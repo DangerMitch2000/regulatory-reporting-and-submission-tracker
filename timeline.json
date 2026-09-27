@@ -1,6 +1,6 @@
 {
   "$schema": "https://vega.github.io/schema/vega/v5.json",
-  "description": "Regulatory timeline 1.3: own-state colours, anchored hierarchy, comparison and native input bindings. Generic aliases only.",
+  "description": "Regulatory Tracker 1.6: own-state colours, anchored hierarchy, comparison and separately labelled historical approval estimates. Generic aliases only.",
   "padding": 0,
   "autosize": "none",
   "background": "#14181f",
@@ -172,7 +172,7 @@
       "value": "",
       "on": [
         {
-          "events": "@rowBg:mouseover, @parentCell:mouseover, @parentLabel:mouseover, @toggle:mouseover, @parentBar:mouseover, @subLabel:mouseover, @siteText:mouseover, @productText:mouseover, @milestone:mouseover, @connector:mouseover",
+          "events": "@rowBg:mouseover, @parentCell:mouseover, @parentLabel:mouseover, @toggle:mouseover, @parentBar:mouseover, @subLabel:mouseover, @siteText:mouseover, @productText:mouseover, @milestone:mouseover, @connector:mouseover, @predictionRange:mouseover, @predictionApproval:mouseover",
           "update": "datum.key"
         },
         {
@@ -272,7 +272,7 @@
       "value": false,
       "on": [
         {
-          "events": "@toggle:click, @parentLabel:click, @parentBar:click, @parentCell:click, @rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @next:click, @nextText:click, @prev:click, @prevText:click, @scrollTrack:pointerdown, @scrollThumb:pointerdown",
+          "events": "@toggle:click, @parentLabel:click, @parentBar:click, @parentCell:click, @rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @next:click, @nextText:click, @prev:click, @prevText:click, @scrollTrack:pointerdown, @scrollThumb:pointerdown, @predictionRange:click, @predictionApproval:click",
           "update": "true"
         },
         {
@@ -370,7 +370,7 @@
       "value": "",
       "on": [
         {
-          "events": "@rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click",
+          "events": "@rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @predictionRange:click, @predictionApproval:click",
           "update": "datum.key"
         }
       ]
@@ -1843,7 +1843,14 @@
             "_RegistrationEnd",
             "_RegistrationEnd",
             "_RegistrationEnd",
-            "_badRegistrationEnd"
+            "_badRegistrationEnd",
+            "PredictionDate",
+            "PredictionLow",
+            "PredictionHigh",
+            "PredictionN",
+            "PredictionMedian",
+            "PredictionCountry",
+            "PredictionStatus"
           ],
           "ops": [
             "count",
@@ -1911,7 +1918,14 @@
             "min",
             "max",
             "valid",
-            "sum"
+            "sum",
+            "max",
+            "max",
+            "max",
+            "max",
+            "max",
+            "max",
+            "max"
           ],
           "as": [
             "sourceRows",
@@ -1979,7 +1993,14 @@
             "RegistrationEndMin",
             "RegistrationEndMax",
             "RegistrationEndValid",
-            "RegistrationEndBad"
+            "RegistrationEndBad",
+            "PredictionDate",
+            "PredictionLow",
+            "PredictionHigh",
+            "PredictionN",
+            "PredictionMedian",
+            "PredictionCountry",
+            "PredictionStatus"
           ]
         },
         {
@@ -2301,6 +2322,11 @@
           "type": "formula",
           "as": "LatestSort",
           "expr": "isValid(datum.LatestApproval) ? datum.LatestApproval : 8640000000000000"
+        },
+        {
+          "type": "formula",
+          "as": "PredictionReady",
+          "expr": "datum.PredictionStatus==='estimated' && isNumber(datum.PredictionDate) && isFinite(datum.PredictionDate) && isNumber(datum.PredictionLow) && isFinite(datum.PredictionLow) && isNumber(datum.PredictionHigh) && isFinite(datum.PredictionHigh) && datum.PredictionLow<=datum.PredictionDate && datum.PredictionDate<=datum.PredictionHigh && datum.PredictionN>0 && datum.OriginalApprovalValid===0 && datum.LatestApprovalValid===0 && datum.ActualApprovalValid===0 && datum.OriginalApprovalBad===0 && datum.LatestApprovalBad===0 && datum.ActualApprovalBad===0"
         }
       ]
     },
@@ -2799,12 +2825,12 @@
         {
           "type": "formula",
           "as": "_lo",
-          "expr": "elapsed ? (isValid(datum.ActualDispatch) && isValid(datum.start) ? datum.start-datum.ActualDispatch : null) : datum.start"
+          "expr": "elapsed ? (isValid(datum.ActualDispatch) && isValid(datum.start) ? datum.start-datum.ActualDispatch : null) : min(isValid(datum.start) ? datum.start : 1/0,datum.level===2 && datum.PredictionReady ? datum.PredictionLow : 1/0)"
         },
         {
           "type": "formula",
           "as": "_hi",
-          "expr": "elapsed ? (isValid(datum.ActualDispatch) && isValid(datum.end) ? max(datum.end,showRegistrationEnd && isValid(datum.RegistrationEnd) ? datum.RegistrationEnd : datum.end)-datum.ActualDispatch : null) : max(isValid(datum.end) ? datum.end : -1/0,showRegistrationEnd && isValid(datum.RegistrationEnd) ? datum.RegistrationEnd : -1/0)"
+          "expr": "elapsed ? (isValid(datum.ActualDispatch) && isValid(datum.end) ? max(datum.end,showRegistrationEnd && isValid(datum.RegistrationEnd) ? datum.RegistrationEnd : datum.end)-datum.ActualDispatch : null) : max(isValid(datum.end) ? datum.end : -1/0,showRegistrationEnd && isValid(datum.RegistrationEnd) ? datum.RegistrationEnd : -1/0,datum.level===2 && datum.PredictionReady ? datum.PredictionHigh : -1/0)"
         },
         {
           "type": "aggregate",
@@ -2926,6 +2952,30 @@
         {
           "type": "filter",
           "expr": "datum.level===2"
+        }
+      ]
+    },
+    {
+      "name": "predictions",
+      "source": "children",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "!elapsed && datum.PredictionReady"
+        },
+        {
+          "type": "filter",
+          "expr": "datum.PredictionHigh>=xlo && datum.PredictionLow<=xhi"
+        }
+      ]
+    },
+    {
+      "name": "predictionPoints",
+      "source": "predictions",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.PredictionDate>=xlo && datum.PredictionDate<=xhi"
         }
       ]
     },
@@ -3458,28 +3508,32 @@
     },
     {
       "type": "text",
+      "name": "predictionLegend",
       "encode": {
         "update": {
-          "fontSize": {
-            "value": 16
-          },
-          "baseline": {
-            "value": "middle"
-          },
           "x": {
             "value": 9
           },
           "y": {
             "value": 15
           },
-          "text": {
-            "value": "Regulatory Tracker · 1.5"
+          "baseline": {
+            "value": "middle"
           },
-          "fontWeight": {
-            "value": 600
+          "fontSize": {
+            "value": 12
           },
           "fill": {
-            "value": "#f1f5fb"
+            "value": "#f6c66a"
+          },
+          "text": {
+            "signal": "elapsed ? '' : '◇ Predicted approval · shaded historical range'"
+          },
+          "limit": {
+            "signal": "max(0,width-260)"
+          },
+          "tooltip": {
+            "value": "Historical approval estimate, displayed separately from original, latest and actual dates. Not a guarantee."
           }
         }
       }
@@ -4417,6 +4471,50 @@
       }
     },
     {
+      "type": "rect",
+      "name": "predictionRange",
+      "from": {
+        "data": "predictions"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "clamp(scale(\"x\",datum.PredictionLow),left+3,width-22)"
+          },
+          "x2": {
+            "signal": "clamp(scale(\"x\",datum.PredictionHigh),left+3,width-22)"
+          },
+          "y": {
+            "signal": "datum.y+32"
+          },
+          "height": {
+            "value": 12
+          },
+          "fill": {
+            "value": "#f6c66a"
+          },
+          "fillOpacity": {
+            "value": 0.18
+          },
+          "stroke": {
+            "value": "#f6c66a"
+          },
+          "strokeOpacity": {
+            "value": 0.5
+          },
+          "cornerRadius": {
+            "value": 3
+          },
+          "tooltip": {
+            "signal": "{'Submission':datum.SubID,'Estimated approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Meaning':'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionDate<nowDate ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
+          },
+          "cursor": {
+            "value": "pointer"
+          }
+        }
+      }
+    },
+    {
       "type": "rule",
       "name": "connector",
       "from": {
@@ -4497,6 +4595,53 @@
           },
           "stroke": {
             "value": "#fff"
+          }
+        }
+      }
+    },
+    {
+      "type": "symbol",
+      "name": "predictionApproval",
+      "from": {
+        "data": "predictionPoints"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "scale": "x",
+            "field": "PredictionDate"
+          },
+          "y": {
+            "signal": "datum.y+38"
+          },
+          "shape": {
+            "value": "diamond"
+          },
+          "size": {
+            "value": 185
+          },
+          "fill": {
+            "value": "#19222e"
+          },
+          "stroke": {
+            "value": "#f6c66a"
+          },
+          "strokeWidth": {
+            "value": 2.5
+          },
+          "tooltip": {
+            "signal": "{'Submission':datum.SubID,'Estimated approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Meaning':'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionDate<nowDate ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
+          },
+          "cursor": {
+            "value": "pointer"
+          }
+        },
+        "hover": {
+          "size": {
+            "value": 230
+          },
+          "stroke": {
+            "value": "#ffe4a6"
           }
         }
       }

@@ -1,3 +1,16 @@
+# Changelog
+
+## 1.6 — 2026-09-27
+
+- Added the Business Unit multiselect filter. Map source `business_unit__c` to the `BusinessUnit` field well; source renaming is not required.
+- Replaced the full product checkbox list with search after two characters, at most 50 matching options, accessible selected products and options narrowed by Business Unit/Site.
+- Kept a single “Regulatory Tracker” title and moved the public demo’s fictional-data note to the footer; the Power BI visual does not label source records as fictional.
+- Added distinct amber approval-estimate markers and empirical middle-50% historical ranges on eligible submission rows, plus selectable approval/history cards and exclusion reasons in Details. Original/latest/actual dates and parent summary bars are unchanged.
+- Predictions require all three approval fields to be genuinely blank and a valid actual submission date. Unmapped required prediction fields, invalid or conflicting values, and unavailable country history suppress estimates without blocking ordinary chart data.
+- Country medians use at least 10 distinct completed submissions whose actual submission and approval dates fall from January 2020 through today, with approval on or after submission. Membership joins count once; missing, invalid, future, pre-2020, reversed, conflicting and multi-country history is excluded from country models.
+- Anchored predictions to actual submission plus the historical median. The range is the empirical interquartile range, not a confidence interval. Valid unusually long durations remain included and flagged; already-passed estimates are not shifted into the future.
+- Documented that history uses only Power BI-delivered rows before local visual filters. Report filters and data limits may restrict the sample, and valid-looking source dates can still be incorrect. Historical Deneb files and companion-table guidance remain available.
+
 ## 1.5 — Regulatory Tracker
 
 - Larger readable labels and milestones, tighter table/timeline split.
@@ -5,8 +18,6 @@
 - Bars and milestone tooltips include full calendar dates, including in elapsed comparison mode.
 - Ctrl+wheel pans dates without zooming. Existing time buttons retained; no Pan dates slider.
 - Public demo and installable Power BI visual updated; Deneb 1.3 files remain historical.
-
-# Changelog
 
 ## 1.3 — 2026-09-23
 
