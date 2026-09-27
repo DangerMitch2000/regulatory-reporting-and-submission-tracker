@@ -78,6 +78,60 @@ async function create(rows, signals = {}) {
   assert.equal(view.data('extent')[0].hi, date('2035-01-01'));
   view.finalize();
 
+  // Registration expiry has a separate sanity bound: all of 2100 is allowed.
+  // This does not apply the prediction history's 2020-through-today cutoff.
+  for (const expiry of [
+    date('2035-01-01'), '2040-12-31', new Date('2040-12-31T00:00:00Z'),
+    '2100-12-31', Date.parse('2100-12-31T23:59:59.999Z')
+  ]) {
+    view = await create([{ ...base, RegistrationEnd: expiry }], { mode: 'Compare', showRegistrationEnd: true });
+    const expected = typeof expiry === 'number' ? expiry : new Date(expiry).getTime();
+    assert.equal(view.data('sub')[0].RegistrationEnd, expected);
+    assert.equal(view.data('sub')[0].RegistrationEndBad, 0);
+    assert.equal(view.data('extent')[0].hi, expected);
+    assert.equal(view.data('milestones').filter(row => row.milestone === 'RegistrationEnd').length, 1);
+    view.finalize();
+  }
+
+  for (const expiry of [
+    '2101-01-01', '9999-12-31', '99999-01-01', date('9999-12-31'),
+    Date.UTC(99999, 0, 1), new Date(Date.UTC(99999, 0, 1)), Infinity, 'not a date'
+  ]) {
+    view = await create([{ ...base, RegistrationEnd: expiry }], { mode: 'Compare' });
+    assert.equal(view.data('sub')[0].RegistrationEnd, null);
+    assert.equal(view.data('sub')[0].RegistrationEndBad, 1);
+    assert.equal(view.data('dataset')[0].RegistrationEnd, expiry, 'Source expiry is never clamped or rewritten');
+    view.signal('showRegistrationEnd', true);
+    await view.runAsync();
+    assert.equal(view.data('extent')[0].hi, base.PredictionHigh);
+    assert.equal(view.data('milestones').filter(row => row.milestone === 'RegistrationEnd').length, 0);
+    assert.ok(view.signal('xhi') < Date.UTC(2101, 0, 1));
+    view.signal('selectedKey', view.data('sub')[0].key).signal('detailTab', 'Issues');
+    await view.runAsync();
+    assert.match(view.data('issueRows').find(row => row.issueField === 'RegistrationEnd').text, /after 2100.*withheld/);
+    // Elapsed comparison is also protected from an enormous expiry duration.
+    view.signal('axisMode', 'Elapsed days');
+    await view.runAsync();
+    assert.equal(view.data('extent')[0].hi, base.ActualSubmission - base.ActualDispatch);
+    view.finalize();
+  }
+
+  // A valid membership date cannot override a bad duplicate. Distinct valid
+  // expiries are withheld as a conflict, while a blank duplicate is permitted.
+  for (const [otherExpiry, badCount, expected] of [
+    ['9999-12-31', 1, null], ['2035-01-01', 0, null], [null, 0, date('2040-12-31')]
+  ]) {
+    view = await create([
+      { ...base, RegistrationEnd: '2040-12-31' },
+      { ...base, Product: 'Second product', RegistrationEnd: otherExpiry }
+    ], { mode: 'Compare', showRegistrationEnd: true });
+    assert.equal(view.data('sub').length, 1);
+    assert.equal(view.data('sub')[0].RegistrationEndBad, badCount);
+    assert.equal(view.data('sub')[0].RegistrationEnd, expected);
+    assert.equal(view.data('extent')[0].hi, expected === null ? base.PredictionHigh : expected);
+    view.finalize();
+  }
+
   // Ineligible or corrupt input cannot accidentally paint an approval estimate.
   for (const change of [
     { PredictionStatus: 'insufficient' },
@@ -111,5 +165,5 @@ async function create(rows, signals = {}) {
   await view.runAsync();
   assert.equal(view.data('predictions').length, 0);
   view.finalize();
-  console.log('PASS: Vega approval markers/ranges, deduplication, eligibility, fitting, hierarchy, elapsed isolation, clipping, past estimates and expiry toggle.');
+  console.log('PASS: Vega approval markers/ranges, deduplication, eligibility, fitting, hierarchy, elapsed isolation, clipping, past estimates and bounded expiry toggle.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

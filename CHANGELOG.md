@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.2 — 2026-09-27
+
+- Clarified comparison headings, day units and current-stage waiting time; moved the abbreviated variance row out of the table while retaining its full Details comparison.
+
+- Made Today a compact badge and blended the row-navigation background into the chart.
+- Removed the top-right legal-manufacturer explanation.
+- Registration end dates after 2100 no longer expand the time axis or plot expiry markers. Invalid values are withheld and flagged in Details; normal future expiry dates and source data are preserved.
+
 ## 1.6.1 — 2026-09-27
 
 - Moved state-filter, comparison and prediction guidance into short footer notes; Clear pins remains alongside the comparison controls.

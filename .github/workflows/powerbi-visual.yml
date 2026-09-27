@@ -51,10 +51,11 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.6.1.0.pbiviz
+          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.6.2.0.pbiviz
           cp powerbi-visual/README.md release/POWER-BI-INSTALL.md
           cp powerbi-visual/verify/overview.png release/powerbi-overview.png
           cp powerbi-visual/verify/details.png release/powerbi-details.png
+          cp powerbi-visual/verify/comparison.png release/powerbi-comparison.png
           cp powerbi-visual/verify/prediction-details.png release/prediction-details.png
           tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs predictions.js prediction-test.cjs
           cd release && sha256sum * > SHA256SUMS.txt
@@ -66,11 +67,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view v1.6.1 >/dev/null 2>&1; then
-            gh release create v1.6.1 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.6.1" --notes "Regulatory Tracker 1.6.1: Distinct regulatory objective totals beside submissions and applications, shorter guidance in the footer, Business Unit filter, bounded product search, one main heading, country-based median approval estimates with historical ranges and supporting Details. Dates are screened from 2020 to today; at least 10 distinct eligible country records are required. Estimates never replace recorded plans or actuals. Forecasts are descriptive, not validated guarantees. Official Microsoft package build and browser host checks passed. Import into Power BI Desktop to verify tenant and host compatibility; this is an uncertified preview, not a Deneb JSON file. See POWER-BI-INSTALL.md. Clipboard depends on the host; selectable detail text remains available. Built from commit $GITHUB_SHA."
+          if ! gh release view v1.6.2 >/dev/null 2>&1; then
+            gh release create v1.6.2 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.6.2" --notes "Regulatory Tracker 1.6.2: Compact Today badge, clearer comparison labels, cleaner header and protection against registration-expiry placeholder years. Distinct regulatory objective totals beside submissions and applications, shorter guidance in the footer, Business Unit filter, bounded product search, one main heading, country-based median approval estimates with historical ranges and supporting Details. Dates are screened from 2020 to today; at least 10 distinct eligible country records are required. Estimates never replace recorded plans or actuals. Forecasts are descriptive, not validated guarantees. Official Microsoft package build and browser host checks passed. Import into Power BI Desktop to verify tenant and host compatibility; this is an uncertified preview, not a Deneb JSON file. See POWER-BI-INSTALL.md. Clipboard depends on the host; selectable detail text remains available. Built from commit $GITHUB_SHA."
           else
-            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.6.1" -f sha="$GITHUB_SHA" -F force=false
-            gh release edit v1.6.1 --target "$GITHUB_SHA" --notes "Regulatory Tracker 1.6.1: Distinct regulatory objective totals beside submissions and applications, shorter guidance in the footer, Business Unit filter, bounded product search, one main heading, country-based median approval estimates with historical ranges and supporting Details. Dates are screened from 2020 to today; at least 10 distinct eligible country records are required. Estimates never replace recorded plans or actuals. Forecasts are descriptive, not validated guarantees. Official Microsoft package build and browser host checks passed. Import into Power BI Desktop to verify tenant and host compatibility; this is an uncertified preview, not a Deneb JSON file. See POWER-BI-INSTALL.md. Clipboard depends on the host; selectable detail text remains available. Built from commit $GITHUB_SHA."
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.6.2" -f sha="$GITHUB_SHA" -F force=false
+            gh release edit v1.6.2 --target "$GITHUB_SHA" --notes "Regulatory Tracker 1.6.2: Compact Today badge, clearer comparison labels, cleaner header and protection against registration-expiry placeholder years. Distinct regulatory objective totals beside submissions and applications, shorter guidance in the footer, Business Unit filter, bounded product search, one main heading, country-based median approval estimates with historical ranges and supporting Details. Dates are screened from 2020 to today; at least 10 distinct eligible country records are required. Estimates never replace recorded plans or actuals. Forecasts are descriptive, not validated guarantees. Official Microsoft package build and browser host checks passed. Import into Power BI Desktop to verify tenant and host compatibility; this is an uncertified preview, not a Deneb JSON file. See POWER-BI-INSTALL.md. Clipboard depends on the host; selectable detail text remains available. Built from commit $GITHUB_SHA."
           fi
-          gh release upload v1.6.1 release/* --clobber
-
+          gh release upload v1.6.2 release/* --clobber

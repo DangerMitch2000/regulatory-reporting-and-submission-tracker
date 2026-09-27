@@ -1,6 +1,6 @@
 {
   "$schema": "https://vega.github.io/schema/vega/v5.json",
-  "description": "Regulatory Tracker 1.6.1: own-state colours, anchored hierarchy, comparison and separately labelled historical approval estimates. Generic aliases only.",
+  "description": "Regulatory Tracker 1.6.2: own-state colours, anchored hierarchy, comparison and separately labelled historical approval estimates. Registration end dates after 31 December 2100 are withheld from markers and axis extents and flagged as invalid, without changing source values. Generic aliases only.",
   "padding": 0,
   "autosize": "none",
   "background": "#14181f",
@@ -35,15 +35,15 @@
     },
     {
       "name": "left",
-      "update": "clamp(width*0.33,360,460)"
+      "update": "mode==='Compare' && compareLevel===2 ? clamp(width*0.4,420,520) : clamp(width*0.33,360,460)"
     },
     {
       "name": "hierarchyW",
-      "update": "left*0.53"
+      "update": "left*(mode==='Compare' && compareLevel===2 ? 0.40 : 0.53)"
     },
     {
       "name": "siteW",
-      "update": "left*0.18"
+      "update": "left*(mode==='Compare' && compareLevel===2 ? 0.29 : 0.18)"
     },
     {
       "name": "top",
@@ -881,7 +881,7 @@
         {
           "type": "formula",
           "as": "_RegistrationEnd",
-          "expr": "isValid(datum._RegistrationEnd) && isFinite(datum._RegistrationEnd) ? datum._RegistrationEnd : null"
+          "expr": "isValid(datum._RegistrationEnd) && isFinite(datum._RegistrationEnd) && datum._RegistrationEnd<utc(2101,0,1) ? datum._RegistrationEnd : null"
         },
         {
           "type": "formula",
@@ -3338,7 +3338,7 @@
         {
           "type": "formula",
           "as": "text",
-          "expr": "datum.issueField+': '+(datum[datum.issueField+'Bad']>0 ? 'Invalid input — withheld' : datum[datum.issueField+'Min']!==datum[datum.issueField+'Max'] ? 'Conflicting dates — withheld' : !isValid(datum[datum.issueField]) ? 'Not recorded' : datum[datum.issueField+'Valid']<datum.sourceRows ? 'Some membership rows blank' : 'OK')"
+          "expr": "datum.issueField+': '+(datum[datum.issueField+'Bad']>0 ? (datum.issueField==='RegistrationEnd' ? 'Invalid input or date after 2100 — withheld' : 'Invalid input — withheld') : datum[datum.issueField+'Min']!==datum[datum.issueField+'Max'] ? 'Conflicting dates — withheld' : !isValid(datum[datum.issueField]) ? 'Not recorded' : datum[datum.issueField+'Valid']<datum.sourceRows ? 'Some membership rows blank' : 'OK')"
         },
         {
           "type": "filter",
@@ -3738,7 +3738,7 @@
             "value": 94
           },
           "text": {
-            "signal": "mode==='Compare' ? 'Comparison' : 'Hierarchy'"
+            "signal": "mode==='Compare' ? (compareLevel===0 ? 'Application' : compareLevel===1 ? 'Regulatory objective' : 'Submission') : 'Hierarchy'"
           },
           "fontWeight": {
             "value": 600
@@ -3757,7 +3757,7 @@
       "encode": {
         "update": {
           "fontSize": {
-            "value": 13
+            "signal": "mode==='Compare' && compareLevel===2 ? 12 : 13"
           },
           "baseline": {
             "value": "middle"
@@ -3766,10 +3766,10 @@
             "signal": "hierarchyW+7"
           },
           "y": {
-            "value": 94
+            "signal": "mode==='Compare' && compareLevel===2 ? 87 : 94"
           },
           "text": {
-            "signal": "mode==='Compare' && compareLevel===2 ? 'Actual D→S' : 'Site (LM)'"
+            "signal": "mode==='Compare' && compareLevel===2 ? [\"Dispatch to\",\"submission (days)\"] : 'Site (LM)'"
           },
           "fontWeight": {
             "value": 600
@@ -3778,7 +3778,13 @@
             "value": "#b8c8df"
           },
           "tooltip": {
-            "value": "Legal manufacturer"
+            "signal": "mode==='Compare' && compareLevel===2 ? \"Completed time from actual dispatch to actual submission. Pending rows show time waiting to submit.\" : \"Legal manufacturer\""
+          },
+          "lineHeight": {
+            "value": 14
+          },
+          "limit": {
+            "signal": "siteW-12"
           }
         }
       }
@@ -3788,7 +3794,7 @@
       "encode": {
         "update": {
           "fontSize": {
-            "value": 13
+            "signal": "mode==='Compare' && compareLevel===2 ? 12 : 13"
           },
           "baseline": {
             "value": "middle"
@@ -3797,10 +3803,10 @@
             "signal": "hierarchyW+siteW+7"
           },
           "y": {
-            "value": 94
+            "signal": "mode==='Compare' && compareLevel===2 ? 87 : 94"
           },
           "text": {
-            "signal": "mode==='Compare' && compareLevel===2 ? 'Actual S→A / Age' : 'Memberships'"
+            "signal": "mode==='Compare' && compareLevel===2 ? [\"Submission to\",\"approval (days)\"] : 'Memberships'"
           },
           "fontWeight": {
             "value": 600
@@ -3809,7 +3815,13 @@
             "value": "#b8c8df"
           },
           "tooltip": {
-            "value": "Product name"
+            "signal": "mode==='Compare' && compareLevel===2 ? \"Completed time from actual submission to actual approval. Pending rows show time waiting for approval.\" : \"Products and countries\""
+          },
+          "lineHeight": {
+            "value": 14
+          },
+          "limit": {
+            "signal": "left-hierarchyW-siteW-12"
           }
         }
       }
@@ -4341,16 +4353,19 @@
             "signal": "datum.y+19"
           },
           "text": {
-            "signal": "mode==='Compare' && compareLevel===2 ? (isValid(datum.DispatchDays) ? format(datum.DispatchDays,'.0f')+'d D→S' : 'D→S: —') : datum.ManufacturerInfo.count===1 ? datum.ManufacturerInfo.detail : datum.ManufacturerInfo.count+' sites'+(datum.ManufacturerInfo.missing ? ' *' : '')"
+            "signal": "mode==='Compare' && compareLevel===2 ? (isValid(datum.DispatchDays) ? format(datum.DispatchDays,'.0f')+' days' : indexof(datum.OpenAge,'Open submission ')===0 ? ['Awaiting submission',format(floor((nowDate-datum.ActualDispatch)/86400000),'.0f')+' days waiting'] : '—') : datum.ManufacturerInfo.count===1 ? datum.ManufacturerInfo.detail : datum.ManufacturerInfo.count+' sites'+(datum.ManufacturerInfo.missing ? ' *' : '')"
           },
           "limit": {
             "signal": "siteW-12"
           },
           "tooltip": {
-            "value": "Click for full membership list below. * includes missing values."
+            "signal": "mode==='Compare' && compareLevel===2 ? 'Actual dispatch to actual submission, in days. Waiting is measured since dispatch. Missing, invalid or conflicting endpoints are withheld. Select for dates in Details.' : 'Click for full legal manufacturer list. * includes missing values.'"
           },
           "cursor": {
             "value": "pointer"
+          },
+          "lineHeight": {
+            "value": 16
           }
         }
       }
@@ -4373,19 +4388,22 @@
             "signal": "hierarchyW+siteW+6"
           },
           "y": {
-            "signal": "datum.y+12"
+            "signal": "mode==='Compare' && compareLevel===2 ? datum.y+19 : datum.y+12"
           },
           "text": {
-            "signal": "mode==='Compare' && compareLevel===2 ? (isValid(datum.ApprovalDays) ? format(datum.ApprovalDays,'.0f')+'d S→A' : 'S→A: —') : datum.ProductCountLabel"
+            "signal": "mode==='Compare' && compareLevel===2 ? (isValid(datum.ApprovalDays) ? format(datum.ApprovalDays,'.0f')+' days' : indexof(datum.OpenAge,'Open approval ')===0 ? ['Awaiting approval',format(floor((nowDate-datum.ActualSubmission)/86400000),'.0f')+' days waiting'] : '—') : datum.ProductCountLabel"
           },
           "limit": {
             "signal": "left-hierarchyW-siteW-12"
           },
           "tooltip": {
-            "value": "Click for full membership list below. * includes missing values."
+            "signal": "mode==='Compare' && compareLevel===2 ? 'Actual submission to actual approval, in days. Waiting is measured since submission. Missing, invalid or conflicting endpoints are withheld. Select for dates in Details.' : 'Click for full product list. * includes missing values.'"
           },
           "cursor": {
             "value": "pointer"
+          },
+          "lineHeight": {
+            "value": 16
           }
         }
       }
@@ -4636,6 +4654,36 @@
       }
     },
     {
+      "type": "rect",
+      "name": "todayBadge",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "clamp(scale(\"x\",nowDate),left+25,width-42)-22"
+          },
+          "y": {
+            "signal": "viewBottom-19"
+          },
+          "width": {
+            "value": 44
+          },
+          "height": {
+            "value": 18
+          },
+          "fill": {
+            "value": "#1e2632"
+          },
+          "cornerRadius": {
+            "value": 3
+          },
+          "opacity": {
+            "signal": "!elapsed && nowDate>=xlo && nowDate<=xhi ? 1 : 0"
+          }
+        }
+      }
+    },
+    {
       "type": "text",
       "encode": {
         "update": {
@@ -4646,10 +4694,10 @@
             "value": "middle"
           },
           "x": {
-            "signal": "clamp(scale(\"x\",nowDate),left+25,width-24)"
+            "signal": "clamp(scale(\"x\",nowDate),left+25,width-42)"
           },
           "y": {
-            "signal": "viewBottom-6"
+            "signal": "viewBottom-10"
           },
           "text": {
             "value": "Today"
@@ -4664,7 +4712,9 @@
             "signal": "!elapsed && nowDate>=xlo && nowDate<=xhi ? 1 : 0"
           }
         }
-      }
+      },
+      "name": "todayLabel",
+      "interactive": false
     },
     {
       "type": "rect",
@@ -4683,13 +4733,17 @@
             "value": 29
           },
           "fill": {
-            "value": "#1e2632"
+            "value": "#14181f"
           },
           "stroke": {
             "value": "#3b475b"
+          },
+          "strokeOpacity": {
+            "value": 0
           }
         }
-      }
+      },
+      "name": "rowNavigationBackground"
     },
     {
       "type": "text",
@@ -4925,7 +4979,7 @@
             "signal": "datum.y+33"
           },
           "text": {
-            "signal": "mode==='Compare' && compareLevel===2 ? datum.OpenAge : datum.CountryCountLabel"
+            "signal": "mode==='Compare' && compareLevel===2 ? '' : datum.CountryCountLabel"
           },
           "limit": {
             "signal": "left-hierarchyW-siteW-12"
@@ -5152,41 +5206,6 @@
           },
           "tooltip": {
             "value": "Pin/unpin this row for comparison"
-          }
-        }
-      }
-    },
-    {
-      "type": "text",
-      "name": "compareVariance",
-      "from": {
-        "data": "pageRows"
-      },
-      "encode": {
-        "update": {
-          "fontSize": {
-            "value": 12
-          },
-          "fill": {
-            "value": "#cedbec"
-          },
-          "baseline": {
-            "value": "middle"
-          },
-          "x": {
-            "signal": "hierarchyW+6"
-          },
-          "y": {
-            "signal": "datum.y+52"
-          },
-          "text": {
-            "signal": "mode==='Compare' && compareLevel===2 ? 'Approval Δ O '+(isValid(datum.ApprovalOriginalVariance) ? format(datum.ApprovalOriginalVariance,'+.0f') : '—')+' / L '+(isValid(datum.ApprovalLatestVariance) ? format(datum.ApprovalLatestVariance,'+.0f') : '—')+'d' : ''"
-          },
-          "limit": {
-            "signal": "left-hierarchyW-12"
-          },
-          "tooltip": {
-            "value": "Actual approval minus Original (O) / Latest (L), in days. Positive means later."
           }
         }
       }

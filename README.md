@@ -1,10 +1,18 @@
-# Regulatory Tracker 1.6.1
+# Regulatory Tracker 1.6.2
 
-[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.6.1 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.6.1) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.6.1/regulatory-tracker-1.6.1.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.6.2 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.6.2) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.6.2/regulatory-tracker-1.6.2.0.pbiviz)
 
-The installable visual and browser demo share the updated layout. Import `regulatory-tracker-1.6.1.0.pbiviz` into Power BI; the stable visual GUID preserves upgrade identity. This remains an uncertified preview requiring validation in your Power BI report. All public sample data is fictional; that note appears in the demo footer, not in the Power BI visual. The interface has one main “Regulatory Tracker” title.
+The installable visual and browser demo share the updated layout. Import `regulatory-tracker-1.6.2.0.pbiviz` into Power BI; the stable visual GUID preserves upgrade identity. This remains an uncertified preview requiring validation in your Power BI report. All public sample data is fictional; that note appears in the demo footer, not in the Power BI visual. The interface has one main “Regulatory Tracker” title.
 
 State checkboxes show matching records plus ancestor context. Parent summaries and details retain all children within membership/search filters, rather than silently changing their meaning. Ctrl+wheel moves dates; use Fit/Year/Quarter/Month and arrow buttons for scale/navigation. No Pan dates slider is included.
+
+## New in 1.6.2
+
+- Submission comparison uses full stage headings and explicit day units. Waiting time appears in its current stage column, separate from completed durations; full approval variances are in Details.
+
+- Today has a compact badge instead of a contrasting full-width bottom strip; row-navigation controls remain available.
+- Removed the top-right legal-manufacturer explanation.
+- Registration end dates after 2100 are flagged and excluded from markers and Fit all. Ordinary future dates remain valid; source values are never clamped or changed.
 
 ## New in 1.6.1
 

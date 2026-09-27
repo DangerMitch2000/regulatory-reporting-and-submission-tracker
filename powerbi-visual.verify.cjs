@@ -49,8 +49,10 @@ try{
  await product.locator('input[type=search]').fill('Stress Product 00100');await page.waitForFunction(()=>document.querySelector('#host .filter[data-kind=product] .chosen-options')?.textContent.includes('00100'));await product.getByLabel('Stress Product 00100',{exact:true}).uncheck();assert.match(await product.locator('summary').innerText(),/99 selected/);assert.ok(await product.locator('.option').count()<=100);
  await page.locator('#host #reset-filters').click();await page.getByRole('button',{name:'Refresh host data',exact:true}).click();await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
  await page.locator('#host select[name=mode]').selectOption({label:'Hierarchy'});await page.locator('#host #selected-details').evaluate(e=>e.open=false);await page.locator('#host .filter').evaluateAll(items=>items.forEach(e=>e.open=false));
- await page.locator('#host').screenshot({path:path.join(__dirname,'overview.png')});assert.deepEqual(errors,[]);console.log('PASS: actual Visual class, CSP interpreter, 60 submissions, five filters, search, comparison, details, list search/paging, refresh/resize, empty data, isolated instances; no page errors.');
+ await page.locator('#host').screenshot({path:path.join(__dirname,'overview.png')});
+ await page.locator('#host select[name=mode]').selectOption({label:'Compare'});await page.waitForFunction(()=>document.querySelector('#host svg')?.textContent.includes('submission (days)'));
+ const comparisonText=await page.locator('#host svg').textContent();assert.ok(comparisonText.includes('Dispatch to'));assert.ok(comparisonText.includes('approval (days)'));assert.ok(!comparisonText.includes('Approval Δ O'));
+ await page.locator('#host').screenshot({path:path.join(__dirname,'comparison.png')});assert.deepEqual(errors,[]);console.log('PASS: actual Visual class, CSP interpreter, 60 submissions, five filters, search, comparison, details, list search/paging, refresh/resize, empty data, isolated instances; no page errors.');
 }finally{await browser.close();server.close();}})().catch(e=>{console.error(e);process.exit(1)});
 `);
 console.log('Created actual-class browser verification harness.');
-
