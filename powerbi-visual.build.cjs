@@ -31,7 +31,8 @@ app=app.replace("queue.then(fn)","queue.then(()=>disposed?undefined:fn())");
 app=app.replace(/const \[spec,data\]=window\.__demoBundle[\s\S]*?rows=data;/,"const spec=config.spec; rows=data;");
 app=app.replace("vega.parse(spec),{renderer:'svg',hover:true}","vega.parse(spec,null,config.expr?{ast:true}:{}),{renderer:'svg',hover:true,...(config.expr?{expr:config.expr}:{})}");
 app=app.replace("document.body.classList.toggle",'root.classList.toggle');
-app=app.replace("await filter();updateControls();",`await filter();updateControls();
+if(!app.includes("// POWERBI_MOUNT_READY"))throw Error("Missing Power BI mount lifecycle marker");
+app=app.replace("// POWERBI_MOUNT_READY",`
   return {view, async updateRows(next,missingPrediction=[]){predictionFieldsMissing=missingPrediction;rows=next;preparePredictions();filterBoxes.forEach(f=>f.refresh());await filter();},async resize(width,height){root.style.setProperty('--host-height',height+'px'); await run(()=>view.signal('denebContainer',{width:Math.max(720,chart.clientWidth),height:Math.max(480,chart.clientHeight)}).runAsync());},destroy(){disposed=true;clearTimeout(timer);filterBoxes.forEach(f=>f.dispose());resize.disconnect();view.finalize();}};`);
 app=app.replace("status.textContent='Could not load the demo: '+error.message;console.error(error);","status.textContent='Could not load the visual: '+error.message;throw error;");
 app=app.replace(/\}\)\(\);\s*$/,'}');

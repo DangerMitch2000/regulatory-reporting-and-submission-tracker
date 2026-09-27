@@ -45,6 +45,7 @@
   $('clear-pins').onclick=()=>run(async()=>{view.change('pinned',vega.changeset().remove(()=>true));await view.runAsync();updateStatus();});
   detail.ontoggle=()=>document.body.classList.toggle('details-expanded',detail.open);
   await filter();$('bindings').append($('clear-pins'));updateControls();
+  // POWERBI_MOUNT_READY
   function preparePredictions(){predictionAnalysis=predictionFieldsMissing.length?{bySubID:new Map()}:predictions.analyze(rows,{now:new Date()});}
   function enriched(row){const p=predictionAnalysis.bySubID.get(norm(row.SubID));return {...row,PredictionDate:p?.predictedDate??null,PredictionLow:p?.rangeStart??null,PredictionHigh:p?.rangeEnd??null,PredictionN:p?.sampleCount??0,PredictionMedian:p?.medianDays??null,PredictionCountry:p?.country??'',PredictionStatus:p?.status??'unavailable'};}
   function filter(){return run(async()=>{const matching=rows.filter(row=>Object.entries(fields).every(([kind,field])=>!selected[kind].size||selected[kind].has(norm(row[field]))));view.change('dataset',vega.changeset().remove(()=>true).insert(matching.map(enriched)));await view.runAsync();detailPage=0;updateStatus();renderDetails();});}
