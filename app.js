@@ -4,11 +4,14 @@
  const fields={site:'Manufacturer',product:'Product',country:'Country',type:'SubmissionType',businessUnit:'BusinessUnit'},selected=Object.fromEntries(Object.keys(fields).map(k=>[k,new Set()]));
  const norm=x=>x==null?'':String(x).trim(),el=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
  let view,rows,queue=Promise.resolve(),detailQuery='',detailPage=0,selectedKey='',timer;const filterBoxes=[];let predictionAnalysis;let predictionFieldsMissing=[];const predictions=window.regulatoryPredictions;
+ const quality=window.regulatoryQuality; const qualityUI=window.regulatoryQualityUI; const exportWorklist=window.regulatoryExportWorklist; let qualityMappedFields=null,qualityAnalysis,qualityPanel;
  const run=fn=>queue=queue.then(fn).catch(error=>{status.textContent='Could not update the chart: '+error.message;console.error(error);});
  const date=x=>x==null||!Number.isFinite(x)?'Not recorded':new Date(x).toISOString().slice(0,10);
  const duration=x=>x==null?'Not recorded / withheld':Math.round(x)+' days';
  try{
-  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.6.2');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();
+  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.7.0');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();prepareQuality();qualityPanel=qualityUI.mount($('quality-view'),{exportWorklist});
+  const showQuality=enabled=>{$('quality-view').hidden=!enabled;$('timeline-view').hidden=enabled;status.hidden=enabled;$('timeline-tab').setAttribute('aria-pressed',String(!enabled));$('quality-tab').setAttribute('aria-pressed',String(enabled));$('tooltip').hidden=true;};
+  $('quality-tab').onclick=()=>showQuality(true);$('timeline-tab').onclick=()=>showQuality(false);
   // These are genuine Vega HTML input bindings, also included in the Deneb deliverable.
   view=new vega.View(vega.parse(spec),{renderer:'svg',hover:true}).initialize(chart,$('bindings')).tooltip((h,event,item,value)=>{
    const tip=$('tooltip');if(value==null){tip.hidden=true;return;}tip.replaceChildren();for(const [k,v]of Object.entries(typeof value==='object'?value:{Details:value})){tip.append(el('strong',k+': '),el('span',String(v)),el('br'));}tip.hidden=false;tip.style.left=Math.max(6,Math.min(event.clientX+12,innerWidth-330))+'px';tip.style.top=Math.max(6,Math.min(event.clientY+12,innerHeight-160))+'px';
@@ -33,7 +36,7 @@
    box.reset=()=>{selected[kind].clear();search.value='';summary.textContent=labelFor(kind)+' · All';refreshValues();draw();};
    filterBoxes.push({kind,refresh(){refreshValues();draw()},dispose(){clearTimeout(inputTimer)}});refreshValues();
   }
-  $('reset-filters').onclick=()=>{for(const cb of stateLegend.querySelectorAll('input'))cb.checked=true;run(()=>view.signal('stateColours',states.map(s=>s[1])).runAsync());for(const box of $('filters').querySelectorAll('details'))box.reset();filterBoxes.forEach(f=>f.refresh());run(async()=>{view.signal('query','');await view.runAsync();});filter();};
+  $('reset-filters').onclick=()=>{qualityPanel.reset();for(const cb of stateLegend.querySelectorAll('input'))cb.checked=true;run(()=>view.signal('stateColours',states.map(s=>s[1])).runAsync());for(const box of $('filters').querySelectorAll('details'))box.reset();filterBoxes.forEach(f=>f.refresh());run(async()=>{view.signal('query','');await view.runAsync();});filter();};
   const resize=new ResizeObserver(entries=>{const {width,height}=entries[0].contentRect;run(()=>view.signal('denebContainer',{width:Math.max(720,width),height:Math.max(480,height)}).runAsync());});resize.observe(chart);
   chart.addEventListener('pointerdown',e=>{if(!e.target.closest('input,select'))chart.focus({preventScroll:true});});
   for(const name of ['selectedKey','query','mode','compareLevel','pinsOnly','pinClick','showRegistrationEnd','sortBy','axisMode'])view.addSignalListener(name,()=>{clearTimeout(timer);timer=setTimeout(()=>{updateStatus();renderDetails();updateControls();},0);});
@@ -47,8 +50,9 @@
   await filter();$('bindings').append($('clear-pins'));updateControls();
   // POWERBI_MOUNT_READY
   function preparePredictions(){predictionAnalysis=predictionFieldsMissing.length?{bySubID:new Map()}:predictions.analyze(rows,{now:new Date()});}
+  function prepareQuality(){qualityAnalysis=quality.analyze(rows,{now:new Date(),...(qualityMappedFields?{mappedFields:qualityMappedFields}:{})});}
   function enriched(row){const p=predictionAnalysis.bySubID.get(norm(row.SubID));return {...row,PredictionDate:p?.predictedDate??null,PredictionLow:p?.rangeStart??null,PredictionHigh:p?.rangeEnd??null,PredictionN:p?.sampleCount??0,PredictionMedian:p?.medianDays??null,PredictionCountry:p?.country??'',PredictionStatus:p?.status??'unavailable'};}
-  function filter(){return run(async()=>{const matching=rows.filter(row=>Object.entries(fields).every(([kind,field])=>!selected[kind].size||selected[kind].has(norm(row[field]))));view.change('dataset',vega.changeset().remove(()=>true).insert(matching.map(enriched)));await view.runAsync();detailPage=0;updateStatus();renderDetails();});}
+  function filter(){return run(async()=>{const matching=rows.filter(row=>Object.entries(fields).every(([kind,field])=>!selected[kind].size||selected[kind].has(norm(row[field]))));view.change('dataset',vega.changeset().remove(()=>true).insert(matching.map(enriched)));await view.runAsync();qualityPanel.update(qualityAnalysis,matching);detailPage=0;updateStatus();renderDetails();});}
   function updateStatus(){const roCount=view.data('roTotals')[0]?.count??0;status.textContent=view.data('sub').length+' submissions · '+roCount+(roCount===1?' RO · ':' ROs · ')+view.data('apps').length+' applications · '+view.data('pinned').length+' pinned';}
   function updateControls(){for(const binding of $('bindings').children){const name=binding.querySelector('input,select')?.name;if(['compareLevel','axisMode','sortBy','pinsOnly'].includes(name))binding.hidden=view.signal('mode')!=='Compare';if(name==='axisMode')binding.hidden=view.signal('mode')!=='Compare'||view.signal('compareLevel')!==2;if(name==='detailQuery')binding.hidden=true;}$('comparison-help').hidden=view.signal('mode')!=='Compare';$('clear-pins').hidden=view.signal('mode')!=='Compare';}
   function renderDetails(){

@@ -1,8 +1,18 @@
-# Regulatory Tracker 1.6.2
+# Regulatory Tracker 1.7.0
 
-[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.6.2 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.6.2) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.6.2/regulatory-tracker-1.6.2.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.7.0 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.7.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.7.0/regulatory-tracker-1.7.0.0.pbiviz)
 
-The installable visual and browser demo share the updated layout. Import `regulatory-tracker-1.6.2.0.pbiviz` into Power BI; the stable visual GUID preserves upgrade identity. This remains an uncertified preview requiring validation in your Power BI report. All public sample data is fictional; that note appears in the demo footer, not in the Power BI visual. The interface has one main “Regulatory Tracker” title.
+Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
+
+## New in 1.7.0: Data quality
+
+Switch to **Data quality** for a remediation worklist grouped and sorted by Site (LM). Existing Business Unit, Site, Product, Country and Submission Type filters combine across the same received membership rows. The issue category and worklist search narrow results further. Timeline state filters and timeline search do not limit this worklist.
+
+Select a submission to see the affected field, received value, reason and suggested check. Errors distinguish invalid or conflicting dates and reversed sequences from review items such as overdue plans or a completed status without an approval date. Missing-information flags apply only to mapped fields; blank optional planning dates are not automatically errors. These are checks on delivered data, not proof that every unflagged value is correct.
+
+Totals count distinct issues and affected submission IDs. Repeated membership rows do not inflate counts. An issue for a submission shared by multiple sites appears once under each matching site; the CSV uses the same explicit site entries. Filter to one site to send its worklist to a colleague. Records without a submission ID remain outside this submission-based worklist.
+
+Checks use all delivered rows for matching submission IDs, so filtering by one product cannot hide a conflicting value on another membership row. **Export worklist** exports all matching entries, including other pages. CSV cells are quoted and formula-like source values are escaped for spreadsheet safety. Power BI uses its download service and optional ExportContent privilege; tenant settings or consent may block download, in which case a selectable/copyable CSV is offered. Source records are unchanged; no workflow statuses or remediation tracking are added.
 
 State checkboxes show matching records plus ancestor context. Parent summaries and details retain all children within membership/search filters, rather than silently changing their meaning. Ctrl+wheel moves dates; use Fit/Year/Quarter/Month and arrow buttons for scale/navigation. No Pan dates slider is included.
 

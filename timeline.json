@@ -1,6 +1,6 @@
 {
   "$schema": "https://vega.github.io/schema/vega/v5.json",
-  "description": "Regulatory Tracker 1.6.2: own-state colours, anchored hierarchy, comparison and separately labelled historical approval estimates. Registration end dates after 31 December 2100 are withheld from markers and axis extents and flagged as invalid, without changing source values. Generic aliases only.",
+  "description": "Regulatory Tracker 1.7.0: own-state colours, anchored hierarchy, comparison and separately labelled historical approval estimates. Registration end dates after 31 December 2100 are withheld from markers and axis extents and flagged as invalid, without changing source values. Generic aliases only.",
   "padding": 0,
   "autosize": "none",
   "background": "#14181f",

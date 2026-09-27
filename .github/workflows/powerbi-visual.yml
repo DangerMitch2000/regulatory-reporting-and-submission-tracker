@@ -7,6 +7,10 @@ on:
       - 'app.js'
       - 'timeline.json'
       - 'predictions.js'
+      - 'quality*.js'
+      - 'quality*.cjs'
+      - 'index.html'
+      - 'style.css'
       - 'prediction-test.cjs'
       - 'powerbi-visual*'
       - '.github/workflows/powerbi-visual.yml'
@@ -22,6 +26,8 @@ jobs:
           node-version: '22'
       - name: Generate project from demo sources
         run: |
+          node quality-test.cjs
+          node quality-ui-test.cjs
           node prediction-test.cjs
           node test-timeline-prediction.cjs
           node powerbi-visual.build.cjs
@@ -51,13 +57,14 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.6.2.0.pbiviz
+          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.7.0.0.pbiviz
           cp powerbi-visual/README.md release/POWER-BI-INSTALL.md
           cp powerbi-visual/verify/overview.png release/powerbi-overview.png
           cp powerbi-visual/verify/details.png release/powerbi-details.png
           cp powerbi-visual/verify/comparison.png release/powerbi-comparison.png
+          cp powerbi-visual/verify/quality.png release/powerbi-data-quality.png
           cp powerbi-visual/verify/prediction-details.png release/prediction-details.png
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs predictions.js prediction-test.cjs
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs predictions.js prediction-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs
           cd release && sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
@@ -67,10 +74,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view v1.6.2 >/dev/null 2>&1; then
-            gh release create v1.6.2 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.6.2" --notes "Regulatory Tracker 1.6.2: Compact Today badge, clearer comparison labels, cleaner header and protection against registration-expiry placeholder years. Distinct regulatory objective totals beside submissions and applications, shorter guidance in the footer, Business Unit filter, bounded product search, one main heading, country-based median approval estimates with historical ranges and supporting Details. Dates are screened from 2020 to today; at least 10 distinct eligible country records are required. Estimates never replace recorded plans or actuals. Forecasts are descriptive, not validated guarantees. Official Microsoft package build and browser host checks passed. Import into Power BI Desktop to verify tenant and host compatibility; this is an uncertified preview, not a Deneb JSON file. See POWER-BI-INSTALL.md. Clipboard depends on the host; selectable detail text remains available. Built from commit $GITHUB_SHA."
+          if ! gh release view v1.7.0 >/dev/null 2>&1; then
+            gh release create v1.7.0 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.7.0" --notes "Regulatory Tracker 1.7.0: Data quality worklists grouped by site, with Business Unit, Product, Country, Type and Site filters, distinct issue/submission totals, source values and reasons, and a filtered CSV export. Download uses the optional Power BI ExportContent permission; a copy fallback is available. No workflow tracking or source edits. Compact Today badge, clear comparison labels and expiry placeholder safeguards are retained. Distinct regulatory objective totals beside submissions and applications, shorter guidance in the footer, Business Unit filter, bounded product search, one main heading, country-based median approval estimates with historical ranges and supporting Details. Dates are screened from 2020 to today; at least 10 distinct eligible country records are required. Estimates never replace recorded plans or actuals. Forecasts are descriptive, not validated guarantees. Official Microsoft package build and browser host checks passed. Import into Power BI Desktop to verify tenant and host compatibility; this is an uncertified preview, not a Deneb JSON file. See POWER-BI-INSTALL.md. Clipboard depends on the host; selectable detail text remains available. Built from commit $GITHUB_SHA."
           else
-            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.6.2" -f sha="$GITHUB_SHA" -F force=false
-            gh release edit v1.6.2 --target "$GITHUB_SHA" --notes "Regulatory Tracker 1.6.2: Compact Today badge, clearer comparison labels, cleaner header and protection against registration-expiry placeholder years. Distinct regulatory objective totals beside submissions and applications, shorter guidance in the footer, Business Unit filter, bounded product search, one main heading, country-based median approval estimates with historical ranges and supporting Details. Dates are screened from 2020 to today; at least 10 distinct eligible country records are required. Estimates never replace recorded plans or actuals. Forecasts are descriptive, not validated guarantees. Official Microsoft package build and browser host checks passed. Import into Power BI Desktop to verify tenant and host compatibility; this is an uncertified preview, not a Deneb JSON file. See POWER-BI-INSTALL.md. Clipboard depends on the host; selectable detail text remains available. Built from commit $GITHUB_SHA."
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.7.0" -f sha="$GITHUB_SHA" -F force=false
+            gh release edit v1.7.0 --target "$GITHUB_SHA" --notes "Regulatory Tracker 1.7.0: Data quality worklists grouped by site, with Business Unit, Product, Country, Type and Site filters, distinct issue/submission totals, source values and reasons, and a filtered CSV export. Download uses the optional Power BI ExportContent permission; a copy fallback is available. No workflow tracking or source edits. Compact Today badge, clear comparison labels and expiry placeholder safeguards are retained. Distinct regulatory objective totals beside submissions and applications, shorter guidance in the footer, Business Unit filter, bounded product search, one main heading, country-based median approval estimates with historical ranges and supporting Details. Dates are screened from 2020 to today; at least 10 distinct eligible country records are required. Estimates never replace recorded plans or actuals. Forecasts are descriptive, not validated guarantees. Official Microsoft package build and browser host checks passed. Import into Power BI Desktop to verify tenant and host compatibility; this is an uncertified preview, not a Deneb JSON file. See POWER-BI-INSTALL.md. Clipboard depends on the host; selectable detail text remains available. Built from commit $GITHUB_SHA."
           fi
-          gh release upload v1.6.2 release/* --clobber
+          gh release upload v1.7.0 release/* --clobber

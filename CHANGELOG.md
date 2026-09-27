@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.0 — 2026-09-28
+
+- Added a Data quality view grouped by site, with the five existing membership filters, issue categories, search, pagination and selectable issue details.
+- Added distinct submission/issue totals and field-level checks that retain source evidence and do not flag every optional blank date.
+- Added a filtered CSV worklist using the Power BI download service, with a copy fallback and spreadsheet formula escaping.
+- Kept full received evidence for matched submissions so membership filters cannot hide conflicting dates. Multi-site rows are explicit while top totals stay deduplicated.
+
+
 ## 1.6.2 — 2026-09-27
 
 - Clarified comparison headings, day units and current-stage waiting time; moved the abbreviated variance row out of the table while retaining its full Details comparison.
