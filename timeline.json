@@ -4506,7 +4506,7 @@
             "value": 3
           },
           "tooltip": {
-            "signal": "{'Submission':datum.SubID,'Estimated approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Meaning':'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionDate<nowDate ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
+            "signal": "{'Submission':datum.SubID,'Estimated approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Meaning':'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionDate<utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate)) ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
           },
           "cursor": {
             "value": "pointer"
@@ -4630,7 +4630,7 @@
             "value": 2.5
           },
           "tooltip": {
-            "signal": "{'Submission':datum.SubID,'Estimated approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Meaning':'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionDate<nowDate ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
+            "signal": "{'Submission':datum.SubID,'Estimated approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Meaning':'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionDate<utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate)) ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
           },
           "cursor": {
             "value": "pointer"

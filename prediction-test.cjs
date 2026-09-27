@@ -81,6 +81,10 @@ assert.equal(analyze([...history, { ...pending, Country: 'Germany' }], { now }).
 assert.equal(analyze([{ ...completed('CUTOFF', 0, 'France', '2020-01-01') }], { now }).summary.qualifyingHistory, 1);
 assert.equal(analyze([{ ...completed('TODAY', 0, 'France', now) }], { now }).summary.qualifyingHistory, 1);
 
+// An estimate due today is not yet overdue, even later in the same day.
+const dueToday={...pending,ActualSubmission:iso(Date.parse(now)-101*DAY)};
+assert.equal(analyze([...history,dueToday],{now:now+'T18:00:00Z'}).bySubID.get('P1').overdue,false);
+
 // Long but valid approvals remain in the median while being separately flagged.
 result = analyze([...history, completed('LONG', 1900, 'France', '2020-01-01'), { ...pending, ActualSubmission: '2025-01-01' }], { now });
 p = result.bySubID.get('P1');

@@ -68,6 +68,9 @@ jobs:
         run: |
           if ! gh release view v1.6 >/dev/null 2>&1; then
             gh release create v1.6 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.6" --notes "Regulatory Tracker 1.6: Business Unit filter, bounded product search, one main heading, country-based median approval estimates with historical ranges and supporting Details. Dates are screened from 2020 to today; at least 10 distinct eligible country records are required. Estimates never replace recorded plans or actuals. Forecasts are descriptive, not validated guarantees. Official Microsoft package build and browser host checks passed. Import into Power BI Desktop to verify tenant and host compatibility; this is an uncertified preview, not a Deneb JSON file. See POWER-BI-INSTALL.md. Clipboard depends on the host; selectable detail text remains available. Built from commit $GITHUB_SHA."
+          else
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.6" -f sha="$GITHUB_SHA" -F force=false
+            gh release edit v1.6 --target "$GITHUB_SHA" --notes "Regulatory Tracker 1.6: Business Unit filter, bounded product search, one main heading, country-based median approval estimates with historical ranges and supporting Details. Dates are screened from 2020 to today; at least 10 distinct eligible country records are required. Estimates never replace recorded plans or actuals. Forecasts are descriptive, not validated guarantees. Official Microsoft package build and browser host checks passed. Import into Power BI Desktop to verify tenant and host compatibility; this is an uncertified preview, not a Deneb JSON file. See POWER-BI-INSTALL.md. Clipboard depends on the host; selectable detail text remains available. Built from commit $GITHUB_SHA."
           fi
           gh release upload v1.6 release/* --clobber
 

@@ -95,6 +95,15 @@ async function create(rows, signals = {}) {
     assert.equal(view.data('predictionPoints').length, 0, JSON.stringify(change));
     view.finalize();
   }
+  // Date-only estimates due today stay current throughout that UTC day.
+  view=await create([base],{mode:'Compare'});
+  view.signal('nowDate',base.PredictionDate+18*60*60*1000);await view.runAsync();
+  const collect=(node)=>[...(node.tooltip?[node.tooltip]:[]),...(node.items||[]).flatMap(collect)];
+  const tips=collect(view.scenegraph().root).filter(t=>t['Estimated approval']);
+  assert.ok(tips.length>0);
+  assert.ok(tips.every(t=>t.Timing==='Estimate from actual submission date'));
+  view.finalize();
+
   // Past estimates are shown as historical estimates rather than silently moved to today.
   view = await create([base], { mode: 'Compare', nowDate: date('2026-09-27') });
   assert.equal(view.data('predictionPoints')[0].PredictionDate, base.PredictionDate);
