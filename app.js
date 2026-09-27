@@ -8,7 +8,7 @@
  const date=x=>x==null||!Number.isFinite(x)?'Not recorded':new Date(x).toISOString().slice(0,10);
  const duration=x=>x==null?'Not recorded / withheld':Math.round(x)+' days';
  try{
-  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.6');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();
+  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.6.1');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();
   // These are genuine Vega HTML input bindings, also included in the Deneb deliverable.
   view=new vega.View(vega.parse(spec),{renderer:'svg',hover:true}).initialize(chart,$('bindings')).tooltip((h,event,item,value)=>{
    const tip=$('tooltip');if(value==null){tip.hidden=true;return;}tip.replaceChildren();for(const [k,v]of Object.entries(typeof value==='object'?value:{Details:value})){tip.append(el('strong',k+': '),el('span',String(v)),el('br'));}tip.hidden=false;tip.style.left=Math.max(6,Math.min(event.clientX+12,innerWidth-330))+'px';tip.style.top=Math.max(6,Math.min(event.clientY+12,innerHeight-160))+'px';
@@ -44,12 +44,12 @@
   $('copy-id').onclick=async()=>{const row=view.data('selectedRow')[0];if(row)await copy(row.level===2?row.SubID:row.level===1?row.ROID:row.AppID,$('copy-status'));};
   $('clear-pins').onclick=()=>run(async()=>{view.change('pinned',vega.changeset().remove(()=>true));await view.runAsync();updateStatus();});
   detail.ontoggle=()=>document.body.classList.toggle('details-expanded',detail.open);
-  await filter();updateControls();
+  await filter();$('bindings').append($('clear-pins'));updateControls();
   function preparePredictions(){predictionAnalysis=predictionFieldsMissing.length?{bySubID:new Map()}:predictions.analyze(rows,{now:new Date()});}
   function enriched(row){const p=predictionAnalysis.bySubID.get(norm(row.SubID));return {...row,PredictionDate:p?.predictedDate??null,PredictionLow:p?.rangeStart??null,PredictionHigh:p?.rangeEnd??null,PredictionN:p?.sampleCount??0,PredictionMedian:p?.medianDays??null,PredictionCountry:p?.country??'',PredictionStatus:p?.status??'unavailable'};}
   function filter(){return run(async()=>{const matching=rows.filter(row=>Object.entries(fields).every(([kind,field])=>!selected[kind].size||selected[kind].has(norm(row[field]))));view.change('dataset',vega.changeset().remove(()=>true).insert(matching.map(enriched)));await view.runAsync();detailPage=0;updateStatus();renderDetails();});}
-  function updateStatus(){status.textContent=view.data('sub').length+' submissions · '+view.data('apps').length+' applications · '+view.data('pinned').length+' pinned';}
-  function updateControls(){for(const binding of $('bindings').children){const name=binding.querySelector('input,select')?.name;if(['compareLevel','axisMode','sortBy','pinsOnly'].includes(name))binding.hidden=view.signal('mode')!=='Compare';if(name==='axisMode')binding.hidden=view.signal('mode')!=='Compare'||view.signal('compareLevel')!==2;if(name==='detailQuery')binding.hidden=true;}$('comparison-help').hidden=view.signal('mode')!=='Compare';}
+  function updateStatus(){const roCount=view.data('roTotals')[0]?.count??0;status.textContent=view.data('sub').length+' submissions · '+roCount+(roCount===1?' RO · ':' ROs · ')+view.data('apps').length+' applications · '+view.data('pinned').length+' pinned';}
+  function updateControls(){for(const binding of $('bindings').children){const name=binding.querySelector('input,select')?.name;if(['compareLevel','axisMode','sortBy','pinsOnly'].includes(name))binding.hidden=view.signal('mode')!=='Compare';if(name==='axisMode')binding.hidden=view.signal('mode')!=='Compare'||view.signal('compareLevel')!==2;if(name==='detailQuery')binding.hidden=true;}$('comparison-help').hidden=view.signal('mode')!=='Compare';$('clear-pins').hidden=view.signal('mode')!=='Compare';}
   function renderDetails(){
    const row=view.data('selectedRow')[0],body=$('detail-body'),lists=$('member-lists');body.replaceChildren();lists.replaceChildren();
    if(selectedKey!==view.signal('selectedKey')){selectedKey=view.signal('selectedKey');detailQuery='';$('list-search').value='';detailPage=0;}

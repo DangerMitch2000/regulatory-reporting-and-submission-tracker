@@ -1,10 +1,16 @@
-# Regulatory Tracker 1.6
+# Regulatory Tracker 1.6.1
 
-[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.6 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.6) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.6/regulatory-tracker-1.6.0.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.6.1 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.6.1) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.6.1/regulatory-tracker-1.6.1.0.pbiviz)
 
-The installable visual and browser demo share the updated layout. Import `regulatory-tracker-1.6.0.0.pbiviz` into Power BI; the stable visual GUID preserves upgrade identity. This remains an uncertified preview requiring validation in your Power BI report. All public sample data is fictional; that note appears in the demo footer, not in the Power BI visual. The interface has one main “Regulatory Tracker” title.
+The installable visual and browser demo share the updated layout. Import `regulatory-tracker-1.6.1.0.pbiviz` into Power BI; the stable visual GUID preserves upgrade identity. This remains an uncertified preview requiring validation in your Power BI report. All public sample data is fictional; that note appears in the demo footer, not in the Power BI visual. The interface has one main “Regulatory Tracker” title.
 
 State checkboxes show matching records plus ancestor context. Parent summaries and details retain all children within membership/search filters, rather than silently changing their meaning. Ctrl+wheel moves dates; use Fit/Year/Quarter/Month and arrow buttons for scale/navigation. No Pan dates slider is included.
+
+## New in 1.6.1
+
+- Short footer notes replace the state-filter, comparison and predicted-approval explanations above the chart. Removed the duplicated totals inside the timeline; the top summary is the single count display.
+
+- The header includes distinct regulatory objective (RO) totals alongside submissions and applications. These totals follow the same membership and text-search filters; repeated membership rows do not increase the RO total.
 
 ## New in 1.6
 

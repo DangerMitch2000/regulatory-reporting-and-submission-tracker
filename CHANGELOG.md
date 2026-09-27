@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1 — 2026-09-27
+
+- Moved state-filter, comparison and prediction guidance into short footer notes; Clear pins remains alongside the comparison controls.
+
+- Added distinct regulatory objective (RO) totals beside the submission and application counts in the top filter area. Removed the duplicated totals inside the timeline and reclaimed its extra header row. Counts follow the same filtered records; repeated submission/product memberships do not inflate the RO total.
+
 ## 1.6 — 2026-09-27
 
 - Added the Business Unit multiselect filter. Map source `business_unit__c` to the `BusinessUnit` field well; source renaming is not required.

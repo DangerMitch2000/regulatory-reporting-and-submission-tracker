@@ -1,6 +1,6 @@
 {
   "$schema": "https://vega.github.io/schema/vega/v5.json",
-  "description": "Regulatory Tracker 1.6: own-state colours, anchored hierarchy, comparison and separately labelled historical approval estimates. Generic aliases only.",
+  "description": "Regulatory Tracker 1.6.1: own-state colours, anchored hierarchy, comparison and separately labelled historical approval estimates. Generic aliases only.",
   "padding": 0,
   "autosize": "none",
   "background": "#14181f",
@@ -47,7 +47,7 @@
     },
     {
       "name": "top",
-      "value": 134
+      "value": 110
     },
     {
       "name": "rowH",
@@ -111,7 +111,7 @@
             "source": "view",
             "filter": [
               "event.ctrlKey",
-              "y()>100"
+              "y()>top-34"
             ],
             "consume": true
           },
@@ -3454,6 +3454,24 @@
           "x": 376
         }
       ]
+    },
+    {
+      "name": "roTotals",
+      "source": "sub",
+      "transform": [
+        {
+          "type": "aggregate",
+          "fields": [
+            "ROID"
+          ],
+          "ops": [
+            "distinct"
+          ],
+          "as": [
+            "count"
+          ]
+        }
+      ]
     }
   ],
   "scales": [
@@ -3507,66 +3525,6 @@
       }
     },
     {
-      "type": "text",
-      "name": "predictionLegend",
-      "encode": {
-        "update": {
-          "x": {
-            "value": 9
-          },
-          "y": {
-            "value": 15
-          },
-          "baseline": {
-            "value": "middle"
-          },
-          "fontSize": {
-            "value": 12
-          },
-          "fill": {
-            "value": "#f6c66a"
-          },
-          "text": {
-            "signal": "elapsed ? '' : '◇ Predicted approval · shaded historical range'"
-          },
-          "limit": {
-            "signal": "max(0,width-260)"
-          },
-          "tooltip": {
-            "value": "Historical approval estimate, displayed separately from original, latest and actual dates. Not a guarantee."
-          }
-        }
-      }
-    },
-    {
-      "type": "text",
-      "encode": {
-        "update": {
-          "fontSize": {
-            "value": 12
-          },
-          "baseline": {
-            "value": "middle"
-          },
-          "x": {
-            "signal": "width-9"
-          },
-          "y": {
-            "value": 15
-          },
-          "align": {
-            "value": "right"
-          },
-          "text": {
-            "signal": "format(length(data(\"sub\")),\",\")+\" submissions\"+(width>700 ? \"  ·  \"+length(data(\"apps\"))+\" applications\" : \"\")"
-          },
-          "fill": {
-            "value": "#93a4bb"
-          }
-        }
-      }
-    },
-    {
       "type": "rect",
       "name": "timeButton",
       "from": {
@@ -3578,7 +3536,7 @@
             "field": "x"
           },
           "y": {
-            "value": 32
+            "value": 8
           },
           "width": {
             "field": "w"
@@ -3630,7 +3588,7 @@
             "signal": "datum.x+datum.w/2"
           },
           "y": {
-            "value": 45
+            "value": 21
           },
           "align": {
             "value": "center"
@@ -3653,7 +3611,7 @@
             "signal": "width-109"
           },
           "y": {
-            "value": 32
+            "value": 8
           },
           "width": {
             "value": 101
@@ -3696,7 +3654,7 @@
             "signal": "width-58"
           },
           "y": {
-            "value": 45
+            "value": 21
           },
           "text": {
             "value": "Collapse all"
@@ -3724,7 +3682,7 @@
             "signal": "width-8"
           },
           "y": {
-            "value": 91
+            "value": 67
           },
           "align": {
             "value": "right"
@@ -3746,7 +3704,7 @@
             "value": 0
           },
           "y": {
-            "value": 102
+            "value": 78
           },
           "width": {
             "signal": "width"
@@ -3777,7 +3735,7 @@
             "signal": "8"
           },
           "y": {
-            "value": 118
+            "value": 94
           },
           "text": {
             "signal": "mode==='Compare' ? 'Comparison' : 'Hierarchy'"
@@ -3808,7 +3766,7 @@
             "signal": "hierarchyW+7"
           },
           "y": {
-            "value": 118
+            "value": 94
           },
           "text": {
             "signal": "mode==='Compare' && compareLevel===2 ? 'Actual D→S' : 'Site (LM)'"
@@ -3839,7 +3797,7 @@
             "signal": "hierarchyW+siteW+7"
           },
           "y": {
-            "value": 118
+            "value": 94
           },
           "text": {
             "signal": "mode==='Compare' && compareLevel===2 ? 'Actual S→A / Age' : 'Memberships'"
@@ -3906,7 +3864,7 @@
             "field": "date"
           },
           "y": {
-            "value": 118
+            "value": 94
           },
           "y2": {
             "signal": "viewBottom"
@@ -3931,7 +3889,7 @@
             "signal": "max(left,scale(\"x\",datum.date))"
           },
           "y": {
-            "value": 102
+            "value": 78
           },
           "y2": {
             "signal": "viewBottom"
@@ -3962,7 +3920,7 @@
             "signal": "max(left+5,scale(\"x\",datum.date)+4)"
           },
           "y": {
-            "value": 110
+            "value": 86
           },
           "text": {
             "signal": "min(width,scale(\"x\",datum.next))-max(left,scale(\"x\",datum.date))>52 ? datum.label : \"\""
@@ -3993,7 +3951,7 @@
             "signal": "scale(\"x\",datum.date)+3"
           },
           "y": {
-            "value": 125
+            "value": 101
           },
           "text": {
             "field": "label"
@@ -4015,7 +3973,7 @@
             "signal": "hierarchyW"
           },
           "y": {
-            "value": 102
+            "value": 78
           },
           "y2": {
             "signal": "viewBottom"
@@ -4037,7 +3995,7 @@
             "signal": "hierarchyW+siteW"
           },
           "y": {
-            "value": 102
+            "value": 78
           },
           "y2": {
             "signal": "viewBottom"
@@ -4059,7 +4017,7 @@
             "signal": "left"
           },
           "y": {
-            "value": 102
+            "value": 78
           },
           "y2": {
             "signal": "viewBottom"
@@ -4654,7 +4612,7 @@
             "signal": "scale(\"x\",nowDate)"
           },
           "y": {
-            "value": 134
+            "value": 110
           },
           "y2": {
             "signal": "viewBottom"
@@ -5088,7 +5046,7 @@
             "value": 8
           },
           "y": {
-            "value": 73
+            "value": 49
           },
           "text": {
             "value": "O ··· Original    L – – Latest    A ━ Actual     ▼ Reg start  △ Reg end"
@@ -5251,7 +5209,7 @@
             "value": 9
           },
           "y": {
-            "value": 91
+            "value": 67
           },
           "text": {
             "value": "● Dispatch ◆ Submission ■ Approval · Colour = own state (hover for legend)"
