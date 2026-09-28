@@ -2,6 +2,11 @@ import {summarize,viewingDay,categories} from './roadmap-2026.logic.js';
 const colours=['#2875d9','#ed922d','#269968','#8159bd'],months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const el=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
 const svg=(tag,attrs)=>{const e=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const [k,v]of Object.entries(attrs))e.setAttribute(k,String(v));return e;};
+const dispatchDefinitions=[
+ ['Unconfirmed','Planned dispatch date has passed, but no actual dispatch date is recorded. This can be a missing update, not necessarily a delay.'],
+ ['Inferred','No actual dispatch date is recorded, but an actual submission or approval date provides evidence of progress. Counted in the planned dispatch month when inference is enabled.']
+];
+function definitions(parent){const box=el('section');box.className='definitions';box.setAttribute('aria-label','Dispatch category definitions');dispatchDefinitions.forEach(([name,meaning],i)=>{const p=el('p'),label=el('strong',name+': ');label.style.color=colours[i+2];p.append(label,document.createTextNode(meaning));box.append(p);});box.append(el('p','These categories describe dispatch evidence, not submission completion status.'));parent.append(box);}
 export function render(root,rows,{now=new Date(),notice='',synthetic=false,includeInferred=false,onInference=(value)=>{},businessUnit='*',onBusinessUnit=(value)=>{},expanded=new Set(),onExpansion=(key)=>{}}={}){
  const r=summarize(rows,viewingDay(now),includeInferred,businessUnit);root.replaceChildren();root.className='roadmap2026';const opts={now,notice,synthetic,includeInferred,onInference,businessUnit,onBusinessUnit,expanded,onExpansion};const redraw=()=>render(root,rows,opts);if(root._slide)return roadSlide(root,r,opts,redraw);root.onkeydown=null;
  const header=el('header'),h=el('h1',r.year+' Roadmap'),asof=el('p','As of '+now.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}));header.append(h,asof);root.append(header);
@@ -35,9 +40,10 @@ export function render(root,rows,{now=new Date(),notice='',synthetic=false,inclu
  r.sites.forEach(site=>{const row=el('tr'),name=el('td'),button=el('button',(expanded.has(site.key)?'▾ ':'▸ ')+site.label);button.setAttribute('aria-expanded',String(expanded.has(site.key)));button.onclick=()=>onExpansion(site.key);name.append(button);row.append(name);cells(row,site.totals,site.total);sb.append(row);
  if(expanded.has(site.key))site.months.forEach((counts,m)=>{const mr=el('tr');mr.className='monthRow';mr.append(el('td',months[m]));cells(mr,counts,counts.reduce((a,b)=>a+b,0));sb.append(mr);});});
  const sr=el('tr');sr.className='total';sr.append(el('td','Total'));cells(sr,r.totals,r.total);sb.append(sr);st.append(sb);side.append(st);
+ definitions(root);
  if(r.ambiguousSites.length)side.append(el('small',r.ambiguousSites.length+' submissions have multiple sites and are counted once in the unallocated bucket.'));
  const cleanup=el('p','Missing Dates — '+r.year+': '+r.missing.length);cleanup.className='cleanup';root.append(cleanup);
- root.append(el('small','No actual dispatch or usable planned dispatch date, with actual submission or approval in '+r.year+'. Each submission counted once. Independent of the inference checkbox.'));
+ root.append(el('small','Outside the chart total: no actual dispatch or usable planned dispatch date, with actual submission or approval in '+r.year+'. Each submission counted once. Independent of the inference checkbox.'));
  if(includeInferred)root.append(el('small','Undated inferred: '+r.undatedInferred.length+' across all filtered years; outside the chart total. May overlap Missing Dates — do not add these counts.'));
  const inferred=r.records.filter(x=>x.category===3);
  if(inferred.length){const d=el('details');d.append(el('summary','Inferred evidence — '+inferred.length+' records'));const list=el('ul');inferred.forEach(x=>list.append(el('li',x.id+' · planned dispatch '+new Date(x.plannedDay).toISOString().slice(0,10)+' · actual dispatch missing · '+x.evidence.map(e=>e.field+': '+new Date(e.day).toISOString().slice(0,10)).join('; '))));d.append(list);root.append(d);}
@@ -58,12 +64,12 @@ function slideCanvas(root,title,subtitle,height,exit){
 function slideButton(root,draw){const b=el('button','Screenshot mode');b.className='captureButton';b.title='Slide-ready layout. Press Escape to return to controls.';b.onclick=()=>{root._slide=true;draw();root.focus?.()};root.append(b)}
 
 function roadSlide(root,r,o,exit){
- const cats=categories.map((c,i)=>({c,i})).filter(x=>o.includeInferred||x.i!==3),height=Math.max(830,265+(r.sites.length+1)*49+100);
+ const cats=categories.map((c,i)=>({c,i})).filter(x=>o.includeInferred||x.i!==3),definitionsY=287+r.sites.length*49+34,height=Math.max(830,definitionsY+158);
  const {text,rect,shape}=slideCanvas(root,r.year+' Registration Overview','Business unit: '+(o.businessUnit==='*'?'All':o.businessUnit??'Unassigned')+' · Inferred dispatches '+(o.includeInferred?'included':'excluded')+' · As of '+o.now.toLocaleDateString('en-GB'),height,exit);
  const warnings=[o.synthetic?'Fictional demonstration data':'',o.notice].filter(Boolean).join(' · ');if(warnings)text(24,110,warnings,18,'#8a4b00');
  cats.forEach(({c,i},j)=>{const x=24+j*292;rect(x,133,15,15,colours[i]);text(x+24,148,c,20)});
  const left=62,top=230,plotW=488,plotH=244,max=Math.max(1,...r.months.map(m=>m.reduce((a,b)=>a+b,0))),step=Math.max(1,Math.ceil(max/4)),ceiling=step*4,y=n=>top+plotH*(1-n/ceiling),band=plotW/12;
- text(24,187,'Monthly submissions',24,'#122c49','start',650);
+ text(24,187,'Monthly dispatch outlook',24,'#122c49','start',650);
  for(let n=0;n<=ceiling;n+=step){shape('line',{x1:left,x2:left+plotW,y1:y(n),y2:y(n),stroke:'#dbe3ec'});text(left-10,y(n)+6,n,20,'#33475c','end')}
  r.months.forEach((values,m)=>{let base=0;values.forEach((n,i)=>{if(n)rect(left+m*band+8,y(base+n),band-16,plotH*n/ceiling,colours[i]);base+=n});text(left+(m+.5)*band,y(base)-8,base,19,'#24364b','middle',600);text(left+(m+.5)*band,503,months[m],19,'#24364b','middle')});
  shape('line',{x1:left,x2:left+plotW,y1:y(r.average),y2:y(r.average),stroke:'#34475b','stroke-dasharray':'6 4'});text(24,539,'Monthly average: '+r.average.toFixed(1),22);
@@ -74,6 +80,12 @@ function roadSlide(root,r,o,exit){
  text(614,226,'Site',20);const headers=[['Dispatched'],['In progress','/ expected'],['Unconfirmed'],...(o.includeInferred?[['Inferred']]:[]),['Total']];headers.forEach((lines,i)=>lines.forEach((s,j)=>text(positions[i],226+j*23,s,16,'#33475c','end')));
  const row=(site,i,total=false)=>{const y=287+i*49;if(total)rect(605,y-29,578,42,'#edf3fa');text(614,y,site.label.length>14?site.label.slice(0,13)+'…':site.label,22,'#122c49','start',total?700:500);cats.forEach(({i:c},j)=>text(positions[j],y,site.totals[c],24,'#24364b','end',600));text(1174,y,site.total,25,'#122c49','end',700)};
  r.sites.forEach((s,i)=>row(s,i));row({label:'Total',totals:r.totals,total:r.total},r.sites.length,true);
- text(24,height-28,'Missing Dates — '+r.year+': '+r.missing.length+' · Each submission counted once',20);
+ const definitionBox=shape('g',{'data-definitions':'dispatch'});definitionBox.append(
+ rect(605,definitionsY-5,578,119,'#f3f6fa'),
+ text(614,definitionsY+17,'Unconfirmed: Past plan; actual dispatch date missing.',19,'#24364b','start',600),
+ text(614,definitionsY+43,'Inferred: Actual submission/approval date recorded;',19),
+ text(614,definitionsY+69,'dispatch missing. Uses planned month when enabled.',19),
+ text(614,definitionsY+101,'Dispatch evidence, not submission completion status.',18,'#33475c'));
+ text(24,height-28,'Missing Dates — '+r.year+': '+r.missing.length+' · Outside chart total',20);
  return r;
 }
