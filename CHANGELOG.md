@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.0 — 2026-09-28
+
+- Add a top-right Theme selector with Dark as the default and Light as an option for the entire visual.
+- Theme timeline marks, labels, controls, menus, Details, predictions, tooltips and Data quality; preserve semantic status colours with contrasting light variants.
+- Switch themes in place, keeping filters, record selection, pins, timeline domain and row position. Each Power BI instance has its own local theme; new instances start dark.
+
 ## 1.8.0 — 2026-09-28
 
 - Add approval forecasts anchored to actual submission, latest planned submission, then original planned submission. Fallback requires genuinely blank higher-priority fields; populated invalid or conflicting values and missing mappings are not silently skipped. Planned dates from January 2020 through December 2100 can anchor future estimates.

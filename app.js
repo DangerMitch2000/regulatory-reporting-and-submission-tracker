@@ -9,8 +9,9 @@
  const run=fn=>queue=queue.then(fn).catch(error=>{status.textContent='Could not update the chart: '+error.message;console.error(error);});
  const date=x=>x==null||!Number.isFinite(x)?'Not recorded':new Date(x).toISOString().slice(0,10);
  const duration=x=>x==null?'Not recorded / withheld':Math.round(x)+' days';
+ document.body.dataset.theme='dark';
  try{
-  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.8.0');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();prepareQuality();qualityPanel=qualityUI.mount($('quality-view'),{exportWorklist});
+  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.9.0');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();prepareQuality();qualityPanel=qualityUI.mount($('quality-view'),{exportWorklist});
   const showQuality=enabled=>{$('quality-view').hidden=!enabled;$('timeline-view').hidden=enabled;status.hidden=enabled;$('timeline-tab').setAttribute('aria-pressed',String(!enabled));$('quality-tab').setAttribute('aria-pressed',String(enabled));$('tooltip').hidden=true;};
   $('quality-tab').onclick=()=>showQuality(true);$('timeline-tab').onclick=()=>showQuality(false);
   // These are genuine Vega HTML input bindings, also included in the Deneb deliverable.
@@ -19,7 +20,8 @@
   });
   const stateLegend=$('state-legend');
   const states=[['Active / Planned','#6d9eff'],['In progress / Ready','#43c6ec'],['Sent / Distributed','#bd9aff'],['HA received','#42cbbb'],['Completed','#65d18c'],['Health Authority Approved','#37d67a'],['Hold / Deferred','#e8b65f'],['Rejected','#f27b82'],['Inactive / Other','#99a4b5']];
-  for(const [label,colour]of states){const wrap=el('label'),cb=el('input'),sw=el('span',undefined,'state-swatch');cb.type='checkbox';cb.checked=true;cb.value=colour;sw.style.background=colour;wrap.append(cb,sw,el('span',label));stateLegend.append(wrap);cb.onchange=()=>run(async()=>{view.signal('stateColours',[...stateLegend.querySelectorAll('input:checked')].map(x=>x.value));await view.runAsync();updateStatus();});}
+  for(const [label,colour]of states){const wrap=el('label'),cb=el('input'),sw=el('span',undefined,'state-swatch');cb.type='checkbox';cb.checked=true;cb.value=colour;sw.dataset.stateColour=colour;sw.style.background=colour;wrap.append(cb,sw,el('span',label));stateLegend.append(wrap);cb.onchange=()=>run(async()=>{view.signal('stateColours',[...stateLegend.querySelectorAll('input:checked')].map(x=>x.value));await view.runAsync();updateStatus();});}
+  $('theme-select').onchange=()=>{const mode=$('theme-select').value==='light'?'light':'dark';run(async()=>{document.body.dataset.theme=mode;view.signal('themeMode',mode);await view.runAsync();const colours=view.signal('themeStateColors');for(const sw of stateLegend.querySelectorAll('.state-swatch'))sw.style.background=colours[sw.dataset.stateColour]||sw.dataset.stateColour;const badge=$('detail-body').querySelector('.state-badge'),row=view.data('selectedRow')[0];if(badge&&row)badge.style.color=colours[row.StateColor]||row.StateColor;});};
   const labelFor=kind=>kind==='site'?'Site (LM)':kind==='businessUnit'?'Business Unit':kind[0].toUpperCase()+kind.slice(1);
   for(const [kind,field]of Object.entries(fields)){
    const box=el('details',undefined,'filter'),summary=el('summary',labelFor(kind)+' · All'),panel=el('div',undefined,'panel'),search=el('input');box.dataset.kind=kind;search.type='search';search.placeholder=kind==='product'?'Type at least 2 characters…':'Search '+labelFor(kind);search.setAttribute('aria-label','Search '+labelFor(kind)+' options');
@@ -69,7 +71,7 @@
    if(!row){$('detail-title').textContent=selectedKey?'Details · selection outside current filters':'Details · select a row or membership count';body.append(el('p','Select a submission, or a parent subtitle or membership count.'));$('detail-tools').hidden=true;return;}
    $('detail-tools').hidden=false;const id=row.level===2?row.SubID:row.level===1?row.ROID:row.AppID;
    $('detail-title').textContent='Details · '+id+' · '+row.State;
-   const heading=el('h2',id),badge=el('span',row.State,'state-badge');badge.style.color=row.StateColor;heading.append(badge);body.append(heading);
+   const heading=el('h2',id),badge=el('span',row.State,'state-badge');badge.style.color=view.signal('themeStateColors')[row.StateColor]||row.StateColor;heading.append(badge);body.append(heading);
    if(row.level===2)body.append(el('p',row.SubmissionType,'type-label'));
    const relations=el('dl',undefined,'relationships');for(const [label,value]of [['Application',row.AppID],['Regulatory objective',row.ROID],['Legal manufacturer',row.ManufacturerInfo.detail],['Countries',row.CountryInfo.detail]]){relations.append(el('dt',label),el('dd',value||'Not recorded'));}body.append(relations);
    if(row.level===2){

@@ -1,8 +1,12 @@
-# Regulatory Tracker 1.8.0
+# Regulatory Tracker 1.9.0
 
-[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.8.0 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.8.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.8.0/regulatory-tracker-1.8.0.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.9.0 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.9.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.9.0/regulatory-tracker-1.9.0.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
+
+## New in 1.9.0: Dark and Light themes
+
+Use **Theme** at the top-right to change the whole visual: timeline, filters, menus, Details, tooltips and Data quality. **Dark is the default** for each new instance. Light uses darker text and state-colour variants for contrast. Switching keeps filters, pins, selection and timeline position; refresh, resize and switching views keep the chosen theme. The choice is local to this instance and is not saved across reopening or in report bookmarks.
 
 ## New in 1.8.0: Planned submission forecasts and date filtering
 

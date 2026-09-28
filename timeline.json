@@ -3,13 +3,14 @@
   "description": "Regulatory Tracker 1.7.0: own-state colours, anchored hierarchy, comparison and separately labelled historical approval estimates. Registration end dates after 31 December 2100 are withheld from markers and axis extents and flagged as invalid, without changing source values. Generic aliases only.",
   "padding": 0,
   "autosize": "none",
-  "background": "#14181f",
+  "background": {
+    "signal": "themePalette.background"
+  },
   "config": {
     "font": "Segoe UI",
     "text": {
       "font": "Segoe UI",
-      "fontSize": 11,
-      "fill": "#dbe3ef"
+      "fontSize": 11
     },
     "style": {
       "guide-label": {
@@ -18,6 +19,18 @@
     }
   },
   "signals": [
+    {
+      "name": "themeMode",
+      "value": "dark"
+    },
+    {
+      "name": "themePalette",
+      "update": "themeMode==='light' ? {\"background\":\"#ffffff\",\"text\":\"#172b43\",\"border\":\"#c5cfdb\",\"controlSelected\":\"#dceaff\",\"control\":\"#eef3f9\",\"controlBorder\":\"#899caf\",\"controlHover\":\"#dae7f6\",\"controlFocus\":\"#365f99\",\"rangeText\":\"#52647a\",\"header\":\"#e8eef6\",\"headerBorder\":\"#b8c6d6\",\"headerText\":\"#253c58\",\"rowSelected\":\"#dceaff\",\"rowHover\":\"#edf3fc\",\"rowApplication\":\"#eef2f7\",\"rowObjective\":\"#f3f6fa\",\"rowOdd\":\"#ffffff\",\"rowEven\":\"#f8fafc\",\"selectionBorder\":\"#7950b4\",\"minorGrid\":\"#dde4ed\",\"majorGrid\":\"#aab9ca\",\"axisText\":\"#3b506b\",\"minorAxisText\":\"#52647a\",\"divider\":\"#c5cfdb\",\"rowDivider\":\"#d5deea\",\"markerHover\":\"#172b43\",\"expandBackground\":\"#e4edf8\",\"expandBorder\":\"#7892b4\",\"expandHover\":\"#cfdef3\",\"expandText\":\"#294765\",\"subText\":\"#52647a\",\"issueText\":\"#89530b\",\"mutedText\":\"#52647a\",\"prediction\":\"#996400\",\"hollowFill\":\"#ffffff\",\"predictionHover\":\"#664000\",\"todayLine\":\"#b82854\",\"todayBackground\":\"#fff1f4\",\"todayText\":\"#a32049\",\"footerText\":\"#52647a\",\"pageControl\":\"#eef3f9\",\"pageControlBorder\":\"#899caf\",\"pageControlHover\":\"#dae7f6\",\"emptyText\":\"#3b506b\",\"countText\":\"#3b506b\",\"scrollTrack\":\"#e7edf5\",\"scrollBorder\":\"#bac7d7\",\"scrollThumb\":\"#7488a4\",\"legendText\":\"#253c58\",\"comparisonText\":\"#52647a\",\"pinText\":\"#7847a4\",\"legendHelp\":\"#52647a\"} : {\"background\":\"#14181f\",\"text\":\"#dbe3ef\",\"border\":\"#3b4657\",\"controlSelected\":\"#33475b\",\"control\":\"#252d39\",\"controlBorder\":\"#526078\",\"controlHover\":\"#3d4d65\",\"controlFocus\":\"#a4bff2\",\"rangeText\":\"#9bacc3\",\"header\":\"#222b38\",\"headerBorder\":\"#445166\",\"headerText\":\"#b8c8df\",\"rowSelected\":\"#344460\",\"rowHover\":\"#293747\",\"rowApplication\":\"#232d3a\",\"rowObjective\":\"#1d2733\",\"rowOdd\":\"#171e28\",\"rowEven\":\"#1b232e\",\"selectionBorder\":\"#b799ff\",\"minorGrid\":\"#334052\",\"majorGrid\":\"#586c86\",\"axisText\":\"#b0c1d9\",\"minorAxisText\":\"#93a8c3\",\"divider\":\"#3b475b\",\"rowDivider\":\"#354154\",\"markerHover\":\"#fff\",\"expandBackground\":\"#2c3b50\",\"expandBorder\":\"#7390b5\",\"expandHover\":\"#49688f\",\"expandText\":\"#d6e8ff\",\"subText\":\"#94a6bf\",\"issueText\":\"#ffbd67\",\"mutedText\":\"#8e9eb5\",\"prediction\":\"#f6c66a\",\"hollowFill\":\"#19222e\",\"predictionHover\":\"#ffe4a6\",\"todayLine\":\"#ff8fad\",\"todayBackground\":\"#1e2632\",\"todayText\":\"#ff9eb8\",\"footerText\":\"#9babbe\",\"pageControl\":\"#2a3648\",\"pageControlBorder\":\"#51617a\",\"pageControlHover\":\"#425777\",\"emptyText\":\"#c0cddd\",\"countText\":\"#a4bbd8\",\"scrollTrack\":\"#101722\",\"scrollBorder\":\"#52617a\",\"scrollThumb\":\"#8296b6\",\"legendText\":\"#cedbec\",\"comparisonText\":\"#aabbd1\",\"pinText\":\"#e5d1ff\",\"legendHelp\":\"#a9bbd3\"}"
+    },
+    {
+      "name": "themeStateColors",
+      "update": "themeMode==='light' ? {\"#6d9eff\":\"#285fbc\",\"#43c6ec\":\"#006e8c\",\"#bd9aff\":\"#7541b2\",\"#42cbbb\":\"#007265\",\"#65d18c\":\"#27733e\",\"#37d67a\":\"#13733b\",\"#e8b65f\":\"#8d5c0b\",\"#f27b82\":\"#bd3544\",\"#99a4b5\":\"#52647a\"} : {\"#6d9eff\":\"#6d9eff\",\"#43c6ec\":\"#43c6ec\",\"#bd9aff\":\"#bd9aff\",\"#42cbbb\":\"#42cbbb\",\"#65d18c\":\"#65d18c\",\"#37d67a\":\"#37d67a\",\"#e8b65f\":\"#e8b65f\",\"#f27b82\":\"#f27b82\",\"#99a4b5\":\"#99a4b5\"}"
+    },
     {
       "name": "denebContainer",
       "value": {
@@ -3527,10 +3540,10 @@
             "signal": "height"
           },
           "fill": {
-            "value": "#14181f"
+            "signal": "themePalette.background"
           },
           "stroke": {
-            "value": "#3b4657"
+            "signal": "themePalette.border"
           }
         }
       }
@@ -3556,10 +3569,10 @@
             "value": 25
           },
           "fill": {
-            "signal": "datum.id==='fit' && !range ? '#33475b' : '#252d39'"
+            "signal": "datum.id==='fit' && !range ? themePalette.controlSelected : themePalette.control"
           },
           "stroke": {
-            "value": "#526078"
+            "signal": "themePalette.controlBorder"
           },
           "cornerRadius": {
             "value": 3
@@ -3573,10 +3586,10 @@
         },
         "hover": {
           "fill": {
-            "value": "#3d4d65"
+            "signal": "themePalette.controlHover"
           },
           "stroke": {
-            "value": "#a4bff2"
+            "signal": "themePalette.controlFocus"
           }
         }
       }
@@ -3609,6 +3622,9 @@
           },
           "cursor": {
             "value": "pointer"
+          },
+          "fill": {
+            "signal": "themePalette.text"
           }
         }
       }
@@ -3631,10 +3647,10 @@
             "value": 25
           },
           "fill": {
-            "value": "#252d39"
+            "signal": "themePalette.control"
           },
           "stroke": {
-            "value": "#526078"
+            "signal": "themePalette.controlBorder"
           },
           "cornerRadius": {
             "value": 3
@@ -3645,7 +3661,7 @@
         },
         "hover": {
           "fill": {
-            "value": "#3d4d65"
+            "signal": "themePalette.controlHover"
           }
         }
       }
@@ -3675,6 +3691,9 @@
           },
           "cursor": {
             "value": "pointer"
+          },
+          "fill": {
+            "signal": "themePalette.text"
           }
         }
       }
@@ -3702,7 +3721,7 @@
             "signal": "elapsed ? 'Day 0 = actual dispatch · missing dispatch: no plot' : width>680 ? utcFormat(xlo,'%d %b %Y')+' – '+utcFormat(xhi,'%d %b %Y') : ''"
           },
           "fill": {
-            "value": "#9bacc3"
+            "signal": "themePalette.rangeText"
           }
         }
       }
@@ -3724,10 +3743,10 @@
             "value": 32
           },
           "fill": {
-            "value": "#222b38"
+            "signal": "themePalette.header"
           },
           "stroke": {
-            "value": "#445166"
+            "signal": "themePalette.headerBorder"
           }
         }
       }
@@ -3755,7 +3774,7 @@
             "value": 600
           },
           "fill": {
-            "value": "#b8c8df"
+            "signal": "themePalette.headerText"
           },
           "tooltip": {
             "value": "Application / RO / Submission"
@@ -3786,7 +3805,7 @@
             "value": 600
           },
           "fill": {
-            "value": "#b8c8df"
+            "signal": "themePalette.headerText"
           },
           "tooltip": {
             "signal": "mode==='Compare' && compareLevel===2 ? \"Completed time from actual dispatch to actual submission. Pending rows show time waiting to submit.\" : \"Legal manufacturer\""
@@ -3823,7 +3842,7 @@
             "value": 600
           },
           "fill": {
-            "value": "#b8c8df"
+            "signal": "themePalette.headerText"
           },
           "tooltip": {
             "signal": "mode==='Compare' && compareLevel===2 ? \"Completed time from actual submission to actual approval. Pending rows show time waiting for approval.\" : \"Products and countries\""
@@ -3858,13 +3877,13 @@
             "signal": "rowH"
           },
           "fill": {
-            "signal": "datum.key===selectedKey ? '#344460' : datum.key===hoverKey ? '#293747' : datum.level===0 ? '#232d3a' : datum.level===1 ? '#1d2733' : datum.idx%2 ? '#171e28' : '#1b232e'"
+            "signal": "datum.key===selectedKey ? themePalette.rowSelected : datum.key===hoverKey ? themePalette.rowHover : datum.level===0 ? themePalette.rowApplication : datum.level===1 ? themePalette.rowObjective : datum.idx%2 ? themePalette.rowOdd : themePalette.rowEven"
           },
           "tooltip": {
             "field": "shortTip"
           },
           "stroke": {
-            "signal": "datum.key===selectedKey ? '#b799ff' : 'transparent'"
+            "signal": "datum.key===selectedKey ? themePalette.selectionBorder : 'transparent'"
           },
           "strokeWidth": {
             "value": 1
@@ -3893,7 +3912,7 @@
             "signal": "viewBottom"
           },
           "stroke": {
-            "value": "#334052"
+            "signal": "themePalette.minorGrid"
           },
           "strokeWidth": {
             "value": 0.6
@@ -3918,7 +3937,7 @@
             "signal": "viewBottom"
           },
           "stroke": {
-            "value": "#586c86"
+            "signal": "themePalette.majorGrid"
           },
           "strokeWidth": {
             "value": 1
@@ -3949,7 +3968,7 @@
             "signal": "min(width,scale(\"x\",datum.next))-max(left,scale(\"x\",datum.date))>52 ? datum.label : \"\""
           },
           "fill": {
-            "value": "#b0c1d9"
+            "signal": "themePalette.axisText"
           },
           "limit": {
             "signal": "max(0,min(width,scale(\"x\",datum.next))-max(left,scale(\"x\",datum.date))-5)"
@@ -3980,7 +3999,7 @@
             "field": "label"
           },
           "fill": {
-            "value": "#93a8c3"
+            "signal": "themePalette.minorAxisText"
           },
           "limit": {
             "signal": "max(0,width-scale(\"x\",datum.date)-4)"
@@ -4002,7 +4021,7 @@
             "signal": "viewBottom"
           },
           "stroke": {
-            "value": "#3b475b"
+            "signal": "themePalette.divider"
           },
           "strokeWidth": {
             "value": 0.8
@@ -4024,7 +4043,7 @@
             "signal": "viewBottom"
           },
           "stroke": {
-            "value": "#3b475b"
+            "signal": "themePalette.divider"
           },
           "strokeWidth": {
             "value": 0.8
@@ -4046,7 +4065,7 @@
             "signal": "viewBottom"
           },
           "stroke": {
-            "value": "#3b475b"
+            "signal": "themePalette.divider"
           },
           "strokeWidth": {
             "value": 0.8
@@ -4071,7 +4090,7 @@
             "signal": "datum.y+rowH"
           },
           "stroke": {
-            "value": "#354154"
+            "signal": "themePalette.rowDivider"
           },
           "strokeWidth": {
             "value": 0.7
@@ -4100,7 +4119,7 @@
             "signal": "rowH-1"
           },
           "fill": {
-            "value": "#fff"
+            "signal": "themePalette.markerHover"
           },
           "fillOpacity": {
             "value": 0
@@ -4143,10 +4162,10 @@
             "value": 2
           },
           "fill": {
-            "value": "#2c3b50"
+            "signal": "themePalette.expandBackground"
           },
           "stroke": {
-            "value": "#7390b5"
+            "signal": "themePalette.expandBorder"
           },
           "cursor": {
             "value": "pointer"
@@ -4157,7 +4176,7 @@
         },
         "hover": {
           "fill": {
-            "value": "#49688f"
+            "signal": "themePalette.expandHover"
           }
         }
       }
@@ -4189,7 +4208,7 @@
             "value": 15
           },
           "fill": {
-            "value": "#d6e8ff"
+            "signal": "themePalette.expandText"
           }
         }
       }
@@ -4228,6 +4247,9 @@
           },
           "tooltip": {
             "field": "shortTip"
+          },
+          "fill": {
+            "signal": "themePalette.text"
           }
         }
       }
@@ -4255,7 +4277,7 @@
             "signal": "(datum.level===0 ? datum.ROCount+' ROs · ' : '')+datum.n+' submissions'"
           },
           "fill": {
-            "value": "#94a6bf"
+            "signal": "themePalette.subText"
           },
           "limit": {
             "signal": "hierarchyW-37-datum.level*12"
@@ -4301,6 +4323,9 @@
           },
           "cursor": {
             "value": "pointer"
+          },
+          "fill": {
+            "signal": "themePalette.text"
           }
         }
       }
@@ -4328,7 +4353,7 @@
             "signal": "datum.SubmissionType"
           },
           "fill": {
-            "signal": "datum.issues>0 ? \"#ffbd67\" : \"#8e9eb5\""
+            "signal": "datum.issues>0 ? themePalette.issueText : themePalette.mutedText"
           },
           "limit": {
             "signal": "hierarchyW-47"
@@ -4377,6 +4402,9 @@
           },
           "lineHeight": {
             "value": 16
+          },
+          "fill": {
+            "signal": "themePalette.text"
           }
         }
       }
@@ -4415,6 +4443,9 @@
           },
           "lineHeight": {
             "value": 16
+          },
+          "fill": {
+            "signal": "themePalette.text"
           }
         }
       }
@@ -4443,10 +4474,10 @@
             "value": 3
           },
           "fill": {
-            "field": "StateColor"
+            "signal": "themeStateColors[datum.StateColor] || datum.StateColor"
           },
           "stroke": {
-            "field": "StateColor"
+            "signal": "themeStateColors[datum.StateColor] || datum.StateColor"
           },
           "cursor": {
             "value": "pointer"
@@ -4478,13 +4509,13 @@
             "value": 12
           },
           "fill": {
-            "value": "#f6c66a"
+            "signal": "themePalette.prediction"
           },
           "fillOpacity": {
             "value": 0.18
           },
           "stroke": {
-            "value": "#f6c66a"
+            "signal": "themePalette.prediction"
           },
           "strokeOpacity": {
             "value": 0.5
@@ -4519,7 +4550,7 @@
             "signal": "datum.y+10+datum.track*14"
           },
           "stroke": {
-            "field": "StateColor"
+            "signal": "themeStateColors[datum.StateColor] || datum.StateColor"
           },
           "strokeWidth": {
             "signal": "datum.track===2 ? 2.3 : 1.5"
@@ -4561,10 +4592,10 @@
             "signal": "datum.kind===1 ? 160 : 115"
           },
           "fill": {
-            "signal": "datum.track===0 || datum.kind===4 ? '#19222e' : datum.StateColor"
+            "signal": "datum.track===0 || datum.kind===4 ? themePalette.hollowFill : (themeStateColors[datum.StateColor] || datum.StateColor)"
           },
           "stroke": {
-            "field": "StateColor"
+            "signal": "themeStateColors[datum.StateColor] || datum.StateColor"
           },
           "strokeWidth": {
             "value": 1.6
@@ -4581,7 +4612,7 @@
             "value": 190
           },
           "stroke": {
-            "value": "#fff"
+            "signal": "themePalette.markerHover"
           }
         }
       }
@@ -4608,10 +4639,10 @@
             "value": 185
           },
           "fill": {
-            "value": "#19222e"
+            "signal": "themePalette.hollowFill"
           },
           "stroke": {
-            "value": "#f6c66a"
+            "signal": "themePalette.prediction"
           },
           "strokeWidth": {
             "value": 2.5
@@ -4631,7 +4662,7 @@
             "value": 230
           },
           "stroke": {
-            "value": "#ffe4a6"
+            "signal": "themePalette.predictionHover"
           }
         }
       }
@@ -4650,7 +4681,7 @@
             "signal": "viewBottom"
           },
           "stroke": {
-            "value": "#ff8fad"
+            "signal": "themePalette.todayLine"
           },
           "strokeWidth": {
             "value": 1
@@ -4686,7 +4717,7 @@
             "value": 18
           },
           "fill": {
-            "value": "#1e2632"
+            "signal": "themePalette.todayBackground"
           },
           "cornerRadius": {
             "value": 3
@@ -4717,7 +4748,7 @@
             "value": "Today"
           },
           "fill": {
-            "value": "#ff9eb8"
+            "signal": "themePalette.todayText"
           },
           "align": {
             "value": "center"
@@ -4747,10 +4778,10 @@
             "value": 29
           },
           "fill": {
-            "value": "#14181f"
+            "signal": "themePalette.background"
           },
           "stroke": {
-            "value": "#3b475b"
+            "signal": "themePalette.divider"
           },
           "strokeOpacity": {
             "value": 0
@@ -4779,7 +4810,7 @@
             "signal": "length(data('invalid')) ? '⚠ '+length(data('invalid'))+' rows missing IDs' : 'Scroll rows · ↑ ↓ / PgUp PgDn · Ctrl+wheel moves dates'"
           },
           "fill": {
-            "value": "#9babbe"
+            "signal": "themePalette.footerText"
           },
           "limit": {
             "signal": "width-242"
@@ -4805,10 +4836,10 @@
             "value": 21
           },
           "fill": {
-            "value": "#2a3648"
+            "signal": "themePalette.pageControl"
           },
           "stroke": {
-            "value": "#51617a"
+            "signal": "themePalette.pageControlBorder"
           },
           "cornerRadius": {
             "value": 2
@@ -4819,7 +4850,7 @@
         },
         "hover": {
           "fill": {
-            "value": "#425777"
+            "signal": "themePalette.pageControlHover"
           }
         }
       }
@@ -4849,6 +4880,9 @@
           },
           "cursor": {
             "value": "pointer"
+          },
+          "fill": {
+            "signal": "themePalette.text"
           }
         }
       }
@@ -4871,10 +4905,10 @@
             "value": 21
           },
           "fill": {
-            "value": "#2a3648"
+            "signal": "themePalette.pageControl"
           },
           "stroke": {
-            "value": "#51617a"
+            "signal": "themePalette.pageControlBorder"
           },
           "cornerRadius": {
             "value": 2
@@ -4885,7 +4919,7 @@
         },
         "hover": {
           "fill": {
-            "value": "#425777"
+            "signal": "themePalette.pageControlHover"
           }
         }
       }
@@ -4915,6 +4949,9 @@
           },
           "cursor": {
             "value": "pointer"
+          },
+          "fill": {
+            "signal": "themePalette.text"
           }
         }
       }
@@ -4940,6 +4977,9 @@
           },
           "align": {
             "value": "center"
+          },
+          "fill": {
+            "signal": "themePalette.text"
           }
         }
       }
@@ -4964,7 +5004,7 @@
             "signal": "length(data(\"sub\"))===0 ? \"No matching submissions\" : \"\""
           },
           "fill": {
-            "value": "#c0cddd"
+            "signal": "themePalette.emptyText"
           },
           "limit": {
             "signal": "width-left-20"
@@ -4999,7 +5039,7 @@
             "signal": "left-hierarchyW-siteW-12"
           },
           "fill": {
-            "value": "#a4bbd8"
+            "signal": "themePalette.countText"
           },
           "cursor": {
             "value": "pointer"
@@ -5028,10 +5068,10 @@
             "signal": "viewBottom-top"
           },
           "fill": {
-            "value": "#101722"
+            "signal": "themePalette.scrollTrack"
           },
           "stroke": {
-            "value": "#52617a"
+            "signal": "themePalette.scrollBorder"
           },
           "cursor": {
             "value": "pointer"
@@ -5060,7 +5100,7 @@
             "signal": "thumbH"
           },
           "fill": {
-            "value": "#8296b6"
+            "signal": "themePalette.scrollThumb"
           },
           "cornerRadius": {
             "value": 4
@@ -5092,6 +5132,9 @@
           },
           "align": {
             "value": "center"
+          },
+          "fill": {
+            "signal": "themePalette.text"
           }
         }
       }
@@ -5105,7 +5148,7 @@
             "value": 13
           },
           "fill": {
-            "value": "#cedbec"
+            "signal": "themePalette.legendText"
           },
           "baseline": {
             "value": "middle"
@@ -5134,7 +5177,7 @@
             "value": 12
           },
           "fill": {
-            "field": "StateColor"
+            "signal": "themeStateColors[datum.StateColor] || datum.StateColor"
           },
           "baseline": {
             "value": "middle"
@@ -5169,7 +5212,7 @@
             "value": 12
           },
           "fill": {
-            "value": "#aabbd1"
+            "signal": "themePalette.comparisonText"
           },
           "baseline": {
             "value": "middle"
@@ -5201,7 +5244,7 @@
             "value": 17
           },
           "fill": {
-            "value": "#e5d1ff"
+            "signal": "themePalette.pinText"
           },
           "baseline": {
             "value": "middle"
@@ -5233,7 +5276,7 @@
             "value": 12
           },
           "fill": {
-            "value": "#a9bbd3"
+            "signal": "themePalette.legendHelp"
           },
           "baseline": {
             "value": "middle"
@@ -5248,17 +5291,7 @@
             "value": "● Dispatch ◆ Submission ■ Approval · Colour = own state (hover for legend)"
           },
           "tooltip": {
-            "value": {
-              "Active / Planned": "#6d9eff",
-              "Progress / Ready": "#43c6ec",
-              "Sent / Distributed": "#bd9aff",
-              "HA received": "#42cbbb",
-              "Completed": "#65d18c",
-              "Hold / Deferred": "#e8b65f",
-              "Rejected": "#f27b82",
-              "Inactive / Other": "#99a4b5",
-              "Health Authority Approved": "#37d67a"
-            }
+            "signal": "{\"Active / Planned\":themeStateColors[\"#6d9eff\"],\"Progress / Ready\":themeStateColors[\"#43c6ec\"],\"Sent / Distributed\":themeStateColors[\"#bd9aff\"],\"HA received\":themeStateColors[\"#42cbbb\"],\"Completed\":themeStateColors[\"#65d18c\"],\"Hold / Deferred\":themeStateColors[\"#e8b65f\"],\"Rejected\":themeStateColors[\"#f27b82\"],\"Inactive / Other\":themeStateColors[\"#99a4b5\"],\"Health Authority Approved\":themeStateColors[\"#37d67a\"]}"
           }
         }
       }

@@ -1,13 +1,14 @@
 /* Browser harness runs the actual Visual class with a synthetic Power BI table. */
 const fs=require('fs'),path=require('path');const out=process.argv[2]||'powerbi-visual';
 fs.mkdirSync(path.join(out,'verify'),{recursive:true});
+fs.copyFileSync(path.join(__dirname,'tracker-theme.verify.cjs'),path.join(out,'verify/tracker-theme.verify.cjs'));
 fs.writeFileSync(path.join(out,'verify/harness.ts'),`import {Visual} from '../src/visual';
 import {roles} from '../src/adapter';
 import rows from '../../sample.json';
 const verify:any=window;verify.__qualityExports=[];verify.__qualityReject=false;verify.__qualityRevision=0;
 const host={eventService:{renderingStarted(){},renderingFinished(){document.body.dataset.ready='true';verify.__qualityRevision++},renderingFailed(o,e){throw Error(e)}},fetchMoreData(){return false},downloadService:{exportStatus(){return Promise.resolve(0)},exportVisualsContent(content,fileName,fileType,description){verify.__qualityExports.push({content,fileName,fileType,description});return Promise.resolve(!verify.__qualityReject)}}};
 const table=(data)=>({columns:roles.map(role=>({displayName:role,roles:{[role]:true}})),rows:data.map(r=>roles.map(role=>r[role]??null))});
-const main=document.getElementById('host');const visual=new Visual({element:main,host} as any);
+const main=document.getElementById('host');const visual=new Visual({element:main,host} as any);verify.__themeVisual=visual;
 const send=(data=rows,type=2)=>visual.update({type,viewport:{width:1280,height:850},dataViews:[{metadata:{},table:table(data)}]} as any);
 const qualityBase={AppID:'QUALITY-APP',ROID:'QUALITY-RO',SubID:'QUALITY-CLEAN',BusinessUnit:'ID',Manufacturer:'Review site A',Product:'Review alpha',Country:'France',SubmissionType:'Renewal',AppStatus:'Active',ROStatus:'Health Authority Approved',SubStatus:'Completed',AppCreated:'2025-01-01',ROCreated:'2025-02-01',SubCreated:'2025-03-01',OriginalDispatch:'2026-01-01',LatestDispatch:'2026-01-01',ActualDispatch:'2026-01-01',OriginalSubmission:'2026-02-01',LatestSubmission:'2026-02-01',ActualSubmission:'2026-02-01',OriginalApproval:'2026-03-01',LatestApproval:'2026-03-01',ActualApproval:'2026-03-01',RegistrationStart:'2026-03-02',RegistrationEnd:'2030-01-01'};
 const badDates=Object.fromEntries(['OriginalDispatch','LatestDispatch','ActualDispatch','OriginalSubmission','LatestSubmission','ActualSubmission','OriginalApproval','LatestApproval','ActualApproval','RegistrationStart','RegistrationEnd'].map(field=>[field,'not-a-date']));
@@ -120,6 +121,7 @@ try{
  await sendQuality('Refresh host data');await page.waitForFunction(()=>document.querySelector('#host #filter-status')?.textContent.startsWith('60 submissions'));await page.locator('#host #reset-filters').click();await checkQualityTotals();await page.locator('#host .filter').evaluateAll(items=>items.forEach(e=>e.open=false));
  await page.locator('#host').screenshot({path:path.join(__dirname,'quality.png')});await page.locator('#host #timeline-tab').click();await page.locator('#host #chart').waitFor({state:'visible'});
 
+await require('./tracker-theme.verify.cjs')(page,{outputDir:__dirname});
 assert.deepEqual(errors,[]);console.log('PASS: actual Visual class, CSP interpreter, 60 submissions, five filters, search, comparison, details, list search/paging, refresh/resize, empty data, isolated instances, quality filters/conflicts, distinct counts, 30,000-row deduplication, full CSV and rejected-export fallback; no page errors.');
 }finally{await browser.close();server.close();}})().catch(e=>{console.error(e);process.exit(1)});
 `);

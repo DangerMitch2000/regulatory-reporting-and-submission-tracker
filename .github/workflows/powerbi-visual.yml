@@ -11,6 +11,8 @@ on:
       - 'quality*.cjs'
       - 'index.html'
       - 'style.css'
+      - 'test-timeline-theme.cjs'
+      - 'tracker-theme.verify.cjs'
       - 'prediction-test.cjs'
       - 'submission-period*'
       - 'powerbi-visual*'
@@ -32,6 +34,7 @@ jobs:
           node prediction-test.cjs
           node submission-period-test.cjs
           node test-timeline-prediction.cjs
+          node test-timeline-theme.cjs
           node powerbi-visual.build.cjs
           node powerbi-visual.verify.cjs
       - name: Install pinned build tools
@@ -59,9 +62,12 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.8.0.0.pbiviz
+          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.9.0.0.pbiviz
           cp powerbi-visual/README.md release/POWER-BI-INSTALL.md
           cp powerbi-visual/verify/overview.png release/powerbi-overview.png
+          cp powerbi-visual/verify/light-theme.png release/powerbi-light-theme.png
+          cp powerbi-visual/verify/light-details.png release/powerbi-light-details.png
+          cp powerbi-visual/verify/light-quality.png release/powerbi-light-quality.png
           cp powerbi-visual/verify/details.png release/powerbi-details.png
           cp powerbi-visual/verify/comparison.png release/powerbi-comparison.png
           cp powerbi-visual/verify/quality.png release/powerbi-data-quality.png
@@ -70,7 +76,7 @@ jobs:
           cp powerbi-visual/verify/approval-benchmark.png release/approval-benchmark.png
           cp powerbi-visual/verify/planned-submission-forecast.png release/planned-submission-forecast.png
           cp powerbi-visual/verify/submission-date-filter.png release/submission-date-filter.png
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs predictions.js prediction-test.cjs submission-period.js submission-period-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs tracker-theme.verify.cjs test-timeline-theme.cjs predictions.js prediction-test.cjs submission-period.js submission-period-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs
           cd release && sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
@@ -80,10 +86,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view v1.8.0 >/dev/null 2>&1; then
-            gh release create v1.8.0 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.8.0" --notes "Regulatory Tracker 1.8.0: future approval forecasts use actual submission, then latest planned submission, then original planned submission, with an explicit planned-date label. Historical training remains actual-only, January 2020 through today, with at least 10 distinct qualifying country submissions. Completed benchmarks retain leave-one-out supporting history. Added a top Submission date filter for All dates, individual years, inclusive/open-ended custom ranges and No usable date. The filter combines with membership filters and applies to Data quality exports without removing the historical cohort needed by estimates. Recorded source dates remain unchanged. Calculation, date-range, adapter, TypeScript and actual-class browser checks passed. This is an uncertified Power BI preview; verify import and field mapping in your report. Built from commit $GITHUB_SHA."
+          if ! gh release view v1.9.0 >/dev/null 2>&1; then
+            gh release create v1.9.0 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.9.0" --notes "Regulatory Tracker 1.9.0: whole-visual Dark and Light themes selected at the top-right. Dark is the default for new visual instances. Timeline, filters, menus, Details, approval estimates, tooltips and Data quality follow the selected theme. Light uses higher-contrast status colours while state identities and all calculations remain unchanged. Theme switching preserves filters, selection, pins and timeline position; resize and data refresh retain the selected theme. The choice is local to each instance and is not saved across report reopening. Calculation, adapter, TypeScript, theme and actual-class browser checks passed. This is an uncertified Power BI preview; verify import in your report. Built from commit $GITHUB_SHA."
           else
-            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.8.0" -f sha="$GITHUB_SHA" -F force=false
-            gh release edit v1.8.0 --target "$GITHUB_SHA" --notes "Regulatory Tracker 1.8.0: future approval forecasts use actual submission, then latest planned submission, then original planned submission, with an explicit planned-date label. Historical training remains actual-only, January 2020 through today, with at least 10 distinct qualifying country submissions. Completed benchmarks retain leave-one-out supporting history. Added a top Submission date filter for All dates, individual years, inclusive/open-ended custom ranges and No usable date. The filter combines with membership filters and applies to Data quality exports without removing the historical cohort needed by estimates. Recorded source dates remain unchanged. Calculation, date-range, adapter, TypeScript and actual-class browser checks passed. This is an uncertified Power BI preview; verify import and field mapping in your report. Built from commit $GITHUB_SHA."
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.9.0" -f sha="$GITHUB_SHA" -F force=false
+            gh release edit v1.9.0 --target "$GITHUB_SHA" --notes "Regulatory Tracker 1.9.0: whole-visual Dark and Light themes selected at the top-right. Dark is the default for new visual instances. Timeline, filters, menus, Details, approval estimates, tooltips and Data quality follow the selected theme. Light uses higher-contrast status colours while state identities and all calculations remain unchanged. Theme switching preserves filters, selection, pins and timeline position; resize and data refresh retain the selected theme. The choice is local to each instance and is not saved across report reopening. Calculation, adapter, TypeScript, theme and actual-class browser checks passed. This is an uncertified Power BI preview; verify import in your report. Built from commit $GITHUB_SHA."
           fi
-          gh release upload v1.8.0 release/* --clobber
+          gh release upload v1.9.0 release/* --clobber
