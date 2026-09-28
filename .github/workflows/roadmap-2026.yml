@@ -48,20 +48,22 @@ jobs:
       - name: Prepare separate release assets
         run: |
           mkdir -p roadmap-release
-          cp roadmap-2026/dist/*.pbiviz roadmap-release/roadmap-2026-1.2.3.0.pbiviz
+          cp roadmap-2026/dist/*.pbiviz roadmap-release/roadmap-2026-1.3.0.0.pbiviz
           cp roadmap-2026/README.md roadmap-release/ROADMAP-INSTALL.md
           cp roadmap-2026/verify/roadmap-preview.png roadmap-release/roadmap-preview.png
           cp roadmap-2026/verify/roadmap-preview-small.png roadmap-release/roadmap-preview-small.png
+          cp roadmap-2026/verify/roadmap-status-review.png roadmap-release/roadmap-status-review.png
+          cp roadmap-2026/verify/roadmap-status-review-small.png roadmap-release/roadmap-status-review-small.png
           cp roadmap-preview.html roadmap-release/roadmap-demo.html
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf roadmap-release/roadmap-2026-source.tar.gz roadmap-2026 roadmap-2026.build.cjs roadmap-2026.verify.cjs roadmap-2026.logic.js roadmap-2026.ui.js roadmap-2026.css roadmap-2026.README.md test-next.cjs test-render.cjs test-host.cjs prepare-preview.cjs make-standalone.cjs
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf roadmap-release/roadmap-2026-source.tar.gz roadmap-2026 roadmap-2026.build.cjs roadmap-2026.verify.cjs roadmap-2026.logic.js roadmap-2026.ui.js roadmap-2026.css roadmap-2026.README.md roadmap-status.verify.cjs test-next.cjs test-render.cjs test-host.cjs prepare-preview.cjs make-standalone.cjs
           cd roadmap-release && sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: roadmap-2026-package-1.2.3
+          name: roadmap-2026-package-1.3.0
           path: roadmap-release/
       - name: Publish separate Roadmap preview
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create roadmap-2026-v1.2.3 --target "$GITHUB_SHA" --prerelease --title "Registration Overview 1.2.3 — Clear category definitions" --notes "Adds visible definitions for Unconfirmed and Inferred in the interactive visual and PowerPoint screenshot layout. Definitions describe dispatch-date evidence, not submission or RO completion status. Missing Dates remains a separate outside-chart count. Calculations, counts, field mappings and filter behavior are unchanged; no status roles are added. Includes fictional interactive demo and source. Calculation tests, compiled host lifecycle tests, real-browser host tests and official Power BI package build passed. Regulatory Tracker is unchanged. Uncertified preview: actual Power BI import and tenant compatibility still require verification. See ROADMAP-INSTALL.md."
-          gh release upload roadmap-2026-v1.2.3 roadmap-release/*
+          gh release create roadmap-2026-v1.3.0 --target "$GITHUB_SHA" --prerelease --title "Registration Overview 1.3.0 — Status review" --notes "Adds optional SubStatus and ROStatus mappings and a Status review view for investigating dispatch-date gaps. Monthly stacked bars can be coloured by submission or RO status, retaining each record's existing dispatch month. Missing Dates uses horizontal status-count bars without assigning a month. Filter by scope, Site, submission status, RO status or search; inspect a 25-row paged worklist with source statuses and date evidence. The chart and both status summaries count distinct submissions, including the RO-status breakdown. Unmapped, blank and conflicting status values remain distinct. Status-review screenshot mode shows the chart, summaries and filter context without the detailed worklist. Existing dispatch classifications and counts are unchanged; statuses do not invent dispatch dates or mark child submissions complete from an RO state. Includes fictional interactive demo, preview images and source. Calculation tests, compiled host lifecycle tests, real-browser host tests and official Power BI package build passed. Regulatory Tracker is unchanged. Uncertified preview: actual Power BI import and tenant compatibility still require verification. See ROADMAP-INSTALL.md."
+          gh release upload roadmap-2026-v1.3.0 roadmap-release/*
