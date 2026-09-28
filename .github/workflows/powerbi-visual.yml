@@ -12,6 +12,8 @@ on:
       - 'index.html'
       - 'style.css'
       - 'test-timeline-theme.cjs'
+      - 'test-timeline-prediction.cjs'
+      - 'open-end-test.cjs'
       - 'tracker-theme.verify.cjs'
       - 'prediction-test.cjs'
       - 'submission-period*'
@@ -94,3 +96,4 @@ jobs:
             gh release edit v1.9.1 --target "$GITHUB_SHA" --notes "Regulatory Tracker 1.9.1: valid registration end dates after 31 December 2100 UTC, including placeholder years 8900 and 9999, mean no registration end date. Removes false errors in Data quality and Details. Source records remain unchanged; real expiry dates through 2100, invalid-date checks and conflicting real-date checks remain supported. Calculation, adapter, TypeScript and actual-class browser checks passed. Built from commit $GITHUB_SHA."
           fi
           gh release upload v1.9.1 release/* --clobber
+

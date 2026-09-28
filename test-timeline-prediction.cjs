@@ -280,7 +280,8 @@ async function create(rows, signals = {}) {
   ]) {
     view = await create([{ ...base, RegistrationEnd: expiry }], { mode: 'Compare' });
     assert.equal(view.data('sub')[0].RegistrationEnd, null);
-    assert.equal(view.data('sub')[0].RegistrationEndBad, 1);
+    const openEnded = expiry !== '99999-01-01' && Number.isFinite(new Date(expiry).getTime()) && new Date(expiry).getTime() >= Date.UTC(2101, 0, 1);
+    assert.equal(view.data('sub')[0].RegistrationEndBad, openEnded ? 0 : 1);
     assert.equal(view.data('dataset')[0].RegistrationEnd, expiry, 'Source expiry is never clamped or rewritten');
     view.signal('showRegistrationEnd', true);
     await view.runAsync();
@@ -289,7 +290,7 @@ async function create(rows, signals = {}) {
     assert.ok(view.signal('xhi') < Date.UTC(2101, 0, 1));
     view.signal('selectedKey', view.data('sub')[0].key).signal('detailTab', 'Issues');
     await view.runAsync();
-    assert.match(view.data('issueRows').find(row => row.issueField === 'RegistrationEnd').text, /after 2100.*withheld/);
+    assert.match(view.data('issueRows').find(row => row.issueField === 'RegistrationEnd').text, openEnded ? /Not recorded/ : /Invalid input.*withheld/);
     // Elapsed comparison is also protected from an enormous expiry duration.
     view.signal('axisMode', 'Elapsed days');
     await view.runAsync();
@@ -300,7 +301,7 @@ async function create(rows, signals = {}) {
   // A valid membership date cannot override a bad duplicate. Distinct valid
   // expiries are withheld as a conflict, while a blank duplicate is permitted.
   for (const [otherExpiry, badCount, expected] of [
-    ['9999-12-31', 1, null], ['2035-01-01', 0, null], [null, 0, date('2040-12-31')]
+    ['9999-12-31', 0, date('2040-12-31')], ['2035-01-01', 0, null], [null, 0, date('2040-12-31')]
   ]) {
     view = await create([
       { ...base, RegistrationEnd: '2040-12-31' },
