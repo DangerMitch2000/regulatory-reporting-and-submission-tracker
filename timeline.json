@@ -110,12 +110,11 @@
             "type": "wheel",
             "source": "view",
             "filter": [
-              "event.ctrlKey",
-              "y()>top-34"
+              "event.ctrlKey"
             ],
             "consume": true
           },
-          "update": "x()>left && y()<viewBottom ? [xlo+span*clamp(event.deltaX || event.deltaY,-240,240)/max(1,width-left),xhi+span*clamp(event.deltaX || event.deltaY,-240,240)/max(1,width-left)] : range"
+          "update": "x()>left && y()>top-34 && y()<viewBottom ? [xlo+span*clamp(event.deltaX || event.deltaY,-240,240)/max(1,width-left),xhi+span*clamp(event.deltaX || event.deltaY,-240,240)/max(1,width-left)] : range"
         },
         {
           "events": {
@@ -2326,7 +2325,7 @@
         {
           "type": "formula",
           "as": "PredictionReady",
-          "expr": "datum.PredictionStatus==='estimated' && isNumber(datum.PredictionDate) && isFinite(datum.PredictionDate) && isNumber(datum.PredictionLow) && isFinite(datum.PredictionLow) && isNumber(datum.PredictionHigh) && isFinite(datum.PredictionHigh) && datum.PredictionLow<=datum.PredictionDate && datum.PredictionDate<=datum.PredictionHigh && datum.PredictionN>0 && datum.OriginalApprovalValid===0 && datum.LatestApprovalValid===0 && datum.ActualApprovalValid===0 && datum.OriginalApprovalBad===0 && datum.LatestApprovalBad===0 && datum.ActualApprovalBad===0"
+          "expr": "(datum.PredictionStatus==='estimated' || datum.PredictionStatus==='benchmark') && isNumber(datum.PredictionDate) && isFinite(datum.PredictionDate) && isNumber(datum.PredictionLow) && isFinite(datum.PredictionLow) && isNumber(datum.PredictionHigh) && isFinite(datum.PredictionHigh) && datum.PredictionLow<=datum.PredictionDate && datum.PredictionDate<=datum.PredictionHigh && datum.PredictionN>0 && (datum.PredictionStatus==='benchmark' ? isValid(datum.ActualApproval) && datum.ActualApprovalBad===0 : datum.ActualApprovalValid===0 && datum.ActualApprovalBad===0)"
         }
       ]
     },
@@ -4482,7 +4481,7 @@
             "value": 3
           },
           "tooltip": {
-            "signal": "{'Submission':datum.SubID,'Estimated approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Meaning':'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionDate<utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate)) ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
+            "signal": "datum.PredictionStatus==='benchmark' ? {'Historical approval benchmark':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Actual approval':utcFormat(datum.ActualApproval,'%d %b %Y'),'Meaning':'Historical comparison with other completed submissions, not a future forecast','Timing':'Completed submission; recorded dates remain unchanged'} : {'Predicted approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Meaning':'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionDate<utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate)) ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
           },
           "cursor": {
             "value": "pointer"
@@ -4606,10 +4605,13 @@
             "value": 2.5
           },
           "tooltip": {
-            "signal": "{'Submission':datum.SubID,'Estimated approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Meaning':'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionDate<utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate)) ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
+            "signal": "datum.PredictionStatus==='benchmark' ? {'Historical approval benchmark':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Actual approval':utcFormat(datum.ActualApproval,'%d %b %Y'),'Meaning':'Historical comparison with other completed submissions, not a future forecast','Timing':'Completed submission; recorded dates remain unchanged'} : {'Predicted approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Meaning':'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionDate<utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate)) ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
           },
           "cursor": {
             "value": "pointer"
+          },
+          "fillOpacity": {
+            "signal": "datum.PredictionStatus==='benchmark' ? 0 : 1"
           }
         },
         "hover": {

@@ -1,8 +1,14 @@
-# Regulatory Tracker 1.7.0
+# Regulatory Tracker 1.7.1
 
-[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.7.0 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.7.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.7.0/regulatory-tracker-1.7.0.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.7.1 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.7.1) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.7.1/regulatory-tracker-1.7.1.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
+
+## New in 1.7.1: Historical approval ranges alongside plans
+
+- Pending submissions can show a country-based approval estimate even when an original or latest approval plan is recorded. Plans and actual dates remain unchanged; invalid or conflicting plans are flagged independently.
+- Valid completed submissions can show a **Historical approval benchmark** based on at least 10 other qualifying submissions. The completed record itself is excluded from its benchmark history.
+- Only `Country`, `ActualSubmission` and `ActualApproval` are required prediction mappings. Approval planning fields are optional for this calculation. The same source-date and country checks still apply.
 
 ## New in 1.7.0: Data quality
 
@@ -36,17 +42,17 @@ State checkboxes show matching records plus ancestor context. Parent summaries a
 - **Product search:** open the filter and type at least two characters. The list renders at most 50 matching options at a time; refine the search to find more. Selected products remain separately accessible, and Business Unit and Site narrow the available choices. Opening the filter no longer creates a checkbox for every product.
 - **Approval estimates:** an amber hollow diamond and shaded historical range appear on eligible submission rows. Select the row to see the estimate, supporting country history and exclusion reasons in the selectable Details panel. Recorded dates and parent summary bars are unchanged.
 
-## Approval estimates and source requirements
+## Approval estimates, benchmarks and source requirements
 
-Map `Country`, `ActualSubmission`, `ActualApproval`, `OriginalApproval` and `LatestApproval` to their corresponding field wells, in addition to the required identifiers. Use raw Date or DateTime columns, not Date hierarchies. If a required prediction field is unmapped, estimates are suppressed while the ordinary tracker can still display available data. An unmapped approval field is not treated as a genuinely blank source value.
+Map `Country`, `ActualSubmission` and `ActualApproval` to their corresponding field wells, in addition to the required identifiers. Use raw Date or DateTime columns, not Date hierarchies. If a required prediction field is unmapped, estimates and benchmarks are suppressed while the ordinary tracker can still display available data. An unmapped actual approval field is not treated as a genuinely blank source value. `OriginalApproval` and `LatestApproval` remain available for displaying and comparing plans, but are optional for this calculation.
 
-An estimate is shown only when **ActualApproval, OriginalApproval and LatestApproval are all blank**, the actual submission date is valid, and enough country history is available. A populated approval field, even if invalid or conflicting, blocks the estimate. Dates are not written back to the source, and predictions do not replace original plans, latest estimates or actual approvals.
+With a blank actual approval, an eligible submission shows an **Approval estimate**, including when either approval plan is recorded. A valid completed submission shows a **Historical approval benchmark** instead. Both require a single country, a valid actual submission date from **1 January 2020 through today**, and sufficient qualifying history. Invalid, conflicting, future or reversed actual approval dates remain withheld; no estimate is substituted for an unreliable actual approval. Invalid or conflicting plans do not block a separate historical range, but remain flagged in Details and Data quality. No source dates are changed or replaced.
 
 The historical cohort uses distinct submissions for the same country. Both actual submission and actual approval must be valid dates from **1 January 2020 through today**, with approval on or after submission. Repeated product or other membership rows do not increase the sample. Missing, invalid, future, pre-2020, reversed or conflicting actual dates are excluded. Records attributed to multiple countries do not contribute to a country model; the model does not guess which country approved them. Products and submission types are not additional grouping requirements in this version.
 
-At least **10 qualifying distinct submissions** are required. The predicted date is the current record’s actual submission date plus the country’s median submission-to-approval duration. The shaded range uses the historical 25th and 75th percentiles—the **empirical middle 50%**, not a confidence interval or a guarantee of approval. Unusually long but otherwise valid durations remain included and are flagged for review. A historical estimate that has already passed is labelled as such; it is not moved into the future.
+Pending estimates require at least **10 qualifying distinct submissions**. A completed record is excluded from its own benchmark cohort, which must still contain at least **10 other qualifying submissions**. The estimate or benchmark date is the selected record’s actual submission date plus its cohort’s median submission-to-approval duration. The shaded range uses the historical 25th and 75th percentiles—the **empirical middle 50%**, not a confidence interval or a guarantee of approval. Unusually long but otherwise valid durations remain included and are flagged for review. A pending estimate that has already passed is labelled as such; it is not moved into the future. Completed benchmarks are retrospective comparisons using currently available history, not backtested forecasts or pending-approval warnings.
 
-Supporting history is calculated before this visual’s local filters, using **only the rows delivered by Power BI**. Report filters, model relationships, security and data-delivery limits can reduce that history. The Details panel shows the qualifying count, excluded count and reasons. Fewer than 10 qualifying records, missing source dates or ambiguous country attribution produce an unavailable estimate instead of an invented date. These checks reject obvious errors but cannot establish that every valid-looking source date is correct. Country-based estimates are descriptive and have not been validated as a forecasting model.
+Supporting history is calculated before this visual’s local filters, using **only the rows delivered by Power BI**. Report filters, model relationships, security and data-delivery limits can reduce that history. The Details panel shows the qualifying count, excluded count and reasons. An insufficient cohort, missing source dates or ambiguous country attribution produces an unavailable estimate or benchmark instead of an invented date. These checks reject obvious errors but cannot establish that every valid-looking source date is correct. Country-based ranges are descriptive and have not been validated as a forecasting model.
 
 # Historical versions
 

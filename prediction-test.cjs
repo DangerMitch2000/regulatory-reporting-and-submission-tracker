@@ -20,7 +20,8 @@ assert.equal(iso(p.predictedDate), '2026-12-11');
 assert.equal(iso(p.rangeStart), '2026-12-05');
 assert.equal(iso(p.rangeEnd), '2026-12-17');
 assert.equal(p.overdue, false);
-assert.equal(result.summary.completed, 12);
+assert.equal(result.summary.benchmark, 12);
+assert.equal(p.selfExcluded, false);
 assert.equal(result.byCountry.size, 1);
 
 // Membership joins must not increase the historical sample or create additional estimates.
@@ -29,19 +30,40 @@ assert.equal(result.bySubID.get('P1').sampleCount, 12);
 assert.equal(result.summary.distinctSubmissions, 13);
 assert.equal(result.summary.estimated, 1);
 
-// No plan or actual approval may be overwritten, even if a populated input is corrupt.
+// Historical estimates are independent of approval plans. Existing original and
+// latest plans, including bad or conflicting inputs, are neither gates nor anchors.
+const baselineEstimate = analyze([...history, pending], { now }).bySubID.get('P1');
+for (const plans of [
+  { OriginalApproval: '2027-01-01' }, { LatestApproval: '2027-02-01' },
+  { OriginalApproval: '2027-01-01', LatestApproval: '2027-02-01' },
+  { OriginalApproval: 'not a date' }, { LatestApproval: 'not a date' },
+  { OriginalApproval: 'bad original', LatestApproval: 'bad latest' },
+  { OriginalApproval: '9999-01-01', LatestApproval: '1960-01-01' },
+  { OriginalApproval: new Date('2027-01-01'), LatestApproval: Date.parse('2027-02-01') }
+]) {
+  const inputs = [...history, { ...pending, ...plans }];
+  const snapshot = structuredClone(inputs);
+  inputs.forEach(Object.freeze);
+  Object.freeze(inputs);
+  p = analyze(inputs, { now }).bySubID.get('P1');
+  assert.deepEqual(p, baselineEstimate, 'Plans must not alter independent historical estimates');
+  assert.deepEqual(inputs, snapshot, 'Received source plans must never be replaced by a prediction');
+}
+p = analyze([...history, pending, { ...pending, OriginalApproval: '2026-10-01', LatestApproval: '2026-12-01' }, { ...pending, OriginalApproval: '2026-11-01', LatestApproval: 'bad' }], { now }).bySubID.get('P1');
+assert.deepEqual(p, baselineEstimate, 'Conflicting source plans across membership rows must not suppress the estimate');
+
+// Valid completed records receive a separate retrospective benchmark. Corrupt
+// actual approvals still block either form of estimate.
 for (const [field, value, status] of [
-  ['OriginalApproval', '2027-01-01', 'planned'], ['LatestApproval', '2027-01-01', 'planned'],
-  ['OriginalApproval', 'not a date', 'unavailable'], ['LatestApproval', 'not a date', 'unavailable'],
-  ['ActualApproval', '2026-09-20', 'completed'], ['ActualApproval', 'nonsense', 'unavailable'],
+  ['ActualApproval', '2026-09-20', 'benchmark'], ['ActualApproval', 'nonsense', 'unavailable'],
   ['ActualApproval', '9999-01-01', 'unavailable']
 ]) {
-  p = analyze([...history, { ...pending, [field]: value }], { now }).bySubID.get('P1');
+  p = analyze([...history, { ...pending, OriginalApproval: 'bad plan', LatestApproval: '2027-01-01', [field]: value }], { now }).bySubID.get('P1');
   assert.equal(p.status, status, field + ': ' + value);
-  assert.equal(p.predictedDate, null);
+  assert.equal(p.predictedDate, status === 'benchmark' ? baselineEstimate.predictedDate : null);
+  assert.equal(p.selfExcluded, status === 'benchmark');
+  assert.equal(p.overdue, false);
 }
-p = analyze([...history, pending, { ...pending, OriginalApproval: '2026-10-01' }, { ...pending, OriginalApproval: '2026-11-01' }], { now }).bySubID.get('P1');
-assert.ok(p.reasonCodes.includes('original_approval_conflicting'));
 
 const bad = [
   { ...completed('OLD'), ActualSubmission: '1960-01-01' },
@@ -77,9 +99,73 @@ for (const input of [
 
 assert.equal(analyze([...history.slice(0, 9), pending], { now }).bySubID.get('P1').status, 'insufficient');
 assert.equal(analyze([...history.slice(0, 10), pending], { now }).bySubID.get('P1').status, 'estimated');
+assert.equal(analyze([...history.slice(0, 9), { ...pending, OriginalApproval: '2027-01-01', LatestApproval: 'bad plan' }], { now }).bySubID.get('P1').status, 'insufficient', 'A plan must not bypass the minimum reliable history requirement');
+assert.equal(analyze([...history.slice(0, 10), { ...pending, OriginalApproval: '2027-01-01', LatestApproval: '2027-02-01' }], { now }).bySubID.get('P1').status, 'estimated');
 assert.equal(analyze([...history, { ...pending, Country: 'Germany' }], { now }).bySubID.get('P1').status, 'insufficient');
 assert.equal(analyze([{ ...completed('CUTOFF', 0, 'France', '2020-01-01') }], { now }).summary.qualifyingHistory, 1);
 assert.equal(analyze([{ ...completed('TODAY', 0, 'France', now) }], { now }).summary.qualifyingHistory, 1);
+
+// Completed targets require ten OTHER completed submissions. Their own measured
+// duration is never allowed to support, bias or artificially qualify the benchmark.
+const threshold = Array.from({ length: 11 }, (_, i) => completed('LOO-' + i, (i + 1) * 10));
+result = analyze(threshold, { now });
+p = result.bySubID.get('LOO-0');
+assert.equal(p.status, 'benchmark');
+assert.equal(p.sampleCount, 10);
+assert.equal(p.selfExcluded, true);
+assert.equal(p.selfExcludedCount, 1);
+assert.equal(p.excludedCount, 1);
+assert.equal(p.exclusions.find(x => x.code === 'self_excluded').count, 1);
+assert.equal(p.historyIncluded, true, 'The target still belongs to the global country history');
+assert.equal(p.medianDays, 65);
+assert.equal(result.byCountry.get('france').medianDays, 60);
+assert.equal(iso(p.predictedDate), '2025-03-07');
+assert.equal(p.overdue, false, 'A retrospective benchmark is never an overdue estimate');
+assert.match(p.reason, /completed record is excluded/);
+assert.equal(result.bySubID.get('LOO-10').medianDays, 55);
+assert.equal(result.summary.benchmark, 11);
+
+result = analyze(threshold.slice(0, 10), { now });
+p = result.bySubID.get('LOO-0');
+assert.equal(p.status, 'insufficient');
+assert.equal(p.sampleCount, 9);
+assert.equal(p.selfExcluded, true);
+assert.equal(p.selfExcludedCount, 1);
+assert.equal(p.predictedDate, null);
+assert.ok(p.reasonCodes.includes('insufficient_benchmark_history'));
+assert.equal(result.summary.benchmark, 0);
+assert.equal(result.summary.insufficient, 10);
+assert.equal(result.summary.qualifyingHistory, 10);
+p = analyze([threshold[0]], { now }).bySubID.get('LOO-0');
+assert.equal(p.sampleCount, 0);
+assert.equal(p.medianDays, null);
+assert.equal(p.rangeLowDays, null);
+assert.equal(p.rangeHighDays, null);
+
+// Compare the indexed implementation with an independent, explicit leave-one-out
+// calculation, including equal durations, zeros and extreme valid long durations.
+const durations = [0, 10, 10, 20, 31, 31, 50, 80, 90, 100, 105, 150, 600, 1900];
+const validation = durations.map((days, i) => completed('CHECK-' + i, days, 'France', '2020-01-01'));
+result = analyze(validation.flatMap(row => [row, { ...row, Product: 'Duplicate membership' }]), { now });
+const percentile = (sorted, q) => {
+  const position = (sorted.length - 1) * q, index = Math.floor(position), fraction = position - index;
+  return sorted[index] + (sorted[Math.min(index + 1, sorted.length - 1)] - sorted[index]) * fraction;
+};
+for (let i = 0; i < durations.length; i++) {
+  const others = durations.filter((_, index) => index !== i).sort((a, b) => a - b);
+  const low = percentile(others, 0.25), high = percentile(others, 0.75), fence = high + 1.5 * (high - low);
+  const estimate = result.bySubID.get('CHECK-' + i);
+  assert.equal(estimate.status, 'benchmark');
+  assert.equal(estimate.sampleCount, others.length);
+  assert.equal(estimate.medianDays, percentile(others, 0.5));
+  assert.equal(estimate.rangeLowDays, low);
+  assert.equal(estimate.rangeHighDays, high);
+  assert.equal(estimate.outlierCount, others.filter(days => days > fence).length);
+}
+const completedInputs = threshold.map((row, i) => Object.freeze({ ...row, OriginalApproval: i % 2 ? 'bad plan' : '2027-01-01', LatestApproval: '2028-01-01' }));
+const completedSnapshot = structuredClone(completedInputs);
+analyze(Object.freeze(completedInputs), { now });
+assert.deepEqual(completedInputs, completedSnapshot, 'Benchmarks never alter actual or planned source values');
 
 // An estimate due today is not yet overdue, even later in the same day.
 const dueToday={...pending,ActualSubmission:iso(Date.parse(now)-101*DAY)};
@@ -115,11 +201,15 @@ assert.equal(context.regulatoryPredictions.analyze(JSON.parse(JSON.stringify([..
 
 // 30,000 membership rows collapse to 10,000 submissions; samples never count joins.
 const large = Array.from({ length: 10000 }, (_, i) => completed('BIG' + i, 40 + i % 121, i % 2 ? 'France' : 'Germany'))
-  .flatMap(r => [r, { ...r, Product: 'Second' }, { ...r, Product: 'Third' }]);
+  .flatMap(r => [r, { ...r, Product: 'Second', OriginalApproval: '2025-12-31' }, { ...r, Product: 'Third', LatestApproval: 'bad plan' }]);
 const start = performance.now();
-result = analyze([...large, pending], { now });
+result = analyze([...large, { ...pending, OriginalApproval: '2027-01-01', LatestApproval: '2027-02-01' }], { now });
 assert.equal(result.summary.inputRows, 30001);
 assert.equal(result.summary.distinctSubmissions, 10001);
 assert.equal(result.bySubID.get('P1').sampleCount, 5000);
+assert.equal(result.bySubID.get('P1').status, 'estimated');
 assert.equal(result.summary.qualifyingHistory, 10000);
+assert.equal(result.summary.benchmark, 10000);
+assert.equal(result.bySubID.get('BIG0').sampleCount, 4999);
+assert.equal(result.bySubID.get('BIG0').selfExcluded, true);
 console.log('Approval prediction checks passed, including 30,000 membership rows (' + Math.round(performance.now() - start) + ' ms).');

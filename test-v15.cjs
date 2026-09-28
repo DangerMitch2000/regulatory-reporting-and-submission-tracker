@@ -1,0 +1,21 @@
+const fs=require('fs'),http=require('http'),path=require('path'),assert=require('assert/strict');
+const {chromium}=require('C:/Users/Desktop/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+(async()=>{const server=http.createServer((req,res)=>{const name=new URL(req.url,'http://localhost').pathname;if(name==='/favicon.ico')return res.writeHead(204).end();const p=path.join(__dirname,name==='/'?'index.html':name);fs.readFile(p,(e,b)=>{if(e)return res.writeHead(404).end();res.setHeader('Content-Type',p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':p.endsWith('.json')?'application/json':'text/html');res.end(b)})}).listen(8785,'127.0.0.1');let browser;
+try{browser=await chromium.launch({headless:true,channel:'msedge'});const page=await browser.newPage({viewport:{width:1400,height:1050}}),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});await page.goto('http://127.0.0.1:8785');await page.waitForFunction(()=>document.querySelector('#filter-status').textContent.includes('60 submissions'));
+assert.equal(await page.locator('#state-legend input').count(),9);assert.equal(await page.locator('input[type=range]').count(),0);
+await page.locator('svg text').filter({hasText:/^APP-001$/}).click();await page.locator('svg .parentBar path').first().hover();await page.waitForTimeout(200);assert.match(await page.locator('#tooltip').innerText(),/Start:/);
+await page.locator('select[name=mode]').selectOption('Compare');await page.locator('svg .milestone path').first().hover();await page.waitForTimeout(100);assert.match(await page.locator('#tooltip').innerText(),/Date:.*\d{2} \w{3} \d{4}/);
+await page.locator('svg .connector line').first().dispatchEvent('pointermove',{clientX:800,clientY:400});await page.locator('svg .connector line').first().dispatchEvent('mousemove',{clientX:800,clientY:400});await page.waitForTimeout(100);assert.match(await page.locator('#tooltip').innerText(),/Start date:/);
+for(const cb of await page.locator('#state-legend input').all())await cb.uncheck();await page.waitForTimeout(200);assert.equal(await page.locator('svg .subLabel text').count(),0);
+await page.locator('#reset-filters').click();await page.locator('select[name=mode]').selectOption('Hierarchy');await page.waitForTimeout(200);
+await page.locator('svg .timeText text').filter({hasText:/^Year$/}).click();await page.waitForTimeout(100);
+const axisText=()=>page.locator('svg text').allTextContents(),rowLabels=()=>page.locator('svg .parentLabel text, svg .subLabel text').allTextContents();
+const dateWindow=texts=>{const label=texts.find(t=>/^\d{2} [A-Z][a-z]{2} \d{4} – \d{2} [A-Z][a-z]{2} \d{4}$/.test(t));assert.ok(label,'Calendar range label exists');return label.split(' – ').map(t=>Date.parse(t+' UTC'))};
+const before=await axisText(),rowsBefore=await rowLabels(),bounds=await page.locator('#chart').boundingBox();await page.mouse.move(bounds.x+bounds.width*0.7,bounds.y+250);
+const pan=async(delta,previous)=>{await page.keyboard.down('Control');try{await page.mouse.wheel(0,delta);await page.waitForFunction(old=>JSON.stringify([...document.querySelectorAll('svg text')].map(e=>e.textContent))!==JSON.stringify(old),previous,{timeout:3000});}finally{await page.keyboard.up('Control')}};
+await pan(120,before);const after=await axisText(),[beforeLo,beforeHi]=dateWindow(before),[afterLo,afterHi]=dateWindow(after);assert.ok(afterLo>beforeLo,'Forward pan advances dates');assert.equal(afterHi-afterLo,beforeHi-beforeLo,'Panning preserves the displayed date span');assert.deepEqual(await rowLabels(),rowsBefore,'Ctrl+wheel does not scroll rows');
+await pan(-120,after);assert.deepEqual(dateWindow(await axisText()),dateWindow(before),'Reverse pan restores the date window');assert.deepEqual(await rowLabels(),rowsBefore);assert.deepEqual(errors,[]);await page.screenshot({path:'v15-preview.png',fullPage:true});console.log('PASS: state checkboxes, empty state, reset, bar/milestone date tooltips, bidirectional Ctrl+wheel pan without zoom or row scrolling, no pan slider, no browser errors.');
+}finally{await browser?.close();server.close()}})().catch(e=>{console.error(e);process.exit(1)});
+
+
+

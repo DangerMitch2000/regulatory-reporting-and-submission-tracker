@@ -54,6 +54,124 @@ async function create(rows, signals = {}) {
   assert.equal(view.data('extent')[0].hi, base.ActualSubmission - base.ActualDispatch);
   view.finalize();
 
+  // Historical estimates coexist with both approval plans. Neither plan is
+  // rewritten, its original/latest milestone remains, and only the axis extends.
+  const planned = { ...base, OriginalApproval: date('2026-03-15'), LatestApproval: date('2026-04-15') };
+  view = await create([planned, { ...planned, Product: 'Second product' }], { mode: 'Compare' });
+  assert.equal(view.data('predictionPoints').length, 1);
+  assert.equal(view.data('predictions').length, 1);
+  assert.equal(view.data('sub')[0].OriginalApproval, planned.OriginalApproval);
+  assert.equal(view.data('sub')[0].LatestApproval, planned.LatestApproval);
+  assert.equal(view.data('sub')[0].ActualApproval, null);
+  assert.equal(view.data('sub')[0].end, planned.LatestApproval);
+  assert.equal(view.data('apps')[0].end, planned.LatestApproval);
+  assert.equal(view.data('ros')[0].end, planned.LatestApproval);
+  assert.equal(view.data('sub')[0].ApprovalDays, null);
+  assert.equal(view.data('extent')[0].hi, base.PredictionHigh);
+  const planMarkers = view.data('milestones').filter(row => ['OriginalApproval', 'LatestApproval'].includes(row.milestone));
+  assert.equal(planMarkers.length, 2);
+  assert.equal(planMarkers.find(row => row.milestone === 'OriginalApproval').date, planned.OriginalApproval);
+  assert.equal(planMarkers.find(row => row.milestone === 'OriginalApproval').track, 0);
+  assert.equal(planMarkers.find(row => row.milestone === 'LatestApproval').date, planned.LatestApproval);
+  assert.equal(planMarkers.find(row => row.milestone === 'LatestApproval').track, 1);
+  const allTips = node => [...(node.tooltip ? [node.tooltip] : []), ...(node.items || []).flatMap(allTips)];
+  const predictionTips = allTips(view.scenegraph().root).filter(tip => tip['Predicted approval']);
+  assert.equal(predictionTips.length, 2);
+  for (const tip of predictionTips) {
+    assert.equal(tip['Predicted approval'], '02 May 2026');
+    assert.equal(tip['Historical range'], '02 Apr 2026 – 01 Jun 2026');
+    assert.equal(tip['Original planned approval'], '15 Mar 2026');
+    assert.equal(tip['Latest planned approval'], '15 Apr 2026');
+    assert.equal(tip['Qualifying completed submissions'], 21);
+    assert.match(tip.Meaning, /not a planned date or guarantee/);
+  }
+  assert.ok(allTips(view.scenegraph().root).some(tip => tip.Milestone === 'OriginalApproval' && tip.Date === '15 Mar 2026'));
+  assert.ok(allTips(view.scenegraph().root).some(tip => tip.Milestone === 'LatestApproval' && tip.Date === '15 Apr 2026'));
+  await view.toSVG();
+  view.finalize();
+
+  // Completed submissions get only an explicitly qualified benchmark. The
+  // actual approval remains a filled marker, while its benchmark is hollow.
+  const completed = { ...planned, SubStatus: 'Completed', ActualApproval: date('2026-04-20'), PredictionStatus: 'benchmark' };
+  view = await create([completed], { mode: 'Compare', nowDate: date('2026-09-27') });
+  assert.equal(view.data('predictionPoints').length, 1);
+  assert.equal(view.data('sub')[0].ActualApproval, completed.ActualApproval);
+  assert.equal(view.data('sub')[0].ApprovalDays, 78);
+  assert.equal(view.data('sub')[0].end, completed.ActualApproval);
+  assert.equal(view.data('apps')[0].end, completed.ActualApproval);
+  assert.equal(view.data('ros')[0].end, completed.ActualApproval);
+  assert.equal(view.data('extent')[0].hi, base.PredictionHigh);
+  const completedMarkers = view.data('milestones').filter(row => /Approval$/.test(row.milestone));
+  assert.equal(completedMarkers.length, 3, 'Original, latest and actual approval markers remain');
+  assert.equal(completedMarkers.find(row => row.milestone === 'ActualApproval').date, completed.ActualApproval);
+  const benchmarkTips = allTips(view.scenegraph().root).filter(tip => tip['Historical approval benchmark']);
+  assert.equal(benchmarkTips.length, 2);
+  for (const tip of benchmarkTips) {
+    assert.equal(tip['Historical approval benchmark'], '02 May 2026');
+    assert.equal(tip['Actual approval'], '20 Apr 2026');
+    assert.match(tip.Meaning, /other completed submissions, not a future forecast/);
+    assert.doesNotMatch(tip.Timing, /pending|overdue|passed|unrecorded/i);
+    assert.equal(tip['Predicted approval'], undefined);
+  }
+  await view.toSVG();
+  view.finalize();
+
+  // Coincident actual and benchmark dates do not erase the actual marker.
+  view = await create([{ ...completed, ActualApproval: base.PredictionDate }], { mode: 'Compare' });
+  const marks = node => [...(node.mark ? [node] : []), ...(node.items || []).flatMap(marks)];
+  const point = marks(view.scenegraph().root).find(mark => mark.mark.name === 'predictionApproval');
+  const actual = marks(view.scenegraph().root).find(mark => mark.mark.name === 'milestone' && mark.datum.milestone === 'ActualApproval');
+  assert.equal(point.x, actual.x);
+  assert.equal(point.y, actual.y);
+  assert.equal(point.fillOpacity, 0);
+  assert.equal(actual.shape, 'square');
+  assert.equal(point.shape, 'diamond');
+  view.finalize();
+
+  // Raw completed state alone never creates a benchmark; its source actual date
+  // must be present, valid and unambiguous as well as engine-qualified.
+  for (const change of [
+    { ActualApproval: null },
+    { ActualApproval: 'not a date' },
+    { PredictionStatus: 'estimated' },
+    { PredictionStatus: 'unavailable' }
+  ]) {
+    view = await create([{ ...completed, ...change }], { mode: 'Compare' });
+    assert.equal(view.data('predictionPoints').length, 0, JSON.stringify(change));
+    view.finalize();
+  }
+  view = await create([
+    completed,
+    { ...completed, ActualApproval: date('2026-04-21'), Product: 'Second product' }
+  ], { mode: 'Compare' });
+  assert.equal(view.data('sub')[0].ActualApproval, null);
+  assert.equal(view.data('predictionPoints').length, 0);
+  view.finalize();
+
+  // Single plans and invalid/conflicting plan inputs do not gate an independently
+  // qualified engine estimate. Existing plan validation still withholds bad marks.
+  for (const change of [
+    { OriginalApproval: date('2026-07-01') },
+    { LatestApproval: date('2026-07-01') },
+    { LatestApproval: 'not a date' }
+  ]) {
+    view = await create([{ ...base, ...change }], { mode: 'Compare' });
+    assert.equal(view.data('predictionPoints').length, 1, JSON.stringify(change));
+    if (change.LatestApproval === 'not a date') {
+      assert.equal(view.data('sub')[0].LatestApprovalBad, 1);
+      assert.equal(view.data('sub')[0].LatestApproval, null);
+    }
+    view.finalize();
+  }
+  view = await create([
+    { ...base, LatestApproval: date('2026-03-01') },
+    { ...base, LatestApproval: date('2026-04-01'), Product: 'Second product' }
+  ], { mode: 'Compare' });
+  assert.equal(view.data('predictionPoints').length, 1);
+  assert.equal(view.data('sub')[0].LatestApproval, null);
+  assert.notEqual(view.data('sub')[0].LatestApprovalMin, view.data('sub')[0].LatestApprovalMax);
+  view.finalize();
+
   // Collapsed hierarchy still fits the estimate, but only expanded submission rows draw it.
   view = await create([base]);
   assert.equal(view.data('predictionPoints').length, 0);
@@ -140,10 +258,8 @@ async function create(rows, signals = {}) {
     { PredictionLow: Infinity },
     { PredictionLow: base.PredictionHigh + day },
     { PredictionN: 0 },
-    { OriginalApproval: date('2026-07-01') },
-    { LatestApproval: date('2026-07-01') },
     { ActualApproval: date('2026-07-01') },
-    { LatestApproval: 'not a date' }
+    { ActualApproval: 'not a date' }
   ]) {
     view = await create([{ ...base, ...change }], { mode: 'Compare' });
     assert.equal(view.data('predictionPoints').length, 0, JSON.stringify(change));
@@ -153,7 +269,7 @@ async function create(rows, signals = {}) {
   view=await create([base],{mode:'Compare'});
   view.signal('nowDate',base.PredictionDate+18*60*60*1000);await view.runAsync();
   const collect=(node)=>[...(node.tooltip?[node.tooltip]:[]),...(node.items||[]).flatMap(collect)];
-  const tips=collect(view.scenegraph().root).filter(t=>t['Estimated approval']);
+  const tips=collect(view.scenegraph().root).filter(t=>t['Predicted approval']);
   assert.ok(tips.length>0);
   assert.ok(tips.every(t=>t.Timing==='Estimate from actual submission date'));
   view.finalize();
@@ -165,5 +281,5 @@ async function create(rows, signals = {}) {
   await view.runAsync();
   assert.equal(view.data('predictions').length, 0);
   view.finalize();
-  console.log('PASS: Vega approval markers/ranges, deduplication, eligibility, fitting, hierarchy, elapsed isolation, clipping, past estimates and bounded expiry toggle.');
+  console.log('PASS: Vega approval estimates and completed benchmarks alongside intact plan/actual markers, status-aware tooltips, deduplication, eligibility, fitting, hierarchy, elapsed isolation, clipping, past estimates and bounded expiry toggle.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

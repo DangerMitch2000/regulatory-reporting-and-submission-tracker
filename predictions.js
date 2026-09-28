@@ -8,7 +8,9 @@
 
   const DAY = 86400000;
   const CUTOFF = Date.UTC(2020, 0, 1);
-  const DATE_FIELDS = ['ActualSubmission', 'ActualApproval', 'OriginalApproval', 'LatestApproval'];
+  // Approval plans are deliberately independent of this historical estimate.
+  // Their validation and warnings belong to Data Quality, not eligibility.
+  const DATE_FIELDS = ['ActualSubmission', 'ActualApproval'];
   const reasonLabels = Object.freeze({
     missing_country: 'Country is missing',
     multiple_countries: 'More than one country; approval time cannot be attributed to one country',
@@ -29,7 +31,9 @@
     latest_approval_conflicting: 'Latest approval plans conflict across membership rows',
     approval_plan_present: 'An approval plan already exists',
     already_approved: 'An actual approval date already exists',
-    insufficient_history: 'Too few qualifying completed submissions for this country'
+    insufficient_history: 'Too few qualifying completed submissions for this country',
+    insufficient_benchmark_history: 'Too few other qualifying completed submissions for this country',
+    self_excluded: 'Target submission excluded from its own benchmark'
   });
 
   function text(value) {
@@ -88,6 +92,43 @@
     const position = (sorted.length - 1) * q, lower = Math.floor(position), fraction = position - lower;
     return sorted[lower] + (sorted[Math.min(lower + 1, sorted.length - 1)] - sorted[lower]) * fraction;
   }
+  function lowerBound(sorted, value) {
+    let lo = 0, hi = sorted.length;
+    while (lo < hi) {
+      const middle = (lo + hi) >>> 1;
+      if (sorted[middle] < value) lo = middle + 1;
+      else hi = middle;
+    }
+    return lo;
+  }
+  function upperBound(sorted, value) {
+    let lo = 0, hi = sorted.length;
+    while (lo < hi) {
+      const middle = (lo + hi) >>> 1;
+      if (sorted[middle] <= value) lo = middle + 1;
+      else hi = middle;
+    }
+    return lo;
+  }
+  // Virtual removal avoids allocating/filtering a new country array for every
+  // completed submission. Equal durations are interchangeable for quantiles.
+  function supportingStats(sorted, omittedDuration) {
+    const skip = omittedDuration === undefined ? -1 : lowerBound(sorted, omittedDuration);
+    const removed = skip >= 0 && skip < sorted.length && sorted[skip] === omittedDuration;
+    const count = sorted.length - (removed ? 1 : 0);
+    const valueAt = index => sorted[index + (removed && index >= skip ? 1 : 0)];
+    const percentile = q => {
+      if (!count) return null;
+      const position = (count - 1) * q, first = Math.floor(position), fraction = position - first;
+      return valueAt(first) + (valueAt(Math.min(first + 1, count - 1)) - valueAt(first)) * fraction;
+    };
+    const medianDays = percentile(0.5), rangeLowDays = percentile(0.25), rangeHighDays = percentile(0.75);
+    const fence = rangeHighDays + 1.5 * (rangeHighDays - rangeLowDays);
+    const outlierCount = count >= 4
+      ? sorted.length - upperBound(sorted, fence) - (removed && omittedDuration > fence ? 1 : 0)
+      : 0;
+    return { sampleCount: count, medianDays, rangeLowDays, rangeHighDays, outlierCount, selfExcluded: removed };
+  }
   function exclusionRows(counts) {
     return Object.entries(counts).map(([code, count]) => ({ code, label: reasonLabels[code] || code, count }));
   }
@@ -111,8 +152,8 @@
     const today = parsedNow.day;
     const minimumSamples = opts.minSamples === undefined ? 10 : opts.minSamples;
     if (!Number.isInteger(minimumSamples) || minimumSamples < 3) throw new Error('Minimum historical sample size must be an integer of at least three.');
-    const groups = new Map(), byCountry = new Map(), bySubID = new Map();
-    const summary = { inputRows: 0, distinctSubmissions: 0, missingIDRows: 0, qualifyingHistory: 0, excludedHistory: 0, estimated: 0, insufficient: 0, unavailable: 0, completed: 0, planned: 0, exclusions: [] };
+    const groups = new Map(), byCountry = new Map(), bySubID = new Map(), sortedHistories = new Map();
+    const summary = { inputRows: 0, distinctSubmissions: 0, missingIDRows: 0, qualifyingHistory: 0, excludedHistory: 0, estimated: 0, benchmark: 0, insufficient: 0, unavailable: 0, completed: 0, planned: 0, exclusions: [] };
     const globalExclusions = Object.create(null);
 
     for (const row of rows || []) {
@@ -166,6 +207,7 @@
 
     for (const country of byCountry.values()) {
       country.durations.sort((a, b) => a - b);
+      sortedHistories.set(country.countryKey, country.durations);
       country.sampleCount = country.durations.length;
       country.medianDays = quantile(country.durations, 0.5);
       country.rangeLowDays = quantile(country.durations, 0.25);
@@ -179,51 +221,47 @@
 
     for (const group of groups.values()) {
       const country = byCountry.get(group.countryKey);
+      const actual = group.dates.ActualApproval;
+      const support = country && actual.present && group.historyIssues.length === 0
+        ? supportingStats(sortedHistories.get(group.countryKey), group.duration)
+        : country;
+      const selfExcluded = Boolean(support && support.selfExcluded);
+      const excludedCount = (country ? country.excludedCount : 0) + (selfExcluded ? 1 : 0);
+      const exclusions = country ? country.exclusions.slice() : [];
+      if (selfExcluded) exclusions.push({ code: 'self_excluded', label: reasonLabels.self_excluded, count: 1 });
       const entry = {
         subID: group.id, status: 'unavailable', reason: '', reasonCodes: [], reasons: [],
         country: group.country, countryKey: group.countryKey, grouping: 'Country only',
-        sampleCount: country ? country.sampleCount : 0,
-        excludedCount: country ? country.excludedCount : 0,
-        exclusions: country ? country.exclusions : [],
-        outlierCount: country ? country.outlierCount : 0,
-        minimumSamples, medianDays: country ? country.medianDays : null,
-        rangeLowDays: country ? country.rangeLowDays : null,
-        rangeHighDays: country ? country.rangeHighDays : null,
+        sampleCount: support ? support.sampleCount : 0,
+        excludedCount, exclusions,
+        outlierCount: support ? support.outlierCount : 0,
+        minimumSamples, medianDays: support ? support.medianDays : null,
+        rangeLowDays: support ? support.rangeLowDays : null,
+        rangeHighDays: support ? support.rangeHighDays : null,
         predictedDate: null, rangeStart: null, rangeEnd: null, overdue: false,
         rangeLabel: 'Historical middle 50% (25th–75th percentiles)',
-        historyScope: 'All delivered submissions for this country, before local filters',
+        historyScope: selfExcluded ? 'Other delivered submissions for this country, before local filters; target excluded' : 'All delivered submissions for this country, before local filters',
         historyExclusionCodes: group.historyIssues,
         historyIncluded: group.historyIssues.length === 0,
         longHistoryFlag: false,
-        actualSubmission: group.dates.ActualSubmission.day
+        actualSubmission: group.dates.ActualSubmission.day,
+        actualApproval: actual.day,
+        selfExcluded, selfExcludedCount: selfExcluded ? 1 : 0
       };
       if (entry.historyIncluded && country && country.sampleCount >= 4) {
         entry.longHistoryFlag = group.duration > country.rangeHighDays + 1.5 * (country.rangeHighDays - country.rangeLowDays);
       }
-      const actual = group.dates.ActualApproval;
-      if (actual.present) {
-        const actualIssues = group.historyIssues.filter(code => code.startsWith('actual_') || code === 'approval_before_submission');
-        setStatus(entry, actualIssues.length ? 'unavailable' : 'completed', actualIssues.length ? actualIssues : ['already_approved']);
-      } else {
-        const original = group.dates.OriginalApproval, latest = group.dates.LatestApproval;
-        const badPlans = [];
-        if (original.present && original.state !== 'valid') badPlans.push('original_approval_' + original.state);
-        if (latest.present && latest.state !== 'valid') badPlans.push('latest_approval_' + latest.state);
-        if (badPlans.length) setStatus(entry, 'unavailable', badPlans);
-        else if (original.present || latest.present) setStatus(entry, 'planned', ['approval_plan_present']);
-        else {
-          const blockers = group.historyIssues.filter(code => code !== 'actual_approval_missing');
-          if (blockers.length) setStatus(entry, 'unavailable', blockers);
-          else if (!country || country.sampleCount < minimumSamples) setStatus(entry, 'insufficient', ['insufficient_history']);
-          else {
-            setStatus(entry, 'estimated', []);
-            entry.predictedDate = entry.actualSubmission + Math.round(country.medianDays) * DAY;
-            entry.rangeStart = entry.actualSubmission + Math.floor(country.rangeLowDays) * DAY;
-            entry.rangeEnd = entry.actualSubmission + Math.ceil(country.rangeHighDays) * DAY;
-            entry.overdue = entry.predictedDate < today;
-            entry.reason = entry.overdue ? 'Historical estimate has already passed; no new future date has been invented' : 'Country median applied to actual submission date';
-          }
-        }
+      const blockers = actual.present ? group.historyIssues : group.historyIssues.filter(code => code !== 'actual_approval_missing');
+      if (blockers.length) setStatus(entry, 'unavailable', blockers);
+      else if (!support || support.sampleCount < minimumSamples) setStatus(entry, 'insufficient', [selfExcluded ? 'insufficient_benchmark_history' : 'insufficient_history']);
+      else {
+        setStatus(entry, actual.present ? 'benchmark' : 'estimated', []);
+        entry.predictedDate = entry.actualSubmission + Math.round(support.medianDays) * DAY;
+        entry.rangeStart = entry.actualSubmission + Math.floor(support.rangeLowDays) * DAY;
+        entry.rangeEnd = entry.actualSubmission + Math.ceil(support.rangeHighDays) * DAY;
+        entry.overdue = !actual.present && entry.predictedDate < today;
+        entry.reason = actual.present ? 'Historical benchmark from other submissions; this completed record is excluded from its own benchmark'
+          : entry.overdue ? 'Historical estimate has already passed; no new future date has been invented' : 'Country median applied to actual submission date';
       }
       summary[entry.status]++;
       bySubID.set(group.id, entry);

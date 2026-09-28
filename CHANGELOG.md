@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.1 — 2026-09-28
+
+- Fixed Ctrl+wheel panning by evaluating the chart-position guard inside the signal update, where Vega can resolve its layout values.
+- Show historical approval estimates alongside recorded original/latest approval plans without changing source dates or parent summary bars. Invalid or conflicting plans retain their independent data-quality flags.
+- Add retrospective Historical approval benchmarks for valid completed submissions, excluding the selected record from its own cohort and requiring at least 10 other qualifying submissions. Pending estimates still require at least 10 qualifying submissions.
+- Require only Country, ActualSubmission and ActualApproval mappings for the calculation; approval planning fields are optional. Keep single-country attribution and valid actual dates from January 2020 through today, with invalid, conflicting, future or reversed actual approvals withheld.
+- Distinguish completed benchmarks from pending estimates and their passed-date warnings. Ranges describe the current historical cohort's empirical middle 50%; completed benchmarks are not backtested forecasts.
+
 ## 1.7.0 — 2026-09-28
 
 - Added a Data quality view grouped by site, with the five existing membership filters, issue categories, search, pagination and selectable issue details.
