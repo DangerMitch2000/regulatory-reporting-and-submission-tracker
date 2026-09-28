@@ -8,9 +8,12 @@
 
   const DAY = 86400000;
   const CUTOFF = Date.UTC(2020, 0, 1);
+  const SUBMISSION_LIMIT = Date.UTC(2101, 0, 1);
+  const SUBMISSION_FIELDS = ['ActualSubmission', 'LatestSubmission', 'OriginalSubmission'];
+  const SUBMISSION_LABELS = Object.freeze({ ActualSubmission: 'Actual submission', LatestSubmission: 'Latest planned submission', OriginalSubmission: 'Original planned submission' });
   // Approval plans are deliberately independent of this historical estimate.
   // Their validation and warnings belong to Data Quality, not eligibility.
-  const DATE_FIELDS = ['ActualSubmission', 'ActualApproval'];
+  const DATE_FIELDS = [...SUBMISSION_FIELDS, 'ActualApproval'];
   const reasonLabels = Object.freeze({
     missing_country: 'Country is missing',
     multiple_countries: 'More than one country; approval time cannot be attributed to one country',
@@ -19,6 +22,18 @@
     actual_submission_conflicting: 'Actual submission dates conflict across membership rows',
     actual_submission_before_2020: 'Actual submission date is before January 2020',
     actual_submission_future: 'Actual submission date is after today',
+    actual_submission_unmapped: 'Actual submission field is not mapped; a lower-priority plan cannot safely replace it',
+    latest_submission_unmapped: 'Latest submission plan field is not mapped; the original plan cannot safely replace it',
+    original_submission_unmapped: 'Original submission plan field is not mapped',
+    latest_submission_invalid: 'Latest submission plan is invalid or after 2100',
+    latest_submission_conflicting: 'Latest submission plans conflict across membership rows',
+    latest_submission_before_2020: 'Latest submission plan is before January 2020',
+    original_submission_invalid: 'Original submission plan is invalid or after 2100',
+    original_submission_conflicting: 'Original submission plans conflict across membership rows',
+    original_submission_before_2020: 'Original submission plan is before January 2020',
+    submission_date_missing: 'No actual or planned submission date was supplied',
+    country_unmapped: 'Country field is not mapped',
+    actual_approval_unmapped: 'Actual approval field is not mapped; approval status cannot be established',
     actual_approval_missing: 'Actual approval date is missing',
     actual_approval_invalid: 'Actual approval date is invalid',
     actual_approval_conflicting: 'Actual approval dates conflict across membership rows',
@@ -41,6 +56,9 @@
       ? String(value).normalize('NFKC').trim().replace(/\s+/g, ' ')
       : '';
   }
+  // Submission identity must match the tracker and Vega exactly: trim only.
+  // Country labels may be normalized, but distinct source IDs must not merge.
+  function subID(value) { return value == null ? '' : String(value).trim(); }
 
   function blank(value) {
     return value == null || (typeof value === 'string' && value.trim() === '');
@@ -59,11 +77,16 @@
     if (typeof value !== 'string') return { state: 'invalid', day: null };
     const raw = value.trim();
     const match = /^(\d{4})-(\d{2})-(\d{2})(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/.exec(raw);
-    if (!match || !Number.isFinite(Date.parse(raw))) return { state: 'invalid', day: null };
+    const timestamp = Date.parse(raw);
+    if (!match || !Number.isFinite(timestamp)) return { state: 'invalid', day: null };
     const year = Number(match[1]), month = Number(match[2]), day = Number(match[3]);
     const result = new Date(Date.UTC(year, month - 1, day));
     if (result.getUTCFullYear() !== year || result.getUTCMonth() !== month - 1 || result.getUTCDate() !== day) {
       return { state: 'invalid', day: null };
+    }
+    if (/(?:Z|[+-]\d{2}:?\d{2})$/.test(raw)) {
+      const instant = new Date(timestamp);
+      return { state: 'valid', day: Date.UTC(instant.getUTCFullYear(), instant.getUTCMonth(), instant.getUTCDate()) };
     }
     return { state: 'valid', day: result.getTime() };
   }
@@ -80,6 +103,43 @@
     if (bucket.days.size > 1) return { state: 'conflicting', day: null, present: true };
     if (!bucket.days.size) return { state: 'missing', day: null, present: false };
     return { state: 'valid', day: bucket.days.values().next().value, present: true };
+  }
+  function resolveField(bucket, field, mapped) {
+    return mapped && !mapped.has(field) ? { state: 'unmapped', day: null, present: false } : resolved(bucket);
+  }
+  function anchorFromDates(dates) {
+    for (const field of SUBMISSION_FIELDS) {
+      const value = dates[field], label = SUBMISSION_LABELS[field];
+      if (value.state === 'unmapped') return { date: null, field, label, state: 'unmapped', reason: label + ' is not mapped; lower-priority dates are withheld.' };
+      if (!value.present) continue;
+      if (value.state !== 'valid') return { date: null, field, label, state: value.state, reason: label + (value.state === 'conflicting' ? ' has conflicting dates across membership rows.' : ' contains an invalid date.') };
+      if (value.day >= SUBMISSION_LIMIT) return { date: null, field, label, state: 'invalid', reason: label + ' is after 31 December 2100 and is withheld.' };
+      return { date: value.day, field, label, state: 'valid', reason: 'Using ' + label.toLowerCase() + '.' };
+    }
+    return { date: null, field: null, label: 'Submission date', state: 'missing', reason: 'No actual or planned submission date was supplied.' };
+  }
+  // This date resolver is also used by the year/range filter. It intentionally has
+  // no prediction-training cutoff: credible historical dates can still be filtered.
+  function resolveSubmissionDates(rows, options) {
+    const opts = options || {}, mapped = opts.mappedFields === undefined ? null : new Set(opts.mappedFields || []);
+    const groups = new Map(), result = new Map();
+    for (const row of rows || []) {
+      const id = subID(row && row.SubID);
+      if (!id) continue;
+      let dates = groups.get(id);
+      if (!dates) { dates = Object.fromEntries(SUBMISSION_FIELDS.map(field => [field, dateBucket()])); groups.set(id, dates); }
+      for (const field of SUBMISSION_FIELDS) if (!mapped || mapped.has(field)) collectDate(dates[field], row[field]);
+    }
+    for (const [id, dates] of groups) result.set(id, anchorFromDates(Object.fromEntries(SUBMISSION_FIELDS.map(field => [field, resolveField(dates[field], field, mapped)]))));
+    return result;
+  }
+  function anchorReasons(anchor, today) {
+    if (!anchor.field) return ['submission_date_missing'];
+    const prefix = anchor.field === 'ActualSubmission' ? 'actual_submission' : anchor.field === 'LatestSubmission' ? 'latest_submission' : 'original_submission';
+    if (anchor.state !== 'valid') return [prefix + '_' + anchor.state];
+    if (anchor.date < CUTOFF) return [prefix + '_before_2020'];
+    if (anchor.field === 'ActualSubmission' && anchor.date > today) return ['actual_submission_future'];
+    return [];
   }
   function dateReasons(date, prefix, today) {
     if (date.state !== 'valid') return [prefix + '_' + date.state];
@@ -147,6 +207,7 @@
 
   function analyze(rows, options) {
     const opts = options || {};
+    const mapped = opts.mappedFields === undefined ? null : new Set(opts.mappedFields || []);
     const parsedNow = parseDate(opts.now === undefined ? new Date() : opts.now);
     if (parsedNow.state !== 'valid') throw new Error('Approval estimates require a valid current date.');
     const today = parsedNow.day;
@@ -158,28 +219,30 @@
 
     for (const row of rows || []) {
       summary.inputRows++;
-      const id = text(row && row.SubID);
+      const id = subID(row && row.SubID);
       if (!id) { summary.missingIDRows++; continue; }
       let group = groups.get(id);
       if (!group) {
         group = { id, countries: new Map(), fields: Object.fromEntries(DATE_FIELDS.map(field => [field, dateBucket()])) };
         groups.set(id, group);
       }
-      for (const country of countryValues(row.Country)) {
+      for (const country of countryValues(!mapped || mapped.has('Country') ? row.Country : null)) {
         const key = country.toLowerCase();
         if (!group.countries.has(key)) group.countries.set(key, country);
       }
-      for (const field of DATE_FIELDS) collectDate(group.fields[field], row[field]);
+      for (const field of DATE_FIELDS) if (!mapped || mapped.has(field)) collectDate(group.fields[field], row[field]);
     }
     summary.distinctSubmissions = groups.size;
 
     for (const group of groups.values()) {
-      group.dates = Object.fromEntries(DATE_FIELDS.map(field => [field, resolved(group.fields[field])]));
+      group.dates = Object.fromEntries(DATE_FIELDS.map(field => [field, resolveField(group.fields[field], field, mapped)]));
+      group.anchor = anchorFromDates(group.dates);
       group.countryKey = group.countries.size === 1 ? group.countries.keys().next().value : null;
       group.country = group.countryKey === null ? null : group.countries.get(group.countryKey);
       const a = group.dates.ActualSubmission, b = group.dates.ActualApproval;
       const issues = [];
-      if (group.countries.size !== 1) issues.push(group.countries.size ? 'multiple_countries' : 'missing_country');
+      if (mapped && !mapped.has('Country')) issues.push('country_unmapped');
+      else if (group.countries.size !== 1) issues.push(group.countries.size ? 'multiple_countries' : 'missing_country');
       issues.push(...dateReasons(a, 'actual_submission', today), ...dateReasons(b, 'actual_approval', today));
       if (a.state === 'valid' && b.state === 'valid' && b.day < a.day) issues.push('approval_before_submission');
       group.historyIssues = [...new Set(issues)];
@@ -222,6 +285,10 @@
     for (const group of groups.values()) {
       const country = byCountry.get(group.countryKey);
       const actual = group.dates.ActualApproval;
+      const anchor = actual.present ? {
+        date: group.dates.ActualSubmission.day, field: 'ActualSubmission', label: SUBMISSION_LABELS.ActualSubmission,
+        state: group.dates.ActualSubmission.state, reason: 'Completed benchmarks require an actual submission date.'
+      } : group.anchor;
       const support = country && actual.present && group.historyIssues.length === 0
         ? supportingStats(sortedHistories.get(group.countryKey), group.duration)
         : country;
@@ -246,22 +313,28 @@
         longHistoryFlag: false,
         actualSubmission: group.dates.ActualSubmission.day,
         actualApproval: actual.day,
+        anchorDate: anchor.date, anchorField: anchor.field, anchorLabel: anchor.label,
+        anchorState: anchor.state, anchorReason: anchor.reason,
+        forecastFromPlan: !actual.present && anchor.state === 'valid' && anchor.field !== 'ActualSubmission',
         selfExcluded, selfExcludedCount: selfExcluded ? 1 : 0
       };
       if (entry.historyIncluded && country && country.sampleCount >= 4) {
         entry.longHistoryFlag = group.duration > country.rangeHighDays + 1.5 * (country.rangeHighDays - country.rangeLowDays);
       }
-      const blockers = actual.present ? group.historyIssues : group.historyIssues.filter(code => code !== 'actual_approval_missing');
+      const blockers = actual.present ? group.historyIssues : [...new Set([
+        ...group.historyIssues.filter(code => !code.startsWith('actual_submission_') && code !== 'actual_approval_missing'),
+        ...anchorReasons(anchor, today)
+      ])];
       if (blockers.length) setStatus(entry, 'unavailable', blockers);
       else if (!support || support.sampleCount < minimumSamples) setStatus(entry, 'insufficient', [selfExcluded ? 'insufficient_benchmark_history' : 'insufficient_history']);
       else {
         setStatus(entry, actual.present ? 'benchmark' : 'estimated', []);
-        entry.predictedDate = entry.actualSubmission + Math.round(support.medianDays) * DAY;
-        entry.rangeStart = entry.actualSubmission + Math.floor(support.rangeLowDays) * DAY;
-        entry.rangeEnd = entry.actualSubmission + Math.ceil(support.rangeHighDays) * DAY;
+        entry.predictedDate = entry.anchorDate + Math.round(support.medianDays) * DAY;
+        entry.rangeStart = entry.anchorDate + Math.floor(support.rangeLowDays) * DAY;
+        entry.rangeEnd = entry.anchorDate + Math.ceil(support.rangeHighDays) * DAY;
         entry.overdue = !actual.present && entry.predictedDate < today;
         entry.reason = actual.present ? 'Historical benchmark from other submissions; this completed record is excluded from its own benchmark'
-          : entry.overdue ? 'Historical estimate has already passed; no new future date has been invented' : 'Country median applied to actual submission date';
+          : entry.overdue ? 'Historical estimate has already passed; no new future date has been invented' : 'Country median applied to ' + entry.anchorLabel.toLowerCase() + ' date';
       }
       summary[entry.status]++;
       bySubID.set(group.id, entry);
@@ -270,5 +343,5 @@
     return { bySubID, byCountry, cutoff: CUTOFF, today, minimumSamples, summary };
   }
 
-  return { analyze, parseDate, reasonLabels, DAY, CUTOFF };
+  return { analyze, resolveSubmissionDates, parseDate, reasonLabels, DAY, CUTOFF };
 });

@@ -1849,7 +1849,11 @@
             "PredictionN",
             "PredictionMedian",
             "PredictionCountry",
-            "PredictionStatus"
+            "PredictionStatus",
+            "PredictionAnchorDate",
+            "PredictionAnchorField",
+            "PredictionAnchorLabel",
+            "PredictionFromPlan"
           ],
           "ops": [
             "count",
@@ -1918,6 +1922,10 @@
             "max",
             "valid",
             "sum",
+            "max",
+            "max",
+            "max",
+            "max",
             "max",
             "max",
             "max",
@@ -1999,7 +2007,11 @@
             "PredictionN",
             "PredictionMedian",
             "PredictionCountry",
-            "PredictionStatus"
+            "PredictionStatus",
+            "PredictionAnchorDate",
+            "PredictionAnchorField",
+            "PredictionAnchorLabel",
+            "PredictionFromPlan"
           ]
         },
         {
@@ -4481,7 +4493,7 @@
             "value": 3
           },
           "tooltip": {
-            "signal": "datum.PredictionStatus==='benchmark' ? {'Historical approval benchmark':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Actual approval':utcFormat(datum.ActualApproval,'%d %b %Y'),'Meaning':'Historical comparison with other completed submissions, not a future forecast','Timing':'Completed submission; recorded dates remain unchanged'} : {'Predicted approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Meaning':'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionDate<utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate)) ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
+            "signal": "datum.PredictionStatus==='benchmark' ? {'Historical approval benchmark':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Anchor':isValid(datum.PredictionAnchorLabel) && datum.PredictionAnchorLabel!=='' ? datum.PredictionAnchorLabel : 'Actual submission','Anchor date':isNumber(datum.PredictionAnchorDate) && isFinite(datum.PredictionAnchorDate) ? utcFormat(datum.PredictionAnchorDate,'%d %b %Y') : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y') : 'Not recorded','Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Actual approval':utcFormat(datum.ActualApproval,'%d %b %Y'),'Meaning':'Historical comparison with other completed submissions, not a future forecast','Timing':'Completed submission; recorded dates remain unchanged'} : {'Predicted approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Anchor':isValid(datum.PredictionAnchorLabel) && datum.PredictionAnchorLabel!=='' ? datum.PredictionAnchorLabel : 'Actual submission','Anchor date':isNumber(datum.PredictionAnchorDate) && isFinite(datum.PredictionAnchorDate) ? utcFormat(datum.PredictionAnchorDate,'%d %b %Y') : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y') : 'Not recorded','Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Basis':datum.PredictionFromPlan ? 'Forecast based on planned submission' : 'Estimate from actual submission date','Meaning':datum.PredictionFromPlan ? 'Conditional on the planned submission date; not a planned approval date or guarantee' : 'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionFromPlan ? 'Forecast assumes the planned submission date is met' : datum.PredictionDate<utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate)) ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
           },
           "cursor": {
             "value": "pointer"
@@ -4605,7 +4617,7 @@
             "value": 2.5
           },
           "tooltip": {
-            "signal": "datum.PredictionStatus==='benchmark' ? {'Historical approval benchmark':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Actual approval':utcFormat(datum.ActualApproval,'%d %b %Y'),'Meaning':'Historical comparison with other completed submissions, not a future forecast','Timing':'Completed submission; recorded dates remain unchanged'} : {'Predicted approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Meaning':'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionDate<utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate)) ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
+            "signal": "datum.PredictionStatus==='benchmark' ? {'Historical approval benchmark':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Anchor':isValid(datum.PredictionAnchorLabel) && datum.PredictionAnchorLabel!=='' ? datum.PredictionAnchorLabel : 'Actual submission','Anchor date':isNumber(datum.PredictionAnchorDate) && isFinite(datum.PredictionAnchorDate) ? utcFormat(datum.PredictionAnchorDate,'%d %b %Y') : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y') : 'Not recorded','Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Actual approval':utcFormat(datum.ActualApproval,'%d %b %Y'),'Meaning':'Historical comparison with other completed submissions, not a future forecast','Timing':'Completed submission; recorded dates remain unchanged'} : {'Predicted approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Anchor':isValid(datum.PredictionAnchorLabel) && datum.PredictionAnchorLabel!=='' ? datum.PredictionAnchorLabel : 'Actual submission','Anchor date':isNumber(datum.PredictionAnchorDate) && isFinite(datum.PredictionAnchorDate) ? utcFormat(datum.PredictionAnchorDate,'%d %b %Y') : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y') : 'Not recorded','Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Basis':datum.PredictionFromPlan ? 'Forecast based on planned submission' : 'Estimate from actual submission date','Meaning':datum.PredictionFromPlan ? 'Conditional on the planned submission date; not a planned approval date or guarantee' : 'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionFromPlan ? 'Forecast assumes the planned submission date is met' : datum.PredictionDate<utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate)) ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
           },
           "cursor": {
             "value": "pointer"

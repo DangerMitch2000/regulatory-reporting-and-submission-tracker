@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
-const { analyze, parseDate, DAY } = require('./predictions.js');
+const { analyze, resolveSubmissionDates, parseDate, DAY } = require('./predictions.js');
 const now = '2026-09-27';
 const iso = n => new Date(n).toISOString().slice(0, 10);
 function completed(id, days = 100, country = 'France', submitted = '2025-01-01') {
@@ -23,6 +23,174 @@ assert.equal(p.overdue, false);
 assert.equal(result.summary.benchmark, 12);
 assert.equal(p.selfExcluded, false);
 assert.equal(result.byCountry.size, 1);
+assert.equal(p.anchorDate, Date.parse('2026-09-01'));
+assert.equal(p.anchorField, 'ActualSubmission');
+assert.equal(p.anchorLabel, 'Actual submission');
+assert.equal(p.forecastFromPlan, false);
+
+// Resolve once per submission over all memberships. The same priority drives
+// filtering and pending estimates: actual, then latest plan, then original plan.
+const submissionPlans = { ...pending, ActualSubmission: null, LatestSubmission: '2027-01-10', OriginalSubmission: '2026-12-01' };
+let anchor = resolveSubmissionDates([submissionPlans]).get('P1');
+assert.deepEqual(anchor, { date: Date.parse('2027-01-10'), field: 'LatestSubmission', label: 'Latest planned submission', state: 'valid', reason: 'Using latest planned submission.' });
+p = analyze([...history, submissionPlans], { now }).bySubID.get('P1');
+assert.equal(p.status, 'estimated');
+assert.equal(p.anchorDate, anchor.date);
+assert.equal(p.anchorField, 'LatestSubmission');
+assert.equal(p.forecastFromPlan, true);
+assert.equal(p.actualSubmission, null);
+assert.equal(iso(p.predictedDate), '2027-04-21');
+assert.equal(p.overdue, false);
+assert.equal(p.sampleCount, 12);
+assert.equal(p.historyIncluded, false, 'A planned submission does not enter actual processing-time history');
+assert.match(p.reason, /latest planned submission/);
+assert.equal(analyze([...history.slice(0, 9), submissionPlans], { now }).bySubID.get('P1').status, 'insufficient');
+assert.equal(analyze([...history.slice(0, 10), submissionPlans], { now }).bySubID.get('P1').status, 'estimated');
+
+anchor = resolveSubmissionDates([{ ...submissionPlans, ActualSubmission: '2026-09-01', LatestSubmission: 'bad plan' }]).get('P1');
+assert.equal(anchor.field, 'ActualSubmission');
+assert.equal(anchor.date, Date.parse('2026-09-01'));
+p = analyze([...history, { ...submissionPlans, ActualSubmission: '2026-09-01', LatestSubmission: 'bad plan' }], { now }).bySubID.get('P1');
+assert.equal(p.status, 'estimated');
+assert.equal(p.forecastFromPlan, false);
+
+anchor = resolveSubmissionDates([{ ...submissionPlans, LatestSubmission: ' ' }]).get('P1');
+assert.equal(anchor.field, 'OriginalSubmission');
+p = analyze([...history, { ...submissionPlans, LatestSubmission: null }], { now }).bySubID.get('P1');
+assert.equal(p.status, 'estimated');
+assert.equal(p.anchorField, 'OriginalSubmission');
+assert.equal(p.anchorDate, Date.parse('2026-12-01'));
+assert.equal(p.forecastFromPlan, true);
+
+// A populated bad higher-priority value must never silently fall through.
+for (const [field, value, expectedState] of [
+  ['ActualSubmission', 'invalid', 'invalid'],
+  ['ActualSubmission', '9999-01-01', 'invalid'],
+  ['ActualSubmission', '2026-02-30', 'invalid'],
+  ['LatestSubmission', 'invalid', 'invalid'],
+  ['LatestSubmission', '9999-01-01', 'invalid']
+]) {
+  const record = { ...submissionPlans, [field]: value };
+  anchor = resolveSubmissionDates([record]).get('P1');
+  assert.equal(anchor.state, expectedState);
+  assert.equal(anchor.field, field);
+  assert.equal(anchor.date, null);
+  p = analyze([...history, record], { now }).bySubID.get('P1');
+  assert.equal(p.status, 'unavailable');
+  assert.equal(p.predictedDate, null);
+}
+for (const field of ['ActualSubmission', 'LatestSubmission', 'OriginalSubmission']) {
+  const originalOnly = { ...submissionPlans, LatestSubmission: null };
+  const record = field === 'OriginalSubmission' ? originalOnly : submissionPlans;
+  const joined = [{ ...record, [field]: '2026-07-01' }, { ...record, [field]: '2026-08-01' }];
+  anchor = resolveSubmissionDates(joined).get('P1');
+  assert.equal(anchor.state, 'conflicting');
+  assert.equal(anchor.field, field);
+  assert.equal(analyze([...history, ...joined], { now }).bySubID.get('P1').status, 'unavailable');
+}
+p = analyze([...history, { ...submissionPlans, ActualSubmission: '2027-01-01' }], { now }).bySubID.get('P1');
+assert.equal(p.status, 'unavailable');
+assert.equal(p.anchorField, 'ActualSubmission');
+assert.ok(p.reasonCodes.includes('actual_submission_future'));
+assert.equal(resolveSubmissionDates([{ ...submissionPlans, ActualSubmission: '2027-01-01' }]).get('P1').date, Date.parse('2027-01-01'), 'Filtering may show a future actual-date record, but forecasting must withhold it');
+
+// Blank higher-priority membership rows cannot mask a populated actual date.
+anchor = resolveSubmissionDates([submissionPlans, { ...submissionPlans, ActualSubmission: '2026-09-01', Product: 'Joined membership' }]).get('P1');
+assert.equal(anchor.field, 'ActualSubmission');
+assert.equal(anchor.date, Date.parse('2026-09-01'));
+assert.equal(resolveSubmissionDates([{ ...pending, SubID: '  SUB-DATE  ' }]).has('SUB-DATE'), true);
+
+// Identity is trim-only, matching app/Vega lookups. Interior spaces and fullwidth
+// characters must not merge genuinely distinct source submission IDs.
+const identityRows = [
+  { ...pending, SubID: 'SUB  1' },
+  { ...pending, SubID: 'SUB 1', ActualSubmission: '2026-09-02' },
+  { ...pending, SubID: ' ＳＵＢ-１ ', ActualSubmission: '2026-09-03' },
+  { ...pending, SubID: 'SUB-1', ActualSubmission: '2026-09-04' },
+  { ...pending, SubID: 123 },
+  { ...pending, SubID: ' 123 ' },
+  { ...pending, SubID: '   ' },
+  { ...pending, SubID: null }
+];
+const identityAnchors = resolveSubmissionDates(identityRows);
+assert.equal(identityAnchors.size, 5);
+assert.equal(identityAnchors.get('SUB  1').date, Date.parse('2026-09-01'));
+assert.equal(identityAnchors.get('SUB 1').date, Date.parse('2026-09-02'));
+assert.equal(identityAnchors.get(identityRows[2].SubID.trim()).date, Date.parse('2026-09-03'));
+assert.equal(identityAnchors.get('SUB-1').date, Date.parse('2026-09-04'));
+assert.equal(identityAnchors.get('123').date, Date.parse('2026-09-01'));
+result = analyze([...history, ...identityRows], { now });
+assert.equal(result.summary.distinctSubmissions, 17);
+assert.equal(result.summary.missingIDRows, 2);
+for (const id of ['SUB  1', 'SUB 1', 'ＳＵＢ-１', 'SUB-1', '123']) {
+  assert.equal(result.bySubID.get(id).status, 'estimated');
+  assert.equal(result.bySubID.get(id).sampleCount, 12);
+  assert.equal(result.bySubID.get(id).anchorDate, identityAnchors.get(id).date);
+}
+assert.equal(analyze([...history, { ...pending, Country: ' Ｆｒａｎｃｅ ' }], { now }).bySubID.get('P1').sampleCount, 12, 'Country normalization remains unchanged');
+
+// Explicitly unmapped higher-priority fields are unknown, not known blanks.
+const allMapped = ['SubID', 'Country', 'ActualApproval', 'ActualSubmission', 'LatestSubmission', 'OriginalSubmission'];
+anchor = resolveSubmissionDates([submissionPlans], { mappedFields: allMapped.filter(field => field !== 'ActualSubmission') }).get('P1');
+assert.equal(anchor.state, 'unmapped');
+assert.equal(anchor.field, 'ActualSubmission');
+anchor = resolveSubmissionDates([{ ...submissionPlans, LatestSubmission: null }], { mappedFields: allMapped.filter(field => field !== 'LatestSubmission') }).get('P1');
+assert.equal(anchor.state, 'unmapped');
+assert.equal(anchor.field, 'LatestSubmission');
+assert.equal(anchor.date, null);
+anchor = resolveSubmissionDates([pending], { mappedFields: ['ActualSubmission'] }).get('P1');
+assert.equal(anchor.state, 'valid', 'A valid actual date does not require lower-priority plan mappings');
+assert.equal(anchor.field, 'ActualSubmission');
+for (const unmapped of ['ActualSubmission', 'LatestSubmission', 'ActualApproval', 'Country']) {
+  p = analyze([...history, submissionPlans], { now, mappedFields: allMapped.filter(field => field !== unmapped) }).bySubID.get('P1');
+  assert.equal(p.status, 'unavailable', unmapped);
+}
+assert.equal(analyze([...history, submissionPlans], { now, mappedFields: new Set(allMapped) }).bySubID.get('P1').status, 'estimated');
+anchor = resolveSubmissionDates([{ ...submissionPlans, LatestSubmission: null, OriginalSubmission: null }], { mappedFields: allMapped.filter(field => field !== 'OriginalSubmission') }).get('P1');
+assert.equal(anchor.state, 'unmapped');
+assert.equal(anchor.field, 'OriginalSubmission');
+anchor = resolveSubmissionDates([{ ...submissionPlans, LatestSubmission: null, OriginalSubmission: null }]).get('P1');
+assert.equal(anchor.state, 'missing');
+assert.equal(anchor.field, null);
+
+// Filtering retains real old business dates; the narrower 2020 rule only affects
+// prediction eligibility. Future plans remain valid through the end of 2100.
+for (const field of ['ActualSubmission', 'LatestSubmission', 'OriginalSubmission']) {
+  const record = { ...submissionPlans, ActualSubmission: null, LatestSubmission: null, OriginalSubmission: null, [field]: '1960-01-01' };
+  assert.equal(resolveSubmissionDates([record]).get('P1').date, Date.parse('1960-01-01'));
+  assert.equal(analyze([...history, record], { now }).bySubID.get('P1').status, 'unavailable');
+}
+assert.equal(resolveSubmissionDates([{ ...submissionPlans, LatestSubmission: '2100-12-31' }]).get('P1').state, 'valid');
+assert.equal(analyze([...history, { ...submissionPlans, LatestSubmission: '2100-12-31' }], { now }).bySubID.get('P1').status, 'estimated');
+assert.equal(resolveSubmissionDates([{ ...submissionPlans, LatestSubmission: '2101-01-01' }]).get('P1').state, 'invalid');
+assert.equal(resolveSubmissionDates([{ ...submissionPlans, LatestSubmission: Date.UTC(99999, 0, 1) }]).get('P1').state, 'invalid');
+assert.equal(resolveSubmissionDates([{ ...submissionPlans, LatestSubmission: '2100-12-31T23:30:00-02:00' }]).get('P1').state, 'invalid');
+assert.equal(resolveSubmissionDates([{ ...submissionPlans, LatestSubmission: '2026-12-31T23:30:00-02:00' }]).get('P1').date, Date.UTC(2027, 0, 1));
+assert.equal(resolveSubmissionDates([{ ...submissionPlans, LatestSubmission: '2026-02-30T00:00:00Z' }]).get('P1').state, 'invalid');
+
+// Completed benchmarks and training never substitute a submission plan for a
+// missing actual submission, even though filtering can still use that plan.
+const missingActualCompleted = { ...submissionPlans, LatestSubmission: '2025-01-01', ActualApproval: '2025-04-01' };
+result = analyze([...history, submissionPlans, { ...missingActualCompleted, SubID: 'DONE-WITHOUT-ACTUAL' }], { now });
+assert.equal(result.summary.qualifyingHistory, 12);
+assert.equal(result.byCountry.get('france').sampleCount, 12);
+p = result.bySubID.get('DONE-WITHOUT-ACTUAL');
+assert.equal(p.status, 'unavailable');
+assert.equal(p.anchorField, 'ActualSubmission');
+assert.equal(p.anchorDate, null);
+assert.equal(p.forecastFromPlan, false);
+assert.equal(p.historyIncluded, false);
+assert.equal(p.selfExcluded, false);
+assert.equal(resolveSubmissionDates([missingActualCompleted]).get('P1').field, 'LatestSubmission');
+
+const plannedSource = Object.freeze([
+  ...history.map(row => Object.freeze({ ...row })),
+  Object.freeze({ ...submissionPlans, LatestSubmission: new Date('2027-01-10'), OriginalSubmission: '2026-12-01' })
+]);
+const plannedSnapshot = structuredClone(plannedSource);
+resolveSubmissionDates(plannedSource);
+analyze(plannedSource, { now, mappedFields: allMapped });
+assert.deepEqual(plannedSource, plannedSnapshot, 'Resolver and plan-based estimates leave all received source values unchanged');
 
 // Membership joins must not increase the historical sample or create additional estimates.
 result = analyze([...history.flatMap(r => [r, { ...r, Product: 'Other product', Country: 'FRANCE' }]), pending, { ...pending, Country: null }], { now });
@@ -212,4 +380,8 @@ assert.equal(result.summary.qualifyingHistory, 10000);
 assert.equal(result.summary.benchmark, 10000);
 assert.equal(result.bySubID.get('BIG0').sampleCount, 4999);
 assert.equal(result.bySubID.get('BIG0').selfExcluded, true);
+const largeAnchors = resolveSubmissionDates([...large, submissionPlans]);
+assert.equal(largeAnchors.size, 10001);
+assert.equal(largeAnchors.get('BIG0').field, 'ActualSubmission');
+assert.equal(largeAnchors.get('P1').field, 'LatestSubmission');
 console.log('Approval prediction checks passed, including 30,000 membership rows (' + Math.round(performance.now() - start) + ' ms).');

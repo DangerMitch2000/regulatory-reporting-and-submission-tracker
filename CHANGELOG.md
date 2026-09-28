@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.8.0 — 2026-09-28
+
+- Add approval forecasts anchored to actual submission, latest planned submission, then original planned submission. Fallback requires genuinely blank higher-priority fields; populated invalid or conflicting values and missing mappings are not silently skipped. Planned dates from January 2020 through December 2100 can anchor future estimates.
+- Add the top Submission date filter with All dates by default, years from received data, inclusive custom From/To bounds with open ends, and No usable date. Resolve each distinct submission using all received evidence so membership filters cannot hide conflicting dates.
+- Apply the date filter alongside existing filters to the Timeline, Data quality worklist and filtered CSV export, while retaining the full delivered cohort for local approval calculations.
+- Keep historical training limited to valid actual submission/approval dates from January 2020 through today and at least 10 qualifying submissions. Completed benchmarks still require at least 10 other qualifying submissions and exclude the target record. Source plans, actual dates and parent summary bars remain unchanged by forecasts.
+
 ## 1.7.1 — 2026-09-28
 
 - Fixed Ctrl+wheel panning by evaluating the chart-position guard inside the signal update, where Vega can resolve its layout values.

@@ -12,7 +12,9 @@ const base = {
   SubCreated: date('2026-01-01'), ROCreated: date('2026-01-01'), AppCreated: date('2026-01-01'),
   ActualDispatch: date('2026-01-15'), ActualSubmission: date('2026-02-01'),
   PredictionDate: date('2026-05-02'), PredictionLow: date('2026-04-02'), PredictionHigh: date('2026-06-01'),
-  PredictionN: 21, PredictionMedian: 90, PredictionCountry: 'Example country', PredictionStatus: 'estimated'
+  PredictionN: 21, PredictionMedian: 90, PredictionCountry: 'Example country', PredictionStatus: 'estimated',
+  PredictionAnchorDate: date('2026-02-01'), PredictionAnchorField: 'ActualSubmission',
+  PredictionAnchorLabel: 'Actual submission', PredictionFromPlan: false
 };
 
 async function create(rows, signals = {}) {
@@ -83,12 +85,73 @@ async function create(rows, signals = {}) {
     assert.equal(tip['Original planned approval'], '15 Mar 2026');
     assert.equal(tip['Latest planned approval'], '15 Apr 2026');
     assert.equal(tip['Qualifying completed submissions'], 21);
+    assert.equal(tip.Anchor, 'Actual submission');
+    assert.equal(tip['Anchor date'], '01 Feb 2026');
+    assert.equal(tip.Basis, 'Estimate from actual submission date');
     assert.match(tip.Meaning, /not a planned date or guarantee/);
   }
   assert.ok(allTips(view.scenegraph().root).some(tip => tip.Milestone === 'OriginalApproval' && tip.Date === '15 Mar 2026'));
   assert.ok(allTips(view.scenegraph().root).some(tip => tip.Milestone === 'LatestApproval' && tip.Date === '15 Apr 2026'));
   await view.toSVG();
   view.finalize();
+
+  // Future planned submissions can carry engine-generated conditional forecasts.
+  // No actual submission or actual processing time is manufactured for the plot.
+  for (const anchorField of ['OriginalSubmission', 'LatestSubmission']) {
+    const anchorLabel = anchorField === 'OriginalSubmission' ? 'Original planned submission' : 'Latest planned submission';
+    const anchorDate = date(anchorField === 'LatestSubmission' ? '2027-06-01' : '2027-05-01');
+    const future = {
+      ...base, ActualDispatch: null, ActualSubmission: null, ActualApproval: null,
+      OriginalSubmission: date('2027-05-01'),
+      LatestSubmission: anchorField === 'LatestSubmission' ? date('2027-06-01') : null,
+      PredictionAnchorDate: anchorDate,
+      PredictionAnchorField: anchorField, PredictionAnchorLabel: anchorLabel, PredictionFromPlan: true,
+      PredictionDate: anchorDate + 90 * day, PredictionLow: anchorDate + 60 * day, PredictionHigh: anchorDate + 120 * day
+    };
+    const sourceEnd = future[anchorField];
+    view = await create([future, { ...future, Product: 'Second product' }], { mode: 'Compare', nowDate: date('2026-09-28') });
+    const row = view.data('sub')[0];
+    assert.equal(view.data('predictionPoints').length, 1);
+    assert.equal(view.data('predictions').length, 1);
+    assert.equal(row.PredictionAnchorDate, sourceEnd);
+    assert.equal(row.PredictionAnchorField, anchorField);
+    assert.equal(row.PredictionAnchorLabel, anchorLabel);
+    assert.equal(row.PredictionFromPlan, true);
+    assert.equal(row.ActualSubmission, null);
+    assert.equal(row.ActualDispatch, null);
+    assert.equal(row.ActualApproval, null);
+    assert.equal(row.DispatchDays, null);
+    assert.equal(row.ApprovalDays, null);
+    assert.equal(row.OpenAge, '');
+    assert.equal(row.start, future.OriginalSubmission);
+    assert.equal(row.end, sourceEnd);
+    assert.equal(view.data('apps')[0].end, sourceEnd);
+    assert.equal(view.data('ros')[0].end, sourceEnd);
+    assert.equal(view.data('extent')[0].lo, future.OriginalSubmission);
+    assert.equal(view.data('extent')[0].hi, future.PredictionHigh);
+    assert.ok(view.signal('xhi') > future.PredictionHigh);
+    assert.equal(view.data('milestones').filter(row => row.milestone.startsWith('Actual')).length, 0);
+    assert.equal(view.data('milestones').find(row => row.milestone === anchorField).date, sourceEnd);
+    assert.equal(view.data('dataset')[0].ActualSubmission, null);
+    assert.equal(view.data('dataset')[0][anchorField], sourceEnd);
+    const tips = allTips(view.scenegraph().root).filter(tip => tip['Predicted approval']);
+    assert.equal(tips.length, 2);
+    for (const tip of tips) {
+      assert.equal(tip['Predicted approval'], anchorField === 'LatestSubmission' ? '30 Aug 2027' : '30 Jul 2027');
+      assert.equal(tip.Anchor, anchorLabel);
+      assert.equal(tip['Anchor date'], anchorField === 'LatestSubmission' ? '01 Jun 2027' : '01 May 2027');
+      assert.equal(tip.Basis, 'Forecast based on planned submission');
+      assert.equal(tip.Timing, 'Forecast assumes the planned submission date is met');
+      assert.match(tip.Meaning, /Conditional on the planned submission date/);
+    }
+    await view.toSVG();
+    view.signal('axisMode', 'Elapsed days');
+    await view.runAsync();
+    assert.equal(view.data('predictionPoints').length, 0);
+    assert.equal(view.data('milestones').length, 0);
+    assert.equal(view.data('sub')[0].ActualSubmission, null);
+    view.finalize();
+  }
 
   // Completed submissions get only an explicitly qualified benchmark. The
   // actual approval remains a filled marker, while its benchmark is hollow.
@@ -281,5 +344,5 @@ async function create(rows, signals = {}) {
   await view.runAsync();
   assert.equal(view.data('predictions').length, 0);
   view.finalize();
-  console.log('PASS: Vega approval estimates and completed benchmarks alongside intact plan/actual markers, status-aware tooltips, deduplication, eligibility, fitting, hierarchy, elapsed isolation, clipping, past estimates and bounded expiry toggle.');
+  console.log('PASS: Vega planned-submission forecasts, actual-based estimates and completed benchmarks alongside intact source markers, anchor/status-aware tooltips, deduplication, eligibility, fitting, hierarchy, elapsed isolation, clipping, past estimates and bounded expiry toggle.');
 })().catch(error => { console.error(error); process.exitCode = 1; });
