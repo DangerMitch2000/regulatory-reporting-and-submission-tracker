@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.9.1 — 2026-09-28
+
+- Treat valid registration end dates after 31 December 2100 UTC as no end date, including years 8900 and 9999. Remove false errors in Data quality and Details while retaining invalid and conflicting real-date checks.
+- Preserve source records and exclude placeholders from timeline expiry markers and date bounds.
+
 ## 1.9.0 — 2026-09-28
 
 - Add a top-right Theme selector with Dark as the default and Light as an option for the entire visual.

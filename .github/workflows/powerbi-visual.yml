@@ -29,6 +29,7 @@ jobs:
           node-version: '22'
       - name: Generate project from demo sources
         run: |
+          node open-end-test.cjs
           node quality-test.cjs
           node quality-ui-test.cjs
           node prediction-test.cjs
@@ -62,7 +63,7 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.9.0.0.pbiviz
+          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.9.1.0.pbiviz
           cp powerbi-visual/README.md release/POWER-BI-INSTALL.md
           cp powerbi-visual/verify/overview.png release/powerbi-overview.png
           cp powerbi-visual/verify/light-theme.png release/powerbi-light-theme.png
@@ -76,7 +77,7 @@ jobs:
           cp powerbi-visual/verify/approval-benchmark.png release/approval-benchmark.png
           cp powerbi-visual/verify/planned-submission-forecast.png release/planned-submission-forecast.png
           cp powerbi-visual/verify/submission-date-filter.png release/submission-date-filter.png
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs tracker-theme.verify.cjs test-timeline-theme.cjs predictions.js prediction-test.cjs submission-period.js submission-period-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs tracker-theme.verify.cjs test-timeline-theme.cjs predictions.js prediction-test.cjs submission-period.js submission-period-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs open-end-test.cjs
           cd release && sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
@@ -86,10 +87,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view v1.9.0 >/dev/null 2>&1; then
-            gh release create v1.9.0 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.9.0" --notes "Regulatory Tracker 1.9.0: whole-visual Dark and Light themes selected at the top-right. Dark is the default for new visual instances. Timeline, filters, menus, Details, approval estimates, tooltips and Data quality follow the selected theme. Light uses higher-contrast status colours while state identities and all calculations remain unchanged. Theme switching preserves filters, selection, pins and timeline position; resize and data refresh retain the selected theme. The choice is local to each instance and is not saved across report reopening. Calculation, adapter, TypeScript, theme and actual-class browser checks passed. This is an uncertified Power BI preview; verify import in your report. Built from commit $GITHUB_SHA."
+          if ! gh release view v1.9.1 >/dev/null 2>&1; then
+            gh release create v1.9.1 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.9.1" --notes "Regulatory Tracker 1.9.1: valid registration end dates after 31 December 2100 UTC, including placeholder years 8900 and 9999, mean no registration end date. Removes false errors in Data quality and Details. Source records remain unchanged; real expiry dates through 2100, invalid-date checks and conflicting real-date checks remain supported. Calculation, adapter, TypeScript and actual-class browser checks passed. Built from commit $GITHUB_SHA."
           else
-            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.9.0" -f sha="$GITHUB_SHA" -F force=false
-            gh release edit v1.9.0 --target "$GITHUB_SHA" --notes "Regulatory Tracker 1.9.0: whole-visual Dark and Light themes selected at the top-right. Dark is the default for new visual instances. Timeline, filters, menus, Details, approval estimates, tooltips and Data quality follow the selected theme. Light uses higher-contrast status colours while state identities and all calculations remain unchanged. Theme switching preserves filters, selection, pins and timeline position; resize and data refresh retain the selected theme. The choice is local to each instance and is not saved across report reopening. Calculation, adapter, TypeScript, theme and actual-class browser checks passed. This is an uncertified Power BI preview; verify import in your report. Built from commit $GITHUB_SHA."
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.9.1" -f sha="$GITHUB_SHA" -F force=false
+            gh release edit v1.9.1 --target "$GITHUB_SHA" --notes "Regulatory Tracker 1.9.1: valid registration end dates after 31 December 2100 UTC, including placeholder years 8900 and 9999, mean no registration end date. Removes false errors in Data quality and Details. Source records remain unchanged; real expiry dates through 2100, invalid-date checks and conflicting real-date checks remain supported. Calculation, adapter, TypeScript and actual-class browser checks passed. Built from commit $GITHUB_SHA."
           fi
-          gh release upload v1.9.0 release/* --clobber
+          gh release upload v1.9.1 release/* --clobber

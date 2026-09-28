@@ -892,13 +892,18 @@
         },
         {
           "type": "formula",
+          "as": "_openRegistrationEnd",
+          "expr": "isValid(datum._RegistrationEnd) && isFinite(datum._RegistrationEnd) && datum._RegistrationEnd>=utc(2101,0,1)"
+        },
+        {
+          "type": "formula",
           "as": "_RegistrationEnd",
           "expr": "isValid(datum._RegistrationEnd) && isFinite(datum._RegistrationEnd) && datum._RegistrationEnd<utc(2101,0,1) ? datum._RegistrationEnd : null"
         },
         {
           "type": "formula",
           "as": "_badRegistrationEnd",
-          "expr": "isValid(datum.RegistrationEnd) && datum.RegistrationEnd!=='' && !isValid(datum._RegistrationEnd) ? 1 : 0"
+          "expr": "!datum._openRegistrationEnd && (isValid(datum.RegistrationEnd) && datum.RegistrationEnd!=='' && !isValid(datum._RegistrationEnd) ? 1 : 0)"
         }
       ]
     },
@@ -3362,7 +3367,7 @@
         {
           "type": "formula",
           "as": "text",
-          "expr": "datum.issueField+': '+(datum[datum.issueField+'Bad']>0 ? (datum.issueField==='RegistrationEnd' ? 'Invalid input or date after 2100 — withheld' : 'Invalid input — withheld') : datum[datum.issueField+'Min']!==datum[datum.issueField+'Max'] ? 'Conflicting dates — withheld' : !isValid(datum[datum.issueField]) ? 'Not recorded' : datum[datum.issueField+'Valid']<datum.sourceRows ? 'Some membership rows blank' : 'OK')"
+          "expr": "datum.issueField+': '+(datum[datum.issueField+'Bad']>0 ? (datum.issueField==='RegistrationEnd' ? 'Invalid input — withheld' : 'Invalid input — withheld') : datum[datum.issueField+'Min']!==datum[datum.issueField+'Max'] ? 'Conflicting dates — withheld' : !isValid(datum[datum.issueField]) ? 'Not recorded' : datum[datum.issueField+'Valid']<datum.sourceRows ? 'Some membership rows blank' : 'OK')"
         },
         {
           "type": "filter",

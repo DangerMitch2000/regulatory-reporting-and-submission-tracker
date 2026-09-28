@@ -89,19 +89,20 @@
     return normalized ? [normalized] : [];
   }
   function dateBucket() {
-    return { raw: new Map(), invalid: new Map(), beyond: new Map(), days: new Set(), present: false };
+    return { raw: new Map(), invalid: new Map(), days: new Set(), present: false };
   }
   function addDate(bucket, value, field) {
     const parsed = parseDate(value);
     if (parsed.state === 'blank') return;
+    // Far-future registration expiry values are source-system open-ended sentinels.
+    if (field === 'RegistrationEnd' && parsed.state === 'valid' && parsed.day >= EXPIRY_LIMIT) return;
     bucket.present = true;
     addRaw(bucket.raw, value);
     if (parsed.state === 'invalid') addRaw(bucket.invalid, value);
-    else if (field === 'RegistrationEnd' && (value instanceof Date ? value.getTime() : typeof value === 'number' ? value : Date.parse(value.trim())) >= EXPIRY_LIMIT) addRaw(bucket.beyond, value);
     else bucket.days.add(parsed.day);
   }
   function resolvedDate(bucket) {
-    return bucket && bucket.invalid.size === 0 && bucket.beyond.size === 0 && bucket.days.size === 1 ? bucket.days.values().next().value : null;
+    return bucket && bucket.invalid.size === 0 && bucket.days.size === 1 ? bucket.days.values().next().value : null;
   }
   function issueSort(a, b) {
     const siteA = a.sites[0] || '\uffff', siteB = b.sites[0] || '\uffff';
@@ -178,9 +179,6 @@
         if (bucket.invalid.size) addIssue('invalid_date', 'error', field, rawValues(bucket.invalid),
           FIELD_LABELS[field] + ' contains an invalid or ambiguous date.',
           'Verify the original record and replace the value with a valid date; use a Date field or unambiguous ISO date.');
-        if (bucket.beyond.size) addIssue('registration_end_after_2100', 'error', field, rawValues(bucket.beyond),
-          'Registration end is after 31 December 2100 and is withheld from the timeline.',
-          'Confirm the real expiry date or remove the placeholder in the source; do not substitute an arbitrary date.');
         if (bucket.days.size > 1) addIssue('conflicting_dates', 'error', field, rawValues(bucket.raw),
           'Different nonblank ' + FIELD_LABELS[field].toLowerCase() + ' dates were supplied for the same submission.',
           'Reconcile the source dates and relationships so the submission has one correct milestone date.');

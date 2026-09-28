@@ -14,8 +14,8 @@ assert.equal(result.issues.length, 0);
 assert.equal(result.affectedSubmissions, 0);
 assert.equal(run([{ ...base, ActualApproval: '1960-01-01', RegistrationEnd: '2040-12-31' }]).issues.length, 0);
 assert.equal(run([{ ...base, RegistrationEnd: '2100-12-31T23:59:59Z' }]).issues.length, 0);
-assert.equal(run([{ ...base, RegistrationEnd: '2100-12-31T23:59:59-12:00' }]).issues[0].rule, 'registration_end_after_2100', 'Expiry bound matches the UTC timestamp guard in the timeline');
-assert.equal(run([{ ...base, RegistrationEnd: '2100-12-31T23:30:00-02:00' }]).issues[0].rule, 'registration_end_after_2100');
+assert.equal(run([{ ...base, RegistrationEnd: '2100-12-31T23:59:59-12:00' }]).issues.length, 0, 'Expiry bound matches the UTC timestamp guard in the timeline');
+assert.equal(run([{ ...base, RegistrationEnd: '2100-12-31T23:30:00-02:00' }]).issues.length, 0);
 assert.equal(run([{ ...base, RegistrationEnd: '2101-01-01T00:00:00+14:00' }]).issues.length, 0);
 
 // Explicit mapping differentiates an absent role from a mapped blank value.
@@ -35,23 +35,21 @@ assert.deepEqual(result.issues[0].appIDs, ['APP-A']);
 // and multiple site/BU memberships. It retains all site memberships for filtering.
 const bad = { ...base, LatestApproval: 'nonsense', RegistrationEnd: '9999-12-31' };
 result = run([bad, { ...bad, Product: 'Second', Manufacturer: 'South', BusinessUnit: 'CMI', ROID: 'RO-B', AppID: 'APP-B' }, { ...bad, Product: 'Third' }]);
-assert.equal(result.issues.length, 2);
+assert.equal(result.issues.length, 1);
 assert.equal(result.affectedSubmissions, 1);
 assert.deepEqual(result.issues[0].sites, ['North', 'South']);
 assert.deepEqual(result.issues[0].businessUnits, ['CMI', 'ID']);
 assert.deepEqual(result.issues[0].roIDs, ['RO-A', 'RO-B']);
 assert.deepEqual(result.issues[0].appIDs, ['APP-A', 'APP-B']);
-assert.equal(worklist(result, { site: 'south', businessUnits: ['id'] }).length, 2);
+assert.equal(worklist(result, { site: 'south', businessUnits: ['id'] }).length, 1);
 assert.equal(worklist(result, { site: 'West' }).length, 0);
-assert.equal(worklist(result, { query: '9999' }).length, 1);
+assert.equal(worklist(result, { query: '9999' }).length, 0);
 assert.equal(worklist(result, { category: 'review' }).length, 0);
-assert.deepEqual(byRule(result, 'registration_end_after_2100')[0].sourceValues, ['9999-12-31']);
+assert.equal(byRule(result, 'registration_end_after_2100').length, 0);
 
-for (const value of ['2101-01-01', '9999-01-01', Date.UTC(99999, 0, 1), new Date(Date.UTC(99999, 0, 1))]) {
+for (const value of ['2101-01-01', '8900-01-01', '9999-01-01', Date.UTC(99999, 0, 1), new Date(Date.UTC(99999, 0, 1))]) {
   result = run([{ ...base, RegistrationEnd: value }]);
-  assert.equal(result.issues.length, 1);
-  assert.equal(result.issues[0].rule, 'registration_end_after_2100');
-  assert.equal(result.issues[0].category, 'error');
+  assert.equal(result.issues.length, 0);
 }
 assert.equal(run([{ ...base, RegistrationEnd: '99999-01-01' }]).issues[0].rule, 'invalid_date');
 
