@@ -157,6 +157,7 @@ assert.throws(() => run([], { now: 'invalid' }), /current date/);
 assert.equal(run([]).issues.length, 0);
 
 const sandbox = vm.createContext({});
+vm.runInContext(fs.readFileSync(require.resolve('./dispatch-required.js'), 'utf8'), sandbox);
 vm.runInContext(fs.readFileSync(require.resolve('./quality.js'), 'utf8'), sandbox);
 assert.equal(typeof sandbox.regulatoryQuality.analyze, 'function');
 assert.equal(sandbox.regulatoryQuality.analyze([{ ...base, ActualDispatch: 'bad' }], { now }).issues.length, 1);

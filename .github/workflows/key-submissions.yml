@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'dispatch-required.js'
       - 'key-*'
       - '.github/workflows/key-submissions.yml'
 permissions:
@@ -37,11 +38,12 @@ jobs:
       - name: Prepare separate release
         run: |
           mkdir -p key-release
-          cp key-submissions/dist/*.pbiviz key-release/key-submissions-2026-1.0.1.0.pbiviz
+          cp key-submissions/dist/*.pbiviz key-release/key-submissions-2026-1.1.0.0.pbiviz
           cp key-submissions.README.md key-release/KEY-SUBMISSIONS-INSTALL.md
           cp key-preview.html key-release/key-demo.html
           cp key-submissions/verify/key-preview.png key-release/key-preview.png
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf key-release/key-source.tar.gz key-submissions key-submissions.build.cjs key-submissions.logic.js key-submissions.ui.js key-submissions.css key-submissions.README.md key-test.cjs key-host-test.cjs key-browser-test.cjs key-demo.cjs
+          cp key-submissions/verify/key-dispatch-details.png key-release/key-dispatch-details.png
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf key-release/key-source.tar.gz key-submissions key-submissions.build.cjs key-submissions.logic.js key-submissions.ui.js key-submissions.css key-submissions.README.md key-test.cjs key-host-test.cjs key-browser-test.cjs key-demo.cjs dispatch-required.js
           cd key-release && sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
@@ -51,5 +53,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create key-submissions-2026-v1.0.1 --target "$GITHUB_SHA" --prerelease --title "Key Submissions — 2026 (ID) 1.0.1" --notes "Fixes empty results when the source flag uses the plural Key Submissions; accepts singular and plural while excluding both Non-Key variants. Separate Power BI visual fixed to ID business unit and dispatch year 2026, using the explicit Key Submission flag. Ten rows per page, search and selectable full details; duplicate product/country memberships count once. Other visuals unchanged. Scope, compiled host and real-browser tests passed before packaging. Fictional public demo included. Uncertified preview: actual Power BI import and model relationships need verification. See KEY-SUBMISSIONS-INSTALL.md."
-          gh release upload key-submissions-2026-v1.0.1 key-release/*
+          gh release create key-submissions-2026-v1.1.0 --target "$GITHUB_SHA" --prerelease --title "Key Submissions — 2026 (ID) 1.1.0" --notes "Adds optional Submission Dispatch required mapping and an All-default filter. Explicit False skips the pending dispatch step; when all dispatch dates are blank, a clearly labelled submission/approval date can qualify a key ID record for 2026. Invalid higher-priority dates still block fallback. Blanks, conflicts, invalid values and unmapped fields remain distinct. Real date values stay intact. Scope, optional mapping, conflict, compiled-host and browser checks passed. See KEY-SUBMISSIONS-INSTALL.md."
+          gh release upload key-submissions-2026-v1.1.0 key-release/*

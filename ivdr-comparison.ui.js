@@ -1,9 +1,9 @@
-import {compare,viewingDay,categories} from './ivdr-comparison.logic.js';
+import {compare,viewingDay,categories,dispatchRequiredOptions} from './ivdr-comparison.logic.js';
 const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
 const percent=n=>n.toFixed(1)+'%';
-export function render(root,rows,{now=new Date(),state={},onChange=(patch)=>{},expanded=new Set(),onExpansion=(key)=>{},notice='',projectMapped=true,synthetic=false}={}){
- const r=compare(projectMapped?rows:[],viewingDay(now),state);root.replaceChildren();root.className='ivdrOverview';const opts={now,state,onChange,expanded,onExpansion,notice,projectMapped,synthetic};const redraw=()=>render(root,rows,opts);if(root._slide&&projectMapped)return ivdrSlide(root,r,opts,redraw);root.onkeydown=null;
+export function render(root,rows,{now=new Date(),state={},onChange=(patch)=>{},expanded=new Set(),onExpansion=(key)=>{},notice='',projectMapped=true,dispatchRequiredMapped=true,synthetic=false}={}){
+ const r=compare(projectMapped?rows:[],viewingDay(now),{...state,dispatchRequiredMapped});root.replaceChildren();root.className='ivdrOverview';const opts={now,state,onChange,expanded,onExpansion,notice,projectMapped,dispatchRequiredMapped,synthetic};const redraw=()=>render(root,rows,opts);if(root._slide&&projectMapped)return ivdrSlide(root,r,opts,redraw);root.onkeydown=null;
  const header=el('header'),titles=el('div');titles.append(el('h1','IVDR Registration Overview'),el('p',r.year+' · '+(r.month<0?'Full year':months[r.month])+' · distinct submissions','subtitle'));header.append(titles,el('span','As of '+now.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}),'asof'));root.append(header);
  if(synthetic)root.append(el('p','Fictional demonstration data','demoNote'));
  if(notice)root.append(el('p',notice,'notice'));
@@ -15,7 +15,9 @@ export function render(root,rows,{now=new Date(),state={},onChange=(patch)=>{},e
  dropdown('Site','site',[{value:'*',label:'All sites'},...r.siteChoices.map(s=>({value:s.key,label:s.label}))],state.site??'*');
  dropdown('Month','month',[{value:-1,label:'All months'},...months.map((label,value)=>({value,label}))],r.month);
  dropdown('Registration group','classification',[{value:'*',label:'IVDR + Non-IVDR'},{value:'ivdr',label:'IVDR'},{value:'non',label:'Non-IVDR'}],state.classification??'*');
+ dropdown('Dispatch required','dispatchRequired',dispatchRequiredOptions.map(({key,label})=>({value:key,label})),r.dispatchRequired);
  const checkLabel=el('label',undefined,'check'),check=el('input');check.type='checkbox';check.checked=!!state.includeInferred;check.onchange=()=>onChange({includeInferred:check.checked});checkLabel.append(check,document.createTextNode('Include inferred dispatches'));controls.append(checkLabel);root.append(controls);
+ if(!dispatchRequiredMapped)root.append(el('p','Dispatch required field not mapped. Existing dispatch rules apply; blank is not the same as False.','mappingNote'));
  const summary=el('div',undefined,'summary');for(const [label,value,cls]of [['Total submissions',r.total,''],['IVDR',r.ivdr,'ivdr'],['Non-IVDR',r.non,'non'],['IVDR share',percent(r.share),'']]){const card=el('div',undefined,'metric '+cls);card.append(el('span',label),el('strong',String(value)));summary.append(card)}root.append(summary);
  const legend=el('div',undefined,'legend');for(const [name,cls]of [['IVDR','ivdr'],['Non-IVDR','non']]){const label=el('span');label.append(el('i',undefined,cls),document.createTextNode(name));legend.append(label)}legend.append(el('span','Blank project values count as Non-IVDR.','muted'));root.append(legend);
  const layout=el('div',undefined,'comparisonLayout'),tablePanel=el('section',undefined,'tablePanel'),chartPanel=el('section',undefined,'chartPanel');layout.append(tablePanel,chartPanel);root.append(layout);
@@ -34,8 +36,10 @@ export function render(root,rows,{now=new Date(),state={},onChange=(patch)=>{},e
  });
  if(!r.total)chart.append(el('p','No submissions match this selection.','empty'));
  const totals=el('details',undefined,'progressTotals');totals.append(el('summary','Progress totals for this selection'));const text=categories.map((c,i)=>i===3&&!state.includeInferred?'':c+': '+r.progress[i].total).filter(Boolean).join(' · ');totals.append(el('p',text));root.append(totals);
- const cleanup=el('div',undefined,'cleanup');cleanup.append(el('strong','Missing Dates — '+r.year+': '+r.missing.length),el('p','No usable dispatch date, but actual submission or approval occurred this year. Scoped to Business unit, Site and Registration group; all months, since no dispatch month is known.'));if(state.includeInferred)cleanup.append(el('p','Undated inferred: '+r.undatedInferred.length+' across all filtered years. Outside chart totals; may overlap Missing Dates.'));root.append(cleanup);
+ const notRequired=el('div',undefined,'notRequired');notRequired.append(el('strong','Dispatch not required: '+r.progress[4].total+' in the dated comparison'),el('p',r.notRequiredOutside.length+' additional '+r.year+' submissions without a usable dispatch date: '+r.notRequiredOutsideIVDR+' IVDR / '+r.notRequiredOutsideNon+' Non-IVDR. Outside dated totals; all months within selected filters.'));root.append(notRequired);
+ const cleanup=el('div',undefined,'cleanup');cleanup.append(el('strong','Missing Dates — '+r.year+': '+r.missing.length),el('p','No usable dispatch date, but actual submission or approval occurred this year. Excludes Dispatch required = False. Scoped to all selected filters; all months, since no dispatch month is known.'));if(state.includeInferred)cleanup.append(el('p','Undated inferred: '+r.undatedInferred.length+' across all filtered years. Outside chart totals; may overlap Missing Dates.'));root.append(cleanup);
  const checks=el('details',undefined,'checks');checks.append(el('summary','Counting and data checks'),el('p','Each submission counts once. IVDR plus rebranding or UDI counts as IVDR; blanks and labels without IVDR count as Non-IVDR. Multiple sites are counted once as unallocated. Dispatch month and inference rules match the Roadmap.'));
+ checks.append(el('p','Dispatch required preserves True, False and Blank. Only explicit False is Dispatch not required. Conflicting or unrecognised values remain review items and follow existing date rules. Dated False records remain in the IVDR / Non-IVDR totals.'));
  checks.append(el('p',r.excluded.length+' excluded for required-date issues · '+r.issues.length+' records with date issues (all filtered years) · '+r.ambiguousSites.length+' multi-site records (full year) · '+r.missingIdRows+' rows without an identifier (business-unit scope).'));
  const list=el('ul');r.issues.forEach(x=>list.append(el('li',x.id+': '+x.fields.join(', '))));r.ambiguousSites.forEach(x=>list.append(el('li',x.id+': '+x.sites.join(', '))));checks.append(list);root.append(checks);
  slideButton(root,redraw);return r;
@@ -53,9 +57,9 @@ function slideCanvas(root,title,subtitle,height,exit){
 function slideButton(root,draw){const b=el('button','Screenshot mode');b.className='captureButton';b.title='Slide-ready layout. Press Escape to return to controls.';b.onclick=()=>{root._slide=true;draw();root.focus?.()};root.append(b)}
 
 function ivdrSlide(root,r,o,exit){
- const height=Math.max(780,354+r.sites.length*58+100),unit=o.state.businessUnit===undefined||o.state.businessUnit==='*'?'All':o.state.businessUnit??'Unassigned',site=o.state.site&&o.state.site!=='*'?(r.siteChoices.find(s=>s.key===o.state.site)?.label||o.state.site):'All sites',group=o.state.classification==='ivdr'?'IVDR':o.state.classification==='non'?'Non-IVDR':'IVDR + Non-IVDR';
+ const height=Math.max(830,354+r.sites.length*58+150),unit=o.state.businessUnit===undefined||o.state.businessUnit==='*'?'All':o.state.businessUnit??'Unassigned',site=o.state.site&&o.state.site!=='*'?(r.siteChoices.find(s=>s.key===o.state.site)?.label||o.state.site):'All sites',group=o.state.classification==='ivdr'?'IVDR':o.state.classification==='non'?'Non-IVDR':'IVDR + Non-IVDR';
  const {text,rect}=slideCanvas(root,r.year+' Registration: IVDR vs Non-IVDR','Business unit: '+unit+' · '+site+' · '+(r.month<0?'Full year':months[r.month])+' · '+group,height,exit);
- text(24,111,'Inferred dispatches '+(o.state.includeInferred?'included':'excluded')+' · As of '+o.now.toLocaleDateString('en-GB')+(o.synthetic?' · Fictional demonstration data':''),19);if(o.notice)text(24,143,o.notice,18,'#8a4b00');
+ text(24,111,'Inferred dispatches '+(o.state.includeInferred?'included':'excluded')+' · As of '+o.now.toLocaleDateString('en-GB')+(o.synthetic?' · Fictional demonstration data':''),19);text(24,140,'Dispatch required: '+(dispatchRequiredOptions.find(option=>option.key===r.dispatchRequired)?.label||'All')+(!o.dispatchRequiredMapped?' · Field not mapped':''),19);if(o.notice)text(24,height-90,o.notice,18,'#8a4b00');
  [['Total submissions',r.total],['IVDR',r.ivdr],['Non-IVDR',r.non],['IVDR share',percent(r.share)]].forEach(([label,value],i)=>{const x=24+i*294;rect(x,162,275,89,'#f1f5fa');text(x+14,190,label,21);text(x+14,233,value,35,'#122c49','start',700)});
  rect(24,274,17,17,'#7455c9');text(50,290,'IVDR',22);rect(155,274,17,17,'#16867e');text(181,290,'Non-IVDR',22);text(350,290,'Blank project values count as Non-IVDR',19);
  text(24,333,'Site',22);text(280,333,'IVDR',21,'#6945be','end');text(402,333,'Non-IVDR',21,'#116d66','end');text(509,333,'Total',21,'#24364b','end');text(558,333,'Volume by site',24,'#122c49','start',650);text(1174,333,'IVDR / Non-IVDR · IVDR %',19,'#24364b','end');
@@ -63,6 +67,7 @@ function ivdrSlide(root,r,o,exit){
  rect(558,y-16,356,22,'#edf2f7');rect(558,y-16,s.ivdr/max*356,22,'#7455c9');rect(558+s.ivdr/max*356,y-16,s.non/max*356,22,'#16867e');text(1174,y,s.ivdr+' / '+s.non+' · '+percent(s.total?s.ivdr/s.total*100:0),22,'#24364b','end',600)});
  const y=378+r.sites.length*58;rect(20,y-30,497,45,'#eaf0f8');text(24,y,'Grand total',22,'#122c49','start',700);text(280,y,r.ivdr,25,'#6945be','end',700);text(402,y,r.non,25,'#116d66','end',700);text(509,y,r.total,25,'#122c49','end',700);
  if(!r.total)text(558,392,'No submissions match this selection',23);
- text(24,height-30,'Missing Dates — '+r.year+': '+r.missing.length+' · All months within selected filters · Distinct submissions',19);
+ text(24,height-60,'Dispatch not required: '+r.progress[4].total+' dated + '+r.notRequiredOutside.length+' without dispatch dates ('+r.notRequiredOutsideIVDR+' IVDR / '+r.notRequiredOutsideNon+' Non-IVDR)',19);
+ text(24,height-30,'Missing Dates — '+r.year+': '+r.missing.length+' · All months within selected filters · Undated records outside totals',19);
  return r;
 }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.10.0 — 2026-09-29
+
+- Add the optional Submission Dispatch required field and a top filter shared by Timeline and Data quality. Keep True, False, blank, conflicting/invalid and unmapped values distinct.
+- Show the requirement in Details, the data-quality inspector and CSV export. Resolve consistent values per submission using full delivered evidence.
+- Suppress overdue dispatch-plan prompts only for explicit False. Retain source dates, submission/approval checks, estimates and open-ended registration handling.
+
 ## 1.9.1 — 2026-09-28
 
 - Treat valid registration end dates after 31 December 2100 UTC as no end date, including years 8900 and 9999. Remove false errors in Data quality and Details while retaining invalid and conflicting real-date checks.

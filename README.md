@@ -1,8 +1,26 @@
-# Regulatory Tracker 1.9.1
+# Regulatory Tracker 1.10.0
 
-[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.9.1 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.9.1) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.9.1/regulatory-tracker-1.9.1.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.10.0 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.10.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.10.0/regulatory-tracker-1.10.0.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
+
+## New in 1.10.0: Dispatch requirement
+
+Map the Submission Dispatch required field to the optional Dispatch required (DispatchRequired) role. True means required, False means not required, and blank remains unknown. A top All-default filter applies to Timeline and Data quality, including CSV export. Details and the worklist show the recorded requirement. Conflicting or invalid values never become False, and missing mappings stay explicit. Resolve the value across all delivered rows for each submission before local filters. Explicit False suppresses overdue dispatch-plan warnings only; source milestone dates, submission/approval checks and historical approval training remain unchanged. Unmapped visuals retain their previous behaviour.
+
+## Updated visual downloads
+
+Map your **Submission dispatch required c** source field to **Dispatch required** in each updated visual. Keep the True / False / blank values; no calculated replacement field is needed.
+
+| Visual | Download | Demo |
+| --- | --- | --- |
+| Regulatory Tracker 1.10.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.10.0/regulatory-tracker-1.10.0.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-timeline-demo/) |
+| Registration Overview / Roadmap 1.4.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/roadmap-2026-v1.4.0/roadmap-2026-1.4.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-timeline-demo/roadmap-preview.html) |
+| IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-timeline-demo/ivdr-preview.html) |
+| Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-timeline-demo/key-preview.html) |
+| Site Regulatory Plan 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/site-plan-2026-v1.1.0/site-regulatory-plan-2026-1.1.0.0.pbiviz) | [Site plan](https://dangermitch2000.github.io/regulatory-timeline-demo/site-plan-preview.html) |
+
+Roadmap shows False separately as **Dispatch not required**, retaining recorded dispatch reference dates. Records without a usable dispatch month but with current-year actual submission/approval evidence are shown separately outside the monthly chart. Blanks remain unknown; they are not assumed to mean False. An unmapped field retains the earlier classification behavior.
 
 ## New in 1.9.1: Open-ended registration dates
 

@@ -1,4 +1,42 @@
-const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');const ctx={Date};vm.createContext(ctx);vm.runInContext(fs.readFileSync('roadmap-2026.logic.js','utf8').replaceAll('export ','')+';this.api={summarize,parseDay,mapTable,selectStatusReview,roles,dateRoles};',ctx);const {summarize,parseDay,mapTable,selectStatusReview,roles,dateRoles}=ctx.api,today=Date.UTC(2026,8,24);
+const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');const ctx={Date,dispatchModule:require('./dispatch-required.js')};vm.createContext(ctx);vm.runInContext(fs.readFileSync('roadmap-2026.logic.js','utf8').replace(/^import .*\r?\n/gm,'').replaceAll('export ','')+';this.api={summarize,parseDay,mapTable,selectStatusReview,roles,dateRoles};',ctx);const {summarize,parseDay,mapTable,selectStatusReview,roles,dateRoles}=ctx.api,today=Date.UTC(2026,8,24);
+// Requirement evidence is resolved once per whole submission before local filters.
+const requirementRows=[
+ {SubID:'F-past',DispatchRequired:false,LatestDispatch:'2026-03-01',ActualSubmission:'2026-04-01',BusinessUnit:'ID',Site:'North'},
+ {SubID:'F-actual',DispatchRequired:' FALSE ',ActualDispatch:'2026-02-01',BusinessUnit:'ID',Site:'North'},
+ {SubID:'F-future',DispatchRequired:false,LatestDispatch:'2026-12-01',BusinessUnit:'ID',Site:'North'},
+ {SubID:'F-undated',DispatchRequired:false,ActualSubmission:'2026-04-01',ActualApproval:'2026-05-01',BusinessUnit:'ID',Site:'North'},
+ {SubID:'F-unknown-year',DispatchRequired:false,BusinessUnit:'ID'},
+ {SubID:'F-other-year',DispatchRequired:false,ActualSubmission:'2025-04-01',BusinessUnit:'ID'},
+ {SubID:'F-other-plan-year',DispatchRequired:false,LatestDispatch:'2027-04-01',ActualSubmission:'2026-04-01',BusinessUnit:'ID'},
+ {SubID:'T',DispatchRequired:true,LatestDispatch:'2026-03-01',BusinessUnit:'ID'},
+ {SubID:'B',DispatchRequired:null,LatestDispatch:'2026-03-01',BusinessUnit:'ID'},
+ {SubID:'Conflict',DispatchRequired:false,LatestDispatch:'2026-03-01',BusinessUnit:'ID'},
+ {SubID:'Conflict',DispatchRequired:true,LatestDispatch:'2026-03-01',BusinessUnit:'Other'},
+ {SubID:'Invalid',DispatchRequired:'No',LatestDispatch:'2026-03-01',BusinessUnit:'ID'},
+ {SubID:'F-past',DispatchRequired:null,LatestDispatch:'2026-03-01',ActualSubmission:'2026-04-01',BusinessUnit:'Other'}
+];
+const requirements=summarize(requirementRows,today,true,'ID'),withoutInference=summarize(requirementRows,today,false,'ID');
+assert.deepEqual(Array.from(requirements.totals),[0,0,4,0,3]);
+assert.deepEqual(Array.from(requirements.totals),Array.from(withoutInference.totals));
+assert.equal(requirements.total,7);assert.equal(requirements.missing.length,0);assert.equal(requirements.undatedInferred.length,0);
+assert.deepEqual(Array.from(requirements.notRequiredOutside),['F-undated']);
+assert.equal(requirements.notRequiredOutsideRecords[0].month,null);assert.equal(requirements.notRequiredOutsideRecords[0].outsideChart,true);
+assert.equal(requirements.records.find(r=>r.id==='F-actual').actualDay,Date.UTC(2026,1,1),'False preserves recorded actual dispatch evidence');
+assert.equal(requirements.records.find(r=>r.id==='F-past').dispatchRequired.value,false,'blank joins never override explicit False');
+assert.equal(requirements.records.find(r=>r.id==='Conflict').dispatchRequired.kind,'conflict','BU must not hide conflicting requirement evidence');
+assert.equal(selectStatusReview(requirements,{scope:'missing-dispatch'}).total,4);
+assert.equal(selectStatusReview(requirements,{scope:'not-required'}).total,3);
+assert.equal(selectStatusReview(requirements,{scope:'not-required-outside'}).total,1);
+assert.equal(summarize(requirementRows,today,true,'ID',{dispatchRequired:'false'}).total,3);
+assert.equal(summarize(requirementRows,today,true,'ID',{dispatchRequired:'false'}).notRequiredOutside.length,1);
+assert.equal(summarize(requirementRows,today,true,'ID',{dispatchRequired:'true'}).total,1);
+assert.equal(summarize(requirementRows,today,true,'ID',{dispatchRequired:'blank'}).total,1);
+assert.equal(summarize(requirementRows,today,true,'ID',{dispatchRequired:'review'}).total,2);
+const oldMapping=summarize(requirementRows,today,true,'ID',{mappedRoles:roles.filter(role=>role!=='DispatchRequired')});
+assert.equal(oldMapping.totals[4],0);assert.equal(oldMapping.missing.length,1);assert.equal(oldMapping.records[0].dispatchRequired.kind,'unmapped');
+assert.equal(mapTable({columns:[{roles:{SubID:true}},{roles:{DispatchRequired:true}}],rows:[['x',false]]}).rows[0].DispatchRequired,false);
+assert.equal(summarize(Array.from({length:30000},(_,i)=>({SubID:'S'+i%1000,DispatchRequired:false,LatestDispatch:'2026-03-01'})),today).totals[4],1000);
+console.log('PASS: DispatchRequired whole-ID resolution, optional mapping, five-way classification, outside-chart false records, preserved actual evidence, strict filters and 30k duplicate rows.');
 const rows=[
 {SubID:'A',ActualDispatch:'2026-01-02',ActualApproval:'2026-02-01',BusinessUnit:'ID',Site:'North'},
 {SubID:'B',LatestDispatch:'2026-12-01',ActualSubmission:'2026-08-01',BusinessUnit:'ID',Site:'North'},
@@ -13,7 +51,7 @@ const rows=[
 {SubID:'J',ActualDispatch:'2026-04-01',BusinessUnit:'TOX'},
 {SubID:'J',ActualDispatch:'2026-05-01',BusinessUnit:'TOX'}];
 function run(inferred=false,unit='*'){return summarize(rows,today,inferred,unit);}
-let a=run(),b=run(true);assert.equal(a.total,6);assert.equal(b.total,6);assert.deepEqual(Array.from(a.totals),[2,3,1,0]);assert.deepEqual(Array.from(b.totals),[2,1,0,3]);assert.equal(b.months[11][3],1);assert.equal(b.months[7][3],0);assert.equal(b.months[10][3],1);assert.equal(b.months[0][0],1);assert.equal(b.missing.length,2);assert.deepEqual(Array.from(a.missing),Array.from(b.missing));assert.equal(b.undatedInferred.length,3);assert.equal(b.excluded.length,2);assert.equal(b.sites.reduce((n,s)=>n+s.total,0),b.total);assert.equal(b.ambiguousSites.length,1);assert.equal(b.sites.find(s=>s.key==='ambiguous').total,1);
+let a=run(),b=run(true);assert.equal(a.total,6);assert.equal(b.total,6);assert.deepEqual(Array.from(a.totals),[2,3,1,0,0]);assert.deepEqual(Array.from(b.totals),[2,1,0,3,0]);assert.equal(b.months[11][3],1);assert.equal(b.months[7][3],0);assert.equal(b.months[10][3],1);assert.equal(b.months[0][0],1);assert.equal(b.missing.length,2);assert.deepEqual(Array.from(a.missing),Array.from(b.missing));assert.equal(b.undatedInferred.length,3);assert.equal(b.excluded.length,2);assert.equal(b.sites.reduce((n,s)=>n+s.total,0),b.total);assert.equal(b.ambiguousSites.length,1);assert.equal(b.sites.find(s=>s.key==='ambiguous').total,1);
 let id=run(true,'ID');assert.equal(id.total,3);assert.equal(id.totals[3],1);assert.equal(id.missing.length,1);assert.equal(id.excluded.length,0);assert.equal(id.ambiguousSites.length,1);assert.equal(id.sites.reduce((n,s)=>n+s.total,0),3);assert.equal(run(true,null).total,1);assert.equal(run(true,'CSP').total,1);assert.equal(run(true,'unknown').total,0);assert.equal(run(true,'CMI').missing.length,1);
 const future=summarize([{SubID:'X',LatestDispatch:'2027-01-01'}],Date.UTC(2027,0,1));assert.equal(future.year,2027);assert.equal(future.total,1);assert.equal(future.average,1/12);
 assert.equal(parseDay('2026-02-30').kind,'invalid');assert.equal(parseDay('01/02/2026').kind,'invalid');assert.equal(parseDay('2026-01-01T23:00:00-08:00').day,Date.UTC(2026,0,1));assert.equal(parseDay(0).kind,'invalid');assert.equal(mapTable({}).missing,true);
@@ -54,7 +92,7 @@ const statusRows=[
  {SubID:'Bad-date',LatestDispatch:'invalid',SubStatus:'Completed',ROStatus:'Health Authority Approved',Site:'South',BusinessUnit:'ID'}
 ];
 const summary=summarize(statusRows,today,true,'ID');
-assert.equal(summary.total,9);assert.deepEqual(plain(summary.totals),[1,1,6,1]);
+assert.equal(summary.total,9);assert.deepEqual(plain(summary.totals),[1,1,6,1,0]);
 const record=id=>summary.records.find(r=>r.id===id);
 assert.equal(record('RO-only').category,2);assert.equal(record('RO-only').subStatus.label,'Planned','RO approval does not complete its child submission');
 assert.equal(record('Variants').subStatus.kind,'value');assert.equal(record('Variants').subStatus.label,'In Progress');assert.deepEqual(plain(record('Variants').subStatus.values),['In Progress']);

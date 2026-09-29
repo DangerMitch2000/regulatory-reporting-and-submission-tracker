@@ -155,3 +155,5 @@ footer .prediction-key{color:var(--forecast-text)}
 select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent-focus);outline-offset:2px}
 #host-notice{padding:8px 12px;margin-bottom:8px;color:var(--text-body);background:var(--surface-panel);border:1px solid var(--border-strong)}
 @media(max-width:620px){header{flex-wrap:wrap;gap:8px}.header-tools{gap:8px;margin-left:auto}.theme-control{font-size:12px}.theme-control select{min-width:75px}}
+
+.dispatch-filter{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-secondary)}.dispatch-filter select{max-width:200px;padding:6px 8px}.dispatch-required-detail{font-weight:600;color:var(--text-primary)}

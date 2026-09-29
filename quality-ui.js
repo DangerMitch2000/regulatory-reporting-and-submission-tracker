@@ -13,7 +13,7 @@
   return entries;
  }
  function csvCell(v){let s=v==null?'':String(v);if(/^[\s]*[=+@-]/.test(s)||/^[\t\r\n]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';}
- function toCsv(entries){const headers=['Site','Business unit','Submission ID','RO IDs','Application IDs','Category','Field','Recorded value','Reason','Suggested check'];const values=entries.map(({site,issue:i})=>[site,i.businessUnits.join(' | '),i.subID,i.roIDs.join(' | '),i.appIDs.join(' | '),labels[i.category],i.fieldLabel,i.value,i.reason,i.suggestion]);return '\uFEFF'+[headers,...values].map(row=>row.map(csvCell).join(',')).join('\r\n');}
+ function toCsv(entries){const headers=['Site','Business unit','Submission ID','RO IDs','Application IDs','Category','Field','Recorded value','Reason','Suggested check','Dispatch required'];const values=entries.map(({site,issue:i})=>[site,i.businessUnits.join(' | '),i.subID,i.roIDs.join(' | '),i.appIDs.join(' | '),labels[i.category],i.fieldLabel,i.value,i.reason,i.suggestion,i.dispatchRequired?.label||'Field not mapped']);return '\uFEFF'+[headers,...values].map(row=>row.map(csvCell).join(',')).join('\r\n');}
  function mount(container,{exportWorklist}={}){
   const doc=container.ownerDocument,el=(tag,text,cls)=>{const e=doc.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
   let analysis={issues:[]},matching=[],page=0,selected='',entries=[],disposed=false,searchTimer;const pageSize=12;
@@ -28,11 +28,11 @@
   const message=el('p',undefined,'quality-message');message.id='quality-message';message.setAttribute('role','status');
   const fallback=el('details',undefined,'quality-fallback'),summary=el('summary','Copy the filtered worklist'),textarea=el('textarea'),copyCsv=el('button','Copy worklist');textarea.readOnly=true;textarea.setAttribute('aria-label','Filtered worklist CSV');textarea.rows=7;fallback.append(summary,textarea,copyCsv);fallback.hidden=true;
   const demoNote=el('p','All examples are fictional. ','quality-note');container.replaceChildren(title,controls,counts,layout,note,message,fallback,demoNote);
-  function issueText(entry){const i=entry.issue;return ['Site: '+entry.site,'Submission: '+i.subID,'RO: '+i.roIDs.join(', '),'Application: '+i.appIDs.join(', '),'Category: '+labels[i.category],'Field: '+i.fieldLabel,'Recorded value: '+i.value,'Reason: '+i.reason,'Suggested check: '+i.suggestion].join('\n');}
+  function issueText(entry){const i=entry.issue;return ['Site: '+entry.site,'Submission: '+i.subID,'RO: '+i.roIDs.join(', '),'Application: '+i.appIDs.join(', '),'Dispatch required: '+(i.dispatchRequired?.label||'Field not mapped'),'Category: '+labels[i.category],'Field: '+i.fieldLabel,'Recorded value: '+i.value,'Reason: '+i.reason,'Suggested check: '+i.suggestion].join('\n');}
   async function copy(text){try{await navigator.clipboard.writeText(text);message.textContent='Copied.';}catch{message.textContent='Clipboard unavailable. Select the text and use Copy.';}}
   function showDetail(){detail.replaceChildren();const entry=entries.find(e=>e.key===selected);if(!entry){detail.append(el('h3','Review issue'),el('p','Select a record to see its source value and suggested check.'));return;}const i=entry.issue;
    detail.append(el('span',labels[i.category],'quality-badge '+i.category),el('h3',i.subID),el('p',entry.site+' · '+(i.roIDs.join(', ')||'RO not recorded')));
-   const dl=el('dl');for(const [label,value]of [['Application',i.appIDs.join(', ')||'Not recorded'],['Field',i.fieldLabel],['Recorded value',i.value],['Why it is flagged',i.reason],['What to check',i.suggestion]])dl.append(el('dt',label),el('dd',value));detail.append(dl);
+   const dl=el('dl');for(const [label,value]of [['Application',i.appIDs.join(', ')||'Not recorded'],['Dispatch required',i.dispatchRequired?.label||'Field not mapped'],['Field',i.fieldLabel],['Recorded value',i.value],['Why it is flagged',i.reason],['What to check',i.suggestion]])dl.append(el('dt',label),el('dd',value));detail.append(dl);
    const buttons=el('div',undefined,'quality-actions'),copyId=el('button','Copy ID'),copyIssue=el('button','Copy issue');copyId.onclick=()=>copy(i.subID);copyIssue.onclick=()=>copy(issueText(entry));buttons.append(copyId,copyIssue);detail.append(buttons,el('p','Source data is unchanged.','muted'));
   }
   function render(){if(disposed)return;entries=worklist(analysis,matching,{category:category.value,query:search.value});const unique=new Map(entries.map(e=>[e.issue.id,e.issue])),subs=new Set([...unique.values()].map(i=>i.subID));counts.replaceChildren();

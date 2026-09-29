@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'dispatch-required.js'
       - 'site-plan*'
       - '.github/workflows/site-plan.yml'
 permissions:
@@ -37,12 +38,13 @@ jobs:
       - name: Prepare separate release
         run: |
           mkdir -p site-plan-release
-          cp site-plan/dist/*.pbiviz site-plan-release/site-regulatory-plan-2026-1.0.2.0.pbiviz
+          cp site-plan/dist/*.pbiviz site-plan-release/site-regulatory-plan-2026-1.1.0.0.pbiviz
           cp site-plan.README.md site-plan-release/SITE-PLAN-INSTALL.md
           cp site-plan-preview.html site-plan-release/site-plan-demo.html
           cp site-plan/verify/site-plan-preview.png site-plan-release/site-plan-preview.png
           cp site-plan/verify/site-plan-small.png site-plan-release/site-plan-small.png
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf site-plan-release/site-plan-source.tar.gz site-plan site-plan.build.cjs site-plan.logic.js site-plan.ui.js site-plan.css site-plan.README.md site-plan-test.cjs site-plan-host-test.cjs site-plan-browser-test.cjs site-plan-demo.cjs
+          cp site-plan/verify/site-plan-dispatch.png site-plan-release/site-plan-dispatch.png
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf site-plan-release/site-plan-source.tar.gz site-plan site-plan.build.cjs site-plan.logic.js site-plan.ui.js site-plan.css site-plan.README.md site-plan-test.cjs site-plan-host-test.cjs site-plan-browser-test.cjs site-plan-demo.cjs dispatch-required.js
           cd site-plan-release && sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
@@ -52,5 +54,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create site-plan-2026-v1.0.2 --target "$GITHUB_SHA" --prerelease --title "Site Regulatory Plan — 2026" --notes "Scale fits the selected site with comparable H1/H2 panels; footer references only 2026. Separate Power BI visual: site selector, H1/H2 panels, latest estimate bars versus original plan outlines for dispatches/submissions/approvals. Each milestone uses its own planned date; blank latest falls back to original with details in all-year data checks. Duplicate joins count once, multi-site submissions stay unallocated. Screenshot mode scales all chart text and bars proportionally. Scope, compiled host and browser tests passed before packaging. Public demo uses fictional data. Existing visuals unchanged. Uncertified preview: real Power BI import and relationships still need testing. See SITE-PLAN-INSTALL.md."
-          gh release upload site-plan-2026-v1.0.2 site-plan-release/*
+          gh release create site-plan-2026-v1.1.0 --target "$GITHUB_SHA" --prerelease --title "Site Regulatory Plan — 2026" --notes "Adds optional Submission Dispatch required mapping and an All-default filter, also labelled in screenshot mode. Explicit False excludes dispatch plan counts and missing dispatch-plan checks while preserving submission and approval plans. Distinct not-required totals need valid 2026 plan evidence. Blank, conflicting, invalid and unmapped values never become False; full submission groups resolve before site/unit filtering. Calculation, compiled-host and browser checks passed. See SITE-PLAN-INSTALL.md."
+          gh release upload site-plan-2026-v1.1.0 site-plan-release/*

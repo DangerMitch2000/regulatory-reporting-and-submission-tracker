@@ -1,0 +1,32 @@
+const assert=require('node:assert/strict'),path=require('node:path');
+module.exports=async function verifyDispatch(page,{outputDir}){
+ await page.goto('http://127.0.0.1:8771/index.html');
+ await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
+ const pick=async value=>{await page.locator('#host #dispatch-required').selectOption(value);};
+ const waitCount=n=>page.waitForFunction(n=>document.querySelector('#host #filter-status').textContent.startsWith(n+' submissions'),n);
+ assert.equal(await page.locator('#host #dispatch-required').inputValue(),'all');
+ await page.locator('#host select[name=mode]').selectOption('Compare');await page.locator('#host input[name=query]').fill('SUB-00003');
+ await page.locator('#host svg .predictionApproval path').first().click();await page.locator('#host #selected-details').evaluate(e=>e.open=true);await page.locator('#host .prediction-date').waitFor();
+ const history=await page.locator('#host .prediction-card').last().innerText(),estimate=await page.locator('#host .prediction-date').innerText();
+ await pick('false');await waitCount(1);assert.match(await page.locator('#host .dispatch-required-detail').innerText(),/False/);assert.equal(await page.locator('#host .prediction-date').innerText(),estimate);assert.equal(await page.locator('#host .prediction-card').last().innerText(),history,'Requirement filter keeps full delivered approval history');
+ await page.locator('#host #reset-filters').click();await waitCount(60);
+ const send=async(mapped=true,empty=false)=>{const previous=await page.evaluate(()=>window.__qualityRevision);await page.evaluate(({mapped,empty})=>{
+  const base={...window.__dispatchRows[0],AppID:'DISPATCH-APP',ROID:'DISPATCH-RO',Country:'France',SubStatus:'Planned',OriginalDispatch:'2026-01-01',LatestDispatch:'2026-01-02',ActualDispatch:null,LatestSubmission:'2026-02-01',ActualSubmission:null,LatestApproval:'2026-03-01',ActualApproval:null};
+  const records=[{...base,SubID:'DISP-TRUE',DispatchRequired:true},{...base,SubID:'DISP-FALSE',DispatchRequired:false},{...base,SubID:'DISP-FALSE',DispatchRequired:' false '},{...base,SubID:'DISP-BLANK',DispatchRequired:null},{...base,SubID:'DISP-CONFLICT',DispatchRequired:false,Product:'Unique alpha'},{...base,SubID:'DISP-CONFLICT',DispatchRequired:true,Product:'Unique beta'},{...base,SubID:'DISP-INVALID',DispatchRequired:'no'}];
+  window.__dispatchSend(empty?[]:records,mapped);
+ },{mapped,empty});await page.waitForFunction(previous=>window.__qualityRevision>previous,previous);};
+ await send();await waitCount(5);await pick('false');await waitCount(1);
+ await page.locator('#host svg text').filter({hasText:/^DISP-FALSE$/}).click();await page.locator('#host #selected-details').evaluate(e=>e.open=true);assert.match(await page.locator('#host .dispatch-required-detail').innerText(),/False/);
+ await page.getByRole('button',{name:'Resize host',exact:true}).click();await send();assert.equal(await page.locator('#host #dispatch-required').inputValue(),'false');await waitCount(1);
+ await page.locator('#host #quality-tab').click();await page.locator('#host #quality-table').filter({hasText:'DISP-FALSE'}).waitFor();
+ assert.ok(!(await page.locator('#host #quality-table').innerText()).includes('Latest dispatch plan'),'No overdue dispatch prompt for explicit False');assert.match(await page.locator('#host #quality-detail').innerText(),/False — dispatch not required/);
+ const before=await page.evaluate(()=>window.__qualityExports.length);await page.locator('#host #quality-export').click();await page.waitForFunction(n=>window.__qualityExports.length>n,before);const csv=await page.evaluate(()=>window.__qualityExports.at(-1).content);assert.match(csv,/Dispatch required/);assert.match(csv,/DISP-FALSE/);assert.ok(!/DISP-TRUE|DISP-BLANK|DISP-CONFLICT/.test(csv));
+ await page.locator('#host #theme-select').selectOption('light');await page.waitForFunction(()=>document.querySelector('#host .regulatory-timeline').dataset.theme==='light');await page.locator('#host').screenshot({path:path.join(outputDir,'dispatch-required.png')});
+ await pick('blank');await waitCount(1);await page.locator('#host #quality-table').filter({hasText:'DISP-BLANK'}).waitFor();assert.match(await page.locator('#host #quality-table').innerText(),/Latest dispatch plan/);
+ await pick('review');await waitCount(2);await page.locator('#host #quality-table').filter({hasText:'Dispatch required'}).waitFor();
+ const product=page.locator('#host .filter[data-kind=product]');await product.locator('summary').click();await product.locator('input[type=search]').fill('Unique alpha');await product.getByLabel('Unique alpha',{exact:true}).check();await product.locator('summary').click();await waitCount(1);await pick('false');await waitCount(0);
+ await page.locator('#host #reset-filters').click();await waitCount(5);assert.equal(await page.locator('#host #dispatch-required').inputValue(),'all');
+ await send(false);await pick('blank');await waitCount(0);await pick('unmapped');await waitCount(5);await pick('false');await waitCount(0);
+ await send(true,true);await waitCount(0);await page.locator('#host #reset-filters').click();assert.equal(await page.locator('#host #dispatch-required').inputValue(),'all');
+ console.log('PASS: Dispatch required mapping/filter/Details/CSV, False dispatch prompts only, full history retained, blank versus unmapped, conflicting memberships and refresh/resize/empty data.');
+};

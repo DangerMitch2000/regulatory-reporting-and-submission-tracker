@@ -18,3 +18,5 @@ await page.getByRole('button',{name:'Screenshot mode',exact:true}).click();asser
 }finally{await browser.close();server.close();}})().catch(e=>{console.error(e);process.exit(1)});`);
 
 fs.copyFileSync('roadmap-status.verify.cjs',base+'status-tests.cjs');
+fs.copyFileSync('roadmap-dispatch.verify.cjs',base+'dispatch-tests.cjs');
+fs.writeFileSync(base+'run.cjs',fs.readFileSync(base+'run.cjs','utf8').replace("assert.deepEqual(errors,[])","await require('./dispatch-tests.cjs')({page,assert,path,dir:__dirname});assert.deepEqual(errors,[])"));

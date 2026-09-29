@@ -1,9 +1,9 @@
 (function (root, factory) {
   'use strict';
-  const api = factory();
+  const api = factory(typeof module === 'object' && module.exports ? require('./dispatch-required.js') : root.regulatoryDispatchRequired);
   if (typeof module === 'object' && module.exports) module.exports = api;
   if (root) root.regulatoryQuality = api;
-})(typeof globalThis === 'object' ? globalThis : this, function () {
+})(typeof globalThis === 'object' ? globalThis : this, function (dispatchRequired) {
   'use strict';
 
   const FIELD_LABELS = Object.freeze({
@@ -13,7 +13,7 @@
     OriginalSubmission: 'Original submission plan', LatestSubmission: 'Latest submission plan', ActualSubmission: 'Actual submission',
     OriginalApproval: 'Original approval plan', LatestApproval: 'Latest approval plan', ActualApproval: 'Actual approval',
     RegistrationStart: 'Registration start', RegistrationEnd: 'Registration end',
-    Country: 'Country', Manufacturer: 'Legal manufacturer', BusinessUnit: 'Business unit', SubStatus: 'Submission state'
+    Country: 'Country', Manufacturer: 'Legal manufacturer', BusinessUnit: 'Business unit', SubStatus: 'Submission state', DispatchRequired: 'Dispatch required'
   });
   const DATE_FIELDS = Object.freeze([
     'AppCreated', 'ROCreated', 'SubCreated',
@@ -128,7 +128,7 @@
       let group = groups.get(id);
       if (!group) {
         group = {
-          id, rows: 0,
+          id, rows: 0, dispatchValues: new Map(),
           dates: Object.fromEntries(dateFields.map(field => [field, dateBucket()])),
           memberships: Object.fromEntries(membershipFields.map(field => [field, new Set()])),
           rawMembers: Object.fromEntries(membershipFields.map(field => [field, new Map()])),
@@ -137,6 +137,7 @@
         groups.set(id, group);
       }
       group.rows++;
+      addRaw(group.dispatchValues, row.DispatchRequired);
       for (const field of membershipFields) {
         for (const member of members(row[field])) group.memberships[field].add(member);
         addRaw(group.rawMembers[field], row[field]);
@@ -148,7 +149,8 @@
     const issues = [], affected = new Set();
     for (const group of groups.values()) {
       const values = field => group.memberships[field] ? [...group.memberships[field]].sort(compare) : [];
-      const base = { subID: group.id, roIDs: values('ROID'), appIDs: values('AppID'), sites: values('Manufacturer'), businessUnits: values('BusinessUnit') };
+      const requirement=dispatchRequired.resolve(rawValues(group.dispatchValues),mapped.has('DispatchRequired'));
+      const base = { subID: group.id, roIDs: values('ROID'), appIDs: values('AppID'), sites: values('Manufacturer'), businessUnits: values('BusinessUnit'),dispatchRequired:requirement };
       const addIssue = (rule, category, field, sourceValues, reason, suggestion, extra) => {
         const issue = {
           id: 'dq:' + JSON.stringify([group.id, rule, field]), rule, ...base,
@@ -159,6 +161,8 @@
         issues.push(issue);
         affected.add(group.id);
       };
+
+      if(requirement.key==='review')addIssue('dispatch_requirement_'+requirement.kind,'error','DispatchRequired',rawValues(group.dispatchValues),requirement.kind==='conflict'?'Both True and False were supplied for the same submission.':'Dispatch required contains a value other than True, False or blank.','Verify the submission field and relationships. Retain one consistent True or False value, or leave it blank when unknown.');
 
       for (const field of ['AppID', 'ROID']) {
         if (!mapped.has(field) || !group.blankParents[field]) continue;
@@ -210,6 +214,7 @@
       // actual/plan dates already have specific flags, so do not guess through them.
       if ([...states].some(state => CLOSED_STATES.has(state))) continue;
       for (const stage of ['Dispatch', 'Submission', 'Approval']) {
+        if(stage==='Dispatch'&&requirement.value===false)continue;
         const actualField = 'Actual' + stage, latestField = 'Latest' + stage, originalField = 'Original' + stage;
         const actual = group.dates[actualField];
         if (!mapped.has(actualField) || actual.present) continue;
