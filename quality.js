@@ -206,10 +206,8 @@
       }
 
       const states = new Set(values('SubStatus').map(lower));
-      const actualApproval = group.dates.ActualApproval;
-      if (states.has('completed') && mapped.has('ActualApproval') && !actualApproval.present) addIssue('completed_without_approval', 'review', 'ActualApproval', [],
-        'Submission state is Completed, but no actual approval date was supplied.',
-        'Confirm whether this submission requires approval; enter the actual approval date if applicable, or verify that Completed is the appropriate state.');
+      // Submission completion does not establish approval of the parent RO or
+      // require an actual approval date on this submission. Keep states separate.
 
       // Terminal records do not need overdue prompts. Conflicting or invalid
       // actual/plan dates already have specific flags, so do not guess through them.

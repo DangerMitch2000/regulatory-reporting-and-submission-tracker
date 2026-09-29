@@ -130,12 +130,18 @@ for (const SubStatus of ['Inactive', 'Withdrawn', 'Rejected', 'Archived', 'Cance
   assert.equal(run([{ ...overdue, SubStatus }]).issues.length, 0, SubStatus);
 }
 assert.equal(run([overdue, { ...overdue, SubStatus: 'Inactive' }]).issues.length, 0, 'Conflicting terminal state conservatively suppresses overdue prompts');
-result = run([{ ...overdue, SubStatus: 'Completed' }]);
-assert.equal(result.issues.length, 1);
-assert.equal(result.issues[0].rule, 'completed_without_approval');
-assert.equal(result.issues[0].category, 'review');
-assert.match(result.issues[0].suggestion, /requires approval/);
-assert.equal(run([{ ...base, SubStatus: 'Completed' }]).issues.length, 0, 'No completed approval warning when approval is unmapped');
+// Submission completion is independent of approval and the parent RO state.
+for(const ROStatus of ['In Progress','Planned','Completed','Health Authority Approved',null]) {
+ const row={...overdue,SubStatus:'Completed',ROStatus};
+ const snapshot=JSON.stringify(row);
+ assert.equal(run([row]).issues.length,0,'Completed submissions can lack approval dates independently of RO state');
+ assert.equal(JSON.stringify(row),snapshot,'Source submission and RO states are unchanged');
+ assert.equal(run([row],{mappedFields:Object.keys(row).filter(k=>k!=='ROStatus')}).issues.length,0,'Unmapped RO state does not imply missing approval');
+}
+assert.equal(run([{ ...base, SubStatus: 'Completed' }]).issues.length,0,'Unmapped approval is not assumed missing');
+assert.equal(byRule(run([{...base,SubStatus:'Completed',ROStatus:'In Progress',ActualApproval:'invalid'}]),'invalid_date').length,1,'Real approval errors remain');
+assert.equal(byRule(run([{...base,SubStatus:'Completed',ROStatus:'In Progress',ActualSubmission:'2026-06-02',ActualApproval:'2026-06-01'}]),'reversed_dates').length,1,'Real milestone reversals remain');
+assert.equal(byRule(run([{...base,SubStatus:'Completed',ROStatus:'In Progress',ActualApproval:'2026-06-01'},{...base,SubStatus:'Completed',ROStatus:'In Progress',ActualApproval:'2026-06-02'}]),'conflicting_dates').length,1,'Real conflicting approval dates remain');
 
 result = run([{ ...base, SubID: '' }, { ...base, SubID: null }, { ...base, SubID: '  ' }, { ...base, LatestApproval: 'bad' }]);
 assert.equal(result.excludedRows, 3);

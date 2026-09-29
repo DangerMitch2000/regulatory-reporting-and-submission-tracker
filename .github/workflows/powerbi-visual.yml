@@ -69,7 +69,7 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.10.1.0.pbiviz
+          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.10.2.0.pbiviz
           cp powerbi-visual/README.md release/POWER-BI-INSTALL.md
           cp powerbi-visual/verify/calendar-day-quality.png release/calendar-day-quality.png
           cp powerbi-visual/verify/dispatch-required.png release/dispatch-required.png
@@ -95,11 +95,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view v1.10.1 >/dev/null 2>&1; then
-            gh release create v1.10.1 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.10.1" --notes "Data quality compares the recorded calendar day for dispatch, submission and approval dates, ignoring time of day and ISO timezone offsets. Same-day milestones and duplicate timestamps are accepted; genuinely earlier days, differing recorded days and invalid dates remain flagged. Original source values and CSV evidence are preserved. Power BI Date objects use their UTC calendar day. Registration expiry, timeline and prediction calculations are unchanged. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
+          if ! gh release view v1.10.2 >/dev/null 2>&1; then
+            gh release create v1.10.2 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.10.2" --notes "Data quality no longer flags a blank actual approval date solely because the submission state is Completed. A submission can be completed while its regulatory objective remains In Progress. Submission and RO states remain independent; neither state is used to invent approval evidence. Invalid, conflicting and genuinely reversed recorded dates are still checked. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
           else
-            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.10.1" -f sha="$GITHUB_SHA" -F force=false
-            gh release edit v1.10.1 --target "$GITHUB_SHA" --notes "Data quality compares the recorded calendar day for dispatch, submission and approval dates, ignoring time of day and ISO timezone offsets. Same-day milestones and duplicate timestamps are accepted; genuinely earlier days, differing recorded days and invalid dates remain flagged. Original source values and CSV evidence are preserved. Power BI Date objects use their UTC calendar day. Registration expiry, timeline and prediction calculations are unchanged. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.10.2" -f sha="$GITHUB_SHA" -F force=false
+            gh release edit v1.10.2 --target "$GITHUB_SHA" --notes "Data quality no longer flags a blank actual approval date solely because the submission state is Completed. A submission can be completed while its regulatory objective remains In Progress. Submission and RO states remain independent; neither state is used to invent approval evidence. Invalid, conflicting and genuinely reversed recorded dates are still checked. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
           fi
-          gh release upload v1.10.1 release/* --clobber
+          gh release upload v1.10.2 release/* --clobber
 

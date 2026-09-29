@@ -1,8 +1,12 @@
-# Regulatory Tracker 1.10.1
+# Regulatory Tracker 1.10.2
 
-[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.10.1 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.10.1) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.10.1/regulatory-tracker-1.10.1.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.10.2 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.10.2) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.10.2/regulatory-tracker-1.10.2.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
+
+## New in 1.10.2: Submission and RO states
+
+Data quality no longer flags a blank actual approval date solely because the submission state is Completed. A submission can be completed while its regulatory objective remains In Progress. Submission and RO states remain independent; neither state is used to invent approval evidence. Invalid, conflicting and genuinely reversed recorded dates are still checked.
 
 ## New in 1.10.1: Calendar-day data quality checks
 
@@ -18,7 +22,7 @@ Map your **Submission dispatch required c** source field to **Dispatch required*
 
 | Visual | Download | Demo |
 | --- | --- | --- |
-| Regulatory Tracker 1.10.1 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.10.1/regulatory-tracker-1.10.1.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-timeline-demo/) |
+| Regulatory Tracker 1.10.2 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.10.2/regulatory-tracker-1.10.2.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-timeline-demo/) |
 | Registration Overview / Roadmap 1.4.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/roadmap-2026-v1.4.0/roadmap-2026-1.4.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-timeline-demo/roadmap-preview.html) |
 | IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-timeline-demo/ivdr-preview.html) |
 | Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-timeline-demo/key-preview.html) |
@@ -50,7 +54,7 @@ Use **Theme** at the top-right to change the whole visual: timeline, filters, me
 
 Switch to **Data quality** for a remediation worklist grouped and sorted by Site (LM). Existing Business Unit, Site, Product, Country and Submission Type filters combine across the same received membership rows. The issue category and worklist search narrow results further. Timeline state filters and timeline search do not limit this worklist.
 
-Select a submission to see the affected field, received value, reason and suggested check. Errors distinguish invalid or conflicting dates and reversed sequences from review items such as overdue plans or a completed status without an approval date. Missing-information flags apply only to mapped fields; blank optional planning dates are not automatically errors. These are checks on delivered data, not proof that every unflagged value is correct.
+Select a submission to see the affected field, received value, reason and suggested check. Errors distinguish invalid or conflicting dates and reversed sequences from review items such as overdue plans. Missing-information flags apply only to mapped fields; blank optional planning dates are not automatically errors. These are checks on delivered data, not proof that every unflagged value is correct.
 
 Totals count distinct issues and affected submission IDs. Repeated membership rows do not inflate counts. An issue for a submission shared by multiple sites appears once under each matching site; the CSV uses the same explicit site entries. Filter to one site to send its worklist to a colleague. Records without a submission ID remain outside this submission-based worklist.
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.10.2 — 2026-09-29
+
+- Remove the Completed-submission / missing-approval review rule. Submission completion does not imply that its regulatory objective is approved or require an approval date.
+- Preserve independent source states, actual-date error checks, calendar-day handling and dispatch requirement logic.
+- Test Completed submissions with In Progress and other RO states, including unmapped RO status; keep genuine invalid, conflicting and reversed dates in the worklist and CSV.
+
 ## 1.10.1 — 2026-09-29
 
 - Compare written ISO calendar days for dispatch, submission and approval data-quality checks. Ignore timestamps and offsets when determining reversed or conflicting milestone dates.
