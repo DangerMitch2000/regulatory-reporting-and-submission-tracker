@@ -74,19 +74,42 @@ assert.ok(result.issues.every(issue => issue.relatedValues.length === 1));
 assert.ok(result.issues.every(issue => issue.category === 'error'));
 assert.equal(run([{ ...base, ActualDispatch: '2026-06-01', ActualSubmission: '2026-06-01', ActualApproval: '2026-06-01' }]).issues.length, 0);
 
+
+// Calendar-day checks tolerate any ordering of valid times on the same written day.
+for (const times of [
+ ['2026-06-01T23:59:59Z','2026-06-01T12:00:00Z','2026-06-01T00:00:01Z'],
+ ['2026-06-01T23:30:00-02:00','2026-06-01T01:00:00Z','2026-06-01T00:30:00+02:00'],
+ ['2026-06-01T23:59:00','2026-06-01T12:00:00','2026-06-01T00:01:00'],
+ [new Date('2026-06-01T23:59:00Z'),new Date('2026-06-01T12:00:00Z'),new Date('2026-06-01T00:01:00Z')],
+ [Date.parse('2026-06-01T23:59:00Z'),Date.parse('2026-06-01T12:00:00Z'),Date.parse('2026-06-01T00:01:00Z')]
+]) {
+ const row={...base,ActualDispatch:times[0],ActualSubmission:times[1],ActualApproval:times[2]},snapshot=JSON.stringify(row);
+ assert.equal(run([row]).issues.length,0,'Same-day milestone timestamps do not create a reversal');
+ assert.equal(JSON.stringify(row),snapshot,'Raw timestamps are preserved');
+}
+for(const field of ['OriginalDispatch','LatestDispatch','ActualDispatch','OriginalSubmission','LatestSubmission','ActualSubmission','OriginalApproval','LatestApproval','ActualApproval']) {
+ const rows=['2026-06-01','2026-06-01T23:30:00-02:00','2026-06-01T00:30:00+02:00'].map(value=>({...base,[field]:value}));
+ assert.equal(byRule(run(rows),'conflicting_dates').length,0,field+' duplicates on one written calendar day agree');
+ assert.equal(byRule(run([...rows,{...base,[field]:'2026-06-02'}]),'conflicting_dates').length,1,field+' different calendar days remain flagged');
+}
+// Unrelated creation timestamps retain their established UTC convention.
+for(const field of ['AppCreated','ROCreated','SubCreated']) assert.equal(byRule(run([{...base,[field]:'2026-06-01T23:30:00-02:00'},{...base,[field]:'2026-06-02T01:30:00Z'}]),'conflicting_dates').length,0);
+// Preserve the established UTC registration-expiry convention independently.
+assert.equal(byRule(run([{...base,RegistrationStart:'2100-12-31',RegistrationEnd:'2100-12-31T23:30:00-02:00'},{...base,RegistrationStart:'2100-12-31',RegistrationEnd:'2030-01-01'}]),'conflicting_dates').length,0);
+
 // Future actual dates need human review, not assumptions about completed events.
 result = run([{ ...base, ActualDispatch: '2026-09-29', OriginalSubmission: '2027-01-01', RegistrationStart: '2030-01-01' }]);
 assert.equal(result.issues.length, 1);
 assert.equal(result.issues[0].rule, 'future_actual_date');
 assert.equal(result.issues[0].category, 'review');
 assert.equal(run([{ ...base, ActualDispatch: now + 'T23:59:00Z' }]).issues.length, 0, 'Same-day actual timestamps do not become future dates');
-assert.equal(run([{ ...base, ActualDispatch: '2026-09-28T23:30:00-02:00' }]).issues[0].rule, 'future_actual_date', 'An explicit offset may place the actual event on the next UTC day');
-assert.equal(run([{ ...base, ActualDispatch: '2026-09-29T00:30:00+02:00' }]).issues.length, 0, 'A next-calendar-day timestamp may still be today in UTC');
+assert.equal(run([{ ...base, ActualDispatch: '2026-09-28T23:30:00-02:00' }]).issues.length, 0, 'A time or offset cannot move the recorded day into the future');
+assert.equal(run([{ ...base, ActualDispatch: '2026-09-29T00:30:00+02:00' }]).issues[0].rule, 'future_actual_date', 'The recorded next calendar day remains a future actual date');
 assert.equal(run([
   { ...base, ActualDispatch: '2026-09-27T23:30:00-02:00' },
   { ...base, ActualDispatch: '2026-09-28T01:30:00Z' }
-]).issues.length, 0, 'Equivalent timezone timestamps must not create conflicting dates');
-assert.equal(run([{ ...base, ActualDispatch: '2026-09-02T00:30:00+02:00', ActualSubmission: '2026-09-01T23:30:00Z' }]).issues.length, 0, 'UTC-normalized dates must not create a false reversal');
+]).issues[0].rule, 'conflicting_dates', 'Different recorded calendar days remain a conflict even if timestamps are equivalent');
+assert.equal(run([{ ...base, ActualDispatch: '2026-09-02T00:30:00+02:00', ActualSubmission: '2026-09-01T23:30:00Z' }]).issues[0].rule, 'reversed_dates', 'Genuinely earlier recorded days remain flagged');
 
 // Overdue latest-plan checks fall back only when the latest field is truly blank.
 const overdue = { ...base, OriginalApproval: '2026-08-01', LatestApproval: '2026-09-01', ActualApproval: null };
@@ -98,7 +121,7 @@ assert.equal(run([{ ...overdue, LatestApproval: ' ' }]).issues[0].field, 'Origin
 assert.equal(run([{ ...overdue, LatestApproval: 'invalid' }]).issues.length, 1);
 assert.equal(run([{ ...overdue, LatestApproval: 'invalid' }]).issues[0].rule, 'invalid_date');
 assert.equal(run([{ ...overdue, LatestApproval: now }]).issues.length, 0);
-assert.equal(run([{ ...overdue, LatestApproval: '2026-09-28T00:30:00+02:00' }]).issues[0].overdueDays, 1, 'Overdue plans use the same UTC date shown on the timeline');
+assert.equal(run([{ ...overdue, LatestApproval: '2026-09-28T00:30:00+02:00' }]).issues.length, 0, 'A plan on the recorded current day is not overdue');
 assert.equal(run([{ ...overdue, ActualApproval: '2026-09-20' }]).issues.length, 0);
 assert.equal(run([{ ...overdue, ActualApproval: 'invalid' }]).issues[0].rule, 'invalid_date');
 assert.equal(run([overdue], { mappedFields: ['SubID', 'LatestApproval', 'OriginalApproval'] }).issues.length, 0, 'An unmapped actual cannot be assumed missing');
@@ -146,8 +169,8 @@ assert.equal(parseDate('2025-02-29').state, 'invalid');
 assert.equal(parseDate('2025-02-29T23:30:00-02:00').state, 'invalid', 'Offset normalization must not make an impossible calendar day valid');
 assert.equal(parseDate('2026-02-30T00:00:00Z').state, 'invalid');
 assert.equal(parseDate('2026-04-31T00:30:00+14:00').state, 'invalid');
-assert.equal(parseDate('2100-12-31T23:30:00-02:00').day, Date.UTC(2101, 0, 1));
-assert.equal(parseDate('2101-01-01T00:30:00+02:00').day, Date.UTC(2100, 11, 31));
+assert.equal(parseDate('2100-12-31T23:30:00-02:00').day, Date.UTC(2100, 11, 31));
+assert.equal(parseDate('2101-01-01T00:30:00+02:00').day, Date.UTC(2101, 0, 1));
 assert.equal(parseDate('2026-09-28').day, Date.UTC(2026, 8, 28));
 assert.equal(parseDate('2026-09-28T00:30:00').day, Date.UTC(2026, 8, 28), 'Unzoned calendar dates retain their calendar day');
 assert.equal(parseDate('2026-01-01T25:00:00Z').state, 'invalid');

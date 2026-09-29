@@ -7,6 +7,7 @@ on:
       - 'app.js'
       - 'dispatch-required*'
       - 'tracker-dispatch.verify.cjs'
+      - 'tracker-calendar-day.verify.cjs'
       - 'timeline.json'
       - 'predictions.js'
       - 'quality*.js'
@@ -68,8 +69,9 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.10.0.0.pbiviz
+          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.10.1.0.pbiviz
           cp powerbi-visual/README.md release/POWER-BI-INSTALL.md
+          cp powerbi-visual/verify/calendar-day-quality.png release/calendar-day-quality.png
           cp powerbi-visual/verify/dispatch-required.png release/dispatch-required.png
           cp powerbi-visual/verify/overview.png release/powerbi-overview.png
           cp powerbi-visual/verify/light-theme.png release/powerbi-light-theme.png
@@ -83,7 +85,7 @@ jobs:
           cp powerbi-visual/verify/approval-benchmark.png release/approval-benchmark.png
           cp powerbi-visual/verify/planned-submission-forecast.png release/planned-submission-forecast.png
           cp powerbi-visual/verify/submission-date-filter.png release/submission-date-filter.png
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs dispatch-required.js dispatch-required-test.cjs tracker-dispatch.verify.cjs tracker-theme.verify.cjs test-timeline-theme.cjs predictions.js prediction-test.cjs submission-period.js submission-period-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs open-end-test.cjs
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs dispatch-required.js dispatch-required-test.cjs tracker-dispatch.verify.cjs tracker-calendar-day.verify.cjs tracker-theme.verify.cjs test-timeline-theme.cjs predictions.js prediction-test.cjs submission-period.js submission-period-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs open-end-test.cjs
           cd release && sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
@@ -93,11 +95,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view v1.10.0 >/dev/null 2>&1; then
-            gh release create v1.10.0 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.10.0" --notes "Regulatory Tracker 1.10.0 adds the optional Submission Dispatch required field, a top filter, Details context and a CSV column. True, False and blank remain distinct. Conflicts and invalid values are flagged and never treated as False. Explicit False suppresses overdue dispatch-plan prompts, while source dates, submission and approval checks, historical estimates, themes and open-ended registrations remain supported. Map the new Dispatch required field well in your report. Calculation, adapter, TypeScript and browser checks passed. Built from commit $GITHUB_SHA."
+          if ! gh release view v1.10.1 >/dev/null 2>&1; then
+            gh release create v1.10.1 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.10.1" --notes "Data quality compares the recorded calendar day for dispatch, submission and approval dates, ignoring time of day and ISO timezone offsets. Same-day milestones and duplicate timestamps are accepted; genuinely earlier days, differing recorded days and invalid dates remain flagged. Original source values and CSV evidence are preserved. Power BI Date objects use their UTC calendar day. Registration expiry, timeline and prediction calculations are unchanged. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
           else
-            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.10.0" -f sha="$GITHUB_SHA" -F force=false
-            gh release edit v1.10.0 --target "$GITHUB_SHA" --notes "Regulatory Tracker 1.10.0 adds the optional Submission Dispatch required field, a top filter, Details context and a CSV column. True, False and blank remain distinct. Conflicts and invalid values are flagged and never treated as False. Explicit False suppresses overdue dispatch-plan prompts, while source dates, submission and approval checks, historical estimates, themes and open-ended registrations remain supported. Map the new Dispatch required field well in your report. Calculation, adapter, TypeScript and browser checks passed. Built from commit $GITHUB_SHA."
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.10.1" -f sha="$GITHUB_SHA" -F force=false
+            gh release edit v1.10.1 --target "$GITHUB_SHA" --notes "Data quality compares the recorded calendar day for dispatch, submission and approval dates, ignoring time of day and ISO timezone offsets. Same-day milestones and duplicate timestamps are accepted; genuinely earlier days, differing recorded days and invalid dates remain flagged. Original source values and CSV evidence are preserved. Power BI Date objects use their UTC calendar day. Registration expiry, timeline and prediction calculations are unchanged. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
           fi
-          gh release upload v1.10.0 release/* --clobber
+          gh release upload v1.10.1 release/* --clobber
 

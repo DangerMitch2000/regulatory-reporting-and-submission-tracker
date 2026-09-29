@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.10.1 — 2026-09-29
+
+- Compare written ISO calendar days for dispatch, submission and approval data-quality checks. Ignore timestamps and offsets when determining reversed or conflicting milestone dates.
+- Accept same-day milestone sequences and duplicate values with different times; retain genuine earlier-day, future-day, differing-day and invalid-value flags.
+- Preserve raw source evidence, Date-object UTC handling, registration expiry rules, timeline and prediction calculations. Add actual-Visual browser and unit regression checks.
+
 ## 1.10.0 — 2026-09-29
 
 - Add the optional Submission Dispatch required field and a top filter shared by Timeline and Data quality. Keep True, False, blank, conflicting/invalid and unmapped values distinct.

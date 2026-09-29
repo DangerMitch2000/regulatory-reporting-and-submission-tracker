@@ -32,11 +32,12 @@
     return l < r ? -1 : l > r ? 1 : left < right ? -1 : left > right ? 1 : 0;
   };
 
-  // ISO calendar dates stay on their written day. Explicit Z/offset timestamps,
-  // Date objects and epoch milliseconds use their UTC day, matching the timeline.
-  // Validate the written calendar date before allowing timezone normalization.
+  // Milestone checks use the written ISO calendar day, ignoring time and offset.
+  // Date objects / epoch milliseconds have no source calendar zone; use UTC day.
+  // Creation and registration fields retain their existing UTC conventions.
+  // Still reject invalid calendar dates and malformed timestamps.
   // No prediction history-window cutoff applies to general data quality checks.
-  function parseDate(value) {
+  function parseDate(value, useUtcDay = false) {
     if (blank(value)) return { state: 'blank', day: null };
     if (value instanceof Date || typeof value === 'number') {
       const date = new Date(value instanceof Date ? value.getTime() : value);
@@ -52,7 +53,7 @@
     const year = Number(match[1]), month = Number(match[2]), day = Number(match[3]);
     const date = new Date(Date.UTC(year, month - 1, day));
     if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return { state: 'invalid', day: null };
-    if (/(?:Z|[+-]\d{2}:?\d{2})$/.test(raw)) {
+    if (useUtcDay && /(?:Z|[+-]\d{2}:?\d{2})$/.test(raw)) {
       const instant = new Date(timestamp);
       return { state: 'valid', day: Date.UTC(instant.getUTCFullYear(), instant.getUTCMonth(), instant.getUTCDate()) };
     }
@@ -92,7 +93,7 @@
     return { raw: new Map(), invalid: new Map(), days: new Set(), present: false };
   }
   function addDate(bucket, value, field) {
-    const parsed = parseDate(value);
+    const parsed = parseDate(value, field.endsWith('Created') || field === 'RegistrationStart' || field === 'RegistrationEnd');
     if (parsed.state === 'blank') return;
     // Far-future registration expiry values are source-system open-ended sentinels.
     if (field === 'RegistrationEnd' && parsed.state === 'valid' && parsed.day >= EXPIRY_LIMIT) return;
@@ -200,7 +201,7 @@
         const currentValues = rawValues(group.dates[laterField].raw), relatedValues = rawValues(group.dates[earlierField].raw);
         addIssue('reversed_dates', 'error', laterField, currentValues,
           FIELD_LABELS[laterField] + ' is before ' + FIELD_LABELS[earlierField].toLowerCase() + '.',
-          'Check both source dates and correct whichever is wrong; the expected order is ' + FIELD_LABELS[earlierField].toLowerCase() + ' followed by ' + FIELD_LABELS[laterField].toLowerCase() + '.',
+          'Check both source dates and correct whichever is wrong; ' + FIELD_LABELS[earlierField] + ' must be on or before ' + FIELD_LABELS[laterField].toLowerCase() + '. Same-day milestones are allowed.',
           { relatedField: earlierField, relatedValues, value: FIELD_LABELS[laterField] + ': ' + displayValues(currentValues) + '; ' + FIELD_LABELS[earlierField] + ': ' + displayValues(relatedValues) });
       }
 
