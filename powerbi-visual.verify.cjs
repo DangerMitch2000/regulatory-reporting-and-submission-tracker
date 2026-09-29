@@ -4,6 +4,7 @@ fs.mkdirSync(path.join(out,'verify'),{recursive:true});
 fs.copyFileSync(path.join(__dirname,'tracker-theme.verify.cjs'),path.join(out,'verify/tracker-theme.verify.cjs'));
 fs.copyFileSync(path.join(__dirname,'tracker-dispatch.verify.cjs'),path.join(out,'verify/tracker-dispatch.verify.cjs'));
 fs.copyFileSync(path.join(__dirname,'tracker-calendar-day.verify.cjs'),path.join(out,'verify/tracker-calendar-day.verify.cjs'));
+fs.copyFileSync(path.join(__dirname,'tracker-dispatch-details.verify.cjs'),path.join(out,'verify/tracker-dispatch-details.verify.cjs'));
 fs.writeFileSync(path.join(out,'verify/harness.ts'),`import {Visual} from '../src/visual';
 import {roles} from '../src/adapter';
 import rows from '../../sample.json';
@@ -127,6 +128,7 @@ try{
 await require('./tracker-theme.verify.cjs')(page,{outputDir:__dirname});
 await require('./tracker-dispatch.verify.cjs')(page,{outputDir:__dirname});
 await require('./tracker-calendar-day.verify.cjs')(page,{outputDir:__dirname});
+await require('./tracker-dispatch-details.verify.cjs')(page,{outputDir:__dirname});
 assert.deepEqual(errors,[]);console.log('PASS: actual Visual class, CSP interpreter, 60 submissions, five filters, search, comparison, details, list search/paging, refresh/resize, empty data, isolated instances, quality filters/conflicts, distinct counts, 30,000-row deduplication, full CSV and rejected-export fallback; no page errors.');
 }finally{await browser.close();server.close();}})().catch(e=>{console.error(e);process.exit(1)});
 `);

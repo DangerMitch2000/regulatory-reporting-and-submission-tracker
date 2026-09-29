@@ -1,8 +1,12 @@
-# Regulatory Tracker 1.10.2
+# Regulatory Tracker 1.10.3
 
-[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.10.2 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.10.2) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.10.2/regulatory-tracker-1.10.2.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.10.3 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.10.3) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.10.3/regulatory-tracker-1.10.3.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
+
+## New in 1.10.3: Dispatch details
+
+Each submission now shows original, latest and actual dispatch dates, source submission status and calendar days until or past its dispatch target in Details. A blank latest plan falls back to the original; invalid or conflicting dates are withheld. Completed submissions, later milestone evidence and unknown dispatch requirements prompt confirmation instead of claiming dispatch is pending. Preparation duration is unavailable without a reliable start date; creation dates are not used. The Gantt layout is unchanged.
 
 ## New in 1.10.2: Submission and RO states
 
@@ -22,7 +26,7 @@ Map your **Submission dispatch required c** source field to **Dispatch required*
 
 | Visual | Download | Demo |
 | --- | --- | --- |
-| Regulatory Tracker 1.10.2 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.10.2/regulatory-tracker-1.10.2.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-timeline-demo/) |
+| Regulatory Tracker 1.10.3 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.10.3/regulatory-tracker-1.10.3.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-timeline-demo/) |
 | Registration Overview / Roadmap 1.4.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/roadmap-2026-v1.4.0/roadmap-2026-1.4.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-timeline-demo/roadmap-preview.html) |
 | IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-timeline-demo/ivdr-preview.html) |
 | Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-timeline-demo/key-preview.html) |

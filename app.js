@@ -7,6 +7,7 @@
  const quality=window.regulatoryQuality; const qualityUI=window.regulatoryQualityUI; const exportWorklist=window.regulatoryExportWorklist; let qualityMappedFields=null,qualityAnalysis,qualityPanel;
  const submissionPeriod=window.regulatorySubmissionPeriod;let submissionDates=new Map(),unidentifiedDates=new Map();
  const dispatchRequired=window.regulatoryDispatchRequired;let dispatchRequirements=new Map();
+ const dispatchDetails=window.regulatoryDispatchDetails;let dispatchSummaries=new Map();
  const run=fn=>queue=queue.then(fn).catch(error=>{status.textContent='Could not update the chart: '+error.message;console.error(error);});
  const date=x=>x==null||!Number.isFinite(x)?'Not recorded':new Date(x).toISOString().slice(0,10);
  const duration=x=>x==null?'Not recorded / withheld':Math.round(x)+' days';
@@ -63,7 +64,7 @@
   function updateDateControl(){const p=chosenPeriod();$('submission-custom').hidden=$('submission-period').value!=='custom';$('submission-date-summary').textContent='Submission date · '+p.label;$('submission-date-error').textContent=p.error;$('submission-date-error').hidden=!p.error;for(const id of ['submission-from','submission-to'])$(id).setAttribute('aria-invalid',String(!!p.error));return p;}
   function refreshDateChoices(){const picker=$('submission-period'),previous=picker.value||'all',options=[['all','All dates'],...submissionPeriod.years([...submissionDates.values(),...unidentifiedDates.values()]).map(year=>['year:'+year,String(year)]),['custom','Custom range'],['undated','No usable date']];if(previous.startsWith('year:')&&!options.some(([v])=>v===previous))options.splice(1,0,[previous,previous.slice(5)+' (no matching dates)']);picker.replaceChildren(...options.map(([value,label])=>{const o=el('option',label);o.value=value;return o;}));picker.value=previous;updateDateControl();}
   function dispatchMapped(){return qualityMappedFields?qualityMappedFields.includes('DispatchRequired'):rows.some(row=>Object.prototype.hasOwnProperty.call(row,'DispatchRequired'));}
-  function prepareQuality(){dispatchRequirements=dispatchRequired.bySubmission(rows,dispatchMapped());qualityAnalysis=quality.analyze(rows,{now:new Date(),...(qualityMappedFields?{mappedFields:qualityMappedFields}:{})});}
+  function prepareQuality(){const options={now:new Date(),...(qualityMappedFields?{mappedFields:qualityMappedFields}:{})};dispatchRequirements=dispatchRequired.bySubmission(rows,dispatchMapped());dispatchSummaries=dispatchDetails.analyze(rows,options);qualityAnalysis=quality.analyze(rows,options);}
   function enriched(row){const p=predictionAnalysis.bySubID.get(norm(row.SubID));return {...row,PredictionDate:p?.predictedDate??null,PredictionLow:p?.rangeStart??null,PredictionHigh:p?.rangeEnd??null,PredictionN:p?.sampleCount??0,PredictionMedian:p?.medianDays??null,PredictionCountry:p?.country??'',PredictionStatus:p?.status??'unavailable',PredictionAnchorDate:p?.anchorDate??null,PredictionAnchorField:p?.anchorField??'',PredictionAnchorLabel:p?.anchorLabel??'',PredictionFromPlan:p?.forecastFromPlan??false};}
   function filter(){return run(async()=>{const period=updateDateControl(),matching=rows.filter(row=>Object.entries(fields).every(([kind,field])=>!selected[kind].size||selected[kind].has(norm(row[field])))&&dispatchRequired.matches(dispatchRequirements.get(norm(row.SubID))||dispatchRequired.resolve([row.DispatchRequired],dispatchMapped()),$('dispatch-required').value||'all')&&submissionPeriod.matches(norm(row.SubID)?submissionDates.get(norm(row.SubID)):unidentifiedDates.get(row),period));view.change('dataset',vega.changeset().remove(()=>true).insert(matching.map(enriched)));await view.runAsync();qualityPanel.update(qualityAnalysis,matching);detailPage=0;updateStatus();renderDetails();});}
   function updateStatus(){const roCount=view.data('roTotals')[0]?.count??0;status.textContent=view.data('sub').length+' submissions · '+roCount+(roCount===1?' RO · ':' ROs · ')+view.data('apps').length+' applications · '+view.data('pinned').length+' pinned';}
@@ -78,6 +79,7 @@
    if(row.level===2){body.append(el('p',row.SubmissionType,'type-label'));const required=dispatchRequirements.get(norm(row.SubID));body.append(el('p','Dispatch required: '+(required?.label||'Field not mapped'),'dispatch-required-detail'));if(required?.key==='review')body.append(el('p','Recorded requirement values: '+required.values.join(' / '),'prediction-warning'));}
    const relations=el('dl',undefined,'relationships');for(const [label,value]of [['Application',row.AppID],['Regulatory objective',row.ROID],['Legal manufacturer',row.ManufacturerInfo.detail],['Countries',row.CountryInfo.detail]]){relations.append(el('dt',label),el('dd',value||'Not recorded'));}body.append(relations);
    if(row.level===2){
+    renderDispatchDetails(body,dispatchSummaries.get(norm(row.SubID)));
     renderPrediction(body,predictionAnalysis.bySubID.get(norm(row.SubID)));
     const more=el('details',undefined,'record-history');more.append(el('summary','All milestone dates and processing history'));body.append(more);
     const table=el('table'),head=el('tr');for(const t of ['Milestone','Original','Latest','Actual'])head.append(el('th',t));table.append(head);
@@ -92,6 +94,15 @@
    detailPage=Math.min(detailPage,max-1);
    for(const [label,info]of groups){const section=el('section'),found=info.members.map(m=>m.label).filter(x=>x.toLowerCase().includes(q));section.append(el('h3',label+' · '+found.length+' matching'));const ul=el('ul');for(const item of found.slice(detailPage*12,detailPage*12+12))ul.append(el('li',item));if(!ul.children.length)ul.append(el('li','No values on this page'));section.append(ul);lists.append(section);}
    $('list-page').textContent=(detailPage+1)+' / '+max;$('list-prev').disabled=detailPage===0;$('list-next').disabled=detailPage>=max-1;
+  }
+  function renderDispatchDetails(body,summary){
+   if(!summary)return;
+   const section=el('section',undefined,'dispatch-summary');section.append(el('h3','Dispatch dates & target timing'));
+   const dates=el('dl',undefined,'dispatch-dates');
+   for(const [label,value]of [['Submission status',summary.status],['Original dispatch plan',summary.dates.OriginalDispatch.label],['Latest dispatch plan',summary.dates.LatestDispatch.label],['Actual dispatch',summary.dates.ActualDispatch.label]])dates.append(el('dt',label),el('dd',value));
+   section.append(dates,el('strong',summary.timing,'dispatch-timing'));
+   if(summary.note)section.append(el('p',summary.note));
+   section.append(el('p','As of '+summary.asOf+' · Calendar days; timestamps ignored.','muted'),el('p','Preparation start: not recorded. Time in preparation is unavailable; record creation dates are not used.','muted'));body.append(section);
   }
   function renderPrediction(body,p){
    const grid=el('div',undefined,'prediction-grid'),record=el('section',undefined,'prediction-card'),estimate=el('section',undefined,'prediction-card estimate'),history=el('section',undefined,'prediction-card');

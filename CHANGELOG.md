@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.10.3 — 2026-09-29
+
+- Add dispatch plans, actual dispatch, submission status and calendar-day target timing to submission Details.
+- Resolve full delivered membership evidence before filters; withhold invalid/conflicting dates. Latest blank plans fall back to original.
+- Distinguish dispatch not required, unknown requirement, completed submission and later milestone evidence from pending dispatch. Do not infer preparation start from creation dates.
+- Keep the Gantt layout and existing timeline calculations unchanged.
+
 ## 1.10.2 — 2026-09-29
 
 - Remove the Completed-submission / missing-approval review rule. Submission completion does not imply that its regulatory objective is approved or require an approval date.
