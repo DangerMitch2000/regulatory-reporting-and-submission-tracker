@@ -1,6 +1,7 @@
 /* Browser harness runs the actual Visual class with a synthetic Power BI table. */
 const fs=require('fs'),path=require('path');const out=process.argv[2]||'powerbi-visual';
 fs.mkdirSync(path.join(out,'verify'),{recursive:true});
+fs.copyFileSync(path.join(__dirname,'tracker-changes.verify.cjs'),path.join(out,'verify/tracker-changes.verify.cjs'));
 fs.copyFileSync(path.join(__dirname,'tracker-states.verify.cjs'),path.join(out,'verify/tracker-states.verify.cjs'));
 fs.copyFileSync(path.join(__dirname,'tracker-events.verify.cjs'),path.join(out,'verify/tracker-events.verify.cjs'));
 fs.copyFileSync(path.join(__dirname,'tracker-preparation.verify.cjs'),path.join(out,'verify/tracker-preparation.verify.cjs'));
@@ -9,9 +10,10 @@ fs.copyFileSync(path.join(__dirname,'tracker-dispatch.verify.cjs'),path.join(out
 fs.copyFileSync(path.join(__dirname,'tracker-calendar-day.verify.cjs'),path.join(out,'verify/tracker-calendar-day.verify.cjs'));
 fs.copyFileSync(path.join(__dirname,'tracker-dispatch-details.verify.cjs'),path.join(out,'verify/tracker-dispatch-details.verify.cjs'));
 fs.writeFileSync(path.join(out,'verify/harness.ts'),`import {Visual} from '../src/visual';
+import * as vega from 'vega';
 import {roles} from '../src/adapter';
 import rows from '../../sample.json';
-const verify:any=window;verify.__qualityExports=[];verify.__qualityReject=false;verify.__qualityRevision=0;
+const verify:any=window;verify.__themeVega=vega;verify.__qualityExports=[];verify.__qualityReject=false;verify.__qualityRevision=0;
 const host={eventService:{renderingStarted(){},renderingFinished(){document.body.dataset.ready='true';verify.__qualityRevision++},renderingFailed(o,e){throw Error(e)}},fetchMoreData(){return false},downloadService:{exportStatus(){return Promise.resolve(0)},exportVisualsContent(content,fileName,fileType,description){verify.__qualityExports.push({content,fileName,fileType,description});return Promise.resolve(!verify.__qualityReject)}}};
 const table=(data)=>({columns:roles.map(role=>({displayName:role,roles:{[role]:true}})),rows:data.map(r=>roles.map(role=>r[role]??null))});
 const main=document.getElementById('host');const visual=new Visual({element:main,host} as any);verify.__themeVisual=visual;
@@ -43,7 +45,7 @@ fs.writeFileSync(path.join(out,'verify/run.cjs'),`const {chromium}=require('@pla
 (async()=>{const server=http.createServer((req,res)=>{const p=path.join(__dirname,new URL(req.url,'http://localhost').pathname);if(!p.startsWith(__dirname+path.sep)){res.writeHead(403).end();return;}fs.readFile(p,(e,b)=>{if(e){res.writeHead(404).end();return;}res.setHeader('Content-Type',p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':'text/html');res.end(b);});}).listen(8771,'127.0.0.1');const browser=await chromium.launch({headless:true,...(process.env.TRACKER_BROWSER_CHANNEL?{channel:process.env.TRACKER_BROWSER_CHANNEL}:{})}),page=await browser.newPage({viewport:{width:1280,height:950}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.goto('http://127.0.0.1:8771/index.html');await page.waitForSelector('body[data-ready=true]');await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
- assert.match(await page.locator('#host #filter-status').innerText(),/4 applications · 10 ROs · 60 submissions/);assert.equal(await page.locator('#host #state-legend details').count(),4);assert.equal(await page.locator('#host input[type=range]').count(),0);assert((await page.locator('#host h1').innerText()).includes('Regulatory Tracker'));
+ assert.match(await page.locator('#host #filter-status').innerText(),/4 applications · 10 ROs · 60 submissions/);assert.equal(await page.locator('#host #state-legend details').count(),5);assert.equal(await page.locator('#host input[type=range]').count(),0);assert((await page.locator('#host h1').innerText()).includes('Regulatory Tracker'));
  assert.equal(await page.locator('#host .filter').count(),5);assert.equal(await page.locator('#host input[type=search]').count(),9);
  await page.locator('#host input[name=query]').fill('SUB-00002');await page.waitForFunction(()=>document.querySelector('#host #filter-status').textContent.includes('1 submissions'));
  await page.getByRole('button',{name:'Refresh host data',exact:true}).click();assert.equal(await page.locator('#host input[name=query]').inputValue(),'SUB-00002');
@@ -134,8 +136,10 @@ await require('./tracker-calendar-day.verify.cjs')(page,{outputDir:__dirname});
 await require('./tracker-dispatch-details.verify.cjs')(page,{outputDir:__dirname});
 await require('./tracker-preparation.verify.cjs')(page,{outputDir:__dirname});
 await require('./tracker-events.verify.cjs')(page,{outputDir:__dirname});
+await require('./tracker-changes.verify.cjs')(page,{outputDir:__dirname});
 await require('./tracker-states.verify.cjs')(page,{outputDir:__dirname});
 assert.deepEqual(errors,[]);console.log('PASS: actual Visual class, CSP interpreter, 60 submissions, five filters, search, comparison, details, list search/paging, refresh/resize, empty data, isolated instances, quality filters/conflicts, distinct counts, 30,000-row deduplication, full CSV and rejected-export fallback; no page errors.');
 }finally{await browser.close();server.close();}})().catch(e=>{console.error(e);process.exit(1)});
 `);
 console.log('Created actual-class browser verification harness.');
+

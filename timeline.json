@@ -25,7 +25,7 @@
     },
     {
       "name": "themePalette",
-      "update": "themeMode==='light' ? {\"preparation\":\"#6752b4\",\"background\":\"#ffffff\",\"text\":\"#172b43\",\"border\":\"#c5cfdb\",\"controlSelected\":\"#dceaff\",\"control\":\"#eef3f9\",\"controlBorder\":\"#899caf\",\"controlHover\":\"#dae7f6\",\"controlFocus\":\"#365f99\",\"rangeText\":\"#52647a\",\"header\":\"#e8eef6\",\"headerBorder\":\"#b8c6d6\",\"headerText\":\"#253c58\",\"rowSelected\":\"#dceaff\",\"rowHover\":\"#edf3fc\",\"rowApplication\":\"#eef2f7\",\"rowObjective\":\"#f3f6fa\",\"rowOdd\":\"#ffffff\",\"rowEven\":\"#f8fafc\",\"selectionBorder\":\"#7950b4\",\"minorGrid\":\"#dde4ed\",\"majorGrid\":\"#aab9ca\",\"axisText\":\"#3b506b\",\"minorAxisText\":\"#52647a\",\"divider\":\"#c5cfdb\",\"rowDivider\":\"#d5deea\",\"markerHover\":\"#172b43\",\"expandBackground\":\"#e4edf8\",\"expandBorder\":\"#7892b4\",\"expandHover\":\"#cfdef3\",\"expandText\":\"#294765\",\"subText\":\"#52647a\",\"issueText\":\"#89530b\",\"mutedText\":\"#52647a\",\"prediction\":\"#996400\",\"hollowFill\":\"#ffffff\",\"predictionHover\":\"#664000\",\"todayLine\":\"#b82854\",\"todayBackground\":\"#fff1f4\",\"todayText\":\"#a32049\",\"footerText\":\"#52647a\",\"pageControl\":\"#eef3f9\",\"pageControlBorder\":\"#899caf\",\"pageControlHover\":\"#dae7f6\",\"emptyText\":\"#3b506b\",\"countText\":\"#3b506b\",\"scrollTrack\":\"#e7edf5\",\"scrollBorder\":\"#bac7d7\",\"scrollThumb\":\"#7488a4\",\"legendText\":\"#253c58\",\"comparisonText\":\"#52647a\",\"pinText\":\"#7847a4\",\"legendHelp\":\"#52647a\"} : {\"preparation\":\"#bba3f7\",\"background\":\"#14181f\",\"text\":\"#dbe3ef\",\"border\":\"#3b4657\",\"controlSelected\":\"#33475b\",\"control\":\"#252d39\",\"controlBorder\":\"#526078\",\"controlHover\":\"#3d4d65\",\"controlFocus\":\"#a4bff2\",\"rangeText\":\"#9bacc3\",\"header\":\"#222b38\",\"headerBorder\":\"#445166\",\"headerText\":\"#b8c8df\",\"rowSelected\":\"#344460\",\"rowHover\":\"#293747\",\"rowApplication\":\"#232d3a\",\"rowObjective\":\"#1d2733\",\"rowOdd\":\"#171e28\",\"rowEven\":\"#1b232e\",\"selectionBorder\":\"#b799ff\",\"minorGrid\":\"#334052\",\"majorGrid\":\"#586c86\",\"axisText\":\"#b0c1d9\",\"minorAxisText\":\"#93a8c3\",\"divider\":\"#3b475b\",\"rowDivider\":\"#354154\",\"markerHover\":\"#fff\",\"expandBackground\":\"#2c3b50\",\"expandBorder\":\"#7390b5\",\"expandHover\":\"#49688f\",\"expandText\":\"#d6e8ff\",\"subText\":\"#94a6bf\",\"issueText\":\"#ffbd67\",\"mutedText\":\"#8e9eb5\",\"prediction\":\"#f6c66a\",\"hollowFill\":\"#19222e\",\"predictionHover\":\"#ffe4a6\",\"todayLine\":\"#ff8fad\",\"todayBackground\":\"#1e2632\",\"todayText\":\"#ff9eb8\",\"footerText\":\"#9babbe\",\"pageControl\":\"#2a3648\",\"pageControlBorder\":\"#51617a\",\"pageControlHover\":\"#425777\",\"emptyText\":\"#c0cddd\",\"countText\":\"#a4bbd8\",\"scrollTrack\":\"#101722\",\"scrollBorder\":\"#52617a\",\"scrollThumb\":\"#8296b6\",\"legendText\":\"#cedbec\",\"comparisonText\":\"#aabbd1\",\"pinText\":\"#e5d1ff\",\"legendHelp\":\"#a9bbd3\"}"
+      "update": "themeMode==='light' ? {\"survey\":\"#943da6\",\"preparation\":\"#6752b4\",\"background\":\"#ffffff\",\"text\":\"#172b43\",\"border\":\"#c5cfdb\",\"controlSelected\":\"#dceaff\",\"control\":\"#eef3f9\",\"controlBorder\":\"#899caf\",\"controlHover\":\"#dae7f6\",\"controlFocus\":\"#365f99\",\"rangeText\":\"#52647a\",\"header\":\"#e8eef6\",\"headerBorder\":\"#b8c6d6\",\"headerText\":\"#253c58\",\"rowSelected\":\"#dceaff\",\"rowHover\":\"#edf3fc\",\"rowApplication\":\"#eef2f7\",\"rowObjective\":\"#f3f6fa\",\"rowOdd\":\"#ffffff\",\"rowEven\":\"#f8fafc\",\"selectionBorder\":\"#7950b4\",\"minorGrid\":\"#dde4ed\",\"majorGrid\":\"#aab9ca\",\"axisText\":\"#3b506b\",\"minorAxisText\":\"#52647a\",\"divider\":\"#c5cfdb\",\"rowDivider\":\"#d5deea\",\"markerHover\":\"#172b43\",\"expandBackground\":\"#e4edf8\",\"expandBorder\":\"#7892b4\",\"expandHover\":\"#cfdef3\",\"expandText\":\"#294765\",\"subText\":\"#52647a\",\"issueText\":\"#89530b\",\"mutedText\":\"#52647a\",\"prediction\":\"#996400\",\"hollowFill\":\"#ffffff\",\"predictionHover\":\"#664000\",\"todayLine\":\"#b82854\",\"todayBackground\":\"#fff1f4\",\"todayText\":\"#a32049\",\"footerText\":\"#52647a\",\"pageControl\":\"#eef3f9\",\"pageControlBorder\":\"#899caf\",\"pageControlHover\":\"#dae7f6\",\"emptyText\":\"#3b506b\",\"countText\":\"#3b506b\",\"scrollTrack\":\"#e7edf5\",\"scrollBorder\":\"#bac7d7\",\"scrollThumb\":\"#7488a4\",\"legendText\":\"#253c58\",\"comparisonText\":\"#52647a\",\"pinText\":\"#7847a4\",\"legendHelp\":\"#52647a\"} : {\"survey\":\"#e5a0f1\",\"preparation\":\"#bba3f7\",\"background\":\"#14181f\",\"text\":\"#dbe3ef\",\"border\":\"#3b4657\",\"controlSelected\":\"#33475b\",\"control\":\"#252d39\",\"controlBorder\":\"#526078\",\"controlHover\":\"#3d4d65\",\"controlFocus\":\"#a4bff2\",\"rangeText\":\"#9bacc3\",\"header\":\"#222b38\",\"headerBorder\":\"#445166\",\"headerText\":\"#b8c8df\",\"rowSelected\":\"#344460\",\"rowHover\":\"#293747\",\"rowApplication\":\"#232d3a\",\"rowObjective\":\"#1d2733\",\"rowOdd\":\"#171e28\",\"rowEven\":\"#1b232e\",\"selectionBorder\":\"#b799ff\",\"minorGrid\":\"#334052\",\"majorGrid\":\"#586c86\",\"axisText\":\"#b0c1d9\",\"minorAxisText\":\"#93a8c3\",\"divider\":\"#3b475b\",\"rowDivider\":\"#354154\",\"markerHover\":\"#fff\",\"expandBackground\":\"#2c3b50\",\"expandBorder\":\"#7390b5\",\"expandHover\":\"#49688f\",\"expandText\":\"#d6e8ff\",\"subText\":\"#94a6bf\",\"issueText\":\"#ffbd67\",\"mutedText\":\"#8e9eb5\",\"prediction\":\"#f6c66a\",\"hollowFill\":\"#19222e\",\"predictionHover\":\"#ffe4a6\",\"todayLine\":\"#ff8fad\",\"todayBackground\":\"#1e2632\",\"todayText\":\"#ff9eb8\",\"footerText\":\"#9babbe\",\"pageControl\":\"#2a3648\",\"pageControlBorder\":\"#51617a\",\"pageControlHover\":\"#425777\",\"emptyText\":\"#c0cddd\",\"countText\":\"#a4bbd8\",\"scrollTrack\":\"#101722\",\"scrollBorder\":\"#52617a\",\"scrollThumb\":\"#8296b6\",\"legendText\":\"#cedbec\",\"comparisonText\":\"#aabbd1\",\"pinText\":\"#e5d1ff\",\"legendHelp\":\"#a9bbd3\"}"
     },
     {
       "name": "themeStateColors",
@@ -64,7 +64,7 @@
     },
     {
       "name": "rowH",
-      "value": 64
+      "value": 84
     },
     {
       "name": "pageSize",
@@ -307,7 +307,7 @@
       "value": false,
       "on": [
         {
-          "events": "@toggle:click, @parentLabel:click, @parentBar:click, @parentCell:click, @rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @next:click, @nextText:click, @prev:click, @prevText:click, @scrollTrack:pointerdown, @scrollThumb:pointerdown, @predictionRange:click, @predictionApproval:click, @preparationRange:click, @preparationLabel:click",
+          "events": "@toggle:click, @parentLabel:click, @parentBar:click, @parentCell:click, @rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @next:click, @nextText:click, @prev:click, @prevText:click, @scrollTrack:pointerdown, @scrollThumb:pointerdown, @predictionRange:click, @predictionApproval:click, @preparationRange:click, @preparationLabel:click, @surveyRange:click",
           "update": "true"
         },
         {
@@ -405,7 +405,7 @@
       "value": "",
       "on": [
         {
-          "events": "@rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @predictionRange:click, @predictionApproval:click, @preparationRange:click, @preparationLabel:click",
+          "events": "@rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @predictionRange:click, @predictionApproval:click, @preparationRange:click, @preparationLabel:click, @surveyRange:click",
           "update": "datum.key"
         }
       ]
@@ -629,7 +629,8 @@
         "input": "select",
         "options": [
           "Application",
-          "Regulatory event"
+          "Regulatory event",
+          "Change initiation"
         ],
         "name": "Group by "
       }
@@ -640,16 +641,29 @@
       "on": [
         {
           "events": "@hierarchyHeader:click",
-          "update": "groupBy==='Regulatory event' && mode==='Hierarchy' ? !eventDescending : eventDescending"
+          "update": "mode==='Hierarchy' ? !eventDescending : eventDescending"
         }
       ]
     },
     {
       "name": "eventMode",
-      "update": "groupBy==='Regulatory event' && mode==='Hierarchy'"
+      "update": "groupBy!=='Application' && mode==='Hierarchy'"
+    },
+    {
+      "name": "changeMode",
+      "update": "groupBy==='Change initiation' && mode==='Hierarchy'"
     }
   ],
   "data": [
+    {
+      "name": "changeRows"
+    },
+    {
+      "name": "orderedRows"
+    },
+    {
+      "name": "surveyRows"
+    },
     {
       "name": "pinned",
       "values": [],
@@ -2910,12 +2924,39 @@
         "apps",
         "ros",
         "sub",
-        "eventRows"
+        "eventRows",
+        "changeRows"
       ],
       "transform": [
         {
           "type": "filter",
-          "expr": "eventMode ? isValid(datum.eventKey) : !isValid(datum.eventKey)"
+          "expr": "changeMode ? isValid(datum.changeKey) : eventMode ? isValid(datum.eventKey) && !isValid(datum.changeKey) : !isValid(datum.eventKey) && !isValid(datum.changeKey)"
+        },
+        {
+          "type": "lookup",
+          "from": "orderedRows",
+          "key": "key",
+          "fields": [
+            "key"
+          ],
+          "as": [
+            "orderInfo"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "rankApp",
+          "expr": "isValid(datum.orderInfo) ? datum.orderInfo.rankApp : 0"
+        },
+        {
+          "type": "formula",
+          "as": "rankRO",
+          "expr": "isValid(datum.orderInfo) ? datum.orderInfo.rankRO : 0"
+        },
+        {
+          "type": "formula",
+          "as": "rankSub",
+          "expr": "isValid(datum.orderInfo) ? datum.orderInfo.rankSub : 0"
         }
       ]
     },
@@ -2935,7 +2976,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "mode==='Hierarchy' ? (datum.level===2 || (eventMode && datum.level===-1)) : datum.level===compareLevel && (!pinsOnly || indata('pinned','pinKey',datum.key))"
+          "expr": "mode==='Hierarchy' ? (datum.level===2 || (eventMode && datum.level<0)) : datum.level===compareLevel && (!pinsOnly || indata('pinned','pinKey',datum.key))"
         },
         {
           "type": "filter",
@@ -2944,8 +2985,32 @@
       ]
     },
     {
+      "name": "surveyDomain",
+      "source": "surveyRows",
+      "transform": [
+        {
+          "type": "lookup",
+          "from": "displayRows",
+          "key": "key",
+          "fields": [
+            "key"
+          ],
+          "as": [
+            "visibleRow"
+          ]
+        },
+        {
+          "type": "filter",
+          "expr": "!elapsed && isValid(datum.visibleRow) && isValid(datum.start) && isValid(datum.end)"
+        }
+      ]
+    },
+    {
       "name": "extent",
-      "source": "domainRows",
+      "source": [
+        "domainRows",
+        "surveyDomain"
+      ],
       "transform": [
         {
           "type": "formula",
@@ -2987,7 +3052,22 @@
         },
         {
           "type": "filter",
-          "expr": "mode==='Hierarchy' ? (datum.level===-1 || ((!eventMode || indata('expanded','key',datum.eventKey)) && (datum.level===0 || (indata('expanded','key',datum.appKey) && (datum.level===1 || indata('expanded','key',datum.roKey)))))) : datum.level===compareLevel && (!pinsOnly || indata('pinned','pinKey',datum.key))"
+          "expr": "mode==='Hierarchy' ? (datum.level===-2 || ((!changeMode || indata('expanded','key',datum.changeKey)) && (datum.level===-1 || ((!eventMode || indata('expanded','key',datum.eventKey)) && (datum.level===0 || (indata('expanded','key',datum.appKey) && (datum.level===1 || indata('expanded','key',datum.roKey)))))))) : datum.level===compareLevel && (!pinsOnly || indata('pinned','pinKey',datum.key))"
+        },
+        {
+          "type": "formula",
+          "as": "sortChangeOther",
+          "expr": "changeMode ? datum.changeOther : 0"
+        },
+        {
+          "type": "formula",
+          "as": "sortChange",
+          "expr": "changeMode ? datum.changeRank*(eventDescending ? -1 : 1) : 0"
+        },
+        {
+          "type": "formula",
+          "as": "sortChangeLevel",
+          "expr": "datum.level===-2 ? -1 : 0"
         },
         {
           "type": "formula",
@@ -3002,12 +3082,12 @@
         {
           "type": "formula",
           "as": "sortA",
-          "expr": "mode==='Hierarchy' ? datum.AppID : ''"
+          "expr": "mode==='Hierarchy' ? datum.rankApp : 0"
         },
         {
           "type": "formula",
           "as": "sortR",
-          "expr": "mode==='Hierarchy' ? datum.sortRO : ''"
+          "expr": "mode==='Hierarchy' ? datum.rankRO : 0"
         },
         {
           "type": "formula",
@@ -3017,12 +3097,15 @@
         {
           "type": "formula",
           "as": "sortValue",
-          "expr": "mode==='Hierarchy' ? datum.sortDate : sortBy==='Latest target approval' ? datum.LatestSort : sortBy==='Dispatch to submission' ? (isValid(datum.DispatchDays) ? datum.DispatchDays : 8640000000000000) : sortBy==='Submission to approval' ? (isValid(datum.ApprovalDays) ? datum.ApprovalDays : 8640000000000000) : datum.CreatedSort"
+          "expr": "mode==='Hierarchy' ? datum.rankSub : sortBy==='Latest target approval' ? datum.LatestSort : sortBy==='Dispatch to submission' ? (isValid(datum.DispatchDays) ? datum.DispatchDays : 8640000000000000) : sortBy==='Submission to approval' ? (isValid(datum.ApprovalDays) ? datum.ApprovalDays : 8640000000000000) : datum.CreatedSort"
         },
         {
           "type": "collect",
           "sort": {
             "field": [
+              "sortChangeOther",
+              "sortChange",
+              "sortChangeLevel",
               "sortUnlinked",
               "sortEvent",
               "sortA",
@@ -3037,6 +3120,9 @@
           "type": "window",
           "sort": {
             "field": [
+              "sortChangeOther",
+              "sortChange",
+              "sortChangeLevel",
               "sortUnlinked",
               "sortEvent",
               "sortA",
@@ -3613,6 +3699,37 @@
           "expr": "!elapsed && datum.LMPrepReady && datum.LMPrepEnd>=xlo && datum.LMPrepStart<=xhi"
         }
       ]
+    },
+    {
+      "name": "surveyWindows",
+      "source": "surveyRows",
+      "transform": [
+        {
+          "type": "lookup",
+          "from": "pageRows",
+          "key": "key",
+          "fields": [
+            "key"
+          ],
+          "as": [
+            "row"
+          ]
+        },
+        {
+          "type": "filter",
+          "expr": "isValid(datum.row) && !elapsed && isValid(datum.start) && isValid(datum.end) && datum.end>=xlo && datum.start<=xhi"
+        },
+        {
+          "type": "formula",
+          "as": "y",
+          "expr": "datum.row.y"
+        },
+        {
+          "type": "formula",
+          "as": "key",
+          "expr": "datum.row.key"
+        }
+      ]
     }
   ],
   "scales": [
@@ -3885,7 +4002,7 @@
             "value": 94
           },
           "text": {
-            "signal": "mode==='Compare' ? (compareLevel===0 ? 'Application' : compareLevel===1 ? 'Regulatory objective' : 'Submission') : eventMode ? 'Event '+(eventDescending ? '↓' : '↑') : 'Hierarchy'"
+            "signal": "mode==='Compare' ? (compareLevel===0 ? 'Application' : compareLevel===1 ? 'Regulatory objective' : 'Submission') : (changeMode ? 'Change ID' : eventMode ? 'Event' : 'Hierarchy')+' '+(eventDescending ? '↓' : '↑')"
           },
           "fontWeight": {
             "value": 600
@@ -3894,10 +4011,10 @@
             "signal": "themePalette.headerText"
           },
           "tooltip": {
-            "signal": "eventMode ? 'Click to reverse numeric event order. No linked event stays last.' : 'Application / RO / Submission'"
+            "value": "Click to reverse numeric identifier order at every level; children stay with their parents."
           },
           "cursor": {
-            "signal": "eventMode ? 'pointer' : 'default'"
+            "value": "pointer"
           }
         }
       },
@@ -4268,7 +4385,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "8+(datum.level+(eventMode ? 1 : 0))*12"
+            "signal": "8+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
           },
           "y": {
             "signal": "datum.y+11"
@@ -4292,7 +4409,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "{'Action':indata('expanded','key',datum.key) ? 'Collapse' : 'Expand','Identifier':datum.level===-1 ? datum.EventName : datum.level===0 ? datum.AppID : datum.ROID}"
+            "signal": "{'Action':indata('expanded','key',datum.key) ? 'Collapse' : 'Expand','Identifier':datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? datum.AppID : datum.ROID}"
           }
         },
         "hover": {
@@ -4311,7 +4428,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "16.5+(datum.level+(eventMode ? 1 : 0))*12"
+            "signal": "16.5+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
           },
           "y": {
             "signal": "datum.y+19.5"
@@ -4349,19 +4466,19 @@
             "value": "middle"
           },
           "x": {
-            "signal": "31+(datum.level+(eventMode ? 1 : 0))*12"
+            "signal": "31+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
           },
           "y": {
             "signal": "datum.y+14"
           },
           "text": {
-            "signal": "datum.level===-1 ? datum.EventName : datum.level===0 ? datum.AppID : datum.ROID"
+            "signal": "datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? datum.AppID : datum.ROID"
           },
           "fontWeight": {
             "value": 600
           },
           "limit": {
-            "signal": "hierarchyW-37-(datum.level+(eventMode ? 1 : 0))*12"
+            "signal": "hierarchyW-37-(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
           },
           "cursor": {
             "value": "pointer"
@@ -4389,7 +4506,7 @@
             "value": "middle"
           },
           "x": {
-            "signal": "31+(datum.level+(eventMode ? 1 : 0))*12"
+            "signal": "31+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
           },
           "y": {
             "signal": "datum.y+32"
@@ -4401,7 +4518,7 @@
             "signal": "themePalette.subText"
           },
           "limit": {
-            "signal": "hierarchyW-37-(datum.level+(eventMode ? 1 : 0))*12"
+            "signal": "hierarchyW-37-(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
           },
           "tooltip": {
             "field": "shortTip"
@@ -4428,7 +4545,7 @@
             "value": "middle"
           },
           "x": {
-            "signal": "43+(eventMode ? 12 : 0)"
+            "signal": "43+(changeMode ? 24 : eventMode ? 12 : 0)"
           },
           "y": {
             "signal": "datum.y+13"
@@ -4604,7 +4721,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "{'Record':datum.level===-1 ? datum.EventName : datum.level===0 ? datum.AppID : datum.ROID,'State':datum.State,'Start':isValid(datum.start) ? utcFormat(datum.start,'%d %b %Y') : 'Not recorded','End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'Not recorded','Submissions':datum.n,'Summary':'All children in membership/search filters; state checkboxes control row visibility'}"
+            "signal": "{'Record':datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? datum.AppID : datum.ROID,'State':datum.State,'Start':isValid(datum.start) ? utcFormat(datum.start,'%d %b %Y') : 'Not recorded','End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'Not recorded','Submissions':datum.n,'Summary':'All children in membership/search filters; state checkboxes control row visibility'}"
           },
           "strokeDash": {
             "signal": "datum.level===-1 ? [5,3] : [1,0]"
@@ -5389,7 +5506,7 @@
             "value": "middle"
           },
           "x": {
-            "signal": "datum.level===2 ? 43 : 31+(datum.level+(eventMode ? 1 : 0))*12"
+            "signal": "datum.level===2 ? 43 : 31+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
           },
           "y": {
             "signal": "datum.y+50"
@@ -5465,13 +5582,13 @@
             "signal": "indata('pinned','pinKey',datum.baseKey || datum.key) ? '◆' : '◇'"
           },
           "cursor": {
-            "signal": "datum.level===-1 ? 'default' : 'pointer'"
+            "signal": "datum.level<0 ? 'default' : 'pointer'"
           },
           "tooltip": {
             "value": "Pin/unpin this row for comparison"
           },
           "opacity": {
-            "signal": "datum.level===-1 ? 0 : 1"
+            "signal": "datum.level<0 ? 0 : 1"
           }
         }
       }
@@ -5501,6 +5618,50 @@
           },
           "tooltip": {
             "signal": "{\"Active / Planned\":themeStateColors[\"#6d9eff\"],\"Progress / Ready\":themeStateColors[\"#43c6ec\"],\"Sent / Distributed\":themeStateColors[\"#bd9aff\"],\"HA received\":themeStateColors[\"#42cbbb\"],\"Completed\":themeStateColors[\"#65d18c\"],\"Hold / Deferred\":themeStateColors[\"#e8b65f\"],\"Rejected\":themeStateColors[\"#f27b82\"],\"Inactive / Other\":themeStateColors[\"#99a4b5\"],\"Health Authority Approved\":themeStateColors[\"#37d67a\"]}"
+          }
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "name": "surveyRange",
+      "from": {
+        "data": "surveyWindows"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "clamp(scale(\"x\",datum.start),left+3,width-22)"
+          },
+          "x2": {
+            "signal": "max(clamp(scale(\"x\",datum.start),left+3,width-22)+3,clamp(scale(\"x\",datum.end),left+3,width-22))"
+          },
+          "y": {
+            "signal": "datum.y+4"
+          },
+          "height": {
+            "value": 9
+          },
+          "fill": {
+            "signal": "themePalette.survey"
+          },
+          "fillOpacity": {
+            "value": 0.28
+          },
+          "stroke": {
+            "signal": "themePalette.survey"
+          },
+          "strokeOpacity": {
+            "value": 0.65
+          },
+          "cornerRadius": {
+            "value": 3
+          },
+          "tooltip": {
+            "signal": "{'Surveyed approval estimate':datum.duration,'Change ID':datum.change,'Assessment country':datum.country,'Earliest':utcFormat(datum.start,'%d %b %Y'),'Latest':utcFormat(datum.end,'%d %b %Y'),'Anchor':datum.anchorLabel,'Source':datum.source,'Basis':'Dispatch to approval (working interpretation); month = 30 days'}"
+          },
+          "cursor": {
+            "value": "pointer"
           }
         }
       }

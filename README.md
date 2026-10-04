@@ -1,8 +1,43 @@
-# Regulatory Tracker 1.13.1
+# Regulatory Tracker 1.14.0
 
-[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.13.1 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.13.1) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.13.1/regulatory-tracker-1.13.1.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.14.0 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.14.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.14.0/regulatory-tracker-1.14.0.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
+
+## Change initiation and country assessments — version 1.14.0
+
+Select **Group by → Change initiation** for **Change ID → Event → Application → RO → Submission**. One change can contain several events; shared applications and submissions remain under each relevant event. **Other regulatory events** stays at the bottom and missing historical references are normal, not data-quality errors.
+
+The hierarchy heading reverses natural numeric identifier order at every level together. Parent-child groups remain intact. All three grouping modes support expand/collapse. The new Change status dropdown lists Completed, In Progress and Not recorded independently. Totals count distinct **Change IDs → Events → Applications → ROs → Submissions** in the current filtered/search results.
+
+### New optional mappings
+
+| Visual field | Source |
+| --- | --- |
+| Event QMS reference | Event related_change_control_number__rim |
+| Change ID | Change Assessment Initiation: Change ID |
+| Change Project ID | Change Project ID |
+| Change QMS reference | Initiation QMS reference |
+| Change status | Initiation Status |
+| Change created | Initiation Created |
+| Planned Implementation Date | Initiation Planned Implementation Date |
+| Response Due Date | Initiation Response Due Date |
+| Change response count | Your recorded response-count field; do not sum duplicated membership rows |
+| Change Assessment Response Countries | Country on the response, separate from submission Country |
+| Change Assessment Response Timeline | Surveyed timeline on that same response |
+| MOH filing requirement | Recorded filing requirement/reason on that response |
+| Required documentation | Country-specific documentation text on that response |
+
+Use your existing model relationships to deliver real event/change/submission/response rows. The visual accepts a Change ID only when its nonblank QMS reference and the event QMS reference match after trimming and case normalization. It does not split compound CR references, infer historical links or join Agile. Normalize composite references in the model using a verified mapping table where necessary. Change IDs and event names must identify their respective records uniquely.
+
+### Surveyed approval range
+
+The thin magenta band above the submission milestones is sourced from **Change Impact Assessment Tool — SharePoint**. Match on Change ID and assessment country (trimmed, case-insensitive, exact country name). Use one country per response row. Standard LM preparation and historical approval estimates remain separate.
+
+Durations accept positive days, weeks and months, including ranges such as **6–8 months** or **6 to 8 months**; months use 30 days and weeks use 7 days. The working interpretation is dispatch-to-approval. Actual dispatch takes priority, then latest planned dispatch, then original planned dispatch. Invalid/conflicting dates do not silently fall back. Missing anchors, reversed/invalid/conflicting durations, unmatched countries and multiple change/country estimates withhold the combined band and remain visible in Details. A single duration is a narrow marker. This is a survey estimate, not a guaranteed forecast.
+
+Every selectable hierarchy level has relevant linked IDs, state, own dates and country-assessment details. Planned implementation is the change's own milestone; no estimated implementation time is added. MOH filing values are preserved as supplied, including blank, Not required, Product not commercialized and Unregulated; they do not automatically remove submissions. Required documentation is displayed as plain multiline text. Response counts are recorded values, not totals summed across repeated joined rows.
+
 
 ## Shift+scroll fix — version 1.13.1
 
@@ -64,7 +99,7 @@ Map your **Submission dispatch required c** source field to **Dispatch required*
 
 | Visual | Download | Demo |
 | --- | --- | --- |
-| Regulatory Tracker 1.13.1 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.13.1/regulatory-tracker-1.13.1.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
+| Regulatory Tracker 1.14.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.14.0/regulatory-tracker-1.14.0.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
 | Registration Overview / Roadmap 1.4.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.4.0/roadmap-2026-1.4.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap-preview.html) |
 | IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |
 | Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/key-preview.html) |
