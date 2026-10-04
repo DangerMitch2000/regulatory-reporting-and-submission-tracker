@@ -102,7 +102,7 @@
    if(p?.status==='estimated'){
     const list=el('dl');for(const [label,value]of [['Application standard',p.duration],['Preparation allowance',p.calendarDays+' calendar days (1 month = 30 days)'],['Estimated preparation start',date(p.start)],['Target finish / planned dispatch',date(p.end)],['Basis',p.anchor]])list.append(el('dt',label),el('dd',value));section.append(list);
     section.append(el('p','Standard supplied through the application’s lead-market country relationship. Child submissions use their own dispatch targets.','muted'));
-   }else section.append(el('p',p?.reason||'Preparation estimate unavailable.'));
+   }else {if(p?.duration)section.append(el('p','Application standard: '+p.duration+' (1 month = 30 calendar days).'));section.append(el('p',p?.reason||'Preparation estimate unavailable.'));}
    section.append(el('p','Planning estimate only. Actual preparation start and time spent preparing are not recorded.','muted'));body.append(section);
   }
   function renderDispatchDetails(body,summary){
