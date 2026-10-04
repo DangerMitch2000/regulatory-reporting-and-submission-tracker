@@ -28,7 +28,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -61,7 +61,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -94,7 +94,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -127,7 +127,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -160,7 +160,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -193,7 +193,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -226,7 +226,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -259,7 +259,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -292,7 +292,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -325,7 +325,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -358,7 +358,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -391,7 +391,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -511,7 +511,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -544,7 +544,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -577,7 +577,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -610,7 +610,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -643,7 +643,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -676,7 +676,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -709,7 +709,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -742,7 +742,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -775,7 +775,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -808,7 +808,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -841,7 +841,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -874,7 +874,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -994,7 +994,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -1027,7 +1027,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -1060,7 +1060,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -1093,7 +1093,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -1126,7 +1126,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -1159,7 +1159,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -1192,7 +1192,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -1225,7 +1225,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -1258,7 +1258,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -1291,7 +1291,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -1324,7 +1324,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -1357,7 +1357,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -1477,7 +1477,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -1510,7 +1510,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -1543,7 +1543,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -1576,7 +1576,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -1609,7 +1609,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -1642,7 +1642,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -1675,7 +1675,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -1708,7 +1708,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -1741,7 +1741,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -1774,7 +1774,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -1807,7 +1807,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -1840,7 +1840,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -1960,7 +1960,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -1993,7 +1993,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -2026,7 +2026,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -2059,7 +2059,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -2092,7 +2092,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -2125,7 +2125,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -2158,7 +2158,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -2191,7 +2191,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -2224,7 +2224,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -2257,7 +2257,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -2290,7 +2290,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -2323,7 +2323,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -2443,7 +2443,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -2476,7 +2476,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -2509,7 +2509,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -2542,7 +2542,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -2575,7 +2575,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -2608,7 +2608,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -2641,7 +2641,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -2674,7 +2674,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -2707,7 +2707,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -2740,7 +2740,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -2773,7 +2773,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -2806,7 +2806,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -2926,7 +2926,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -2959,7 +2959,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -2992,7 +2992,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -3025,7 +3025,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -3058,7 +3058,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -3091,7 +3091,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -3124,7 +3124,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -3157,7 +3157,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -3190,7 +3190,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -3223,7 +3223,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -3256,7 +3256,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -3289,7 +3289,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -3409,7 +3409,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -3442,7 +3442,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -3475,7 +3475,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "2 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -3508,7 +3508,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -3541,7 +3541,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -3574,7 +3574,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -3607,7 +3607,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -3640,7 +3640,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -3673,7 +3673,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -3706,7 +3706,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -3739,7 +3739,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -3772,7 +3772,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -3892,7 +3892,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -3925,7 +3925,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -3958,7 +3958,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -3991,7 +3991,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -4024,7 +4024,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -4057,7 +4057,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -4090,7 +4090,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -4123,7 +4123,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -4156,7 +4156,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -4189,7 +4189,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -4222,7 +4222,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -4255,7 +4255,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -4375,7 +4375,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -4408,7 +4408,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -4441,7 +4441,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -4474,7 +4474,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -4507,7 +4507,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -4540,7 +4540,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -4573,7 +4573,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -4606,7 +4606,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -4639,7 +4639,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -4672,7 +4672,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -4705,7 +4705,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -4738,7 +4738,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -4858,7 +4858,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -4891,7 +4891,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -4924,7 +4924,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -4957,7 +4957,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -4990,7 +4990,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5023,7 +5023,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5056,7 +5056,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5089,7 +5089,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5122,7 +5122,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5155,7 +5155,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -5188,7 +5188,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -5221,7 +5221,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "3 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -5341,7 +5341,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5374,7 +5374,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5407,7 +5407,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5440,7 +5440,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -5473,7 +5473,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -5506,7 +5506,7 @@
     "DispatchRequired": false,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000100",
-    "EventState": "Planned",
+    "EventState": "Planned State",
     "EventPlannedStart": null,
     "EventPlannedCompletion": null
   },
@@ -5539,7 +5539,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5572,7 +5572,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5605,7 +5605,7 @@
     "DispatchRequired": true,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5638,7 +5638,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5671,7 +5671,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5704,7 +5704,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5824,7 +5824,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5857,7 +5857,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5890,7 +5890,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5923,7 +5923,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5956,7 +5956,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -5989,7 +5989,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6022,7 +6022,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6055,7 +6055,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6088,7 +6088,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6121,7 +6121,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6154,7 +6154,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6187,7 +6187,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6220,7 +6220,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6253,7 +6253,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6286,7 +6286,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6319,7 +6319,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6352,7 +6352,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6385,7 +6385,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6418,7 +6418,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6451,7 +6451,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6484,7 +6484,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6517,7 +6517,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6550,7 +6550,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6583,7 +6583,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6616,7 +6616,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6649,7 +6649,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6682,7 +6682,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6715,7 +6715,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6748,7 +6748,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6781,7 +6781,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6814,7 +6814,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6847,7 +6847,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6880,7 +6880,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6913,7 +6913,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6946,7 +6946,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -6979,7 +6979,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7012,7 +7012,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7045,7 +7045,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7078,7 +7078,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7111,7 +7111,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7144,7 +7144,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7177,7 +7177,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7210,7 +7210,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7243,7 +7243,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7276,7 +7276,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7309,7 +7309,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7342,7 +7342,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7375,7 +7375,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7408,7 +7408,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7441,7 +7441,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7474,7 +7474,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7507,7 +7507,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7540,7 +7540,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7573,7 +7573,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7606,7 +7606,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7639,7 +7639,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7672,7 +7672,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7705,7 +7705,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7738,7 +7738,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7771,7 +7771,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7804,7 +7804,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7837,7 +7837,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7870,7 +7870,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7903,7 +7903,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7936,7 +7936,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -7969,7 +7969,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8002,7 +8002,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8035,7 +8035,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8068,7 +8068,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8101,7 +8101,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8134,7 +8134,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8167,7 +8167,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8200,7 +8200,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8233,7 +8233,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8266,7 +8266,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8299,7 +8299,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8332,7 +8332,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8365,7 +8365,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8398,7 +8398,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8431,7 +8431,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8464,7 +8464,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8497,7 +8497,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8530,7 +8530,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8563,7 +8563,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8596,7 +8596,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8629,7 +8629,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8662,7 +8662,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8695,7 +8695,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8728,7 +8728,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8761,7 +8761,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8794,7 +8794,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8827,7 +8827,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8860,7 +8860,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8893,7 +8893,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8926,7 +8926,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8959,7 +8959,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000010",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -8992,7 +8992,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9025,7 +9025,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9058,7 +9058,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9091,7 +9091,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9124,7 +9124,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9157,7 +9157,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9190,7 +9190,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9223,7 +9223,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9256,7 +9256,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9289,7 +9289,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9322,7 +9322,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9355,7 +9355,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9388,7 +9388,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9421,7 +9421,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9454,7 +9454,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9487,7 +9487,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9520,7 +9520,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9553,7 +9553,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9586,7 +9586,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9619,7 +9619,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9652,7 +9652,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9685,7 +9685,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9718,7 +9718,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9751,7 +9751,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9784,7 +9784,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9817,7 +9817,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9850,7 +9850,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9883,7 +9883,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9916,7 +9916,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9949,7 +9949,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -9982,7 +9982,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10015,7 +10015,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10048,7 +10048,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10081,7 +10081,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10114,7 +10114,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10147,7 +10147,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10180,7 +10180,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10213,7 +10213,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10246,7 +10246,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10279,7 +10279,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10312,7 +10312,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10345,7 +10345,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10378,7 +10378,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10411,7 +10411,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10444,7 +10444,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10477,7 +10477,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10510,7 +10510,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10543,7 +10543,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10576,7 +10576,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10609,7 +10609,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10642,7 +10642,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10675,7 +10675,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10708,7 +10708,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10741,7 +10741,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10774,7 +10774,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10807,7 +10807,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10840,7 +10840,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10873,7 +10873,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10906,7 +10906,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10939,7 +10939,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -10972,7 +10972,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11005,7 +11005,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11038,7 +11038,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11071,7 +11071,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11104,7 +11104,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11137,7 +11137,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11170,7 +11170,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11203,7 +11203,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11236,7 +11236,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11269,7 +11269,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11302,7 +11302,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11335,7 +11335,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11368,7 +11368,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11401,7 +11401,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11434,7 +11434,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11467,7 +11467,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11500,7 +11500,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11533,7 +11533,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11566,7 +11566,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11599,7 +11599,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11632,7 +11632,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11665,7 +11665,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11698,7 +11698,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11731,7 +11731,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11764,7 +11764,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11797,7 +11797,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11830,7 +11830,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11863,7 +11863,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11896,7 +11896,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11929,7 +11929,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11962,7 +11962,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -11995,7 +11995,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -12028,7 +12028,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -12061,7 +12061,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -12094,7 +12094,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -12127,7 +12127,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -12160,7 +12160,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -12193,7 +12193,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   },
@@ -12226,7 +12226,7 @@
     "DispatchRequired": null,
     "LMPrepDuration": "1 months",
     "EventName": "Regulatory Event-000002",
-    "EventState": "In Progress",
+    "EventState": "In Progress State",
     "EventPlannedStart": "2026-01-01",
     "EventPlannedCompletion": "2027-06-30"
   }

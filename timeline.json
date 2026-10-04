@@ -29,7 +29,7 @@
     },
     {
       "name": "themeStateColors",
-      "update": "themeMode==='light' ? {\"#6d9eff\":\"#285fbc\",\"#43c6ec\":\"#006e8c\",\"#bd9aff\":\"#7541b2\",\"#42cbbb\":\"#007265\",\"#65d18c\":\"#27733e\",\"#37d67a\":\"#13733b\",\"#e8b65f\":\"#8d5c0b\",\"#f27b82\":\"#bd3544\",\"#99a4b5\":\"#52647a\"} : {\"#6d9eff\":\"#6d9eff\",\"#43c6ec\":\"#43c6ec\",\"#bd9aff\":\"#bd9aff\",\"#42cbbb\":\"#42cbbb\",\"#65d18c\":\"#65d18c\",\"#37d67a\":\"#37d67a\",\"#e8b65f\":\"#e8b65f\",\"#f27b82\":\"#f27b82\",\"#99a4b5\":\"#99a4b5\"}"
+      "update": "themeMode==='light' ? {\"#4d91e8\":\"#3665a2\",\"#939aa5\":\"#62666d\",\"#8294ab\":\"#5b6777\",\"#a3bd45\":\"#5d6c27\",\"#27ae78\":\"#1a7350\",\"#f09342\":\"#905828\",\"#d9b44a\":\"#756128\",\"#b88960\":\"#806043\",\"#a17be8\":\"#7056a2\",\"#e35b64\":\"#a7434a\",\"#bd718d\":\"#8b5368\",\"#70b85c\":\"#436e37\",\"#e5a17e\":\"#825c48\",\"#e177b3\":\"#954f77\",\"#39b8aa\":\"#226e66\",\"#52bfe0\":\"#2f6d7f\",\"#808be5\":\"#5961a0\",\"#e27c70\":\"#96524a\",\"#9aa66a\":\"#616943\",\"#db772b\":\"#99531e\",\"#c16ccb\":\"#8e4f95\",\"#a79a8c\":\"#6f665d\",\"#b49bdb\":\"#6c5d83\",\"#65a994\":\"#437062\",\"#abb4c2\":\"#61666e\",\"#e06ded\":\"#95489d\"} : {\"#4d91e8\":\"#89b6f0\",\"#939aa5\":\"#b0b5bd\",\"#8294ab\":\"#a8b4c4\",\"#a3bd45\":\"#a3bd45\",\"#27ae78\":\"#68c6a1\",\"#f09342\":\"#f2a25d\",\"#d9b44a\":\"#d9b44a\",\"#b88960\":\"#cdad90\",\"#a17be8\":\"#c1a7f0\",\"#e35b64\":\"#ee9da2\",\"#bd718d\":\"#d5a6b7\",\"#70b85c\":\"#84c273\",\"#e5a17e\":\"#e6a684\",\"#e177b3\":\"#e99bc7\",\"#39b8aa\":\"#5ec5ba\",\"#52bfe0\":\"#52bfe0\",\"#808be5\":\"#a6aeed\",\"#e27c70\":\"#ea9f96\",\"#9aa66a\":\"#adb786\",\"#db772b\":\"#e7a572\",\"#c16ccb\":\"#d8a2de\",\"#a79a8c\":\"#bbb1a6\",\"#b49bdb\":\"#bfa9e0\",\"#65a994\":\"#8ec0b0\",\"#abb4c2\":\"#abb4c2\",\"#e06ded\":\"#e894f2\"}"
     },
     {
       "name": "denebContainer",
@@ -123,11 +123,11 @@
             "type": "wheel",
             "source": "view",
             "filter": [
-              "event.ctrlKey"
+              "event.ctrlKey && !event.shiftKey"
             ],
             "consume": true
           },
-          "update": "x()>left && y()>top-34 && y()<viewBottom ? [xlo+span*clamp(event.deltaX || event.deltaY,-240,240)/max(1,width-left),xhi+span*clamp(event.deltaX || event.deltaY,-240,240)/max(1,width-left)] : range"
+          "update": "x()>left && y()>top-34 && y()<viewBottom ? [xlo+span*clamp((event.deltaX || event.deltaY)*(event.deltaMode===1 ? 16 : event.deltaMode===2 ? height : 1),-100,100)*0.12/max(1,width-left),xhi+span*clamp((event.deltaX || event.deltaY)*(event.deltaMode===1 ? 16 : event.deltaMode===2 ? height : 1),-100,100)*0.12/max(1,width-left)] : range"
         },
         {
           "events": {
@@ -140,6 +140,17 @@
             "signal": "showRegistrationEnd"
           },
           "update": "null"
+        },
+        {
+          "events": {
+            "type": "wheel",
+            "source": "view",
+            "filter": [
+              "event.shiftKey"
+            ],
+            "consume": true
+          },
+          "update": "x()>left && y()>top-34 && y()<viewBottom ? [(xlo+span*clamp((x()-left)/max(1,width-left),0,1))-clamp(span*pow(1.0008,clamp((event.deltaY || event.deltaX)*(event.deltaMode===1 ? 16 : event.deltaMode===2 ? height : 1),-100,100)),86400000,3155760000000)*clamp((x()-left)/max(1,width-left),0,1),(xlo+span*clamp((x()-left)/max(1,width-left),0,1))+clamp(span*pow(1.0008,clamp((event.deltaY || event.deltaX)*(event.deltaMode===1 ? 16 : event.deltaMode===2 ? height : 1),-100,100)),86400000,3155760000000)*(1-clamp((x()-left)/max(1,width-left),0,1))] : range"
         }
       ]
     },
@@ -583,15 +594,32 @@
     {
       "name": "stateColours",
       "value": [
-        "#6d9eff",
-        "#43c6ec",
-        "#bd9aff",
-        "#42cbbb",
-        "#65d18c",
-        "#37d67a",
-        "#e8b65f",
-        "#f27b82",
-        "#99a4b5"
+        "#4d91e8",
+        "#939aa5",
+        "#8294ab",
+        "#a3bd45",
+        "#27ae78",
+        "#f09342",
+        "#d9b44a",
+        "#b88960",
+        "#a17be8",
+        "#e35b64",
+        "#bd718d",
+        "#70b85c",
+        "#e5a17e",
+        "#e177b3",
+        "#39b8aa",
+        "#52bfe0",
+        "#808be5",
+        "#e27c70",
+        "#9aa66a",
+        "#db772b",
+        "#c16ccb",
+        "#a79a8c",
+        "#b49bdb",
+        "#65a994",
+        "#abb4c2",
+        "#e06ded"
       ]
     },
     {
@@ -2317,7 +2345,7 @@
         {
           "type": "formula",
           "as": "StateColor",
-          "expr": "datum.StateKey==='health authority approved' ? '#37d67a' : datum.StateKey==='active' || datum.StateKey==='planned' ? '#6d9eff' : datum.StateKey==='in progress' || datum.StateKey==='ready for submission' ? '#43c6ec' : datum.StateKey==='sent to health authority' || datum.StateKey==='distributed' ? '#bd9aff' : datum.StateKey==='ha received' ? '#42cbbb' : datum.StateKey==='completed' ? '#65d18c' : datum.StateKey==='deferred' || datum.StateKey==='on hold by mah' ? '#e8b65f' : datum.StateKey==='rejected' ? '#f27b82' : '#99a4b5'"
+          "expr": "datum.StateKey===\"active\" ? \"#4d91e8\" : datum.StateKey===\"inactive\" ? \"#939aa5\" : datum.StateKey===\"archived\" ? \"#8294ab\" : datum.StateKey===\"conditionally approved\" ? \"#a3bd45\" : datum.StateKey===\"health authority approved\" ? \"#27ae78\" : datum.StateKey===\"in progress\" ? \"#f09342\" : datum.StateKey===\"on hold by health authority\" ? \"#d9b44a\" : datum.StateKey===\"on hold by mah\" ? \"#b88960\" : datum.StateKey===\"planned\" ? \"#a17be8\" : datum.StateKey===\"rejected\" ? \"#e35b64\" : datum.StateKey===\"withdrawn\" ? \"#bd718d\" : datum.StateKey===\"completed\" ? \"#70b85c\" : datum.StateKey===\"deferred\" ? \"#e5a17e\" : datum.StateKey===\"distributed\" ? \"#e177b3\" : datum.StateKey===\"ha received\" ? \"#39b8aa\" : datum.StateKey===\"ready for submission\" ? \"#52bfe0\" : datum.StateKey===\"sent to health authority\" ? \"#808be5\" : datum.StateKey===\"cancelled state\" ? \"#e27c70\" : datum.StateKey===\"closed state\" ? \"#9aa66a\" : datum.StateKey===\"in progress state\" ? \"#db772b\" : datum.StateKey===\"in regulatory assessment state\" ? \"#c16ccb\" : datum.StateKey===\"inactive state\" ? \"#a79a8c\" : datum.StateKey===\"planned state\" ? \"#b49bdb\" : datum.StateKey===\"regulatory assessment complete state\" ? \"#65a994\" : datum.StateKey===\"not recorded\" ? \"#abb4c2\" : datum.StateKey===\"conflicting values\" ? \"#e06ded\" : \"#abb4c2\""
         },
         {
           "type": "formula",
@@ -2609,7 +2637,7 @@
         {
           "type": "formula",
           "as": "StateColor",
-          "expr": "datum.StateKey==='health authority approved' ? '#37d67a' : datum.StateKey==='active' || datum.StateKey==='planned' ? '#6d9eff' : datum.StateKey==='in progress' || datum.StateKey==='ready for submission' ? '#43c6ec' : datum.StateKey==='sent to health authority' || datum.StateKey==='distributed' ? '#bd9aff' : datum.StateKey==='ha received' ? '#42cbbb' : datum.StateKey==='completed' ? '#65d18c' : datum.StateKey==='deferred' || datum.StateKey==='on hold by mah' ? '#e8b65f' : datum.StateKey==='rejected' ? '#f27b82' : '#99a4b5'"
+          "expr": "datum.StateKey===\"active\" ? \"#4d91e8\" : datum.StateKey===\"inactive\" ? \"#939aa5\" : datum.StateKey===\"archived\" ? \"#8294ab\" : datum.StateKey===\"conditionally approved\" ? \"#a3bd45\" : datum.StateKey===\"health authority approved\" ? \"#27ae78\" : datum.StateKey===\"in progress\" ? \"#f09342\" : datum.StateKey===\"on hold by health authority\" ? \"#d9b44a\" : datum.StateKey===\"on hold by mah\" ? \"#b88960\" : datum.StateKey===\"planned\" ? \"#a17be8\" : datum.StateKey===\"rejected\" ? \"#e35b64\" : datum.StateKey===\"withdrawn\" ? \"#bd718d\" : datum.StateKey===\"completed\" ? \"#70b85c\" : datum.StateKey===\"deferred\" ? \"#e5a17e\" : datum.StateKey===\"distributed\" ? \"#e177b3\" : datum.StateKey===\"ha received\" ? \"#39b8aa\" : datum.StateKey===\"ready for submission\" ? \"#52bfe0\" : datum.StateKey===\"sent to health authority\" ? \"#808be5\" : datum.StateKey===\"cancelled state\" ? \"#e27c70\" : datum.StateKey===\"closed state\" ? \"#9aa66a\" : datum.StateKey===\"in progress state\" ? \"#db772b\" : datum.StateKey===\"in regulatory assessment state\" ? \"#c16ccb\" : datum.StateKey===\"inactive state\" ? \"#a79a8c\" : datum.StateKey===\"planned state\" ? \"#b49bdb\" : datum.StateKey===\"regulatory assessment complete state\" ? \"#65a994\" : datum.StateKey===\"not recorded\" ? \"#abb4c2\" : datum.StateKey===\"conflicting values\" ? \"#e06ded\" : \"#abb4c2\""
         },
         {
           "type": "formula",
@@ -2838,7 +2866,7 @@
         {
           "type": "formula",
           "as": "StateColor",
-          "expr": "datum.StateKey==='health authority approved' ? '#37d67a' : datum.StateKey==='active' || datum.StateKey==='planned' ? '#6d9eff' : datum.StateKey==='in progress' || datum.StateKey==='ready for submission' ? '#43c6ec' : datum.StateKey==='sent to health authority' || datum.StateKey==='distributed' ? '#bd9aff' : datum.StateKey==='ha received' ? '#42cbbb' : datum.StateKey==='completed' ? '#65d18c' : datum.StateKey==='deferred' || datum.StateKey==='on hold by mah' ? '#e8b65f' : datum.StateKey==='rejected' ? '#f27b82' : '#99a4b5'"
+          "expr": "datum.StateKey===\"active\" ? \"#4d91e8\" : datum.StateKey===\"inactive\" ? \"#939aa5\" : datum.StateKey===\"archived\" ? \"#8294ab\" : datum.StateKey===\"conditionally approved\" ? \"#a3bd45\" : datum.StateKey===\"health authority approved\" ? \"#27ae78\" : datum.StateKey===\"in progress\" ? \"#f09342\" : datum.StateKey===\"on hold by health authority\" ? \"#d9b44a\" : datum.StateKey===\"on hold by mah\" ? \"#b88960\" : datum.StateKey===\"planned\" ? \"#a17be8\" : datum.StateKey===\"rejected\" ? \"#e35b64\" : datum.StateKey===\"withdrawn\" ? \"#bd718d\" : datum.StateKey===\"completed\" ? \"#70b85c\" : datum.StateKey===\"deferred\" ? \"#e5a17e\" : datum.StateKey===\"distributed\" ? \"#e177b3\" : datum.StateKey===\"ha received\" ? \"#39b8aa\" : datum.StateKey===\"ready for submission\" ? \"#52bfe0\" : datum.StateKey===\"sent to health authority\" ? \"#808be5\" : datum.StateKey===\"cancelled state\" ? \"#e27c70\" : datum.StateKey===\"closed state\" ? \"#9aa66a\" : datum.StateKey===\"in progress state\" ? \"#db772b\" : datum.StateKey===\"in regulatory assessment state\" ? \"#c16ccb\" : datum.StateKey===\"inactive state\" ? \"#a79a8c\" : datum.StateKey===\"planned state\" ? \"#b49bdb\" : datum.StateKey===\"regulatory assessment complete state\" ? \"#65a994\" : datum.StateKey===\"not recorded\" ? \"#abb4c2\" : datum.StateKey===\"conflicting values\" ? \"#e06ded\" : \"#abb4c2\""
         },
         {
           "type": "formula",
@@ -4342,7 +4370,7 @@
             "field": "shortTip"
           },
           "fill": {
-            "signal": "themePalette.text"
+            "signal": "themeStateColors[datum.StateColor] || datum.StateColor"
           }
         }
       }
@@ -4418,7 +4446,7 @@
             "value": "pointer"
           },
           "fill": {
-            "signal": "themePalette.text"
+            "signal": "themeStateColors[datum.StateColor] || datum.StateColor"
           }
         }
       }

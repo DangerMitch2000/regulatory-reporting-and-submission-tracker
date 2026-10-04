@@ -81,7 +81,7 @@ function auditMarks(marks) {
   const darkSVG = await view.toSVG();
   assert.match(darkSVG, /fill="#14181f"/);
   assert.match(darkSVG, /fill="#dbe3ef"/);
-  for (const item of namedItems(view, 'ownState')) assert.equal(item.fill, item.datum.StateColor);
+  for (const item of namedItems(view, 'ownState')) assert.equal(item.fill, view.signal('themeStateColors')[item.datum.StateColor]);
   const darkSelected = namedItems(view, 'rowBg').find(item => item.datum.key === selectedKey);
   assert.equal(darkSelected.fill, '#344460');
 
@@ -117,7 +117,7 @@ function auditMarks(marks) {
 
   // Filtering remains keyed by the canonical colours. Changing themes after
   // choosing one state cannot add or remove records or reset the current view.
-  view.signal('stateColours', ['#65d18c']);
+  view.signal('stateColours', ['#70b85c']);
   await view.runAsync();
   assert.equal(view.data('pageRows').length, 1);
   assert.equal(view.data('pageRows')[0].State, 'Completed');
@@ -125,7 +125,7 @@ function auditMarks(marks) {
   view.signal('themeMode', 'dark');
   await view.runAsync();
   assert.deepEqual(snapshot(view), filtered);
-  assert.equal(namedItems(view, 'ownState')[0].fill, '#65d18c');
+  assert.equal(namedItems(view, 'ownState')[0].fill, view.signal('themeStateColors')['#70b85c']);
 
   // Hierarchy bars and expanded children use the same theme without rebuilding.
   view.signal('mode', 'Hierarchy').signal('stateColours', canonicalColors.slice());

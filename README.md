@@ -1,8 +1,18 @@
-# Regulatory Tracker 1.12.0
+# Regulatory Tracker 1.13.0
 
-[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.12.0 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.12.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.12.0/regulatory-tracker-1.12.0.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.13.0 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.13.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.13.0/regulatory-tracker-1.13.0.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
+
+## Separate state filters and mouse controls — version 1.13.0
+
+Four alphabetical dropdowns independently filter **Application state**, **RO state**, **Submission state** and **Event state**. All 29 supplied options are separate: Active/Planned, In Progress/Ready For Submission and Sent To Health Authority/Distributed are no longer combined. Values within a field use OR; selections across fields combine with AND. Parents summarize only matching linked children. State evidence is resolved across delivered entity rows before local filters; conflicting and missing values have explicit options when present. Additional source states appear separately rather than being silently omitted. No additional fields are required.
+
+Every distinct known state has a colour; identical state names share a consistent colour across record types. Record names, status labels, bars and filter swatches match, with readable light/dark shades. Other labels remain neutral. Unknown states retain a neutral colour with their original label.
+
+Top totals are ordered **Events → Applications → ROs → Submissions**, counted distinctly within current membership, state and search filters. Unlinked work is not an event; appearances beneath several events do not inflate totals. The top-right hierarchy label includes Event.
+
+**Mouse controls:** drag empty timeline background to pan; **Ctrl+wheel** pans in small steps proportional to the visible range; **Shift+wheel** zooms gently around the date beneath the pointer. No new zoom buttons. Zoom is bounded from one day to 100 years. Existing preset buttons remain available.
 
 ## Regulatory event grouping — version 1.12.0
 
@@ -50,7 +60,7 @@ Map your **Submission dispatch required c** source field to **Dispatch required*
 
 | Visual | Download | Demo |
 | --- | --- | --- |
-| Regulatory Tracker 1.12.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.12.0/regulatory-tracker-1.12.0.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
+| Regulatory Tracker 1.13.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.13.0/regulatory-tracker-1.13.0.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
 | Registration Overview / Roadmap 1.4.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.4.0/roadmap-2026-1.4.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap-preview.html) |
 | IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |
 | Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/key-preview.html) |

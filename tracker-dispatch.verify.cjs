@@ -3,7 +3,7 @@ module.exports=async function verifyDispatch(page,{outputDir}){
  await page.goto('http://127.0.0.1:8771/index.html');
  await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
  const pick=async value=>{await page.locator('#host #dispatch-required').selectOption(value);};
- const waitCount=n=>page.waitForFunction(n=>document.querySelector('#host #filter-status').textContent.startsWith(n+' submissions'),n);
+ const waitCount=n=>page.waitForFunction(n=>document.querySelector('#host #filter-status').textContent.includes(n+' submissions'),n);
  assert.equal(await page.locator('#host #dispatch-required').inputValue(),'all');
  await page.locator('#host select[name=mode]').selectOption('Compare');await page.locator('#host input[name=query]').fill('SUB-00003');
  await page.locator('#host svg .predictionApproval path').first().click();await page.locator('#host #selected-details').evaluate(e=>e.open=true);await page.locator('#host .prediction-date').waitFor();

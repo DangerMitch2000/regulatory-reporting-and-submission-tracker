@@ -52,8 +52,8 @@ module.exports=async function verifyTrackerThemes(page,{outputDir}){
  await page.locator('#host #selected-details').evaluate(node=>node.open=true);
  await page.locator('#host .prediction-date').waitFor();
  await page.locator('#host svg .pin text').first().click();
- await page.locator('#host #state-legend input[value="#f27b82"]').uncheck();
- await page.waitForFunction(()=>!window.__themeVisual.app.view.signal('stateColours').includes('#f27b82'));
+ await page.locator('#host .state-filter[data-field=SubStatus] summary').click();await page.locator('#host .state-filter[data-field=SubStatus] input[value=rejected]').uncheck();await page.locator('#host .state-filter[data-field=SubStatus] summary').click();
+ await page.waitForFunction(()=>!document.querySelector('#host .state-filter[data-field=SubStatus] input[value=rejected]').checked);
  await page.locator('#host svg .timeText text').filter({hasText:/^Year$/}).click();
  const before=await viewState();
  assert.equal(before.pinned.length,1);assert.ok(before.signals.range);assert.ok(before.signals.selectedKey);
@@ -104,7 +104,7 @@ module.exports=async function verifyTrackerThemes(page,{outputDir}){
  await page.getByRole('button',{name:'Reject export',exact:true}).click();await page.locator('#host #quality-export').click();
  await page.locator('#host .quality-fallback textarea').waitFor({state:'visible'});await readable('#host .quality-fallback textarea');
  await send('Empty host data');
- await page.waitForFunction(()=>document.querySelector('#host #filter-status')?.textContent.startsWith('0 submissions'));assert.equal(await root.getAttribute('data-theme'),'light');
+ await page.waitForFunction(()=>document.querySelector('#host #filter-status')?.textContent.includes('0 submissions'));assert.equal(await root.getAttribute('data-theme'),'light');
  await page.locator('#host #timeline-tab').click();assert.equal(await page.locator('#host #theme-select').inputValue(),'light');
  await theme('dark');await theme('light');
  await send('Refresh host data');await page.locator('#host #reset-filters').click();

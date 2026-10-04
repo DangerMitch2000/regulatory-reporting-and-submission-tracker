@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'app.js'
+      - 'states*'
+      - 'tracker-states.verify.cjs'
       - 'events*'
       - 'tracker-events.verify.cjs'
       - 'preparation*'
@@ -42,6 +44,7 @@ jobs:
         run: |
           node open-end-test.cjs
           node dispatch-details-test.cjs
+          node states-test.cjs
           node events-test.cjs
           node preparation-test.cjs
           node dispatch-required-test.cjs
@@ -78,9 +81,11 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.12.0.0.pbiviz
+          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.13.0.0.pbiviz
           cp powerbi-visual/README.md release/POWER-BI-INSTALL.md
           cp powerbi-visual/verify/preparation-light.png release/preparation-light.png
+          cp powerbi-visual/verify/states-dark.png release/states-dark.png
+          cp powerbi-visual/verify/states-light.png release/states-light.png
           cp powerbi-visual/verify/preparation-dark.png release/preparation-dark.png
           cp powerbi-visual/verify/dispatch-details.png release/dispatch-details.png
           cp powerbi-visual/verify/calendar-day-quality.png release/calendar-day-quality.png
@@ -97,7 +102,7 @@ jobs:
           cp powerbi-visual/verify/approval-benchmark.png release/approval-benchmark.png
           cp powerbi-visual/verify/planned-submission-forecast.png release/planned-submission-forecast.png
           cp powerbi-visual/verify/submission-date-filter.png release/submission-date-filter.png
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz events.js events-test.cjs tracker-events.verify.cjs powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs dispatch-required.js dispatch-required-test.cjs dispatch-details.js dispatch-details-test.cjs preparation.js preparation-test.cjs tracker-preparation.verify.cjs tracker-dispatch-details.verify.cjs tracker-dispatch.verify.cjs tracker-calendar-day.verify.cjs tracker-theme.verify.cjs test-timeline-theme.cjs predictions.js prediction-test.cjs submission-period.js submission-period-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs open-end-test.cjs
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz states.js states-test.cjs tracker-states.verify.cjs events.js events-test.cjs tracker-events.verify.cjs powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs dispatch-required.js dispatch-required-test.cjs dispatch-details.js dispatch-details-test.cjs preparation.js preparation-test.cjs tracker-preparation.verify.cjs tracker-dispatch-details.verify.cjs tracker-dispatch.verify.cjs tracker-calendar-day.verify.cjs tracker-theme.verify.cjs test-timeline-theme.cjs predictions.js prediction-test.cjs submission-period.js submission-period-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs open-end-test.cjs
           cd release && sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
@@ -107,11 +112,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view v1.12.0 >/dev/null 2>&1; then
-            gh release create v1.12.0 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.12.0" --notes "Adds Regulatory event grouping on the existing Timeline using four optional event fields. Supports events spanning applications, numeric sorting in both directions, unlinked work and optional event planned spans. Distinct counts, child milestones and preparation estimates are preserved. Existing lifecycle calculations remain unchanged. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
+          if ! gh release view v1.13.0 >/dev/null 2>&1; then
+            gh release create v1.13.0 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.13.0" --notes "Adds four independent state dropdowns and distinct state colours on names and bars. Counts now list events first. Drag to pan, Ctrl+wheel for fine panning and Shift+wheel for gentle pointer-centred zoom. Existing lifecycle calculations remain unchanged. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
           else
-            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.12.0" -f sha="$GITHUB_SHA" -F force=false
-            gh release edit v1.12.0 --target "$GITHUB_SHA" --notes "Adds Regulatory event grouping on the existing Timeline using four optional event fields. Supports events spanning applications, numeric sorting in both directions, unlinked work and optional event planned spans. Distinct counts, child milestones and preparation estimates are preserved. Existing lifecycle calculations remain unchanged. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.13.0" -f sha="$GITHUB_SHA" -F force=false
+            gh release edit v1.13.0 --target "$GITHUB_SHA" --notes "Adds four independent state dropdowns and distinct state colours on names and bars. Counts now list events first. Drag to pan, Ctrl+wheel for fine panning and Shift+wheel for gentle pointer-centred zoom. Existing lifecycle calculations remain unchanged. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
           fi
-          gh release upload v1.12.0 release/* --clobber
+          gh release upload v1.13.0 release/* --clobber
 

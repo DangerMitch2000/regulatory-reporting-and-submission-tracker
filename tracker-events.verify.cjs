@@ -5,7 +5,7 @@ module.exports=async function(page,{outputDir}){
  await page.evaluate(()=>{const base={...window.__dispatchRows[0],AppID:'APP-A',ROID:'RO-A',SubID:'SUB-A',Country:'Mexico',Product:'Product A',SubStatus:'Planned',LMPrepDuration:'2 months',DispatchRequired:true,LatestDispatch:'2026-11-30',ActualDispatch:null,EventName:'Event-2',EventState:'In Progress',EventPlannedStart:'2026-01-01',EventPlannedCompletion:'2026-12-31'};window.__dispatchSend([base,{...base,EventName:'Event-10'},{...base,AppID:'APP-B',ROID:'RO-B',SubID:'SUB-B',Country:'Canada',Product:'Product B'},{...base,ROID:'RO-C',SubID:'SUB-C',EventName:null},{...base,EventName:'Event-100',EventPlannedStart:null,EventPlannedCompletion:null}]);});
  await page.waitForFunction(n=>window.__qualityRevision>n,revision);
  const view=fn=>page.evaluate(fn),data=()=>view(()=>window.__themeVisual.app.view.data('visible').map(r=>({key:r.key,name:r.EventName,level:r.level,app:r.AppID,sub:r.SubID,start:r.start,end:r.end,n:r.n})));
- assert.match(await page.locator('#host #filter-status').innerText(),/^3 submissions · 3 ROs · 2 applications/);
+ assert.match(await page.locator('#host #filter-status').innerText(),/3 events · 2 applications · 3 ROs · 3 submissions/);
  await page.locator('#host select[name=groupBy]').selectOption('Regulatory event');
  let rows=await data();assert.deepEqual(rows.map(r=>r.name),['Event-100','Event-10','Event-2','No linked event']);assert.equal(rows[0].start,null);assert.equal(rows[0].end,null);
  await page.locator('#host .hierarchyHeader text').click();rows=await data();assert.deepEqual(rows.map(r=>r.name),['Event-2','Event-10','Event-100','No linked event']);
