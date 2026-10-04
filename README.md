@@ -1,8 +1,27 @@
-# Regulatory Tracker 1.11.0
+# Regulatory Tracker 1.12.0
 
-[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.11.0 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.11.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.11.0/regulatory-tracker-1.11.0.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.12.0 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.12.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.12.0/regulatory-tracker-1.12.0.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
+
+## Regulatory event grouping — version 1.12.0
+
+On Timeline, keep **Group by: Application** for the usual view, or select **Regulatory event** for **Event → Application → RO → Submission**. Click the **Event ↑/↓** table heading to reverse natural numeric event order. **No linked event** always stays last. Country and product memberships, existing milestones, preparation bars and approval estimates remain available.
+
+Map these four additional optional roles from the Event table through your existing Event–RO/submission relationship:
+
+| Visual field | Source field |
+| --- | --- |
+| Regulatory event name / number | Event name (name__v) |
+| Regulatory event state | Event state (state__v) |
+| Event planned start | planned_start_date__rim |
+| Event planned completion | planned_completion_date__rim |
+
+One event may affect many applications, and one application or submission may belong to several events. Each event shows only its linked work; the top totals count distinct records rather than event appearances. Blank links are normal. Event names/numbers must uniquely identify events. Preserve a row per real event–submission link; do not create an unfiltered cross-join.
+
+Event dates are optional. Both valid, consistent dates are needed for the event's own dashed planned span. Missing, conflicting, invalid or reversed dates withhold that span and Details explains why; child timelines remain visible. Event state remains independent from child states. Application grouping and comparison retain their existing behavior.
+
+After replacing the Power BI visual, map the four fields. If an existing visual instance does not pick up the updated layout, insert a fresh instance and remap its fields. Public demo examples are fictional.
 
 ## LM dossier preparation — version 1.11.0
 Map just one new optional field: **LM Dossier Preparation Timeline** (`LMPrepDuration`) from the country survey, related through the application lead-market country. Each child inherits its application standard. Values such as `1 month`, `2 months`, `3 weeks` or `45 days` are accepted; months use **30 calendar days**, weeks use 7 days. These are planning allowances, not actual preparation time or statistical confidence ranges. Purple bars end at latest planned dispatch, falling back to original only when latest is blank or unmapped. Existing source milestones, parent lifecycle bars and approval estimates are unchanged. Missing, invalid or conflicting durations/dispatch targets withhold the estimate; explicit Dispatch required=False draws no preparation bar. Details explains unavailable estimates. No new country or start/end date role is required.
@@ -31,11 +50,11 @@ Map your **Submission dispatch required c** source field to **Dispatch required*
 
 | Visual | Download | Demo |
 | --- | --- | --- |
-| Regulatory Tracker 1.11.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.11.0/regulatory-tracker-1.11.0.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-timeline-demo/) |
-| Registration Overview / Roadmap 1.4.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/roadmap-2026-v1.4.0/roadmap-2026-1.4.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-timeline-demo/roadmap-preview.html) |
-| IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-timeline-demo/ivdr-preview.html) |
-| Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-timeline-demo/key-preview.html) |
-| Site Regulatory Plan 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/site-plan-2026-v1.1.0/site-regulatory-plan-2026-1.1.0.0.pbiviz) | [Site plan](https://dangermitch2000.github.io/regulatory-timeline-demo/site-plan-preview.html) |
+| Regulatory Tracker 1.12.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.12.0/regulatory-tracker-1.12.0.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
+| Registration Overview / Roadmap 1.4.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.4.0/roadmap-2026-1.4.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap-preview.html) |
+| IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |
+| Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/key-preview.html) |
+| Site Regulatory Plan 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-plan-2026-v1.1.0/site-regulatory-plan-2026-1.1.0.0.pbiviz) | [Site plan](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-plan-preview.html) |
 
 Roadmap shows False separately as **Dispatch not required**, retaining recorded dispatch reference dates. Records without a usable dispatch month but with current-year actual submission/approval evidence are shown separately outside the monthly chart. Blanks remain unknown; they are not assumed to mean False. An unmapped field retains the earlier classification behavior.
 
@@ -117,7 +136,7 @@ Supporting history is calculated before this visual’s local filters, including
 
 ## Previous Power BI visual — 1.4 preview
 
-[Download the installable .pbiviz](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/powerbi-v1.4.0-preview.1/regulatory-timeline-1.4.0.0.pbiviz) · [Installation guide, source and previews](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/powerbi-v1.4.0-preview.1)
+[Download the installable .pbiviz](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/powerbi-v1.4.0-preview.1/regulatory-timeline-1.4.0.0.pbiviz) · [Installation guide, source and previews](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/powerbi-v1.4.0-preview.1)
 
 This custom Power BI visual carries over the demo's dark interface, styled search and filters, comparison controls, and selectable HTML details. Import the `.pbiviz` through Power BI's **Visualizations (…) → Import a visual from a file**, then map source columns to the named field wells. Start with AppID, ROID and SubID; map dates as raw Date columns, not Date hierarchies. You do not need Deneb or field renaming for this version.
 
@@ -127,7 +146,7 @@ The existing browser demo and Deneb 1.3 files remain available below. The custom
 
 ## Historical Deneb files — version 1.3
 
-[Open live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Download release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.3)
+[Open live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Download release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.3)
 
 An interactive dark Vega timeline with entirely fictional data. No private source mappings, real records, photos or organizational branding are included.
 

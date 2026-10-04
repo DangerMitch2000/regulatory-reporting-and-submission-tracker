@@ -272,6 +272,18 @@
             "signal": "sortBy"
           },
           "update": "{key:'',rel:0,fallback:0}"
+        },
+        {
+          "events": {
+            "signal": "groupBy"
+          },
+          "update": "{key:'',rel:0,fallback:0}"
+        },
+        {
+          "events": {
+            "signal": "eventDescending"
+          },
+          "update": "{key:'',rel:0,fallback:0}"
         }
       ]
     },
@@ -564,7 +576,7 @@
       "on": [
         {
           "events": "@pin:click",
-          "update": "{pinKey:datum.key}"
+          "update": "datum.level===-1 ? pinClick : {pinKey:datum.baseKey || datum.key}"
         }
       ]
     },
@@ -581,6 +593,32 @@
         "#f27b82",
         "#99a4b5"
       ]
+    },
+    {
+      "name": "groupBy",
+      "value": "Application",
+      "bind": {
+        "input": "select",
+        "options": [
+          "Application",
+          "Regulatory event"
+        ],
+        "name": "Group by "
+      }
+    },
+    {
+      "name": "eventDescending",
+      "value": true,
+      "on": [
+        {
+          "events": "@hierarchyHeader:click",
+          "update": "groupBy==='Regulatory event' && mode==='Hierarchy' ? !eventDescending : eventDescending"
+        }
+      ]
+    },
+    {
+      "name": "eventMode",
+      "update": "groupBy==='Regulatory event' && mode==='Hierarchy'"
     }
   ],
   "data": [
@@ -913,7 +951,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "query==='' || indexof(lower(datum.AppID+' '+datum.ROID+' '+datum.SubID+' '+datum._Product+' '+datum._Country+' '+datum.SubmissionType),lower(query))>=0"
+          "expr": "query==='' || indexof(lower(datum.EventName+' '+datum.AppID+' '+datum.ROID+' '+datum.SubID+' '+datum._Product+' '+datum._Country+' '+datum.SubmissionType),lower(query))>=0"
         },
         {
           "type": "aggregate",
@@ -2836,12 +2874,26 @@
       ]
     },
     {
-      "name": "stateMatches",
+      "name": "eventRows"
+    },
+    {
+      "name": "displayRows",
       "source": [
         "apps",
         "ros",
-        "sub"
+        "sub",
+        "eventRows"
       ],
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "eventMode ? isValid(datum.eventKey) : !isValid(datum.eventKey)"
+        }
+      ]
+    },
+    {
+      "name": "stateMatches",
+      "source": "displayRows",
       "transform": [
         {
           "type": "filter",
@@ -2851,15 +2903,11 @@
     },
     {
       "name": "domainRows",
-      "source": [
-        "apps",
-        "ros",
-        "sub"
-      ],
+      "source": "displayRows",
       "transform": [
         {
           "type": "filter",
-          "expr": "mode==='Hierarchy' ? datum.level===2 : datum.level===compareLevel && (!pinsOnly || indata('pinned','pinKey',datum.key))"
+          "expr": "mode==='Hierarchy' ? (datum.level===2 || (eventMode && datum.level===-1)) : datum.level===compareLevel && (!pinsOnly || indata('pinned','pinKey',datum.key))"
         },
         {
           "type": "filter",
@@ -2900,22 +2948,28 @@
     },
     {
       "name": "visible",
-      "source": [
-        "apps",
-        "ros",
-        "sub"
-      ],
+      "source": "displayRows",
       "transform": [
         {
           "type": "project"
         },
         {
           "type": "filter",
-          "expr": "indexof(stateColours,datum.StateColor)>=0 || (mode==='Hierarchy' && (datum.level===0 && indata('stateMatches','appKey',datum.key) || datum.level===1 && indata('stateMatches','roKey',datum.key)))"
+          "expr": "indexof(stateColours,datum.StateColor)>=0 || (mode==='Hierarchy' && (datum.level===-1 && indata('stateMatches','eventKey',datum.key) || datum.level===0 && indata('stateMatches','appKey',datum.key) || datum.level===1 && indata('stateMatches','roKey',datum.key)))"
         },
         {
           "type": "filter",
-          "expr": "mode==='Hierarchy' ? (datum.level===0 || (indata(\"expanded\",\"key\",datum.appKey) && (datum.level===1 || indata(\"expanded\",\"key\",datum.roKey)))) : datum.level===compareLevel && (!pinsOnly || indata('pinned','pinKey',datum.key))"
+          "expr": "mode==='Hierarchy' ? (datum.level===-1 || ((!eventMode || indata('expanded','key',datum.eventKey)) && (datum.level===0 || (indata('expanded','key',datum.appKey) && (datum.level===1 || indata('expanded','key',datum.roKey)))))) : datum.level===compareLevel && (!pinsOnly || indata('pinned','pinKey',datum.key))"
+        },
+        {
+          "type": "formula",
+          "as": "sortUnlinked",
+          "expr": "eventMode ? datum.unlinked : 0"
+        },
+        {
+          "type": "formula",
+          "as": "sortEvent",
+          "expr": "eventMode ? datum.eventRank*(eventDescending ? -1 : 1) : 0"
         },
         {
           "type": "formula",
@@ -2941,6 +2995,8 @@
           "type": "collect",
           "sort": {
             "field": [
+              "sortUnlinked",
+              "sortEvent",
               "sortA",
               "sortR",
               "sortL",
@@ -2953,6 +3009,8 @@
           "type": "window",
           "sort": {
             "field": [
+              "sortUnlinked",
+              "sortEvent",
               "sortA",
               "sortR",
               "sortL",
@@ -3274,11 +3332,7 @@
     },
     {
       "name": "selectedRow",
-      "source": [
-        "apps",
-        "ros",
-        "sub"
-      ],
+      "source": "displayRows",
       "transform": [
         {
           "type": "filter",
@@ -3803,7 +3857,7 @@
             "value": 94
           },
           "text": {
-            "signal": "mode==='Compare' ? (compareLevel===0 ? 'Application' : compareLevel===1 ? 'Regulatory objective' : 'Submission') : 'Hierarchy'"
+            "signal": "mode==='Compare' ? (compareLevel===0 ? 'Application' : compareLevel===1 ? 'Regulatory objective' : 'Submission') : eventMode ? 'Event '+(eventDescending ? '↓' : '↑') : 'Hierarchy'"
           },
           "fontWeight": {
             "value": 600
@@ -3812,10 +3866,14 @@
             "signal": "themePalette.headerText"
           },
           "tooltip": {
-            "value": "Application / RO / Submission"
+            "signal": "eventMode ? 'Click to reverse numeric event order. No linked event stays last.' : 'Application / RO / Submission'"
+          },
+          "cursor": {
+            "signal": "eventMode ? 'pointer' : 'default'"
           }
         }
-      }
+      },
+      "name": "hierarchyHeader"
     },
     {
       "type": "text",
@@ -4182,7 +4240,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "8+datum.level*12"
+            "signal": "8+(datum.level+(eventMode ? 1 : 0))*12"
           },
           "y": {
             "signal": "datum.y+11"
@@ -4206,7 +4264,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "{'Action':indata('expanded','key',datum.key) ? 'Collapse' : 'Expand','Identifier':datum.level===0 ? datum.AppID : datum.ROID}"
+            "signal": "{'Action':indata('expanded','key',datum.key) ? 'Collapse' : 'Expand','Identifier':datum.level===-1 ? datum.EventName : datum.level===0 ? datum.AppID : datum.ROID}"
           }
         },
         "hover": {
@@ -4225,7 +4283,7 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "16.5+datum.level*12"
+            "signal": "16.5+(datum.level+(eventMode ? 1 : 0))*12"
           },
           "y": {
             "signal": "datum.y+19.5"
@@ -4263,19 +4321,19 @@
             "value": "middle"
           },
           "x": {
-            "signal": "31+datum.level*12"
+            "signal": "31+(datum.level+(eventMode ? 1 : 0))*12"
           },
           "y": {
             "signal": "datum.y+14"
           },
           "text": {
-            "signal": "datum.level===0 ? datum.AppID : datum.ROID"
+            "signal": "datum.level===-1 ? datum.EventName : datum.level===0 ? datum.AppID : datum.ROID"
           },
           "fontWeight": {
             "value": 600
           },
           "limit": {
-            "signal": "hierarchyW-37-datum.level*12"
+            "signal": "hierarchyW-37-(datum.level+(eventMode ? 1 : 0))*12"
           },
           "cursor": {
             "value": "pointer"
@@ -4303,19 +4361,19 @@
             "value": "middle"
           },
           "x": {
-            "signal": "31+datum.level*12"
+            "signal": "31+(datum.level+(eventMode ? 1 : 0))*12"
           },
           "y": {
             "signal": "datum.y+32"
           },
           "text": {
-            "signal": "(datum.level===0 ? datum.ROCount+' ROs · ' : '')+datum.n+' submissions'"
+            "signal": "(datum.level===-1 ? datum.AppCount+' applications · ' : datum.level===0 ? datum.ROCount+' ROs · ' : '')+datum.n+' submissions'"
           },
           "fill": {
             "signal": "themePalette.subText"
           },
           "limit": {
-            "signal": "hierarchyW-37-datum.level*12"
+            "signal": "hierarchyW-37-(datum.level+(eventMode ? 1 : 0))*12"
           },
           "tooltip": {
             "field": "shortTip"
@@ -4342,7 +4400,7 @@
             "value": "middle"
           },
           "x": {
-            "value": 43
+            "signal": "43+(eventMode ? 12 : 0)"
           },
           "y": {
             "signal": "datum.y+13"
@@ -4518,7 +4576,10 @@
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "{'Record':datum.level===0 ? datum.AppID : datum.ROID,'State':datum.State,'Start':isValid(datum.start) ? utcFormat(datum.start,'%d %b %Y') : 'Not recorded','End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'Not recorded','Submissions':datum.n,'Summary':'All children in membership/search filters; state checkboxes control row visibility'}"
+            "signal": "{'Record':datum.level===-1 ? datum.EventName : datum.level===0 ? datum.AppID : datum.ROID,'State':datum.State,'Start':isValid(datum.start) ? utcFormat(datum.start,'%d %b %Y') : 'Not recorded','End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'Not recorded','Submissions':datum.n,'Summary':'All children in membership/search filters; state checkboxes control row visibility'}"
+          },
+          "strokeDash": {
+            "signal": "datum.level===-1 ? [5,3] : [1,0]"
           }
         }
       }
@@ -5300,7 +5361,7 @@
             "value": "middle"
           },
           "x": {
-            "signal": "datum.level===2 ? 43 : 31+datum.level*12"
+            "signal": "datum.level===2 ? 43 : 31+(datum.level+(eventMode ? 1 : 0))*12"
           },
           "y": {
             "signal": "datum.y+50"
@@ -5373,13 +5434,16 @@
             "signal": "datum.y+10"
           },
           "text": {
-            "signal": "indata('pinned','pinKey',datum.key) ? '◆' : '◇'"
+            "signal": "indata('pinned','pinKey',datum.baseKey || datum.key) ? '◆' : '◇'"
           },
           "cursor": {
-            "value": "pointer"
+            "signal": "datum.level===-1 ? 'default' : 'pointer'"
           },
           "tooltip": {
             "value": "Pin/unpin this row for comparison"
+          },
+          "opacity": {
+            "signal": "datum.level===-1 ? 0 : 1"
           }
         }
       }

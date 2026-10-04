@@ -1,6 +1,7 @@
 /* Browser harness runs the actual Visual class with a synthetic Power BI table. */
 const fs=require('fs'),path=require('path');const out=process.argv[2]||'powerbi-visual';
 fs.mkdirSync(path.join(out,'verify'),{recursive:true});
+fs.copyFileSync(path.join(__dirname,'tracker-events.verify.cjs'),path.join(out,'verify/tracker-events.verify.cjs'));
 fs.copyFileSync(path.join(__dirname,'tracker-preparation.verify.cjs'),path.join(out,'verify/tracker-preparation.verify.cjs'));
 fs.copyFileSync(path.join(__dirname,'tracker-theme.verify.cjs'),path.join(out,'verify/tracker-theme.verify.cjs'));
 fs.copyFileSync(path.join(__dirname,'tracker-dispatch.verify.cjs'),path.join(out,'verify/tracker-dispatch.verify.cjs'));
@@ -131,6 +132,7 @@ await require('./tracker-dispatch.verify.cjs')(page,{outputDir:__dirname});
 await require('./tracker-calendar-day.verify.cjs')(page,{outputDir:__dirname});
 await require('./tracker-dispatch-details.verify.cjs')(page,{outputDir:__dirname});
 await require('./tracker-preparation.verify.cjs')(page,{outputDir:__dirname});
+await require('./tracker-events.verify.cjs')(page,{outputDir:__dirname});
 assert.deepEqual(errors,[]);console.log('PASS: actual Visual class, CSP interpreter, 60 submissions, five filters, search, comparison, details, list search/paging, refresh/resize, empty data, isolated instances, quality filters/conflicts, distinct counts, 30,000-row deduplication, full CSV and rejected-export fallback; no page errors.');
 }finally{await browser.close();server.close();}})().catch(e=>{console.error(e);process.exit(1)});
 `);
