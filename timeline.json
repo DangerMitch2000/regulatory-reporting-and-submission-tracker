@@ -407,6 +407,12 @@
         {
           "events": "@rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @predictionRange:click, @predictionApproval:click, @preparationRange:click, @preparationLabel:click, @surveyRange:click",
           "update": "datum.key"
+        },
+        {
+          "events": {
+            "signal": "groupBy"
+          },
+          "update": "''"
         }
       ]
     },

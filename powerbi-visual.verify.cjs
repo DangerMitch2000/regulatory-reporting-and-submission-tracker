@@ -1,6 +1,7 @@
 /* Browser harness runs the actual Visual class with a synthetic Power BI table. */
 const fs=require('fs'),path=require('path');const out=process.argv[2]||'powerbi-visual';
 fs.mkdirSync(path.join(out,'verify'),{recursive:true});
+fs.copyFileSync(path.join(__dirname,'tracker-performance.verify.cjs'),path.join(out,'verify/tracker-performance.verify.cjs'));
 fs.copyFileSync(path.join(__dirname,'tracker-changes.verify.cjs'),path.join(out,'verify/tracker-changes.verify.cjs'));
 fs.copyFileSync(path.join(__dirname,'tracker-states.verify.cjs'),path.join(out,'verify/tracker-states.verify.cjs'));
 fs.copyFileSync(path.join(__dirname,'tracker-events.verify.cjs'),path.join(out,'verify/tracker-events.verify.cjs'));
@@ -136,6 +137,7 @@ await require('./tracker-calendar-day.verify.cjs')(page,{outputDir:__dirname});
 await require('./tracker-dispatch-details.verify.cjs')(page,{outputDir:__dirname});
 await require('./tracker-preparation.verify.cjs')(page,{outputDir:__dirname});
 await require('./tracker-events.verify.cjs')(page,{outputDir:__dirname});
+await require('./tracker-performance.verify.cjs')(page);
 await require('./tracker-changes.verify.cjs')(page,{outputDir:__dirname});
 await require('./tracker-states.verify.cjs')(page,{outputDir:__dirname});
 assert.deepEqual(errors,[]);console.log('PASS: actual Visual class, CSP interpreter, 60 submissions, five filters, search, comparison, details, list search/paging, refresh/resize, empty data, isolated instances, quality filters/conflicts, distinct counts, 30,000-row deduplication, full CSV and rejected-export fallback; no page errors.');

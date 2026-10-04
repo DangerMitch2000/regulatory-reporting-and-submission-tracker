@@ -1,8 +1,18 @@
-# Regulatory Tracker 1.14.0
+# Regulatory Tracker 1.14.1
 
-[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.14.0 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.14.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.14.0/regulatory-tracker-1.14.0.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.14.1 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.14.1) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.14.1/regulatory-tracker-1.14.1.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
+
+## Performance and grouping stability — version 1.14.1
+
+Survey matching now uses an index rather than scanning every delivered row per submission. Event and change hierarchies reuse shared record indexes. Sorting stores only identifiers and numeric ranks, reuses existing hierarchies, and no longer carries copies of record details through the sort lookup. Switching grouping clears a selection from the previous view while preserving each hierarchy's expansion keys.
+
+The new browser regression test uses **10,000 distinct submissions**, duplicate memberships and overlapping events. It checks 18 group switches, real mouse expansion across groups, six numeric sort reversals, search and repeated host refresh. It verifies unique row keys, stable totals, no stale selection and compact sort records. Existing calculations and field mappings are unchanged.
+
+On the local synthetic browser fixture, loading took approximately **7.3 seconds** and the slowest switch approximately **1.2 seconds**. These measure the visual, not Power BI model/network refresh. A separate 3,000-submission matching/hierarchy benchmark improved from approximately 1.47 seconds to 0.31 seconds with unchanged survey counts. Timings depend on hardware and actual membership/response volume.
+
+Import the updated package; **no additional fields** are needed beyond the change-initiation mappings below.
 
 ## Change initiation and country assessments — version 1.14.0
 
@@ -99,7 +109,7 @@ Map your **Submission dispatch required c** source field to **Dispatch required*
 
 | Visual | Download | Demo |
 | --- | --- | --- |
-| Regulatory Tracker 1.14.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.14.0/regulatory-tracker-1.14.0.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
+| Regulatory Tracker 1.14.1 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.14.1/regulatory-tracker-1.14.1.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
 | Registration Overview / Roadmap 1.4.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.4.0/roadmap-2026-1.4.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap-preview.html) |
 | IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |
 | Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/key-preview.html) |

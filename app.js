@@ -3,7 +3,7 @@
  const $=id=>document.getElementById(id), chart=$('chart'),status=$('filter-status'),detail=$('selected-details');
  const fields={site:'Manufacturer',product:'Product',country:'Country',type:'SubmissionType',businessUnit:'BusinessUnit'},selected=Object.fromEntries(Object.keys(fields).map(k=>[k,new Set()]));
  const norm=x=>x==null?'':String(x).trim(),el=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
- let eventSource=[]; const changes=window.regulatoryChanges;
+ let eventSource=[],relatedIndex=null,sourceRevision=0,hierarchyCache=null; const changes=window.regulatoryChanges;
  let view,rows,queue=Promise.resolve(),detailQuery='',detailPage=0,selectedKey='',timer;const filterBoxes=[];let predictionAnalysis;let predictionFieldsMissing=[];const predictions=window.regulatoryPredictions;
  const quality=window.regulatoryQuality; const qualityUI=window.regulatoryQualityUI; const exportWorklist=window.regulatoryExportWorklist; let qualityMappedFields=null,qualityAnalysis,qualityPanel;
  const submissionPeriod=window.regulatorySubmissionPeriod;let submissionDates=new Map(),unidentifiedDates=new Map();
@@ -15,7 +15,7 @@
  const duration=x=>x==null?'Not recorded / withheld':Math.round(x)+' days';
  document.body.dataset.theme='dark';
  try{
-  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.14.0');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();prepareQuality();qualityPanel=qualityUI.mount($('quality-view'),{exportWorklist});
+  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.14.1');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();prepareQuality();qualityPanel=qualityUI.mount($('quality-view'),{exportWorklist});
   for(const {key,label} of dispatchRequired.options){const option=el('option',label);option.value=key;$('dispatch-required').append(option);}$('dispatch-required').value='all';$('dispatch-required').onchange=()=>filter();
   const showQuality=enabled=>{$('quality-view').hidden=!enabled;$('timeline-view').hidden=enabled;status.hidden=enabled;$('timeline-tab').setAttribute('aria-pressed',String(!enabled));$('quality-tab').setAttribute('aria-pressed',String(enabled));$('tooltip').hidden=true;};
   $('quality-tab').onclick=()=>showQuality(true);$('timeline-tab').onclick=()=>showQuality(false);
@@ -87,12 +87,19 @@
   function dispatchMapped(){return qualityMappedFields?qualityMappedFields.includes('DispatchRequired'):rows.some(row=>Object.prototype.hasOwnProperty.call(row,'DispatchRequired'));}
   function prepareQuality(){const options={now:new Date(),...(qualityMappedFields?{mappedFields:qualityMappedFields}:{})};dispatchRequirements=dispatchRequired.bySubmission(rows,dispatchMapped());dispatchSummaries=dispatchDetails.analyze(rows,options);preparationEstimates=preparation.analyze(rows,{...options,dispatchSummaries});qualityAnalysis=quality.analyze(rows,options);}
   function enriched(row){const q=preparationEstimates.get(norm(row.SubID));const p=predictionAnalysis.bySubID.get(norm(row.SubID));return {...row,LMPrepStart:q?.start??null,LMPrepEnd:q?.end??null,LMPrepLabel:q?.duration??'',LMPrepStatus:q?.status??'unavailable',LMPrepAnchor:q?.anchor??'',PredictionDate:p?.predictedDate??null,PredictionLow:p?.rangeStart??null,PredictionHigh:p?.rangeEnd??null,PredictionN:p?.sampleCount??0,PredictionMedian:p?.medianDays??null,PredictionCountry:p?.country??'',PredictionStatus:p?.status??'unavailable',PredictionAnchorDate:p?.anchorDate??null,PredictionAnchorField:p?.anchorField??'',PredictionAnchorLabel:p?.anchorLabel??'',PredictionFromPlan:p?.forecastFromPlan??false};}
-  function filter(){return run(async()=>{refreshStateFilters();const period=updateDateControl(),matching=rows.filter(row=>stateConfig.matches(row,stateAnalysis,stateExcluded)&&Object.entries(fields).every(([kind,field])=>!selected[kind].size||selected[kind].has(norm(row[field])))&&dispatchRequired.matches(dispatchRequirements.get(norm(row.SubID))||dispatchRequired.resolve([row.DispatchRequired],dispatchMapped()),$('dispatch-required').value||'all')&&submissionPeriod.matches(norm(row.SubID)?submissionDates.get(norm(row.SubID)):unidentifiedDates.get(row),period));view.change('dataset',vega.changeset().remove(()=>true).insert(matching.map(enriched)));await view.runAsync();eventSource=matching;await refreshEvents();qualityPanel.update(qualityAnalysis,matching);detailPage=0;updateStatus();renderDetails();});}
+  function filter(){return run(async()=>{refreshStateFilters();const period=updateDateControl(),matching=rows.filter(row=>stateConfig.matches(row,stateAnalysis,stateExcluded)&&Object.entries(fields).every(([kind,field])=>!selected[kind].size||selected[kind].has(norm(row[field])))&&dispatchRequired.matches(dispatchRequirements.get(norm(row.SubID))||dispatchRequired.resolve([row.DispatchRequired],dispatchMapped()),$('dispatch-required').value||'all')&&submissionPeriod.matches(norm(row.SubID)?submissionDates.get(norm(row.SubID)):unidentifiedDates.get(row),period));view.change('dataset',vega.changeset().remove(()=>true).insert(matching.map(enriched)));await view.runAsync();eventSource=matching;sourceRevision++;await refreshEvents();qualityPanel.update(qualityAnalysis,matching);detailPage=0;updateStatus();renderDetails();});}
   async function refreshEvents(){
- const sub=view.data('sub'),apps=view.data('apps'),ros=view.data('ros'),ev=window.regulatoryEvents.build(eventSource,sub,apps,ros),ch=changes.build(eventSource,sub,apps,ros);
- const all=changes.order([...apps,...ros,...sub,...ev,...ch],view.signal('eventDescending'));
- const surveys=all.filter(r=>r.level===2).flatMap(r=>{const estimates=changes.survey(changes.related(r,eventSource));return estimates.length===1?[{...estimates[0],key:r.key}]:[];});
- view.change('eventRows',vega.changeset().remove(()=>true).insert(ev));view.change('changeRows',vega.changeset().remove(()=>true).insert(ch));view.change('orderedRows',vega.changeset().remove(()=>true).insert(all));view.change('surveyRows',vega.changeset().remove(()=>true).insert(surveys));await view.runAsync();
+ const signature=sourceRevision+'|'+view.signal('query'),descending=view.signal('eventDescending');
+ if(hierarchyCache?.signature===signature){
+  if(hierarchyCache.descending!==descending){hierarchyCache.descending=descending;view.change('orderedRows',vega.changeset().remove(()=>true).insert(changes.order(hierarchyCache.all,descending)));await view.runAsync();}
+  return;
+ }
+ const sub=view.data('sub'),apps=view.data('apps'),ros=view.data('ros'),prepared=window.regulatoryEvents.prepare(sub,apps,ros);
+ relatedIndex=changes.index(eventSource);
+ const ev=window.regulatoryEvents.build(eventSource,sub,apps,ros,prepared),ch=changes.build(eventSource,sub,apps,ros,prepared),all=[...apps,...ros,...sub,...ev,...ch];
+ const surveys=all.filter(r=>r.level===2).flatMap(r=>{const estimates=changes.survey(changes.related(r,relatedIndex));return estimates.length===1?[{...estimates[0],key:r.key}]:[];});
+ hierarchyCache={signature,descending,all};
+ view.change('eventRows',vega.changeset().remove(()=>true).insert(ev));view.change('changeRows',vega.changeset().remove(()=>true).insert(ch));view.change('orderedRows',vega.changeset().remove(()=>true).insert(changes.order(all,descending)));view.change('surveyRows',vega.changeset().remove(()=>true).insert(surveys));await view.runAsync();
  }
   function updateStatus(){const sub=view.data('sub'),roCount=new Set(sub.map(r=>r.ROID)).size,appCount=new Set(sub.map(r=>r.AppID)).size,eventCount=new Set(view.data('eventRows').filter(r=>r.level===-1&&!r.unlinked).map(r=>r.EventName)).size;status.textContent=new Set(view.data('changeRows').filter(r=>r.level===-2&&r.ChangeID).map(r=>r.ChangeID)).size+' change IDs · '+eventCount+' events · '+appCount+' applications · '+roCount+' ROs · '+new Set(sub.map(r=>r.SubID)).size+' submissions · '+view.data('pinned').length+' pinned';}
 
@@ -127,7 +134,7 @@
    $('list-page').textContent=(detailPage+1)+' / '+max;$('list-prev').disabled=detailPage===0;$('list-next').disabled=detailPage>=max-1;
   }
   function renderChangeDetails(body,row){
- const rs=changes.related(row,eventSource),section=el('section',undefined,'change-details');section.append(el('h3','Change initiation & linked records'));
+ const rs=changes.related(row,relatedIndex||eventSource),section=el('section',undefined,'change-details');section.append(el('h3','Change initiation & linked records'));
  const unique=f=>[...new Set(rs.map(r=>norm(r[f])).filter(Boolean))];
  for(const [label,f]of [['Change IDs','ChangeID'],['Events','EventName'],['Applications','AppID'],['ROs','ROID'],['Submissions','SubID']])section.append(el('p',label+': '+(unique(f).join(' · ')||'Not recorded')));
  if(row.level===0||row.level===1){section.append(el('p','Created: '+(unique(row.level===0?'AppCreated':'ROCreated').join(' / ')||'Not recorded')),el('p','Child timeline span: '+date(row.start)+' – '+date(row.end)));}
