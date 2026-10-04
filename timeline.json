@@ -349,7 +349,7 @@
             "type": "wheel",
             "source": "view",
             "filter": [
-              "!event.ctrlKey"
+              "!event.ctrlKey && !event.shiftKey"
             ],
             "consume": true
           },

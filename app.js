@@ -15,7 +15,7 @@
  const duration=x=>x==null?'Not recorded / withheld':Math.round(x)+' days';
  document.body.dataset.theme='dark';
  try{
-  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.13.0');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();prepareQuality();qualityPanel=qualityUI.mount($('quality-view'),{exportWorklist});
+  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.13.1');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();prepareQuality();qualityPanel=qualityUI.mount($('quality-view'),{exportWorklist});
   for(const {key,label} of dispatchRequired.options){const option=el('option',label);option.value=key;$('dispatch-required').append(option);}$('dispatch-required').value='all';$('dispatch-required').onchange=()=>filter();
   const showQuality=enabled=>{$('quality-view').hidden=!enabled;$('timeline-view').hidden=enabled;status.hidden=enabled;$('timeline-tab').setAttribute('aria-pressed',String(!enabled));$('quality-tab').setAttribute('aria-pressed',String(enabled));$('tooltip').hidden=true;};
   $('quality-tab').onclick=()=>showQuality(true);$('timeline-tab').onclick=()=>showQuality(false);

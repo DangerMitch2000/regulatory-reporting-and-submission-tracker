@@ -1,10 +1,14 @@
-# Regulatory Tracker 1.13.0
+# Regulatory Tracker 1.13.1
 
-[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.13.0 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.13.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.13.0/regulatory-tracker-1.13.0.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.13.1 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.13.1) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.13.1/regulatory-tracker-1.13.1.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
 
-## Separate state filters and mouse controls — version 1.13.0
+## Shift+scroll fix — version 1.13.1
+
+Shift+wheel now zooms without also scrolling the submission rows. Ordinary wheel scrolling and Ctrl+wheel panning remain available. No new field mappings are required.
+
+## Separate state filters and mouse controls — version 1.13.1
 
 Four alphabetical dropdowns independently filter **Application state**, **RO state**, **Submission state** and **Event state**. All 29 supplied options are separate: Active/Planned, In Progress/Ready For Submission and Sent To Health Authority/Distributed are no longer combined. Values within a field use OR; selections across fields combine with AND. Parents summarize only matching linked children. State evidence is resolved across delivered entity rows before local filters; conflicting and missing values have explicit options when present. Additional source states appear separately rather than being silently omitted. No additional fields are required.
 
@@ -60,7 +64,7 @@ Map your **Submission dispatch required c** source field to **Dispatch required*
 
 | Visual | Download | Demo |
 | --- | --- | --- |
-| Regulatory Tracker 1.13.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.13.0/regulatory-tracker-1.13.0.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
+| Regulatory Tracker 1.13.1 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.13.1/regulatory-tracker-1.13.1.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
 | Registration Overview / Roadmap 1.4.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.4.0/roadmap-2026-1.4.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap-preview.html) |
 | IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |
 | Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/key-preview.html) |

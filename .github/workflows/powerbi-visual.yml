@@ -81,7 +81,7 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.13.0.0.pbiviz
+          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.13.1.0.pbiviz
           cp powerbi-visual/README.md release/POWER-BI-INSTALL.md
           cp powerbi-visual/verify/preparation-light.png release/preparation-light.png
           cp powerbi-visual/verify/states-dark.png release/states-dark.png
@@ -112,11 +112,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view v1.13.0 >/dev/null 2>&1; then
-            gh release create v1.13.0 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.13.0" --notes "Adds four independent state dropdowns and distinct state colours on names and bars. Counts now list events first. Drag to pan, Ctrl+wheel for fine panning and Shift+wheel for gentle pointer-centred zoom. Existing lifecycle calculations remain unchanged. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
+          if ! gh release view v1.13.1 >/dev/null 2>&1; then
+            gh release create v1.13.1 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.13.1" --notes "Fixes Shift+wheel zoom also scrolling submission rows. Retains all separate state filters and colours. Drag to pan, Ctrl+wheel for fine panning and Shift+wheel for gentle pointer-centred zoom. Existing lifecycle calculations remain unchanged. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
           else
-            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.13.0" -f sha="$GITHUB_SHA" -F force=false
-            gh release edit v1.13.0 --target "$GITHUB_SHA" --notes "Adds four independent state dropdowns and distinct state colours on names and bars. Counts now list events first. Drag to pan, Ctrl+wheel for fine panning and Shift+wheel for gentle pointer-centred zoom. Existing lifecycle calculations remain unchanged. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.13.1" -f sha="$GITHUB_SHA" -F force=false
+            gh release edit v1.13.1 --target "$GITHUB_SHA" --notes "Fixes Shift+wheel zoom also scrolling submission rows. Retains all separate state filters and colours. Drag to pan, Ctrl+wheel for fine panning and Shift+wheel for gentle pointer-centred zoom. Existing lifecycle calculations remain unchanged. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
           fi
-          gh release upload v1.13.0 release/* --clobber
+          gh release upload v1.13.1 release/* --clobber
 

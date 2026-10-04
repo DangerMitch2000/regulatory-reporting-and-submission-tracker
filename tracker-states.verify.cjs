@@ -12,5 +12,15 @@ module.exports=async(page,{outputDir})=>{
  await page.mouse.move(point.x,point.y);await page.mouse.down();await page.mouse.move(point.x+30,point.y,{steps:5});await page.mouse.up();await page.waitForTimeout(100);const dragged=await range();assert.ok(dragged[0]<after[0]);assert.ok(Math.abs((dragged[1]-dragged[0])-(after[1]-after[0]))<2,'Dragging preserves zoom');
  await page.keyboard.down('Shift');await page.mouse.wheel(0,-100);await page.keyboard.up('Shift');await page.waitForTimeout(100);const zoomed=await range();assert.ok(zoomed[1]-zoomed[0]<dragged[1]-dragged[0]);assert.ok((zoomed[1]-zoomed[0])/(dragged[1]-dragged[0])>.9,'Zoom steps are gentle');
  const fraction=await page.evaluate(x=>{const v=window.__themeVisual.app.view,b=document.querySelector('#host #chart svg').getBoundingClientRect();return (x-b.x-v.signal('left'))/(v.signal('width')-v.signal('left'));},point.x+30);assert.ok(Math.abs((dragged[0]+fraction*(dragged[1]-dragged[0]))-(zoomed[0]+fraction*(zoomed[1]-zoomed[0])))<(dragged[1]-dragged[0])/500,'Zoom preserves date under pointer within one screen pixel');
+ // Use enough rows to expose accidental vertical scrolling during modified wheel gestures.
+ await page.evaluate(()=>window.__dispatchSend(window.__dispatchRows));
+ await page.waitForTimeout(250);
+ await page.evaluate(async()=>{const v=window.__themeVisual.app.view;v.signal('rowRequest',{pos:8});await v.runAsync();});
+ const scrollState=()=>page.evaluate(()=>({row:window.__themeVisual.app.view.signal('scrollTop'),pageX:window.scrollX,pageY:window.scrollY}));
+ const fixed=await scrollState();
+ const wheelPoint=await page.evaluate(()=>{const v=window.__themeVisual.app.view,b=document.querySelector('#host #chart svg').getBoundingClientRect();return {x:b.x+v.signal('left')+100,y:b.y+v.signal('top')+40};});
+ await page.mouse.move(wheelPoint.x,wheelPoint.y);
+ for(const key of ['Shift','Control']){await page.keyboard.down(key);await page.mouse.wheel(0,100);await page.keyboard.up(key);await page.waitForTimeout(120);assert.deepEqual(await scrollState(),fixed,key+' wheel must not scroll rows or page');}
+ await page.mouse.wheel(0,100);await page.waitForTimeout(120);assert.ok((await scrollState()).row>fixed.row,'Unmodified wheel still scrolls rows');
  console.log('PASS: separate state dropdowns, independent Planned filter, ordered distinct counts, state-coloured names, themes, fine Ctrl+wheel, background drag and pointer-centred Shift zoom.');
 };
