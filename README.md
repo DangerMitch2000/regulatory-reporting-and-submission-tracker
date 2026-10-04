@@ -1,12 +1,17 @@
-# Regulatory Tracker 1.10.3
+# Regulatory Tracker 1.11.0
 
-[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.10.3 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.10.3) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.10.3/regulatory-tracker-1.10.3.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-timeline-demo/) · [Version 1.11.0 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/v1.11.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.11.0/regulatory-tracker-1.11.0.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
 
+## LM dossier preparation — version 1.11.0
+Map just one new optional field: **LM Dossier Preparation Timeline** (`LMPrepDuration`) from the country survey, related through the application lead-market country. Each child inherits its application standard. Values such as `1 month`, `2 months`, `3 weeks` or `45 days` are accepted; months use **30 calendar days**, weeks use 7 days. These are planning allowances, not actual preparation time or statistical confidence ranges. Purple bars end at latest planned dispatch, falling back to original only when latest is blank or unmapped. Existing source milestones, parent lifecycle bars and approval estimates are unchanged. Missing, invalid or conflicting durations/dispatch targets withhold the estimate; explicit Dispatch required=False draws no preparation bar. Details explains unavailable estimates. No new country or start/end date role is required.
+
+If both dispatch plans are missing, Details retains the preparation duration but no dated bar is drawn. Import the new package and map this one additional field; no other new mappings are required.
+
 ## New in 1.10.3: Dispatch details
 
-Each submission now shows original, latest and actual dispatch dates, source submission status and calendar days until or past its dispatch target in Details. A blank latest plan falls back to the original; invalid or conflicting dates are withheld. Completed submissions, later milestone evidence and unknown dispatch requirements prompt confirmation instead of claiming dispatch is pending. Preparation duration is unavailable without a reliable start date; creation dates are not used. The Gantt layout is unchanged.
+Each submission now shows original, latest and actual dispatch dates, source submission status and calendar days until or past its dispatch target in Details. A blank latest plan falls back to the original; invalid or conflicting dates are withheld. Completed submissions, later milestone evidence and unknown dispatch requirements prompt confirmation instead of claiming dispatch is pending. Actual preparation time is unavailable without a reliable actual start date; creation dates are not used. The Gantt layout is unchanged.
 
 ## New in 1.10.2: Submission and RO states
 
@@ -26,7 +31,7 @@ Map your **Submission dispatch required c** source field to **Dispatch required*
 
 | Visual | Download | Demo |
 | --- | --- | --- |
-| Regulatory Tracker 1.10.3 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.10.3/regulatory-tracker-1.10.3.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-timeline-demo/) |
+| Regulatory Tracker 1.11.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/v1.11.0/regulatory-tracker-1.11.0.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-timeline-demo/) |
 | Registration Overview / Roadmap 1.4.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/roadmap-2026-v1.4.0/roadmap-2026-1.4.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-timeline-demo/roadmap-preview.html) |
 | IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-timeline-demo/ivdr-preview.html) |
 | Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-timeline-demo/key-preview.html) |
@@ -157,9 +162,3 @@ Serve this directory with any static server; all runtime assets are local. GitHu
 Real Vega parsing/rendering and functional tests cover state grain, distinct counts, full memberships, search, comparison level/pins, Day 0, expiry domains, date conflicts/reversals, exact duration/variance, sorts, anchored expansion and 30,000 fictional membership rows. Drawn rows are capped at60; aggregation still processes all delivered data. Browser tests check genuine controls, copying, filters and responsive layout. Actual Power BI cannot be verified in the standalone browser.
 
 Vega 5.33.0 is bundled under BSD-3-Clause; see VEGA-LICENSE.txt.
-
-
-
-
-## LM dossier preparation — version 1.11.0
-Map just one new optional field: **LM Dossier Preparation Timeline** (`LMPrepDuration`) from the country survey, related through the application lead-market country. Each child inherits its application standard. Values such as `1 month`, `2 months`, `3 weeks` or `45 days` are accepted; months use **30 calendar days**, weeks use 7 days. These are planning allowances, not actual preparation time or statistical confidence ranges. Purple bars end at latest planned dispatch, falling back to original only when latest is blank or unmapped. Existing source milestones, parent lifecycle bars and approval estimates are unchanged. Missing, invalid or conflicting durations/dispatch targets withhold the estimate; explicit Dispatch required=False draws no preparation bar. Details explains unavailable estimates. No new country or start/end date role is required.
