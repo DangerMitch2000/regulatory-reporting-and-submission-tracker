@@ -8,6 +8,7 @@
  const submissionPeriod=window.regulatorySubmissionPeriod;let submissionDates=new Map(),unidentifiedDates=new Map();
  const dispatchRequired=window.regulatoryDispatchRequired;let dispatchRequirements=new Map();
  const dispatchDetails=window.regulatoryDispatchDetails;let dispatchSummaries=new Map();
+ const preparation=window.regulatoryPreparation;let preparationEstimates=new Map();
  const run=fn=>queue=queue.then(fn).catch(error=>{status.textContent='Could not update the chart: '+error.message;console.error(error);});
  const date=x=>x==null||!Number.isFinite(x)?'Not recorded':new Date(x).toISOString().slice(0,10);
  const duration=x=>x==null?'Not recorded / withheld':Math.round(x)+' days';
@@ -64,8 +65,8 @@
   function updateDateControl(){const p=chosenPeriod();$('submission-custom').hidden=$('submission-period').value!=='custom';$('submission-date-summary').textContent='Submission date · '+p.label;$('submission-date-error').textContent=p.error;$('submission-date-error').hidden=!p.error;for(const id of ['submission-from','submission-to'])$(id).setAttribute('aria-invalid',String(!!p.error));return p;}
   function refreshDateChoices(){const picker=$('submission-period'),previous=picker.value||'all',options=[['all','All dates'],...submissionPeriod.years([...submissionDates.values(),...unidentifiedDates.values()]).map(year=>['year:'+year,String(year)]),['custom','Custom range'],['undated','No usable date']];if(previous.startsWith('year:')&&!options.some(([v])=>v===previous))options.splice(1,0,[previous,previous.slice(5)+' (no matching dates)']);picker.replaceChildren(...options.map(([value,label])=>{const o=el('option',label);o.value=value;return o;}));picker.value=previous;updateDateControl();}
   function dispatchMapped(){return qualityMappedFields?qualityMappedFields.includes('DispatchRequired'):rows.some(row=>Object.prototype.hasOwnProperty.call(row,'DispatchRequired'));}
-  function prepareQuality(){const options={now:new Date(),...(qualityMappedFields?{mappedFields:qualityMappedFields}:{})};dispatchRequirements=dispatchRequired.bySubmission(rows,dispatchMapped());dispatchSummaries=dispatchDetails.analyze(rows,options);qualityAnalysis=quality.analyze(rows,options);}
-  function enriched(row){const p=predictionAnalysis.bySubID.get(norm(row.SubID));return {...row,PredictionDate:p?.predictedDate??null,PredictionLow:p?.rangeStart??null,PredictionHigh:p?.rangeEnd??null,PredictionN:p?.sampleCount??0,PredictionMedian:p?.medianDays??null,PredictionCountry:p?.country??'',PredictionStatus:p?.status??'unavailable',PredictionAnchorDate:p?.anchorDate??null,PredictionAnchorField:p?.anchorField??'',PredictionAnchorLabel:p?.anchorLabel??'',PredictionFromPlan:p?.forecastFromPlan??false};}
+  function prepareQuality(){const options={now:new Date(),...(qualityMappedFields?{mappedFields:qualityMappedFields}:{})};dispatchRequirements=dispatchRequired.bySubmission(rows,dispatchMapped());dispatchSummaries=dispatchDetails.analyze(rows,options);preparationEstimates=preparation.analyze(rows,{...options,dispatchSummaries});qualityAnalysis=quality.analyze(rows,options);}
+  function enriched(row){const q=preparationEstimates.get(norm(row.SubID));const p=predictionAnalysis.bySubID.get(norm(row.SubID));return {...row,LMPrepStart:q?.start??null,LMPrepEnd:q?.end??null,LMPrepLabel:q?.duration??'',LMPrepStatus:q?.status??'unavailable',LMPrepAnchor:q?.anchor??'',PredictionDate:p?.predictedDate??null,PredictionLow:p?.rangeStart??null,PredictionHigh:p?.rangeEnd??null,PredictionN:p?.sampleCount??0,PredictionMedian:p?.medianDays??null,PredictionCountry:p?.country??'',PredictionStatus:p?.status??'unavailable',PredictionAnchorDate:p?.anchorDate??null,PredictionAnchorField:p?.anchorField??'',PredictionAnchorLabel:p?.anchorLabel??'',PredictionFromPlan:p?.forecastFromPlan??false};}
   function filter(){return run(async()=>{const period=updateDateControl(),matching=rows.filter(row=>Object.entries(fields).every(([kind,field])=>!selected[kind].size||selected[kind].has(norm(row[field])))&&dispatchRequired.matches(dispatchRequirements.get(norm(row.SubID))||dispatchRequired.resolve([row.DispatchRequired],dispatchMapped()),$('dispatch-required').value||'all')&&submissionPeriod.matches(norm(row.SubID)?submissionDates.get(norm(row.SubID)):unidentifiedDates.get(row),period));view.change('dataset',vega.changeset().remove(()=>true).insert(matching.map(enriched)));await view.runAsync();qualityPanel.update(qualityAnalysis,matching);detailPage=0;updateStatus();renderDetails();});}
   function updateStatus(){const roCount=view.data('roTotals')[0]?.count??0;status.textContent=view.data('sub').length+' submissions · '+roCount+(roCount===1?' RO · ':' ROs · ')+view.data('apps').length+' applications · '+view.data('pinned').length+' pinned';}
   function updateControls(){for(const binding of $('bindings').children){const name=binding.querySelector('input,select')?.name;if(['compareLevel','axisMode','sortBy','pinsOnly'].includes(name))binding.hidden=view.signal('mode')!=='Compare';if(name==='axisMode')binding.hidden=view.signal('mode')!=='Compare'||view.signal('compareLevel')!==2;if(name==='detailQuery')binding.hidden=true;}$('comparison-help').hidden=view.signal('mode')!=='Compare';$('clear-pins').hidden=view.signal('mode')!=='Compare';}
@@ -79,6 +80,7 @@
    if(row.level===2){body.append(el('p',row.SubmissionType,'type-label'));const required=dispatchRequirements.get(norm(row.SubID));body.append(el('p','Dispatch required: '+(required?.label||'Field not mapped'),'dispatch-required-detail'));if(required?.key==='review')body.append(el('p','Recorded requirement values: '+required.values.join(' / '),'prediction-warning'));}
    const relations=el('dl',undefined,'relationships');for(const [label,value]of [['Application',row.AppID],['Regulatory objective',row.ROID],['Legal manufacturer',row.ManufacturerInfo.detail],['Countries',row.CountryInfo.detail]]){relations.append(el('dt',label),el('dd',value||'Not recorded'));}body.append(relations);
    if(row.level===2){
+    renderPreparation(body,preparationEstimates.get(norm(row.SubID)));
     renderDispatchDetails(body,dispatchSummaries.get(norm(row.SubID)));
     renderPrediction(body,predictionAnalysis.bySubID.get(norm(row.SubID)));
     const more=el('details',undefined,'record-history');more.append(el('summary','All milestone dates and processing history'));body.append(more);
@@ -94,6 +96,14 @@
    detailPage=Math.min(detailPage,max-1);
    for(const [label,info]of groups){const section=el('section'),found=info.members.map(m=>m.label).filter(x=>x.toLowerCase().includes(q));section.append(el('h3',label+' · '+found.length+' matching'));const ul=el('ul');for(const item of found.slice(detailPage*12,detailPage*12+12))ul.append(el('li',item));if(!ul.children.length)ul.append(el('li','No values on this page'));section.append(ul);lists.append(section);}
    $('list-page').textContent=(detailPage+1)+' / '+max;$('list-prev').disabled=detailPage===0;$('list-next').disabled=detailPage>=max-1;
+  }
+  function renderPreparation(body,p){
+   const section=el('section',undefined,'preparation-card');section.append(el('h3','Estimated LM dossier preparation'));
+   if(p?.status==='estimated'){
+    const list=el('dl');for(const [label,value]of [['Application standard',p.duration],['Preparation allowance',p.calendarDays+' calendar days (1 month = 30 days)'],['Estimated preparation start',date(p.start)],['Target finish / planned dispatch',date(p.end)],['Basis',p.anchor]])list.append(el('dt',label),el('dd',value));section.append(list);
+    section.append(el('p','Standard supplied through the application’s lead-market country relationship. Child submissions use their own dispatch targets.','muted'));
+   }else section.append(el('p',p?.reason||'Preparation estimate unavailable.'));
+   section.append(el('p','Planning estimate only. Actual preparation start and time spent preparing are not recorded.','muted'));body.append(section);
   }
   function renderDispatchDetails(body,summary){
    if(!summary)return;

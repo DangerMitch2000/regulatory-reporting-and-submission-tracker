@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'app.js'
+      - 'preparation*'
+      - 'tracker-preparation.verify.cjs'
       - 'dispatch-details*'
       - 'tracker-dispatch-details.verify.cjs'
       - 'dispatch-required*'
@@ -38,6 +40,7 @@ jobs:
         run: |
           node open-end-test.cjs
           node dispatch-details-test.cjs
+          node preparation-test.cjs
           node dispatch-required-test.cjs
           node quality-test.cjs
           node quality-ui-test.cjs
@@ -72,8 +75,10 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.10.3.0.pbiviz
+          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.11.0.0.pbiviz
           cp powerbi-visual/README.md release/POWER-BI-INSTALL.md
+          cp powerbi-visual/verify/preparation-light.png release/preparation-light.png
+          cp powerbi-visual/verify/preparation-dark.png release/preparation-dark.png
           cp powerbi-visual/verify/dispatch-details.png release/dispatch-details.png
           cp powerbi-visual/verify/calendar-day-quality.png release/calendar-day-quality.png
           cp powerbi-visual/verify/dispatch-required.png release/dispatch-required.png
@@ -89,7 +94,7 @@ jobs:
           cp powerbi-visual/verify/approval-benchmark.png release/approval-benchmark.png
           cp powerbi-visual/verify/planned-submission-forecast.png release/planned-submission-forecast.png
           cp powerbi-visual/verify/submission-date-filter.png release/submission-date-filter.png
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs dispatch-required.js dispatch-required-test.cjs dispatch-details.js dispatch-details-test.cjs tracker-dispatch-details.verify.cjs tracker-dispatch.verify.cjs tracker-calendar-day.verify.cjs tracker-theme.verify.cjs test-timeline-theme.cjs predictions.js prediction-test.cjs submission-period.js submission-period-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs open-end-test.cjs
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs dispatch-required.js dispatch-required-test.cjs dispatch-details.js dispatch-details-test.cjs preparation.js preparation-test.cjs tracker-preparation.verify.cjs tracker-dispatch-details.verify.cjs tracker-dispatch.verify.cjs tracker-calendar-day.verify.cjs tracker-theme.verify.cjs test-timeline-theme.cjs predictions.js prediction-test.cjs submission-period.js submission-period-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs open-end-test.cjs
           cd release && sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
@@ -99,11 +104,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view v1.10.3 >/dev/null 2>&1; then
-            gh release create v1.10.3 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.10.3" --notes "Submission Details now includes dispatch dates and calendar days until or past the target, with clear exceptions for completed submissions, recorded later milestones and dispatch not required or unknown. Preparation duration is not inferred from creation dates. Gantt layout unchanged. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
+          if ! gh release view v1.11.0 >/dev/null 2>&1; then
+            gh release create v1.11.0 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.11.0" --notes "Adds one optional LM Dossier Preparation Timeline field. Purple estimated preparation bars use the application lead-market standard and end at each submission planned dispatch. Missing or conflicting inputs are withheld. Existing lifecycle calculations remain unchanged. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
           else
-            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.10.3" -f sha="$GITHUB_SHA" -F force=false
-            gh release edit v1.10.3 --target "$GITHUB_SHA" --notes "Submission Details now includes dispatch dates and calendar days until or past the target, with clear exceptions for completed submissions, recorded later milestones and dispatch not required or unknown. Preparation duration is not inferred from creation dates. Gantt layout unchanged. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.11.0" -f sha="$GITHUB_SHA" -F force=false
+            gh release edit v1.11.0 --target "$GITHUB_SHA" --notes "Adds one optional LM Dossier Preparation Timeline field. Purple estimated preparation bars use the application lead-market standard and end at each submission planned dispatch. Missing or conflicting inputs are withheld. Existing lifecycle calculations remain unchanged. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
           fi
-          gh release upload v1.10.3 release/* --clobber
+          gh release upload v1.11.0 release/* --clobber
 

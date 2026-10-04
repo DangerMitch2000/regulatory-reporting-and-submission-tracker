@@ -159,3 +159,7 @@ Real Vega parsing/rendering and functional tests cover state grain, distinct cou
 Vega 5.33.0 is bundled under BSD-3-Clause; see VEGA-LICENSE.txt.
 
 
+
+
+## LM dossier preparation — version 1.11.0
+Map just one new optional field: **LM Dossier Preparation Timeline** (`LMPrepDuration`) from the country survey, related through the application lead-market country. Each child inherits its application standard. Values such as `1 month`, `2 months`, `3 weeks` or `45 days` are accepted; months use **30 calendar days**, weeks use 7 days. These are planning allowances, not actual preparation time or statistical confidence ranges. Purple bars end at latest planned dispatch, falling back to original only when latest is blank or unmapped. Existing source milestones, parent lifecycle bars and approval estimates are unchanged. Missing, invalid or conflicting durations/dispatch targets withhold the estimate; explicit Dispatch required=False draws no preparation bar. Details explains unavailable estimates. No new country or start/end date role is required.

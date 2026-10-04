@@ -25,7 +25,7 @@
     },
     {
       "name": "themePalette",
-      "update": "themeMode==='light' ? {\"background\":\"#ffffff\",\"text\":\"#172b43\",\"border\":\"#c5cfdb\",\"controlSelected\":\"#dceaff\",\"control\":\"#eef3f9\",\"controlBorder\":\"#899caf\",\"controlHover\":\"#dae7f6\",\"controlFocus\":\"#365f99\",\"rangeText\":\"#52647a\",\"header\":\"#e8eef6\",\"headerBorder\":\"#b8c6d6\",\"headerText\":\"#253c58\",\"rowSelected\":\"#dceaff\",\"rowHover\":\"#edf3fc\",\"rowApplication\":\"#eef2f7\",\"rowObjective\":\"#f3f6fa\",\"rowOdd\":\"#ffffff\",\"rowEven\":\"#f8fafc\",\"selectionBorder\":\"#7950b4\",\"minorGrid\":\"#dde4ed\",\"majorGrid\":\"#aab9ca\",\"axisText\":\"#3b506b\",\"minorAxisText\":\"#52647a\",\"divider\":\"#c5cfdb\",\"rowDivider\":\"#d5deea\",\"markerHover\":\"#172b43\",\"expandBackground\":\"#e4edf8\",\"expandBorder\":\"#7892b4\",\"expandHover\":\"#cfdef3\",\"expandText\":\"#294765\",\"subText\":\"#52647a\",\"issueText\":\"#89530b\",\"mutedText\":\"#52647a\",\"prediction\":\"#996400\",\"hollowFill\":\"#ffffff\",\"predictionHover\":\"#664000\",\"todayLine\":\"#b82854\",\"todayBackground\":\"#fff1f4\",\"todayText\":\"#a32049\",\"footerText\":\"#52647a\",\"pageControl\":\"#eef3f9\",\"pageControlBorder\":\"#899caf\",\"pageControlHover\":\"#dae7f6\",\"emptyText\":\"#3b506b\",\"countText\":\"#3b506b\",\"scrollTrack\":\"#e7edf5\",\"scrollBorder\":\"#bac7d7\",\"scrollThumb\":\"#7488a4\",\"legendText\":\"#253c58\",\"comparisonText\":\"#52647a\",\"pinText\":\"#7847a4\",\"legendHelp\":\"#52647a\"} : {\"background\":\"#14181f\",\"text\":\"#dbe3ef\",\"border\":\"#3b4657\",\"controlSelected\":\"#33475b\",\"control\":\"#252d39\",\"controlBorder\":\"#526078\",\"controlHover\":\"#3d4d65\",\"controlFocus\":\"#a4bff2\",\"rangeText\":\"#9bacc3\",\"header\":\"#222b38\",\"headerBorder\":\"#445166\",\"headerText\":\"#b8c8df\",\"rowSelected\":\"#344460\",\"rowHover\":\"#293747\",\"rowApplication\":\"#232d3a\",\"rowObjective\":\"#1d2733\",\"rowOdd\":\"#171e28\",\"rowEven\":\"#1b232e\",\"selectionBorder\":\"#b799ff\",\"minorGrid\":\"#334052\",\"majorGrid\":\"#586c86\",\"axisText\":\"#b0c1d9\",\"minorAxisText\":\"#93a8c3\",\"divider\":\"#3b475b\",\"rowDivider\":\"#354154\",\"markerHover\":\"#fff\",\"expandBackground\":\"#2c3b50\",\"expandBorder\":\"#7390b5\",\"expandHover\":\"#49688f\",\"expandText\":\"#d6e8ff\",\"subText\":\"#94a6bf\",\"issueText\":\"#ffbd67\",\"mutedText\":\"#8e9eb5\",\"prediction\":\"#f6c66a\",\"hollowFill\":\"#19222e\",\"predictionHover\":\"#ffe4a6\",\"todayLine\":\"#ff8fad\",\"todayBackground\":\"#1e2632\",\"todayText\":\"#ff9eb8\",\"footerText\":\"#9babbe\",\"pageControl\":\"#2a3648\",\"pageControlBorder\":\"#51617a\",\"pageControlHover\":\"#425777\",\"emptyText\":\"#c0cddd\",\"countText\":\"#a4bbd8\",\"scrollTrack\":\"#101722\",\"scrollBorder\":\"#52617a\",\"scrollThumb\":\"#8296b6\",\"legendText\":\"#cedbec\",\"comparisonText\":\"#aabbd1\",\"pinText\":\"#e5d1ff\",\"legendHelp\":\"#a9bbd3\"}"
+      "update": "themeMode==='light' ? {\"preparation\":\"#6752b4\",\"background\":\"#ffffff\",\"text\":\"#172b43\",\"border\":\"#c5cfdb\",\"controlSelected\":\"#dceaff\",\"control\":\"#eef3f9\",\"controlBorder\":\"#899caf\",\"controlHover\":\"#dae7f6\",\"controlFocus\":\"#365f99\",\"rangeText\":\"#52647a\",\"header\":\"#e8eef6\",\"headerBorder\":\"#b8c6d6\",\"headerText\":\"#253c58\",\"rowSelected\":\"#dceaff\",\"rowHover\":\"#edf3fc\",\"rowApplication\":\"#eef2f7\",\"rowObjective\":\"#f3f6fa\",\"rowOdd\":\"#ffffff\",\"rowEven\":\"#f8fafc\",\"selectionBorder\":\"#7950b4\",\"minorGrid\":\"#dde4ed\",\"majorGrid\":\"#aab9ca\",\"axisText\":\"#3b506b\",\"minorAxisText\":\"#52647a\",\"divider\":\"#c5cfdb\",\"rowDivider\":\"#d5deea\",\"markerHover\":\"#172b43\",\"expandBackground\":\"#e4edf8\",\"expandBorder\":\"#7892b4\",\"expandHover\":\"#cfdef3\",\"expandText\":\"#294765\",\"subText\":\"#52647a\",\"issueText\":\"#89530b\",\"mutedText\":\"#52647a\",\"prediction\":\"#996400\",\"hollowFill\":\"#ffffff\",\"predictionHover\":\"#664000\",\"todayLine\":\"#b82854\",\"todayBackground\":\"#fff1f4\",\"todayText\":\"#a32049\",\"footerText\":\"#52647a\",\"pageControl\":\"#eef3f9\",\"pageControlBorder\":\"#899caf\",\"pageControlHover\":\"#dae7f6\",\"emptyText\":\"#3b506b\",\"countText\":\"#3b506b\",\"scrollTrack\":\"#e7edf5\",\"scrollBorder\":\"#bac7d7\",\"scrollThumb\":\"#7488a4\",\"legendText\":\"#253c58\",\"comparisonText\":\"#52647a\",\"pinText\":\"#7847a4\",\"legendHelp\":\"#52647a\"} : {\"preparation\":\"#bba3f7\",\"background\":\"#14181f\",\"text\":\"#dbe3ef\",\"border\":\"#3b4657\",\"controlSelected\":\"#33475b\",\"control\":\"#252d39\",\"controlBorder\":\"#526078\",\"controlHover\":\"#3d4d65\",\"controlFocus\":\"#a4bff2\",\"rangeText\":\"#9bacc3\",\"header\":\"#222b38\",\"headerBorder\":\"#445166\",\"headerText\":\"#b8c8df\",\"rowSelected\":\"#344460\",\"rowHover\":\"#293747\",\"rowApplication\":\"#232d3a\",\"rowObjective\":\"#1d2733\",\"rowOdd\":\"#171e28\",\"rowEven\":\"#1b232e\",\"selectionBorder\":\"#b799ff\",\"minorGrid\":\"#334052\",\"majorGrid\":\"#586c86\",\"axisText\":\"#b0c1d9\",\"minorAxisText\":\"#93a8c3\",\"divider\":\"#3b475b\",\"rowDivider\":\"#354154\",\"markerHover\":\"#fff\",\"expandBackground\":\"#2c3b50\",\"expandBorder\":\"#7390b5\",\"expandHover\":\"#49688f\",\"expandText\":\"#d6e8ff\",\"subText\":\"#94a6bf\",\"issueText\":\"#ffbd67\",\"mutedText\":\"#8e9eb5\",\"prediction\":\"#f6c66a\",\"hollowFill\":\"#19222e\",\"predictionHover\":\"#ffe4a6\",\"todayLine\":\"#ff8fad\",\"todayBackground\":\"#1e2632\",\"todayText\":\"#ff9eb8\",\"footerText\":\"#9babbe\",\"pageControl\":\"#2a3648\",\"pageControlBorder\":\"#51617a\",\"pageControlHover\":\"#425777\",\"emptyText\":\"#c0cddd\",\"countText\":\"#a4bbd8\",\"scrollTrack\":\"#101722\",\"scrollBorder\":\"#52617a\",\"scrollThumb\":\"#8296b6\",\"legendText\":\"#cedbec\",\"comparisonText\":\"#aabbd1\",\"pinText\":\"#e5d1ff\",\"legendHelp\":\"#a9bbd3\"}"
     },
     {
       "name": "themeStateColors",
@@ -184,7 +184,7 @@
       "value": "",
       "on": [
         {
-          "events": "@rowBg:mouseover, @parentCell:mouseover, @parentLabel:mouseover, @toggle:mouseover, @parentBar:mouseover, @subLabel:mouseover, @siteText:mouseover, @productText:mouseover, @milestone:mouseover, @connector:mouseover, @predictionRange:mouseover, @predictionApproval:mouseover",
+          "events": "@rowBg:mouseover, @parentCell:mouseover, @parentLabel:mouseover, @toggle:mouseover, @parentBar:mouseover, @subLabel:mouseover, @siteText:mouseover, @productText:mouseover, @milestone:mouseover, @connector:mouseover, @predictionRange:mouseover, @predictionApproval:mouseover, @preparationRange:mouseover, @preparationLabel:mouseover",
           "update": "datum.key"
         },
         {
@@ -284,7 +284,7 @@
       "value": false,
       "on": [
         {
-          "events": "@toggle:click, @parentLabel:click, @parentBar:click, @parentCell:click, @rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @next:click, @nextText:click, @prev:click, @prevText:click, @scrollTrack:pointerdown, @scrollThumb:pointerdown, @predictionRange:click, @predictionApproval:click",
+          "events": "@toggle:click, @parentLabel:click, @parentBar:click, @parentCell:click, @rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @next:click, @nextText:click, @prev:click, @prevText:click, @scrollTrack:pointerdown, @scrollThumb:pointerdown, @predictionRange:click, @predictionApproval:click, @preparationRange:click, @preparationLabel:click",
           "update": "true"
         },
         {
@@ -382,7 +382,7 @@
       "value": "",
       "on": [
         {
-          "events": "@rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @predictionRange:click, @predictionApproval:click",
+          "events": "@rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @predictionRange:click, @predictionApproval:click, @preparationRange:click, @preparationLabel:click",
           "update": "datum.key"
         }
       ]
@@ -1871,7 +1871,12 @@
             "PredictionAnchorDate",
             "PredictionAnchorField",
             "PredictionAnchorLabel",
-            "PredictionFromPlan"
+            "PredictionFromPlan",
+            "LMPrepStart",
+            "LMPrepEnd",
+            "LMPrepLabel",
+            "LMPrepStatus",
+            "LMPrepAnchor"
           ],
           "ops": [
             "count",
@@ -1940,6 +1945,11 @@
             "max",
             "valid",
             "sum",
+            "max",
+            "max",
+            "max",
+            "max",
+            "max",
             "max",
             "max",
             "max",
@@ -2029,7 +2039,12 @@
             "PredictionAnchorDate",
             "PredictionAnchorField",
             "PredictionAnchorLabel",
-            "PredictionFromPlan"
+            "PredictionFromPlan",
+            "LMPrepStart",
+            "LMPrepEnd",
+            "LMPrepLabel",
+            "LMPrepStatus",
+            "LMPrepAnchor"
           ]
         },
         {
@@ -2356,6 +2371,11 @@
           "type": "formula",
           "as": "PredictionReady",
           "expr": "(datum.PredictionStatus==='estimated' || datum.PredictionStatus==='benchmark') && isNumber(datum.PredictionDate) && isFinite(datum.PredictionDate) && isNumber(datum.PredictionLow) && isFinite(datum.PredictionLow) && isNumber(datum.PredictionHigh) && isFinite(datum.PredictionHigh) && datum.PredictionLow<=datum.PredictionDate && datum.PredictionDate<=datum.PredictionHigh && datum.PredictionN>0 && (datum.PredictionStatus==='benchmark' ? isValid(datum.ActualApproval) && datum.ActualApprovalBad===0 : datum.ActualApprovalValid===0 && datum.ActualApprovalBad===0)"
+        },
+        {
+          "type": "formula",
+          "as": "LMPrepReady",
+          "expr": "datum.LMPrepStatus==='estimated' && isNumber(datum.LMPrepStart) && isFinite(datum.LMPrepStart) && isNumber(datum.LMPrepEnd) && isFinite(datum.LMPrepEnd) && datum.LMPrepStart<datum.LMPrepEnd"
         }
       ]
     },
@@ -2854,12 +2874,12 @@
         {
           "type": "formula",
           "as": "_lo",
-          "expr": "elapsed ? (isValid(datum.ActualDispatch) && isValid(datum.start) ? datum.start-datum.ActualDispatch : null) : min(isValid(datum.start) ? datum.start : 1/0,datum.level===2 && datum.PredictionReady ? datum.PredictionLow : 1/0)"
+          "expr": "elapsed ? (isValid(datum.ActualDispatch) && isValid(datum.start) ? datum.start-datum.ActualDispatch : null) : min(isValid(datum.start) ? datum.start : 1/0,datum.level===2 && datum.PredictionReady ? datum.PredictionLow : 1/0,datum.level===2 && datum.LMPrepReady ? datum.LMPrepStart : 1/0)"
         },
         {
           "type": "formula",
           "as": "_hi",
-          "expr": "elapsed ? (isValid(datum.ActualDispatch) && isValid(datum.end) ? max(datum.end,showRegistrationEnd && isValid(datum.RegistrationEnd) ? datum.RegistrationEnd : datum.end)-datum.ActualDispatch : null) : max(isValid(datum.end) ? datum.end : -1/0,showRegistrationEnd && isValid(datum.RegistrationEnd) ? datum.RegistrationEnd : -1/0,datum.level===2 && datum.PredictionReady ? datum.PredictionHigh : -1/0)"
+          "expr": "elapsed ? (isValid(datum.ActualDispatch) && isValid(datum.end) ? max(datum.end,showRegistrationEnd && isValid(datum.RegistrationEnd) ? datum.RegistrationEnd : datum.end)-datum.ActualDispatch : null) : max(isValid(datum.end) ? datum.end : -1/0,showRegistrationEnd && isValid(datum.RegistrationEnd) ? datum.RegistrationEnd : -1/0,datum.level===2 && datum.PredictionReady ? datum.PredictionHigh : -1/0,datum.level===2 && datum.LMPrepReady ? datum.LMPrepEnd : -1/0)"
         },
         {
           "type": "aggregate",
@@ -3499,6 +3519,16 @@
           "as": [
             "count"
           ]
+        }
+      ]
+    },
+    {
+      "name": "preparationWindows",
+      "source": "children",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "!elapsed && datum.LMPrepReady && datum.LMPrepEnd>=xlo && datum.LMPrepStart<=xhi"
         }
       ]
     }
@@ -4489,6 +4519,88 @@
           },
           "tooltip": {
             "signal": "{'Record':datum.level===0 ? datum.AppID : datum.ROID,'State':datum.State,'Start':isValid(datum.start) ? utcFormat(datum.start,'%d %b %Y') : 'Not recorded','End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'Not recorded','Submissions':datum.n,'Summary':'All children in membership/search filters; state checkboxes control row visibility'}"
+          }
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "name": "preparationRange",
+      "from": {
+        "data": "preparationWindows"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "clamp(scale(\"x\",datum.LMPrepStart),left+3,width-22)"
+          },
+          "x2": {
+            "signal": "clamp(scale(\"x\",datum.LMPrepEnd),left+3,width-22)"
+          },
+          "y": {
+            "signal": "datum.y+32"
+          },
+          "height": {
+            "value": 14
+          },
+          "fill": {
+            "signal": "themePalette.preparation"
+          },
+          "fillOpacity": {
+            "value": 0.28
+          },
+          "stroke": {
+            "signal": "themePalette.preparation"
+          },
+          "strokeOpacity": {
+            "value": 0.65
+          },
+          "cornerRadius": {
+            "value": 3
+          },
+          "tooltip": {
+            "signal": "{'Estimated LM dossier preparation':datum.LMPrepLabel,'Start':utcFormat(datum.LMPrepStart,'%d %b %Y'),'Target dispatch':utcFormat(datum.LMPrepEnd,'%d %b %Y'),'Basis':datum.LMPrepAnchor,'Application':datum.AppID,'Meaning':'Country standard via application lead market; not actual preparation activity'}"
+          },
+          "cursor": {
+            "value": "pointer"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "name": "preparationLabel",
+      "from": {
+        "data": "preparationWindows"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "clamp(scale(\"x\",datum.LMPrepStart),left+3,width-22)+5"
+          },
+          "y": {
+            "signal": "datum.y+27"
+          },
+          "text": {
+            "signal": "'LM prep · '+datum.LMPrepLabel"
+          },
+          "fontSize": {
+            "value": 11
+          },
+          "fill": {
+            "signal": "themePalette.preparation"
+          },
+          "limit": {
+            "signal": "max(0,clamp(scale(\"x\",datum.LMPrepEnd),left+3,width-22)-(clamp(scale(\"x\",datum.LMPrepStart),left+3,width-22))-10)"
+          },
+          "opacity": {
+            "signal": "clamp(scale(\"x\",datum.LMPrepEnd),left+3,width-22)-(clamp(scale(\"x\",datum.LMPrepStart),left+3,width-22))>=75 ? 1 : 0"
+          },
+          "tooltip": {
+            "signal": "{'Estimated LM dossier preparation':datum.LMPrepLabel,'Start':utcFormat(datum.LMPrepStart,'%d %b %Y'),'Target dispatch':utcFormat(datum.LMPrepEnd,'%d %b %Y'),'Basis':datum.LMPrepAnchor,'Application':datum.AppID,'Meaning':'Country standard via application lead market; not actual preparation activity'}"
+          },
+          "cursor": {
+            "value": "pointer"
           }
         }
       }
