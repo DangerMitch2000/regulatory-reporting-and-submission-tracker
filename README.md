@@ -1,8 +1,20 @@
-# Regulatory Tracker 1.14.1
+# Regulatory Tracker 1.14.2
 
-[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.14.1 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.14.1) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.14.1/regulatory-tracker-1.14.1.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.14.2 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.14.2) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.14.2/regulatory-tracker-1.14.2.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
+
+## Complete record visibility — version 1.14.2
+
+Named records delivered to the visual are retained at every level: **Change ID, Regulatory Event, Application, RO and Submission**. An application or RO no longer needs a submission to appear. An event can appear without applications, ROs or submissions, and a Change ID can appear without any linked event. Missing or unusable dates suppress only the corresponding bar, not the record row or Details.
+
+Submissions with missing parent identifiers remain accessible beneath **Application not recorded** and/or **RO not recorded** containers. These labels are not invented records and are excluded from named-record totals. Parent-only records do not create placeholder submissions. Counts remain distinct across duplicate memberships and overlapping events.
+
+All delivered Change IDs are listed in Change initiation grouping. An event nests under a change only when its existing QMS references match; absent or conflicting references do not fabricate a link. Those events remain under **Other regulatory events**. Search includes standalone Change IDs and events, and every retained row has selectable Details.
+
+**Expand/collapse defaults are unchanged.** The visual still respects deliberate filters and grouping. This does not recover records that the Power BI model, relationships, report filters or data delivery omit. To include independent records, the model must supply real rows for those identifiers, including parent-only rows where appropriate; do not create artificial cross-joins. Rows with no identifier at any level cannot be identified as named records. A host delivery-limit notice remains visible if Power BI refuses additional rows.
+
+Existing field mappings continue to work; **no new fields** are required. For a standalone-record view, at least one of ChangeID, EventName, AppID, ROID or SubID must be mapped. Retained-record checks cover both themes, all three grouping modes, blank dates, missing parents, QMS mismatch, duplicate rows, Details and search. The existing 10,000-submission test remains part of the release checks.
 
 ## Performance and grouping stability — version 1.14.1
 
@@ -38,7 +50,7 @@ The hierarchy heading reverses natural numeric identifier order at every level t
 | MOH filing requirement | Recorded filing requirement/reason on that response |
 | Required documentation | Country-specific documentation text on that response |
 
-Use your existing model relationships to deliver real event/change/submission/response rows. The visual accepts a Change ID only when its nonblank QMS reference and the event QMS reference match after trimming and case normalization. It does not split compound CR references, infer historical links or join Agile. Normalize composite references in the model using a verified mapping table where necessary. Change IDs and event names must identify their respective records uniquely.
+Use your existing model relationships to deliver real event/change/submission/response rows. Every delivered Change ID is retained. Events nest beneath a Change ID only when its nonblank QMS reference and the event QMS reference match after trimming and case normalization. It does not split compound CR references, infer historical links or join Agile. Normalize composite references in the model using a verified mapping table where necessary. Change IDs and event names must identify their respective records uniquely.
 
 ### Surveyed approval range
 
@@ -109,7 +121,7 @@ Map your **Submission dispatch required c** source field to **Dispatch required*
 
 | Visual | Download | Demo |
 | --- | --- | --- |
-| Regulatory Tracker 1.14.1 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.14.1/regulatory-tracker-1.14.1.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
+| Regulatory Tracker 1.14.2 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.14.2/regulatory-tracker-1.14.2.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
 | Registration Overview / Roadmap 1.4.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.4.0/roadmap-2026-1.4.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap-preview.html) |
 | IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |
 | Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/key-preview.html) |

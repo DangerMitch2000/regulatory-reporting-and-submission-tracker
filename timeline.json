@@ -738,6 +738,11 @@
         },
         {
           "type": "formula",
+          "as": "hasRecord",
+          "expr": "datum.AppID!=='' || datum.ROID!=='' || datum.SubID!==''"
+        },
+        {
+          "type": "formula",
           "as": "_OriginalDispatch",
           "expr": "!isValid(datum.OriginalDispatch) || datum.OriginalDispatch==='' ? null : (isNumber(datum.OriginalDispatch) || isDate(datum.OriginalDispatch) || test(regexp('^\\\\d{4}-\\\\d{2}-\\\\d{2}'),toString(datum.OriginalDispatch)) ? toNumber(toDate(datum.OriginalDispatch)) : null)"
         },
@@ -990,6 +995,11 @@
           "type": "formula",
           "as": "_badRegistrationEnd",
           "expr": "!datum._openRegistrationEnd && (isValid(datum.RegistrationEnd) && datum.RegistrationEnd!=='' && !isValid(datum._RegistrationEnd) ? 1 : 0)"
+        },
+        {
+          "type": "formula",
+          "as": "searchKey",
+          "expr": "datum.hasRecord ? datum.subKey : datum.subKey+'|'+datum.EventName+'|'+datum.ChangeID"
         }
       ]
     },
@@ -999,12 +1009,12 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "query==='' || indexof(lower(datum.EventName+' '+datum.AppID+' '+datum.ROID+' '+datum.SubID+' '+datum._Product+' '+datum._Country+' '+datum.SubmissionType),lower(query))>=0"
+          "expr": "query==='' || indexof(lower(datum.ChangeID+' '+datum.EventName+' '+datum.AppID+' '+datum.ROID+' '+datum.SubID+' '+datum._Product+' '+datum._Country+' '+datum.SubmissionType),lower(query))>=0"
         },
         {
           "type": "aggregate",
           "groupby": [
-            "subKey"
+            "searchKey"
           ]
         }
       ]
@@ -1015,7 +1025,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "query==='' || indata('searchKeys','subKey',datum.subKey)"
+          "expr": "query==='' || indata('searchKeys','searchKey',datum.searchKey)"
         }
       ]
     },
@@ -1025,7 +1035,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "!datum.validKey"
+          "expr": "datum.SubID!=='' && !datum.validKey"
         }
       ]
     },
@@ -1042,7 +1052,8 @@
             "subKey",
             "_Manufacturer",
             "_Product",
-            "_Country"
+            "_Country",
+            "hasRecord"
           ]
         }
       ]
@@ -1053,7 +1064,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "datum.validKey"
+          "expr": "datum.hasRecord"
         },
         {
           "type": "formula",
@@ -1127,7 +1138,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "datum.validKey"
+          "expr": "datum.hasRecord"
         },
         {
           "type": "formula",
@@ -1201,7 +1212,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "datum.validKey"
+          "expr": "datum.hasRecord"
         },
         {
           "type": "formula",
@@ -1275,7 +1286,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "datum.validKey"
+          "expr": "datum.hasRecord"
         },
         {
           "type": "formula",
@@ -1349,7 +1360,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "datum.validKey"
+          "expr": "datum.hasRecord"
         },
         {
           "type": "formula",
@@ -1423,7 +1434,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "datum.validKey"
+          "expr": "datum.hasRecord"
         },
         {
           "type": "formula",
@@ -1497,7 +1508,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "datum.validKey"
+          "expr": "datum.hasRecord"
         },
         {
           "type": "formula",
@@ -1571,7 +1582,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "datum.validKey"
+          "expr": "datum.hasRecord"
         },
         {
           "type": "formula",
@@ -1645,7 +1656,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "datum.validKey"
+          "expr": "datum.hasRecord"
         },
         {
           "type": "formula",
@@ -1719,7 +1730,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "datum.validKey"
+          "expr": "datum.hasRecord"
         },
         {
           "type": "formula",
@@ -1757,7 +1768,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "datum.validKey"
+          "expr": "datum.hasRecord"
         },
         {
           "type": "formula",
@@ -1795,7 +1806,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "datum.validKey"
+          "expr": "datum.hasRecord"
         },
         {
           "type": "formula",
@@ -1833,7 +1844,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "datum.validKey"
+          "expr": "datum.hasRecord"
         },
         {
           "type": "formula",
@@ -1866,12 +1877,12 @@
       ]
     },
     {
-      "name": "sub",
+      "name": "recordBase",
       "source": "raw",
       "transform": [
         {
           "type": "filter",
-          "expr": "datum.validKey"
+          "expr": "datum.hasRecord"
         },
         {
           "type": "aggregate",
@@ -2246,7 +2257,7 @@
         {
           "type": "formula",
           "as": "n",
-          "expr": "1"
+          "expr": "datum.SubID!=='' ? 1 : 0"
         },
         {
           "type": "formula",
@@ -2466,6 +2477,16 @@
       ]
     },
     {
+      "name": "sub",
+      "source": "recordBase",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.SubID!==''"
+        }
+      ]
+    },
+    {
       "name": "appsBreakdown",
       "source": "sub",
       "transform": [
@@ -2510,8 +2531,37 @@
       ]
     },
     {
+      "name": "appROCounts",
+      "source": "recordBase",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.ROID!==''"
+        },
+        {
+          "type": "aggregate",
+          "groupby": [
+            "appKey",
+            "ROID"
+          ]
+        },
+        {
+          "type": "aggregate",
+          "groupby": [
+            "appKey"
+          ],
+          "ops": [
+            "count"
+          ],
+          "as": [
+            "count"
+          ]
+        }
+      ]
+    },
+    {
       "name": "apps",
-      "source": "sub",
+      "source": "recordBase",
       "transform": [
         {
           "type": "aggregate",
@@ -2689,6 +2739,27 @@
           "as": [
             "Breakdown"
           ]
+        },
+        {
+          "type": "lookup",
+          "from": "appROCounts",
+          "key": "appKey",
+          "fields": [
+            "appKey"
+          ],
+          "as": [
+            "roCounts"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "ROCount",
+          "expr": "isValid(datum.roCounts) ? datum.roCounts.count : 0"
+        },
+        {
+          "type": "formula",
+          "as": "Breakdown",
+          "expr": "isValid(datum.Breakdown) ? datum.Breakdown : {label:'No linked submissions'}"
         }
       ]
     },
@@ -2738,8 +2809,12 @@
     },
     {
       "name": "ros",
-      "source": "sub",
+      "source": "recordBase",
       "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.ROID!=='' || datum.SubID!==''"
+        },
         {
           "type": "aggregate",
           "groupby": [
@@ -2918,6 +2993,11 @@
           "as": [
             "Breakdown"
           ]
+        },
+        {
+          "type": "formula",
+          "as": "Breakdown",
+          "expr": "isValid(datum.Breakdown) ? datum.Breakdown : {label:'No linked submissions'}"
         }
       ]
     },
@@ -4415,7 +4495,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "{'Action':indata('expanded','key',datum.key) ? 'Collapse' : 'Expand','Identifier':datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? datum.AppID : datum.ROID}"
+            "signal": "{'Action':indata('expanded','key',datum.key) ? 'Collapse' : 'Expand','Identifier':datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded')}"
           }
         },
         "hover": {
@@ -4478,7 +4558,7 @@
             "signal": "datum.y+14"
           },
           "text": {
-            "signal": "datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? datum.AppID : datum.ROID"
+            "signal": "datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded')"
           },
           "fontWeight": {
             "value": 600
@@ -4727,7 +4807,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "{'Record':datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? datum.AppID : datum.ROID,'State':datum.State,'Start':isValid(datum.start) ? utcFormat(datum.start,'%d %b %Y') : 'Not recorded','End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'Not recorded','Submissions':datum.n,'Summary':'All children in membership/search filters; state checkboxes control row visibility'}"
+            "signal": "{'Record':datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Start':isValid(datum.start) ? utcFormat(datum.start,'%d %b %Y') : 'Not recorded','End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'Not recorded','Submissions':datum.n,'Summary':'All children in membership/search filters; state checkboxes control row visibility'}"
           },
           "strokeDash": {
             "signal": "datum.level===-1 ? [5,3] : [1,0]"
@@ -5136,7 +5216,7 @@
             "signal": "viewBottom+15"
           },
           "text": {
-            "signal": "length(data('invalid')) ? '⚠ '+length(data('invalid'))+' rows missing IDs' : 'Scroll rows · ↑ ↓ / PgUp PgDn · Ctrl+wheel moves dates'"
+            "signal": "length(data('invalid')) ? '⚠ '+length(data('invalid'))+' submission rows with missing parent IDs (retained)' : 'Scroll rows · ↑ ↓ / PgUp PgDn · Ctrl+wheel moves dates'"
           },
           "fill": {
             "signal": "themePalette.footerText"

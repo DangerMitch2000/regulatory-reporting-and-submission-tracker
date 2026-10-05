@@ -10,18 +10,28 @@
  const natural=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'}).compare;
  function partition(rows,field){const groups=new Map();for(const row of rows){const k=text(row[field]);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(row);}return groups;}
  function build(source,submissions,applications,objectives,prepared=prepare(submissions,applications,objectives)){
-  const {base,apps,ros}=prepared,groups=new Map();
-  for(const r of source){const k=key(text(r.AppID),text(r.ROID),text(r.SubID));if(!base.has(k))continue;const name=text(r.EventName);if(!groups.has(name))groups.set(name,[]);groups.get(name).push(r);}
-  const names=[...groups.keys()].filter(Boolean).sort(natural),result=[];
-  for(const [name,records]of groups){const eventKey=key('event',name),common={EventName:name||'No linked event',eventKey,eventRank:names.indexOf(name),unlinked:name?0:1};const linked=new Map();for(const r of records){const k=key(text(r.AppID),text(r.ROID),text(r.SubID));if(!linked.has(k))linked.set(k,[]);linked.get(k).push(r);}
-   const children=[...linked].map(([k,rs])=>{const s=base.get(k);return decorate({...s,...common,key:key(eventKey,s.key),appKey:key(eventKey,s.appKey),roKey:key(eventKey,s.roKey),baseKey:s.key},rs)});
-   const parent=(template,children,rs,level,k)=>decorate({...template,...common,baseKey:template.key,key:k,level,n:unique(children.map(s=>s.SubID)).length,ROCount:unique(children.map(s=>s.ROID)).length,AppCount:unique(children.map(s=>s.AppID)).length,start:Math.min(...children.map(s=>s.start).filter(finite)),end:Math.max(...children.map(s=>s.end).filter(finite)),issues:children.reduce((n,s)=>n+(s.issues||0),0),Breakdown:{label:unique(children.map(s=>s.State)).join(' · ')},sortDate:0},rs);
-   const states=unique(records.map(r=>text(r.EventState)).filter(Boolean)),state=!name?'Not applicable':states.length>1?'Conflicting values':states[0]||'Not recorded',start=dateField(records,'EventPlannedStart'),end=dateField(records,'EventPlannedCompletion');
+  const {base,apps,ros}=prepared,groups=new Map(),result=[];
+  for(const r of source){
+   const a=text(r.AppID),o=text(r.ROID),s=text(r.SubID),name=text(r.EventName);
+   if(s ? !base.has(key(a,o,s)) : o ? !ros.has(key(a,o)) : a ? !apps.has(a) : !name)continue;
+   if(!groups.has(name))groups.set(name,[]);groups.get(name).push(r);
+  }
+  const names=[...groups.keys()].filter(Boolean).sort(natural);
+  const count=(rs,f)=>unique(rs.map(r=>text(r[f])).filter(Boolean)).length;
+  for(const [name,records]of groups){
+   const eventKey=key('event',name),common={EventName:name||'No linked event',eventKey,eventRank:names.indexOf(name),unlinked:name?0:1};
+   const children=[];const bySub=new Map();for(const r of records){if(!text(r.SubID))continue;const k=key(text(r.AppID),text(r.ROID),text(r.SubID));if(!bySub.has(k))bySub.set(k,[]);bySub.get(k).push(r);}
+   for(const [k,rs]of bySub){const s=base.get(k);children.push(decorate({...s,...common,key:key(eventKey,s.key),appKey:key(eventKey,s.appKey),roKey:key(eventKey,s.roKey),baseKey:s.key},rs));}
+   const parent=(template,cs,rs,level,k)=>{const starts=cs.map(s=>s.start).filter(finite),ends=cs.map(s=>s.end).filter(finite);return decorate({...template,...common,baseKey:template.key,key:k,level,n:count(rs,'SubID'),ROCount:count(rs,'ROID'),AppCount:count(rs,'AppID'),start:starts.length?Math.min(...starts):null,end:ends.length?Math.max(...ends):null,issues:cs.reduce((n,s)=>n+(s.issues||0),0),Breakdown:{label:unique(cs.map(s=>s.State)).join(' · ')||'No linked submissions'},sortDate:0},rs);};
+   const stateValues=unique(records.map(r=>text(r.EventState)).filter(Boolean)),state=!name?'Not applicable':stateValues.length>1?'Conflicting values':stateValues[0]||'Not recorded',start=dateField(records,'EventPlannedStart'),end=dateField(records,'EventPlannedCompletion');
    const event=parent({AppID:'',ROID:'',sortRO:''},children,records,-1,eventKey);Object.assign(event,{State:state,StateColor:colour(state),start:null,end:null,EventStartLabel:start.label,EventEndLabel:end.label,EventPlanNote:'Both event planned dates are needed to draw a span.'});
    if(name&&start.value!==null&&end.value!==null){if(end.value>=start.value)Object.assign(event,{start:start.value,end:end.value,EventPlanNote:'Event plan; independent of submission milestone dates.'});else event.EventPlanNote='Planned completion is before planned start — span withheld.';}
    result.push(event);
-   const appRecords=partition(records,'AppID');for(const [appId,ac]of partition(children,'AppID')){const ar=appRecords.get(appId),app=parent(apps.get(appId),ac,ar,0,ac[0].appKey);app.appKey=app.key;result.push(app);
-    const roRecords=partition(ar,'ROID');for(const [roId,rc]of partition(ac,'ROID')){const rr=roRecords.get(roId),ro=parent(ros.get(key(appId,roId)),rc,rr,1,rc[0].roKey);ro.appKey=app.key;ro.roKey=ro.key;result.push(ro,...rc);}
+   const appChildren=partition(children,'AppID');
+   for(const [appId,ar]of partition(records.filter(r=>text(r.AppID)||text(r.ROID)||text(r.SubID)),'AppID')){
+    const template=apps.get(appId);if(!template)continue;const ac=appChildren.get(appId)||[],app=parent(template,ac,ar,0,key(eventKey,template.key));app.appKey=app.key;result.push(app);
+    const roChildren=partition(ac,'ROID');
+    for(const [roId,rr]of partition(ar.filter(r=>text(r.ROID)||text(r.SubID)),'ROID')){const rt=ros.get(key(appId,roId));if(!rt)continue;const rc=roChildren.get(roId)||[],ro=parent(rt,rc,rr,1,key(eventKey,rt.key));ro.appKey=app.key;ro.roKey=ro.key;result.push(ro,...rc);}
    }
   }return result.map(row=>Object.fromEntries(Object.entries(row)));
  }
