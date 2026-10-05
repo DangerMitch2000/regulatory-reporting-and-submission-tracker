@@ -98,7 +98,7 @@
  const hierarchySource=view.data('raw');
  relatedIndex=changes.index(hierarchySource);
  const ev=window.regulatoryEvents.build(hierarchySource,sub,apps,ros,prepared),ch=changes.build(hierarchySource,sub,apps,ros,prepared),all=[...apps,...ros,...sub,...ev,...ch];
- const surveys=all.filter(r=>r.level===2).flatMap(r=>{const estimates=changes.survey(changes.related(r,relatedIndex));return estimates.length===1?[{...estimates[0],key:r.key}]:[];});
+ const surveys=all.filter(r=>r.level===2).flatMap(r=>{const estimates=changes.submissionSurvey(changes.related(r,relatedIndex));return estimates.length===1?[{...estimates[0],key:r.key}]:[];});
  hierarchyCache={signature,descending,all};
  view.change('eventRows',vega.changeset().remove(()=>true).insert(ev));view.change('changeRows',vega.changeset().remove(()=>true).insert(ch));view.change('orderedRows',vega.changeset().remove(()=>true).insert(changes.order(all,descending)));view.change('surveyRows',vega.changeset().remove(()=>true).insert(surveys));await view.runAsync();
  }
@@ -142,8 +142,9 @@
  const ids=unique('ChangeID');
  for(const id of ids){const evidence=rs.filter(r=>norm(r.ChangeID)===id),dl=el('dl');dl.append(el('dt','Change ID'),el('dd',id));for(const [label,f]of [['Project ID','ChangeProjectID'],['QMS reference','ChangeQMS'],['Status','ChangeStatus'],['Created','ChangeCreated'],['Planned implementation','ChangePlannedImplementation'],['Response due','ChangeResponseDue'],['Response count','ChangeResponseCount']]){const values=[...new Set(evidence.map(r=>norm(r[f])).filter(Boolean))];dl.append(el('dt',label),el('dd',values.join(' / ')||'Not recorded'));}section.append(dl);}
  if(row.level===-2){section.append(el('p','Planned implementation: '+(row.ChangePlanLabel||'Not recorded')));}
- const assessments=new Map();for(const r of rs){if((!changes.linked(r)&&!(row.level===-2&&row.ChangeID===norm(r.ChangeID)))||!norm(r.AssessmentCountry))continue;const k=JSON.stringify([r.ChangeID,r.AssessmentCountry,r.AssessmentMOHFiling,r.AssessmentDocumentation]);assessments.set(k,r);}for(const r of assessments.values()){section.append(el('h4','Assessment · '+r.ChangeID+' · '+r.AssessmentCountry),el('p','MOH filing requirement: '+(norm(r.AssessmentMOHFiling)||'Not recorded')),el('p','Required documentation: '+(norm(r.AssessmentDocumentation)||'Not recorded'),'assessment-documentation'));}
- const estimates=changes.survey(rs);for(const estimate of estimates){section.append(el('h4','Surveyed approval estimate · '+estimate.country),el('p','Change '+estimate.change+' · '+estimate.duration),el('p',estimate.reason||date(estimate.start)+' – '+date(estimate.end)+' · '+estimate.anchorLabel),el('p','Source: '+estimate.source));}
+ const responseRecords=row.level===2?changes.countryResponses(rs):rs;
+ const assessments=new Map();for(const r of responseRecords){if((!changes.linked(r)&&!(row.level===-2&&row.ChangeID===norm(r.ChangeID)))||!norm(r.AssessmentCountry))continue;const k=JSON.stringify([r.ChangeID,r.AssessmentCountry,r.AssessmentMOHFiling,r.AssessmentDocumentation]);assessments.set(k,r);}for(const r of assessments.values()){section.append(el('h4','Assessment · '+r.ChangeID+' · '+r.AssessmentCountry),el('p','MOH filing requirement: '+(norm(r.AssessmentMOHFiling)||'Not recorded')),el('p','Required documentation: '+(norm(r.AssessmentDocumentation)||'Not recorded'),'assessment-documentation'));}
+ const estimates=row.level===2?changes.submissionSurvey(rs):changes.survey(rs);for(const estimate of estimates){section.append(el('h4','Surveyed approval estimate · '+estimate.country),el('p','Change '+estimate.change+' · '+estimate.duration),el('p',estimate.reason||date(estimate.start)+' – '+date(estimate.end)+' · '+estimate.anchorLabel),el('p','Source: '+estimate.source));}
  if(estimates.length>1&&row.level===2)section.append(el('p','Multiple change/country estimates: shown here individually; combined timeline range withheld.'));
  if(!estimates.length)section.append(el('p','No matching country assessment timeline recorded.'));
  section.append(el('p','Survey basis: dispatch to approval (working interpretation); 1 month = 30 days.','muted'));body.append(section);

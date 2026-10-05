@@ -1,8 +1,27 @@
-# Regulatory Tracker 1.14.2
+# Regulatory Tracker 1.14.3
 
-[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.14.2 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.14.2) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.14.2/regulatory-tracker-1.14.2.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.14.3 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.14.3) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.14.3/regulatory-tracker-1.14.3.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
+
+## Country assessment matching — version 1.14.3
+
+Submission estimates and assessment Details now select the response for that submission's country within its linked change. Responses for other countries no longer block a valid estimate or show another country's documents. Change and event Details retain all their country responses.
+
+Map these existing visual fields from the country response table; the source columns do not need renaming:
+
+| Source column | Visual field |
+| --- | --- |
+| Countries | Change Assessment Response Countries |
+| Timeline | Change Assessment Response Timeline |
+| If No MoH Filing Required | MOH filing requirement |
+| Country response documentation text | Required documentation |
+
+Use the country, timeline, filing requirement and documents from the same response record. Keep submission Country mapped separately. The response must arrive with its correct Change ID and existing event/QMS links. The per-country unique identifier is useful for checking the model join; it is not a replacement for Countries and needs no new visual field. Response counts alone do not supply response details. Keep recorded counts unsummed across repeated country and membership rows.
+
+Blank timelines and N/A remain in Details with filing requirements and documentation, but do not create a range. Supported examples include 1 month, 4 months, 30 days and 6–8 months. Months use 30 days. Missing or ambiguous submission countries, conflicting durations for the same change/country, conflicting dispatch dates and multiple matching changes still withhold a combined band. The visual does not guess a country, split country lists or infer a missing response. It can only use records delivered by the Power BI model.
+
+No new mappings are introduced by this patch. The new regression fixture covers multiple countries per change, duplicate memberships, all three grouping modes, both themes, country-specific documentation, blank/N/A timelines and rendered ranges. The existing 10,000-submission and retained-record checks remain in the release suite.
 
 ## Complete record visibility — version 1.14.2
 
@@ -45,9 +64,9 @@ The hierarchy heading reverses natural numeric identifier order at every level t
 | Planned Implementation Date | Initiation Planned Implementation Date |
 | Response Due Date | Initiation Response Due Date |
 | Change response count | Your recorded response-count field; do not sum duplicated membership rows |
-| Change Assessment Response Countries | Country on the response, separate from submission Country |
-| Change Assessment Response Timeline | Surveyed timeline on that same response |
-| MOH filing requirement | Recorded filing requirement/reason on that response |
+| Change Assessment Response Countries | Response Countries, separate from submission Country |
+| Change Assessment Response Timeline | Response Timeline on that same response |
+| MOH filing requirement | Response If No MoH Filing Required |
 | Required documentation | Country-specific documentation text on that response |
 
 Use your existing model relationships to deliver real event/change/submission/response rows. Every delivered Change ID is retained. Events nest beneath a Change ID only when its nonblank QMS reference and the event QMS reference match after trimming and case normalization. It does not split compound CR references, infer historical links or join Agile. Normalize composite references in the model using a verified mapping table where necessary. Change IDs and event names must identify their respective records uniquely.
@@ -121,7 +140,7 @@ Map your **Submission dispatch required c** source field to **Dispatch required*
 
 | Visual | Download | Demo |
 | --- | --- | --- |
-| Regulatory Tracker 1.14.2 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.14.2/regulatory-tracker-1.14.2.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
+| Regulatory Tracker 1.14.3 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.14.3/regulatory-tracker-1.14.3.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
 | Registration Overview / Roadmap 1.4.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.4.0/roadmap-2026-1.4.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap-preview.html) |
 | IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |
 | Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/key-preview.html) |

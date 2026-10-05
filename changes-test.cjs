@@ -7,3 +7,18 @@ assert.match(c.survey([base,{...base,AssessmentTimeline:'3 months'}])[0].reason,
 assert.match(c.survey([{...base,Country:'Mexico'}])[0].reason,/country/);
 assert.match(c.survey([{...base,ActualDispatch:'bad'}])[0].reason,/Invalid/);
 console.log('PASS: change links, surveyed ranges, mismatched country, conflicting durations and invalid dispatch anchors.');
+const crossCountry=[base,{...base,AssessmentCountry:'Mexico',AssessmentTimeline:'3 months',AssessmentDocumentation:'Mexico-only documents'}];
+assert.equal(c.submissionSurvey(crossCountry).length,1);
+assert.equal(c.submissionSurvey(crossCountry)[0].country,'Hungary');
+assert.equal(c.submissionSurvey(crossCountry)[0].start,Date.UTC(2027,0,1)+180*86400000);
+assert.equal(c.countryResponses(crossCountry).length,1,'Submission details must not show another country’s response');
+assert.equal(c.survey(crossCountry).length,2,'Parent details retain every response country');
+assert.equal(c.submissionSurvey(crossCountry.map(r=>({...r,Country:'  hungary  '}))).length,1);
+assert.deepEqual(c.submissionSurvey(crossCountry.map(r=>({...r,Country:''}))),[]);
+assert.deepEqual(c.submissionSurvey([...crossCountry,{...base,Country:'Mexico'}]),[],'Ambiguous submission country must not pick an arbitrary response');
+for(const value of ['',null,'N/A','Depends on approval']){const r=c.submissionSurvey([{...base,AssessmentTimeline:value}])[0];assert.equal(r.start,null);assert.ok(r.reason);}
+assert.match(c.submissionSurvey([...crossCountry,{...base,AssessmentTimeline:'3 months'}])[0].reason,/conflicting/);
+assert.match(c.submissionSurvey([base,{...crossCountry[1],LatestDispatch:'2027-02-01'}])[0].reason,/Conflicting/,'Response filtering must not hide conflicting submission dates');
+assert.equal(c.submissionSurvey([...crossCountry,{...base,ChangeID:'C2'}]).length,2,'Different changes remain separate');
+assert.equal(c.submissionSurvey([...crossCountry,...crossCountry]).length,1,'Membership duplicates do not multiply ranges');
+console.log('PASS: submission-specific country response selection, all-country parent details, blank/N/A durations, cross-row anchor conflicts, multiple changes and duplicates.');

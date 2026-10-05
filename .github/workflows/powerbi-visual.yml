@@ -9,6 +9,7 @@ on:
       - 'tracker-states.verify.cjs'
       - 'changes*'
       - 'tracker-changes.verify.cjs'
+      - 'tracker-survey-country.verify.cjs'
       - 'tracker-performance.verify.cjs'
       - 'performance-test.cjs'
       - 'retained-records-test.cjs'
@@ -90,7 +91,7 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.14.2.0.pbiviz
+          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.14.3.0.pbiviz
           cp powerbi-visual/README.md release/POWER-BI-INSTALL.md
           cp powerbi-visual/verify/preparation-light.png release/preparation-light.png
           cp powerbi-visual/verify/changes-dark.png release/changes-dark.png
@@ -113,7 +114,7 @@ jobs:
           cp powerbi-visual/verify/approval-benchmark.png release/approval-benchmark.png
           cp powerbi-visual/verify/planned-submission-forecast.png release/planned-submission-forecast.png
           cp powerbi-visual/verify/submission-date-filter.png release/submission-date-filter.png
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz retained-records-test.cjs tracker-retained-records.verify.cjs tracker-performance.verify.cjs performance-test.cjs changes.js changes-test.cjs tracker-changes.verify.cjs states.js states-test.cjs tracker-states.verify.cjs events.js events-test.cjs tracker-events.verify.cjs powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs dispatch-required.js dispatch-required-test.cjs dispatch-details.js dispatch-details-test.cjs preparation.js preparation-test.cjs tracker-preparation.verify.cjs tracker-dispatch-details.verify.cjs tracker-dispatch.verify.cjs tracker-calendar-day.verify.cjs tracker-theme.verify.cjs test-timeline-theme.cjs predictions.js prediction-test.cjs submission-period.js submission-period-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs open-end-test.cjs
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz retained-records-test.cjs tracker-retained-records.verify.cjs tracker-performance.verify.cjs performance-test.cjs changes.js changes-test.cjs tracker-changes.verify.cjs tracker-survey-country.verify.cjs states.js states-test.cjs tracker-states.verify.cjs events.js events-test.cjs tracker-events.verify.cjs powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs dispatch-required.js dispatch-required-test.cjs dispatch-details.js dispatch-details-test.cjs preparation.js preparation-test.cjs tracker-preparation.verify.cjs tracker-dispatch-details.verify.cjs tracker-dispatch.verify.cjs tracker-calendar-day.verify.cjs tracker-theme.verify.cjs test-timeline-theme.cjs predictions.js prediction-test.cjs submission-period.js submission-period-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs open-end-test.cjs
           cd release && sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
@@ -123,11 +124,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view v1.14.2 >/dev/null 2>&1; then
-            gh release create v1.14.2 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.14.2" --notes "Retains named Change IDs, events, applications, ROs and submissions without requiring complete child hierarchies or usable dates. Missing-parent containers remain visible without invented IDs or counts. Standalone changes are retained while unmatched events stay separate. Expansion and filters are unchanged. Includes retained-record and 10,000-submission regression tests. Drag to pan, Ctrl+wheel for fine panning and Shift+wheel for gentle pointer-centred zoom. Existing lifecycle calculations remain unchanged. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
+          if ! gh release view v1.14.3 >/dev/null 2>&1; then
+            gh release create v1.14.3 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.14.3" --notes "Fixes submission survey matching when a change has responses for multiple countries. Each submission uses its own country response; other countries no longer block its range or supply its documentation. Blank and N/A timelines remain in Details without a range. Same-country conflicts and ambiguous estimates remain withheld. No new field mappings. Includes multi-country browser coverage in all grouping modes and both themes, retained-record tests and the 10,000-submission regression. Calculation, adapter, TypeScript and browser checks passed. Built from commit $GITHUB_SHA."
           else
-            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.14.2" -f sha="$GITHUB_SHA" -F force=false
-            gh release edit v1.14.2 --target "$GITHUB_SHA" --notes "Retains named Change IDs, events, applications, ROs and submissions without requiring complete child hierarchies or usable dates. Missing-parent containers remain visible without invented IDs or counts. Standalone changes are retained while unmatched events stay separate. Expansion and filters are unchanged. Includes retained-record and 10,000-submission regression tests. Drag to pan, Ctrl+wheel for fine panning and Shift+wheel for gentle pointer-centred zoom. Existing lifecycle calculations remain unchanged. Calculation, adapter, TypeScript and actual-Visual browser checks passed. Built from commit $GITHUB_SHA."
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.14.3" -f sha="$GITHUB_SHA" -F force=false
+            gh release edit v1.14.3 --target "$GITHUB_SHA" --notes "Fixes submission survey matching when a change has responses for multiple countries. Each submission uses its own country response; other countries no longer block its range or supply its documentation. Blank and N/A timelines remain in Details without a range. Same-country conflicts and ambiguous estimates remain withheld. No new field mappings. Includes multi-country browser coverage in all grouping modes and both themes, retained-record tests and the 10,000-submission regression. Calculation, adapter, TypeScript and browser checks passed. Built from commit $GITHUB_SHA."
           fi
-          gh release upload v1.14.2 release/* --clobber
+          gh release upload v1.14.3 release/* --clobber
 
