@@ -1,12 +1,12 @@
 const assert=require('node:assert/strict'),c=require('./changes');
 assert.deepEqual(c.duration('6–8 months'),{low:180,high:240});assert.equal(c.duration('6 to 2 months'),null);assert.equal(c.duration('Depends on approval'),null);
-const base={ChangeID:'C1',EventName:'E1',EventQMS:'CR1',ChangeQMS:'cr1',AssessmentCountry:'Hungary',Country:'Hungary',AssessmentTimeline:'6–8 months',LatestDispatch:'2027-01-01'};
+const base={ChangeID:'C1',EventName:'E1',EventQMS:'CR1',ChangeQMS:'cr1',AssessmentCountry:'Hungary',Country:'Hungary',AssessmentTimeline:'6–8 months',LatestSubmission:'2027-01-01'};
 assert.equal(c.linked(base),true);assert.equal(c.linked({...base,ChangeQMS:'CR2'}),false);
 let p=c.survey([base])[0];assert.equal(p.start,Date.UTC(2027,0,1)+180*86400000);assert.equal(p.end,Date.UTC(2027,0,1)+240*86400000);
 assert.match(c.survey([base,{...base,AssessmentTimeline:'3 months'}])[0].reason,/conflicting/);
 assert.match(c.survey([{...base,Country:'Mexico'}])[0].reason,/country/);
-assert.match(c.survey([{...base,ActualDispatch:'bad'}])[0].reason,/Invalid/);
-console.log('PASS: change links, surveyed ranges, mismatched country, conflicting durations and invalid dispatch anchors.');
+assert.match(c.survey([{...base,ActualSubmission:'bad'}])[0].reason,/Invalid/);
+console.log('PASS: change links, surveyed ranges, mismatched country, conflicting durations and invalid submission anchors.');
 const crossCountry=[base,{...base,AssessmentCountry:'Mexico',AssessmentTimeline:'3 months',AssessmentDocumentation:'Mexico-only documents'}];
 assert.equal(c.submissionSurvey(crossCountry).length,1);
 assert.equal(c.submissionSurvey(crossCountry)[0].country,'Hungary');
@@ -18,7 +18,7 @@ assert.deepEqual(c.submissionSurvey(crossCountry.map(r=>({...r,Country:''}))),[]
 assert.deepEqual(c.submissionSurvey([...crossCountry,{...base,Country:'Mexico'}]),[],'Ambiguous submission country must not pick an arbitrary response');
 for(const value of ['',null,'N/A','Depends on approval']){const r=c.submissionSurvey([{...base,AssessmentTimeline:value}])[0];assert.equal(r.start,null);assert.ok(r.reason);}
 assert.match(c.submissionSurvey([...crossCountry,{...base,AssessmentTimeline:'3 months'}])[0].reason,/conflicting/);
-assert.match(c.submissionSurvey([base,{...crossCountry[1],LatestDispatch:'2027-02-01'}])[0].reason,/Conflicting/,'Response filtering must not hide conflicting submission dates');
+assert.match(c.submissionSurvey([base,{...crossCountry[1],LatestSubmission:'2027-02-01'}])[0].reason,/Conflicting/,'Response filtering must not hide conflicting submission dates');
 assert.equal(c.submissionSurvey([...crossCountry,{...base,ChangeID:'C2'}]).length,2,'Different changes remain separate');
 assert.equal(c.submissionSurvey([...crossCountry,...crossCountry]).length,1,'Membership duplicates do not multiply ranges');
 console.log('PASS: submission-specific country response selection, all-country parent details, blank/N/A durations, cross-row anchor conflicts, multiple changes and duplicates.');

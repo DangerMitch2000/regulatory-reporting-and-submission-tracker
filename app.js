@@ -15,7 +15,7 @@
  const duration=x=>x==null?'Not recorded / withheld':Math.round(x)+' days';
  document.body.dataset.theme='dark';
  try{
-  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.14.2');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();prepareQuality();qualityPanel=qualityUI.mount($('quality-view'),{exportWorklist});
+  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.15.0');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();prepareQuality();qualityPanel=qualityUI.mount($('quality-view'),{exportWorklist});
   for(const {key,label} of dispatchRequired.options){const option=el('option',label);option.value=key;$('dispatch-required').append(option);}$('dispatch-required').value='all';$('dispatch-required').onchange=()=>filter();
   const showQuality=enabled=>{$('quality-view').hidden=!enabled;$('timeline-view').hidden=enabled;status.hidden=enabled;$('timeline-tab').setAttribute('aria-pressed',String(!enabled));$('quality-tab').setAttribute('aria-pressed',String(enabled));$('tooltip').hidden=true;};
   $('quality-tab').onclick=()=>showQuality(true);$('timeline-tab').onclick=()=>showQuality(false);
@@ -96,9 +96,9 @@
  }
  const sub=view.data('sub'),apps=view.data('apps'),ros=view.data('ros'),prepared=window.regulatoryEvents.prepare(sub,apps,ros);
  const hierarchySource=view.data('raw');
- relatedIndex=changes.index(hierarchySource);
+ relatedIndex=changes.index(hierarchySource,rows);
  const ev=window.regulatoryEvents.build(hierarchySource,sub,apps,ros,prepared),ch=changes.build(hierarchySource,sub,apps,ros,prepared),all=[...apps,...ros,...sub,...ev,...ch];
- const surveys=all.filter(r=>r.level===2).flatMap(r=>{const estimates=changes.submissionSurvey(changes.related(r,relatedIndex));return estimates.length===1?[{...estimates[0],key:r.key}]:[];});
+ const surveys=all.filter(r=>r.level===2).flatMap(r=>{const estimates=changes.submissionSurvey(changes.related(r,relatedIndex),relatedIndex);return estimates.length===1?[{...estimates[0],key:r.key}]:[];});
  hierarchyCache={signature,descending,all};
  view.change('eventRows',vega.changeset().remove(()=>true).insert(ev));view.change('changeRows',vega.changeset().remove(()=>true).insert(ch));view.change('orderedRows',vega.changeset().remove(()=>true).insert(changes.order(all,descending)));view.change('surveyRows',vega.changeset().remove(()=>true).insert(surveys));await view.runAsync();
  }
@@ -142,12 +142,30 @@
  const ids=unique('ChangeID');
  for(const id of ids){const evidence=rs.filter(r=>norm(r.ChangeID)===id),dl=el('dl');dl.append(el('dt','Change ID'),el('dd',id));for(const [label,f]of [['Project ID','ChangeProjectID'],['QMS reference','ChangeQMS'],['Status','ChangeStatus'],['Created','ChangeCreated'],['Planned implementation','ChangePlannedImplementation'],['Response due','ChangeResponseDue'],['Response count','ChangeResponseCount']]){const values=[...new Set(evidence.map(r=>norm(r[f])).filter(Boolean))];dl.append(el('dt',label),el('dd',values.join(' / ')||'Not recorded'));}section.append(dl);}
  if(row.level===-2){section.append(el('p','Planned implementation: '+(row.ChangePlanLabel||'Not recorded')));}
- const responseRecords=row.level===2?changes.countryResponses(rs):rs;
- const assessments=new Map();for(const r of responseRecords){if((!changes.linked(r)&&!(row.level===-2&&row.ChangeID===norm(r.ChangeID)))||!norm(r.AssessmentCountry))continue;const k=JSON.stringify([r.ChangeID,r.AssessmentCountry,r.AssessmentMOHFiling,r.AssessmentDocumentation]);assessments.set(k,r);}for(const r of assessments.values()){section.append(el('h4','Assessment · '+r.ChangeID+' · '+r.AssessmentCountry),el('p','MOH filing requirement: '+(norm(r.AssessmentMOHFiling)||'Not recorded')),el('p','Required documentation: '+(norm(r.AssessmentDocumentation)||'Not recorded'),'assessment-documentation'));}
- const estimates=row.level===2?changes.submissionSurvey(rs):changes.survey(rs);for(const estimate of estimates){section.append(el('h4','Surveyed approval estimate · '+estimate.country),el('p','Change '+estimate.change+' · '+estimate.duration),el('p',estimate.reason||date(estimate.start)+' – '+date(estimate.end)+' · '+estimate.anchorLabel),el('p','Source: '+estimate.source));}
+ if(row.level===-2&&row.ChangeID)renderCountryProgress(section,rs,relatedIndex?.assessments.get(row.ChangeID));
+ const responseRecords=row.level===2?changes.countryResponses(rs,relatedIndex):rs;
+ const keyedParent=row.level!==2&&ids.some(id=>relatedIndex?.assessments.get(id)?.some(e=>e.mode==='identifier'));
+ const keyedResponses=keyedParent&&row.level!==-2?ids.flatMap(id=>(relatedIndex?.assessments.get(id)||[]).flatMap(e=>changes.responses.evidence(e,rs.find(r=>r.ChangeID===id)||{}))):[];
+ const assessments=new Map();for(const r of (keyedParent?keyedResponses:responseRecords)){if((!changes.linked(r)&&!(row.level===-2&&row.ChangeID===norm(r.ChangeID)))||!norm(r.AssessmentCountry))continue;const k=JSON.stringify([r.ChangeID,r.AssessmentCountry,r.AssessmentMOHFiling,r.AssessmentDocumentation]);assessments.set(k,r);}for(const r of assessments.values()){section.append(el('h4','Assessment · '+r.ChangeID+' · '+r.AssessmentCountry),el('p','MOH filing requirement: '+(norm(r.AssessmentMOHFiling)||'Not recorded')),el('p','Required documentation: '+(norm(r.AssessmentDocumentation)||'Not recorded'),'assessment-documentation'));}
+ const estimates=row.level===2?changes.submissionSurvey(rs,relatedIndex):keyedParent?[]:changes.survey(rs);for(const estimate of estimates){section.append(el('h4','Surveyed approval estimate · '+estimate.country),el('p','Change '+estimate.change+' · '+estimate.duration),el('p',estimate.reason||date(estimate.start)+' – '+date(estimate.end)+' · '+estimate.anchorLabel),el('p','Source: '+estimate.source));if(estimate.start!==null&&estimate.anchorLabel!=='Actual submission')section.append(el('p','Forecast based on planned submission.','muted'));}
+ if(row.level===2){const approved=window.regulatoryEvents.dateField(rs,'ActualApproval');section.append(el('p','Actual approval: '+approved.label));}
  if(estimates.length>1&&row.level===2)section.append(el('p','Multiple change/country estimates: shown here individually; combined timeline range withheld.'));
- if(!estimates.length)section.append(el('p','No matching country assessment timeline recorded.'));
- section.append(el('p','Survey basis: dispatch to approval (working interpretation); 1 month = 30 days.','muted'));body.append(section);
+ if(!estimates.length&&!keyedParent)section.append(el('p','No matching country assessment timeline recorded.'));
+ section.append(el('p','Survey basis: submission to approval; 1 month = 30 days.','muted'));body.append(section);
+ }
+  function renderCountryProgress(section,records,entries){
+ const progress=changes.responses.progress(entries?.[0]?.records||records,{dispatchSummaries,...(entries?{entries}:{})}),box=el('section',undefined,'country-progress');box.append(el('h3','Country progress'));
+ box.append(el('p','Progress uses recorded Actual Dispatch Dates across all delivered records for this change. Countries needing attention appear first. The document list describes the required dossier; individual document completion is not recorded.','muted'));
+ if(!progress.length){box.append(el('p','No country response records delivered. Map Expected response ID, Expected response country and Response ID (per country) to include countries awaiting a response.'));section.append(box);return;}
+ const controls=el('div',undefined,'country-progress-controls'),search=el('input'),order=el('select'),count=el('span');search.type='search';search.placeholder='Find a country or submission';search.setAttribute('aria-label','Find country progress');order.setAttribute('aria-label','Sort country progress');for(const [value,label]of [['attention','Attention first'],['country','Country A–Z']]){const option=el('option',label);option.value=value;order.append(option);}controls.append(search,order,count);box.append(controls);
+ const scroll=el('div',undefined,'country-progress-scroll'),table=el('table'),head=el('thead'),tr=el('tr'),tbody=el('tbody');for(const label of ['Country','Assessment response','Dispatch progress','Attention','Required documentation'])tr.append(el('th',label));head.append(tr);table.append(head,tbody);scroll.append(table);box.append(scroll);section.append(box);
+ const draw=()=>{tbody.replaceChildren();const query=search.value.trim().toLowerCase(),shown=progress.filter(p=>(p.country+' '+p.change+' '+p.submissions.map(s=>s.id).join(' ')).toLowerCase().includes(query));if(order.value==='country')shown.sort((a,b)=>a.country.localeCompare(b.country));count.textContent=shown.length+' of '+progress.length+' country assessments';
+ for(const p of shown){const row=el('tr');row.dataset.priority=String(p.priority);row.dataset.country=p.country;const country=el('td'),response=el('td'),dispatch=el('td'),attention=el('td'),docs=el('td');country.append(el('strong',p.country));if(p.expectedID||p.responseID)country.append(el('small','Expected ID: '+(p.expectedID||'Not recorded')),el('small','Response ID: '+(p.responseID||'Not recorded')));
+ response.append(el('strong',p.response),el('small','Timeline: '+(p.timelines.join(' / ')||'Not recorded')),el('small','MOH filing requirement: '+(p.filing.join(' / ')||'Not recorded')));
+ dispatch.append(el('strong',p.submissions.length?p.dispatched+' of '+p.submissions.length+' dispatched':'No linked submission delivered'));
+ if(p.submissions.length){const meter=el('progress');meter.max=p.submissions.length;meter.value=p.dispatched;meter.setAttribute('aria-label',p.country+' dispatch progress');dispatch.append(meter);const details=el('details'),summary=el('summary','Linked submissions');details.append(summary);for(const sub of p.submissions){const line=el('div',undefined,'country-submission'),target=view.data('displayRows').find(r=>r.level===2&&r.SubID===sub.id&&(!r.ChangeID||r.ChangeID===p.change));const name=el(target?'button':'span',sub.id);if(target){name.type='button';name.onclick=()=>run(async()=>{view.signal('selectedKey',target.key);await view.runAsync();renderDetails();});}line.append(name,el('span',sub.stage+(sub.date?' · '+sub.date:'')+' · State: '+sub.status));details.append(line);}dispatch.append(details);}
+ attention.append(el('strong',p.attention),el('small','Response due: '+p.due));docs.append(el('p',p.docs.join('\n\n')||'Not recorded','assessment-documentation'),el('small',!p.submissions.length?'Dispatch status unavailable':p.dispatched===p.submissions.length?'Dispatch recorded for all linked submissions':'Dispatch recorded for '+p.dispatched+' of '+p.submissions.length+' linked submissions'));row.append(country,response,dispatch,attention,docs);tbody.append(row);}
+ };search.oninput=draw;order.onchange=draw;draw();
  }
   function renderPreparation(body,p){
    const section=el('section',undefined,'preparation-card');section.append(el('h3','Estimated LM dossier preparation'));

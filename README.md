@@ -1,8 +1,40 @@
-# Regulatory Tracker 1.14.3
+# Regulatory Tracker 1.15.0
 
-[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.14.3 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.14.3) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.14.3/regulatory-tracker-1.14.3.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.15.0 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.15.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.15.0/regulatory-tracker-1.15.0.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
+
+## Country response IDs and dispatch progress — version 1.15.0
+
+Open a Change ID's **Details → Country progress** to see expected countries, assessment responses, linked submissions, dispatch progress, attention reasons and required documentation. The list is searchable and sorts by attention or country. It covers all delivered records for that change, including countries without a returned response or a linked submission. Local Gantt filters do not remove its expected-country list; report/model filters still limit the records delivered to the visual.
+
+### Three additional optional mappings
+
+| Source column | Visual field |
+| --- | --- |
+| Expected Responses: Unique Identifier | Expected response ID |
+| Expected Responses: Impacted Countries | Expected response country |
+| Change Assessment Response: Unique Identifier (per Country) | Response ID (per country) |
+
+Keep the existing response Countries, Timeline, MOH filing requirement and Required documentation mappings. Keep the submission Country field as well. The IDs establish response identity; expected-country names label the list and connect its entries to submission countries. Do not replace the country field with the identifier string.
+
+The expected and received IDs match within the same Change ID after trimming and case normalization. IDs are opaque: the visual does not extract country names or CR numbers from them. Different response-country spellings can use the expected-country label when the IDs match. A conflicting expected country for one ID, a missing key, or an unmatched key is shown for review and cannot silently fall back to a country-only join. Reports without these identifiers retain the existing country-based behavior.
+
+Use the existing model route **Change Assessment Initiation → Expected Responses → Change Assessment Response**, with the response join on the two unique-identifier fields. Deliver expected-country rows even when no response exists. Parent-only assessment rows carrying Change ID can now supply evidence to that change's linked submissions; they do not need invented application, RO or submission IDs. Records excluded by the model query cannot be restored by this visual. Validate a table containing both IDs, Change ID, expected country and response fields before mapping the visual. [Microsoft's relationship guidance](https://learn.microsoft.com/en-us/power-bi/guidance/star-schema) explains how keys establish relationships between tables.
+
+### Progress and priorities
+
+Progress is **distinct linked submissions with a valid recorded Actual Dispatch Date / distinct linked submissions** for that country and change. For example, 3 of 5 dispatched means two linked submissions have no qualifying dispatch date. A planned date, Completed state, actual submission or actual approval never substitutes for actual dispatch. Duplicate product memberships and repeated event appearances do not increase the count. Invalid, conflicting, future dispatch dates or ambiguous submission countries are flagged for review.
+
+Attention sorting puts data that needs checking and overdue dispatch/response targets first, followed by awaiting responses, absent submission links, remaining dispatch work and fully dispatched countries. Dispatch-overdue indicators use the existing confirmed dispatch requirement and open-submission rules. Every row explains its reason; this is a workflow prompt, not a regulatory-risk score. A missing response means no matching response was delivered to the visual, not proof that none exists in SharePoint.
+
+Required documentation is preserved as supplied, including line breaks. Dispatch progress indicates that the linked submissions were sent. The source has no document-by-document completion field, so the visual does not claim individual documents are missing, received or approved. MOH filing reasons remain informational and do not hide submissions.
+
+### Corrected survey timeline basis
+
+The response timeline means **submission to approval**, not dispatch to approval. A surveyed range starts from Actual Submission Date; if blank, it uses latest planned submission, then original planned submission, explicitly labelled as a forecast. Invalid or conflicting higher-priority dates do not fall back. Actual Approval Date remains the recorded outcome alongside the surveyed range. A dispatch date alone cannot anchor it. Months continue to mean 30 days, weeks 7 days. Blank/N/A, invalid, reversed or conflicting durations remain in Details without a range. Source: **Change Impact Assessment Tool — SharePoint**.
+
+The release tests include separate expected/received rows, absent responses, mismatched IDs, cross-change isolation, duplicate memberships, exact dispatch progress, both themes, country filtering, sorting/selection and 10,000 submissions. Power BI model delivery still needs verification against your report.
 
 ## Country assessment matching — version 1.14.3
 
@@ -17,9 +49,9 @@ Map these existing visual fields from the country response table; the source col
 | If No MoH Filing Required | MOH filing requirement |
 | Country response documentation text | Required documentation |
 
-Use the country, timeline, filing requirement and documents from the same response record. Keep submission Country mapped separately. The response must arrive with its correct Change ID and existing event/QMS links. The per-country unique identifier is useful for checking the model join; it is not a replacement for Countries and needs no new visual field. Response counts alone do not supply response details. Keep recorded counts unsummed across repeated country and membership rows.
+Use the country, timeline, filing requirement and documents from the same response record. Keep submission Country mapped separately. The response must arrive with its correct Change ID and existing event/QMS links. Use the optional expected/received ID mappings above for identifier-based matching; country names remain labels and submission-country links. Response counts alone do not supply response details. Keep recorded counts unsummed across repeated country and membership rows.
 
-Blank timelines and N/A remain in Details with filing requirements and documentation, but do not create a range. Supported examples include 1 month, 4 months, 30 days and 6–8 months. Months use 30 days. Missing or ambiguous submission countries, conflicting durations for the same change/country, conflicting dispatch dates and multiple matching changes still withhold a combined band. The visual does not guess a country, split country lists or infer a missing response. It can only use records delivered by the Power BI model.
+Blank timelines and N/A remain in Details with filing requirements and documentation, but do not create a range. Supported examples include 1 month, 4 months, 30 days and 6–8 months. Months use 30 days. Missing or ambiguous submission countries, conflicting durations for the same change/country, conflicting submission dates and multiple matching changes still withhold a combined band. The visual does not guess a country, split country lists or infer a missing response. It can only use records delivered by the Power BI model.
 
 No new mappings are introduced by this patch. The new regression fixture covers multiple countries per change, duplicate memberships, all three grouping modes, both themes, country-specific documentation, blank/N/A timelines and rendered ranges. The existing 10,000-submission and retained-record checks remain in the release suite.
 
@@ -75,7 +107,7 @@ Use your existing model relationships to deliver real event/change/submission/re
 
 The thin magenta band above the submission milestones is sourced from **Change Impact Assessment Tool — SharePoint**. Match on Change ID and assessment country (trimmed, case-insensitive, exact country name). Use one country per response row. Standard LM preparation and historical approval estimates remain separate.
 
-Durations accept positive days, weeks and months, including ranges such as **6–8 months** or **6 to 8 months**; months use 30 days and weeks use 7 days. The working interpretation is dispatch-to-approval. Actual dispatch takes priority, then latest planned dispatch, then original planned dispatch. Invalid/conflicting dates do not silently fall back. Missing anchors, reversed/invalid/conflicting durations, unmatched countries and multiple change/country estimates withhold the combined band and remain visible in Details. A single duration is a narrow marker. This is a survey estimate, not a guaranteed forecast.
+Durations accept positive days, weeks and months, including ranges such as **6–8 months** or **6 to 8 months**; months use 30 days and weeks use 7 days. The response timeline covers submission-to-approval. Actual submission takes priority, then latest planned submission, then original planned submission; planned anchors are labelled as forecasts. Invalid/conflicting dates do not silently fall back. Missing anchors, reversed/invalid/conflicting durations, unmatched countries and multiple change/country estimates withhold the combined band and remain visible in Details. A single duration is a narrow marker. This is a survey estimate, not a guaranteed forecast.
 
 Every selectable hierarchy level has relevant linked IDs, state, own dates and country-assessment details. Planned implementation is the change's own milestone; no estimated implementation time is added. MOH filing values are preserved as supplied, including blank, Not required, Product not commercialized and Unregulated; they do not automatically remove submissions. Required documentation is displayed as plain multiline text. Response counts are recorded values, not totals summed across repeated joined rows.
 
@@ -140,7 +172,7 @@ Map your **Submission dispatch required c** source field to **Dispatch required*
 
 | Visual | Download | Demo |
 | --- | --- | --- |
-| Regulatory Tracker 1.14.3 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.14.3/regulatory-tracker-1.14.3.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
+| Regulatory Tracker 1.15.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.15.0/regulatory-tracker-1.15.0.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
 | Registration Overview / Roadmap 1.4.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.4.0/roadmap-2026-1.4.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap-preview.html) |
 | IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |
 | Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/key-preview.html) |

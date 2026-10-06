@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),path=require('node:path');
 module.exports=async(page,{outputDir})=>{
  await page.goto('http://127.0.0.1:8771/index.html');await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
  await page.evaluate(()=>{
-  const base={AppID:'A-SURVEY',ROID:'R-SURVEY',ChangeID:'C-SURVEY',EventName:'E-SURVEY',EventQMS:'CR-SURVEY',ChangeQMS:'CR-SURVEY',ChangeStatus:'In Progress',SubStatus:'Planned',LatestDispatch:'2027-01-01',OriginalDispatch:'2027-01-01'};
+  const base={AppID:'A-SURVEY',ROID:'R-SURVEY',ChangeID:'C-SURVEY',EventName:'E-SURVEY',EventQMS:'CR-SURVEY',ChangeQMS:'CR-SURVEY',ChangeStatus:'In Progress',SubStatus:'Planned',LatestDispatch:'2027-01-01',OriginalDispatch:'2027-01-01',ActualSubmission:null,LatestSubmission:'2027-01-01',OriginalSubmission:'2027-01-01'};
   const responses=[{AssessmentCountry:'Hungary',AssessmentTimeline:'6–8 months',AssessmentMOHFiling:'Not required',AssessmentDocumentation:'HU certificate\nHU form'},{AssessmentCountry:'Mexico',AssessmentTimeline:'3 months',AssessmentDocumentation:'MX certificate'},{AssessmentCountry:'Colombia',AssessmentTimeline:'N/A',AssessmentMOHFiling:'Product not commercialized'}];
   window.__countrySurveyRows=['Hungary','Mexico','Colombia'].flatMap(Country=>responses.map(r=>({...base,...r,Country,SubID:'S-'+Country})));
   window.__dispatchSend([...window.__countrySurveyRows,...window.__countrySurveyRows]);
