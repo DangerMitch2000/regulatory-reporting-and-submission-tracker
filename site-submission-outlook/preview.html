@@ -1,5 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Site Submission Outlook — illustrative preview</title><style>.siteSubmissions{--ink:#17324d;--muted:#536a80;--border:#dce6ef;--surface:#fff;--bg:#f4f7fa;color:var(--ink);background:var(--surface);font:14px 'Segoe UI',Arial,sans-serif;box-sizing:border-box;overflow:auto;position:relative;line-height:1.45}.siteSubmissions *{box-sizing:border-box}.siteSubmissions.dark{--ink:#e7edf7;--muted:#acbed3;--border:#35455a;--surface:#152133;--bg:#1d2d42}.siteSubmissions button,.siteSubmissions select,.siteSubmissions input{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 9px}.siteSubmissions button{cursor:pointer}.siteSubmissions button:hover{background:var(--bg)}.siteSubmissions button:disabled{opacity:.5;cursor:default}.siteSubmissions :focus-visible{outline:3px solid #dc8c21;outline-offset:3px}.ssControls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 18px;border-bottom:1px solid var(--border)}.ssControls label{display:flex;gap:7px;align-items:center}.ssControls .ssPush{margin-left:auto}.ssSites{position:relative}.ssSites summary{cursor:pointer;border:1px solid var(--border);padding:6px 11px;border-radius:6px}.ssSitePanel{position:absolute;top:40px;left:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;box-shadow:0 12px 30px #0002;width:280px;z-index:3;max-height:330px;overflow:auto}.ssSitePanel label{padding:4px;display:flex;justify-content:space-between}.ssSitePanel small{color:var(--muted)}.ssSitePanel p{margin:0 0 10px}.ssStage{width:100%;min-width:530px}.ssStage svg{display:block;width:100%;height:auto}.ssStage text{font-family:'Segoe UI',Arial,sans-serif}.ssStage .ssHit{cursor:pointer}.ssStage .ssHit:hover{fill:rgba(60,130,170,.08)}.ssStage .ssHit:focus{stroke:#dc8c21;stroke-width:3;outline:none}.ssNotice{padding:10px 18px;margin:0;background:#fff3d6;color:#744000;font-weight:600}.ssSetup{padding:28px;max-width:800px}.ssSetup h2{font-size:23px}.ssSetup li{margin:8px 0}.ssChecks{padding:9px 18px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;color:var(--muted);border-top:1px solid var(--border)}.ssChecks span{font-size:12px}.ssDetails{margin:0 18px 20px;padding-top:14px;border-top:1px solid var(--border)}.ssDetails h3{font-size:17px;margin:0}.ssDetailTools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}.ssDetailTools input{min-width:190px;flex:1}.ssDetailTools .ssClose{margin-left:auto}.ssTableWrap{overflow:auto;max-height:360px}.ssDetails table{width:100%;border-collapse:collapse;text-align:left;font-size:13px}.ssDetails th{position:sticky;top:0;background:var(--bg);color:var(--muted);font-weight:600;z-index:1}.ssDetails td,.ssDetails th{padding:9px 10px;border-bottom:1px solid var(--border);white-space:nowrap}.ssDetails td:last-child{white-space:normal;min-width:150px}.ssStatus{font-weight:650}.ssPager{display:flex;align-items:center;gap:12px;margin-top:12px;color:var(--muted)}.ssPager span{margin-right:auto}.siteSubmissions.capture .ssControls,.siteSubmissions.capture .ssChecks,.siteSubmissions.capture .ssDetails{display:none}.siteSubmissions.capture{background:var(--surface)}.siteSubmissions.capture .ssStage{min-width:0}.ssEmpty{padding:22px;color:var(--muted)}@media(prefers-reduced-motion:no-preference){.ssControls button{transition:background .15s}}@media(max-width:600px){.ssControls{padding:8px}.ssControls .ssPush{margin-left:0}.ssDetails{margin-left:9px;margin-right:9px}}
 .siteSubmissions.capture{display:flex;flex-direction:column;overflow:hidden}.siteSubmissions.capture .ssStage{flex:1;min-height:0}.siteSubmissions.capture .ssStage svg{height:100%;width:100%}
+.ssStage .ssBacklogHit{cursor:pointer}.ssStage .ssBacklogHit:hover{fill:rgba(195,110,25,.1)}.ssStage .ssBacklogHit:focus{stroke:#dc8c21;stroke-width:3;outline:none}
 body{margin:0;padding:24px;background:#e7edf3;font:14px 'Segoe UI',sans-serif}nav{max-width:1440px;margin:0 auto 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}nav strong{margin-right:auto}nav button{padding:8px 12px;border:1px solid #c9d4e1;background:white;border-radius:6px;color:#17324d;cursor:pointer}#host{width:min(1440px,100%);height:800px;margin:0 auto;border:1px solid #d6e0eb;box-shadow:0 10px 40px #18365314;border-radius:9px}.demo-note{max-width:1440px;margin:18px auto;color:#536a80} </style></head><body><nav><strong>Preview · fictional submissions</strong><button id="wide">Wide preview</button><button id="small">Compact preview</button><button id="clean">Reset demo</button><button id="review">Data checks example</button></nav><div id="host"></div><p class="demo-note">Demonstration data only. The months follow your computer's current date. Import the Power BI package and map your real submission fields to see actual counts.</p><script>(()=>{
 const DEFAULT_SITES = ['ABO', 'ADJ', 'ADK', 'AJG', 'ARDG', 'SCR'];
 const ROLES = ['SubID', 'Site', 'PlannedSubmission', 'ActualSubmission', 'BusinessUnit'];
@@ -70,7 +71,8 @@ function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date()} =
     if (!grouped.has(id)) grouped.set(id, []);
     grouped.get(id).push(row);
   }
-  const buckets = selectedSites.map(site => ({site, key: siteKey(site), delivered: 0, months: dates.months.map(month => ({
+  const backlog = {cutoff: dates.months[0].start, count: 0, rows: []};
+  const buckets = selectedSites.map(site => ({site, key: siteKey(site), delivered: 0, backlog: {count: 0, rows: []}, months: dates.months.map(month => ({
     ...month, site, planned: 0, inProcess: 0, submitted: 0, review: 0, overdue: 0, rows: []}))}));
   const lookup = new Map(buckets.map(b => [b.key, b]));
   const issues = [], checks = {missingIds, outsideSites: 0, unassignedSite: 0, multipleSites: 0, missingPlan: 0, planIssues: 0, actualIssues: 0, outsideMonths: 0};
@@ -103,7 +105,14 @@ function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date()} =
     }
     if (actualIssue) issues.push({...record});
     const month = bucket.months.find(m => plan.day >= m.start && plan.day < m.end);
-    if (!month) { checks.outsideMonths++; continue; }
+    if (!month) {
+      if (plan.day < backlog.cutoff && actual.kind === 'blank') {
+        record.overdue = true;
+        bucket.backlog.count++; bucket.backlog.rows.push(record);
+        backlog.count++; backlog.rows.push(record);
+      } else checks.outsideMonths++;
+      continue;
+    }
     month.planned++;
     month[record.status === 'Submitted' ? 'submitted' : record.status === 'Check date' ? 'review' : 'inProcess']++;
     record.overdue = record.status === 'In process' && plan.day < dates.today;
@@ -112,15 +121,20 @@ function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date()} =
   }
   const totals = {planned: 0, inProcess: 0, submitted: 0, review: 0, overdue: 0};
   const monthTotals = dates.months.map(m => ({...m, ...totals}));
-  for (const site of buckets) site.months.forEach((m, i) => {
-    Object.keys(totals).forEach(key => {totals[key] += m[key]; monthTotals[i][key] += m[key];});
-    m.rows.sort((a, b) => a.plan.day - b.plan.day || a.id.localeCompare(b.id, undefined, {numeric: true}));
-  });
+  const oldestFirst = (a, b) => a.plan.day - b.plan.day || a.id.localeCompare(b.id, undefined, {numeric: true});
+  backlog.rows.sort(oldestFirst);
+  for (const site of buckets) {
+    site.backlog.rows.sort(oldestFirst);
+    site.months.forEach((m, i) => {
+      Object.keys(totals).forEach(key => {totals[key] += m[key]; monthTotals[i][key] += m[key];});
+      m.rows.sort(oldestFirst);
+    });
+  }
   const peak = Math.max(1, ...buckets.flatMap(site => site.months.map(m => m.planned)));
   const rawStep = peak / 5, magnitude = 10 ** Math.floor(Math.log10(rawStep));
   const step = Math.max(1, ([1, 2, 5, 10].find(s => s * magnitude >= rawStep) || 10) * magnitude);
   const axisMax = Math.max(5, Math.ceil(peak / step) * step);
-  return {...dates, buckets, totals, monthTotals, checks, issues, axisMax, step, scopedRecords,
+  return {...dates, buckets, totals, monthTotals, backlog, checks, issues, axisMax, step, scopedRecords,
     units: [...units].sort(), availableSites: [...availableSites.values()].sort(),
     issueCount: issues.length + missingIds, completion: totals.planned ? Math.round(totals.submitted / totals.planned * 100) : 0};
 }
@@ -143,7 +157,7 @@ function render(root, rows, options = {}) {
     const setup = el('section', undefined, 'ssSetup'); setup.append(el('h2', 'Site Submission Outlook'), el('p', 'Map these four fields to show this month and next month for your main six sites:'));
     const list = el('ul'); missing.forEach(role => list.append(el('li', labels[role] || role))); setup.append(list, el('p', 'Use raw date columns, not date hierarchies. Use the initial planned submission date to match the reference slide. An actual-date column may contain blanks.')); root.append(setup); return;
   }
-  const sites = normalizeSites(state.sites), r = summarize(rows, {sites, unit: unitMapped ? state.unit ?? '*' : '*', now});
+  const sites = normalizeSites(state.sites), unit = unitMapped ? state.unit ?? '*' : '*', r = summarize(rows, {sites, unit, now});
   const controls = el('div', undefined, 'ssControls');
   const siteControl = el('details', undefined, 'ssSites'); siteControl.open = Boolean(state.sitesOpen);
   siteControl.append(el('summary', `Sites · ${sites.length}`));
@@ -156,25 +170,35 @@ function render(root, rows, options = {}) {
     label.append(box, el('span', name)); if (!r.availableSites.some(s => siteKey(s) === siteKey(name))) label.append(el('small', 'No delivered rows')); panel.append(label);
   });
   const reset = el('button', 'Use main six sites'); reset.onclick = () => onChange({sites: [...DEFAULT_SITES], sitesOpen: true, detail: null}); panel.append(reset); siteControl.append(panel); controls.append(siteControl);
-  function select(label, value, opts, key) {
+  function select(label, value, opts, key, disabled = false) {
     const wrap = el('label', label), input = el('select'); input.setAttribute('aria-label', label);
     if (!opts.some(o => o.value === value)) opts.push({value, label: `${value || 'Blank'} (no records)`});
-    for (const o of opts) {const opt = el('option', o.label); opt.value = o.value; input.append(opt);} input.value = value;
+    for (const o of opts) {const opt = el('option', o.label); opt.value = o.value; input.append(opt);} input.value = value; input.disabled = disabled;
+    if (disabled) input.title = 'Add your business-unit column to the Business unit (optional) field to enable this filter.';
     input.onchange = () => onChange({[key]: input.value, detail: null}); wrap.append(input); controls.append(wrap);
   }
   if (unitMapped) select('Business unit', state.unit ?? '*', [{value: '*', label: 'All'}, ...r.units.map(value => ({value, label: value || 'Not recorded'}))], 'unit');
+  else select('Business unit', '*', [{value: '*', label: 'Map Business unit field'}], 'unit', true);
   select('Theme', state.theme || 'light', [{value: 'light', label: 'Light'}, {value: 'dark', label: 'Dark'}], 'theme');
   const capture = el('button', 'Screenshot mode', 'ssPush'); capture.title = 'Hide controls; press Escape to return.'; capture.onclick = () => {onChange({capture: true, sitesOpen: false}); root.focus();}; controls.append(capture); root.append(controls);
   if (notice) root.append(el('p', notice, 'ssNotice'));
-  const W = compact ? 820 : 1280, H = compact ? 720 : 690;
+  const W = compact ? 820 : 1280, H = compact ? 840 : 800;
   const colors = {bg: dark ? '#152133' : '#ffffff', ink: dark ? '#e7edf7' : '#17324d', muted: dark ? '#acbed3' : '#536a80',
-    border: dark ? '#35455a' : '#dce6ef', panel: dark ? '#1d2d42' : '#f3f7fa', inProcess: dark ? '#479fe7' : '#176eb0', submitted: '#61cdb4', review: '#f6c66a'};
-  if (highContrast) Object.assign(colors, {bg: highContrast.background, ink: highContrast.foreground, muted: highContrast.foreground, border: highContrast.foreground, panel: highContrast.background, inProcess: highContrast.foreground, submitted: highContrast.background, review: highContrast.background});
-  const stage = el('div', undefined, 'ssStage'), svg = svgEl('svg', {viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Submissions planned for ${r.label}: ${r.totals.planned} planned, ${r.totals.inProcess} in process, ${r.totals.submitted} submitted, ${r.totals.review} needing date review.`});
+    border: dark ? '#35455a' : '#dce6ef', panel: dark ? '#1d2d42' : '#f3f7fa', inProcess: dark ? '#479fe7' : '#176eb0', submitted: '#61cdb4', review: '#f6c66a', backlog: dark ? '#ffb783' : '#a5450a', backlogBg: dark ? '#432d23' : '#fff2e7'};
+  if (highContrast) Object.assign(colors, {bg: highContrast.background, ink: highContrast.foreground, muted: highContrast.foreground, border: highContrast.foreground, panel: highContrast.background, inProcess: highContrast.foreground, submitted: highContrast.background, review: highContrast.background, backlog: highContrast.foreground, backlogBg: highContrast.background});
+  const stage = el('div', undefined, 'ssStage'), svg = svgEl('svg', {viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Submissions planned for ${r.label}: ${r.totals.planned} planned, ${r.totals.inProcess} in process, ${r.totals.submitted} submitted, ${r.totals.review} needing date review. ${r.backlog.count} overdue backlog, planned before ${dateText(r.backlog.cutoff)} and still not submitted.`});
   stage.append(svg); root.append(stage);
   svg.append(svgEl('rect', {width: W, height: H, fill: colors.bg}));
   const text = (x, y, value, size = 18, fill = colors.ink, extra = {}) => {const node = svgEl('text', {x, y, 'font-size': size, fill, ...extra}, value); svg.append(node); return node;};
   const bold = {'font-weight': 650}, centered = {'text-anchor': 'middle'};
+  function backlogHit(x, y, width, height, site = null) {
+    const count = site ? site.backlog.count : r.backlog.count, scope = site ? site.site : 'All selected sites';
+    const selected = state.detail?.kind === 'backlog' && (state.detail.site || '*') === (site?.key || '*');
+    const hit = svgEl('rect', {x, y, width, height, rx: 7, fill: 'transparent', stroke: selected ? colors.backlog : 'none', 'stroke-width': 2, tabindex: 0, role: 'button', class: 'ssBacklogHit', 'data-site': site?.key || '*', 'aria-label': `${scope}: ${count} overdue backlog. Planned before ${dateText(r.backlog.cutoff)} with no actual submission date. View submissions.`});
+    hit.append(svgEl('title', {}, `${scope} · Overdue backlog: ${count}\nPlanned before ${dateText(r.backlog.cutoff)} with no actual submission date.\nCounted separately from the two-month plan. Click to view oldest first.`));
+    const activate = () => onChange({detail: {kind: 'backlog', ...(site ? {site: site.key} : {})}, query: '', status: 'all', page: 0, sitesOpen: false});
+    hit.onclick = activate; hit.onkeydown = e => {if (e.key === 'Enter' || e.key === ' ') {e.preventDefault(); activate();}}; svg.append(hit);
+  }
   text(34, 48, 'Site Submission Outlook', compact ? 29 : 32, colors.ink, bold);
   text(35, 82, `${r.label} · Planned-month progress`, compact ? 19 : 21, colors.muted);
   if (!compact) text(1238, 45, 'CURRENT + NEXT MONTH', 15, colors.muted, {'text-anchor': 'end', 'letter-spacing': 1});
@@ -210,9 +234,20 @@ function render(root, rows, options = {}) {
       hit.onkeydown = e => {if (e.key === 'Enter' || e.key === ' ') {e.preventDefault(); activate();}}; svg.append(hit);
     });
     text(cx, bottom + 64, site.site.length > 12 ? `${site.site.slice(0, 11)}…` : site.site, 20, colors.ink, {...centered, ...bold}).append(svgEl('title', {}, site.site));
+    const width = Math.min(groupWidth - 12, 144), x = cx - width / 2, y = bottom + 114;
+    svg.append(svgEl('rect', {x, y, width, height: 42, rx: 7, fill: colors.backlogBg, stroke: highContrast ? colors.ink : 'none'}));
+    text(cx, y + 29, String(site.backlog.count), 24, colors.backlog, {...centered, ...bold});
+    backlogHit(x, y, width, 42, site);
   });
+  text(left, bottom + 100, 'Overdue backlog', 18, colors.backlog, bold);
+  text(left + 163, bottom + 100, `Planned before ${dateText(r.backlog.cutoff)}`, 15, colors.muted);
+  if (compact) {
+    const x = right - 148, y = bottom + 77;
+    svg.append(svgEl('rect', {x, y, width: 148, height: 31, rx: 6, fill: colors.backlogBg}));
+    text(x + 74, y + 22, `Total: ${r.backlog.count}`, 18, colors.backlog, {...centered, ...bold}); backlogHit(x, y, 148, 31);
+  }
   if (!compact) {
-    const x = 1006, width = 242; svg.append(svgEl('rect', {x, y: 157, width, height: 443, rx: 13, fill: colors.panel, stroke: colors.border}));
+    const x = 1006, width = 242; svg.append(svgEl('rect', {x, y: 157, width, height: 549, rx: 13, fill: colors.panel, stroke: colors.border}));
     text(x + 20, 190, 'Two-month plan', 20, colors.ink, bold); text(x + 20, 246, String(r.totals.planned), 47, colors.ink, bold); text(x + 20, 271, 'distinct submissions', 16, colors.muted);
     const stat = (y, label, value) => {text(x + 20, y, label, 17); text(x + width - 20, y, String(value), 21, colors.ink, {...bold, 'text-anchor': 'end'});};
     stat(317, 'In process', r.totals.inProcess); stat(350, 'Submitted', r.totals.submitted); if (r.totals.review) stat(383, 'Check date', r.totals.review);
@@ -220,32 +255,38 @@ function render(root, rows, options = {}) {
     svg.append(svgEl('rect', {x: x + 20, y: 433, width: width - 40, height: 9, rx: 4, fill: colors.border}));
     svg.append(svgEl('rect', {x: x + 20, y: 433, width: (width - 40) * r.completion / 100, height: 9, rx: 4, fill: colors.submitted}));
     text(x + 20, 480, `${r.totals.overdue} overdue`, 22, colors.ink, bold); text(x + 20, 504, 'within this month’s plan', 15, colors.muted);
-    text(x + 20, 547, `As of ${dateText(r.today)}`, 15, colors.muted); text(x + 20, 573, 'Click a column for details', 15, colors.muted);
+    svg.append(svgEl('rect', {x: x + 14, y: 527, width: width - 28, height: 97, rx: 8, fill: colors.backlogBg, stroke: highContrast ? colors.ink : 'none'}));
+    text(x + 26, 552, 'Overdue backlog', 18, colors.backlog, bold); text(x + 26, 589, String(r.backlog.count), 31, colors.backlog, bold);
+    text(x + 26, 611, `Before ${dateText(r.backlog.cutoff)}`, 14, colors.backlog); backlogHit(x + 14, 527, width - 28, 97);
+    text(x + 20, 655, `As of ${dateText(r.today)}`, 15, colors.muted); text(x + 20, 683, 'Click counts for details', 15, colors.muted);
   }
   if (!sites.length) text((left + right) / 2, top + 100, 'Choose up to six sites to start.', 22, colors.muted, centered);
   else if (!r.totals.planned) text((left + right) / 2, top + 110, 'No planned submissions in these two months', 21, colors.muted, centered);
-  const footerY = compact ? 650 : 643;
-  text(35, footerY, `${synthetic ? 'ILLUSTRATIVE DATA · ' : ''}${sites.length} sites · ${unitMapped && state.unit && state.unit !== '*' ? state.unit : 'All business units'}${compact ? ` · ${r.completion}% submitted · ${r.totals.overdue} overdue` : ''}`, 15, colors.muted);
-  text(35, footerY + 23, 'Grouped by planned date; Submitted requires an actual date on or before today.', 15, colors.muted);
-  if (r.issueCount || compact) text(35, footerY + 44, `${compact ? `As of ${dateText(r.today)} · ` : ''}${r.issueCount ? `${r.issueCount} data checks — review below` : 'Distinct submission counts; duplicates do not increase totals.'}`, 14, colors.muted);
+  const footerY = 742;
+  text(35, footerY, `${synthetic ? 'ILLUSTRATIVE DATA · ' : ''}${sites.length} sites · ${unit === '*' ? 'All business units' : unit || 'Not recorded'}`, 15, colors.muted);
+  text(35, footerY + 23, 'Backlog is separate from the two-month plan. Keep earlier dates in report filters.', 15, colors.muted);
+  text(35, footerY + 44, `Submitted requires an actual date on or before today.${r.issueCount ? ` ${r.issueCount} data checks — review below.` : ''}`, 14, colors.muted);
+  if (compact) text(35, footerY + 66, `${r.completion}% submitted · ${r.totals.overdue} overdue in this month’s plan · As of ${dateText(r.today)}`, 14, colors.muted);
   const checks = el('div', undefined, 'ssChecks'), review = el('button', `Data checks · ${r.issueCount}`);
-  review.onclick = () => onChange({detail: {kind: 'issues'}, query: '', status: 'all', page: 0}); checks.append(review, el('span', `${r.checks.outsideSites} submissions outside selected sites · ${r.checks.outsideMonths} outside these months · ${r.checks.missingIds} rows without an ID`)); root.append(checks);
+  review.onclick = () => onChange({detail: {kind: 'issues'}, query: '', status: 'all', page: 0}); checks.append(review, el('span', `${r.checks.outsideSites} submissions outside selected sites · ${r.checks.outsideMonths} outside the month plan and backlog · ${r.checks.missingIds} rows without an ID`)); root.append(checks);
   if (state.detail) renderDetails(root, r, state, onChange);
   return r;
 }
 
 function renderDetails(root, result, state, onChange) {
-  const issues = state.detail.kind === 'issues', month = issues ? null : result.buckets.find(b => b.key === state.detail.site)?.months.find(m => m.key === state.detail.month);
-  const records = issues ? result.issues : month?.rows || [], query = String(state.query || '').toLowerCase();
+  const issues = state.detail.kind === 'issues', isBacklog = state.detail.kind === 'backlog', site = result.buckets.find(b => b.key === state.detail.site);
+  const month = issues || isBacklog ? null : site?.months.find(m => m.key === state.detail.month);
+  const records = issues ? result.issues : isBacklog ? (state.detail.site ? site?.backlog.rows || [] : result.backlog.rows) : month?.rows || [], query = String(state.query || '').toLowerCase();
   const filtered = records.filter(r => (!query || `${r.id} ${r.site} ${r.reason}`.toLowerCase().includes(query)) && (issues || !state.status || state.status === 'all' || r.status === state.status));
   const pageSize = 50, page = Math.min(Math.max(0, state.page || 0), Math.max(0, Math.ceil(filtered.length / pageSize) - 1));
   const section = el('section', undefined, 'ssDetails');
-  section.append(el('h3', issues ? 'Data checks' : `${month?.site || state.detail.site} · ${month?.label || state.detail.month}`));
+  section.append(el('h3', issues ? 'Data checks' : isBacklog ? `${site?.site || (state.detail.site ? state.detail.site : 'All selected sites')} · Overdue backlog` : `${month?.site || state.detail.site} · ${month?.label || state.detail.month}`));
   if (issues) section.append(el('p', 'Site checks cover all delivered sites in the selected business unit. Date checks cover selected sites across all dates. Records needing date review are not assumed to be submitted.'));
+  else if (isBacklog) section.append(el('p', `Planned before ${dateText(result.backlog.cutoff)} with no actual submission date, oldest first. These records are separate from the two-month plan. Only records delivered by Power BI can appear; keep earlier dates in report filters.`));
   else section.append(el('p', 'These submissions belong to the selected planned month. Actual submission dates can be earlier or later than that month.'));
   const controls = el('div', undefined, 'ssDetailTools'), search = el('input'); search.placeholder = 'Find submission'; search.setAttribute('aria-label', 'Find submission'); search.value = state.query || '';
   search.onchange = () => onChange({query: search.value, page: 0}); controls.append(search);
-  if (!issues) {
+  if (!issues && !isBacklog) {
     const statuses = el('select'); statuses.setAttribute('aria-label', 'Submission progress');
     ['all', 'In process', 'Submitted', 'Check date'].forEach(s => {const o = el('option', s === 'all' ? 'All progress' : s); o.value = s; statuses.append(o);}); statuses.value = state.status || 'all'; statuses.onchange = () => onChange({status: statuses.value, page: 0}); controls.append(statuses);
   }
@@ -269,6 +310,13 @@ function sample(now = new Date()) {
       rows.push(row); if (i%9===0) rows.push({...row});
     }
   }));
+  DEFAULT_SITES.forEach((site, si) => {
+    for (let i = 0; i < [5,3,12,4,2,8][si]; i++) {
+      const row = {SubID: `DEMO-${site}-BACKLOG-${String(i+1).padStart(3,'0')}`, Site: site, PlannedSubmission: iso(i%2 ? -3 : -1, i%27+1), ActualSubmission: null, BusinessUnit: i%4 ? 'ID' : 'CMI'};
+      rows.push(row); if (i%3===0) rows.push({...row});
+    }
+    rows.push({SubID: `DEMO-${site}-PRIOR-SUBMITTED`, Site: site, PlannedSubmission: iso(-1,15), ActualSubmission: iso(0,Math.min(3,currentDay)), BusinessUnit: 'ID'});
+  });
   return rows;
 }
 

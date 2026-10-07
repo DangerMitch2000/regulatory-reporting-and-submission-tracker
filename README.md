@@ -4,13 +4,17 @@
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
 
-## Site Submission Outlook — new separate visual
+## Site Submission Outlook — overdue backlog in 1.1.0
 
-[Download Site Submission Outlook 1.0.0](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.0.0/site-submission-outlook-1.0.0.0.pbiviz) · [Live preview](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Field mappings and instructions](site-submission-outlook/README.md)
+[Download Site Submission Outlook 1.1.0](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.1.0/site-submission-outlook-1.1.0.0.pbiviz) · [Live preview](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Field mappings and instructions](site-submission-outlook/README.md)
 
-Shows the **current and following month** for **ABO, ADJ, ADK, AJG, ARDG and SCR**. Each month's planned submissions split into **In process** and **Submitted**, using distinct submission IDs and actual submission dates. The planned date determines the column, including submissions completed early. Click a column to inspect its records. Includes totals, an overdue count within the displayed plan, optional business-unit filtering, light/dark themes and screenshot mode.
+Shows the **current and following month** for **ABO, ADJ, ADK, AJG, ARDG and SCR**. Each month's planned submissions split into **In process** and **Submitted**, using distinct submission IDs and actual submission dates. The planned date determines the column, including submissions completed early. Click a column to inspect its records. Includes totals, optional business-unit filtering, light/dark themes and screenshot mode.
 
-Map Submission ID, Site, Initial planned submission date and Actual submission date; Business unit is optional. The package has its own visual identity and no change-response dependencies. The months advance automatically. Calculation, browser and packaged-runtime checks cover 10,000 distinct submissions with duplicate source rows. Preview data is fictional; verify the imported visual against your report.
+**Overdue backlog** appears beneath each site and in the summary. It counts submissions planned before the first displayed month with no actual submission date. For October–November, that means everything planned before 1 October, including earlier years. Click a backlog count for the relevant submissions, oldest first. Backlog stays separate from the monthly plan totals and completion percentage; the cutoff advances automatically, and recorded actual submission dates clear completed items.
+
+The **Business unit** dropdown starts at All and filters the monthly plan, backlog and their details together. Map the existing Business unit field to enable it; until then the dropdown shows a mapping prompt. Blank units remain separately selectable as Not recorded.
+
+The visual identity and field mappings are unchanged: Submission ID, Site, Initial planned submission date and Actual submission date; Business unit is optional. **Keep earlier planned dates included in report/page/visual filters** so Power BI delivers the backlog rows. No change-response fields are required. Calculation, browser and packaged-runtime checks cover the backlog cutoff, late completion, duplicates, conflicts, filters, rollover and 10,000 distinct submissions. Preview data is fictional; verify the imported visual against your report.
 
 ## Country response IDs and dispatch progress — version 1.15.0
 
@@ -185,7 +189,7 @@ For the Tracker, Roadmap, IVDR, Key Submissions and Site Regulatory Plan, map yo
 | IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |
 | Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/key-preview.html) |
 | Site Regulatory Plan 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-plan-2026-v1.1.0/site-regulatory-plan-2026-1.1.0.0.pbiviz) | [Site plan](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-plan-preview.html) |
-| Site Submission Outlook 1.0.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.0.0/site-submission-outlook-1.0.0.0.pbiviz) | [Current and next month](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) |
+| Site Submission Outlook 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.1.0/site-submission-outlook-1.1.0.0.pbiviz) | [Current and next month](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) |
 
 Roadmap shows False separately as **Dispatch not required**, retaining recorded dispatch reference dates. Records without a usable dispatch month but with current-year actual submission/approval evidence are shown separately outside the monthly chart. Blanks remain unknown; they are not assumed to mean False. An unmapped field retains the earlier classification behavior.
 

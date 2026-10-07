@@ -1,12 +1,28 @@
-# Site Submission Outlook — 1.0.0
+# Site Submission Outlook — 1.1.0
 
 A separate Power BI custom visual showing **the current and following calendar month** for **ABO, ADJ, ADK, AJG, ARDG and SCR**. Each month's planned submissions are split into **In process** and **Submitted**. The package has its own visual identity and does not replace the Regulatory Tracker.
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.0.0/site-submission-outlook-1.0.0.0.pbiviz) · [Live preview with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.0.0)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.1.0/site-submission-outlook-1.1.0.0.pbiviz) · [Live preview with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.1.0)
+
+## New in 1.1.0: overdue backlog
+
+The orange count beneath each site shows submissions planned **before the first displayed month** that still have **no recorded actual submission date**. The summary includes a total for all selected sites. For October–November 2026, the cutoff is before **1 October 2026**, including any earlier year. When the chart advances to November–December, the cutoff advances to 1 November.
+
+Click a site's backlog count, or the total, to see the relevant submissions, oldest planned date first. The list supports search and pagination. Backlog remains separate from the two monthly bars, planned total and completion percentage. Recording an actual submission date removes that submission from the backlog at the next data update, even if it was submitted late.
+
+**Keep earlier planned dates included in the Power BI data delivered to this visual.** A report, page or visual filter restricted to October–November would remove the rows needed to count the backlog. The visual selects the two displayed months itself; it cannot restore rows filtered out by Power BI. Business-unit and site filters apply to the backlog as well as the monthly plan.
+
+Import 1.1.0 over the existing Site Submission Outlook visual. The visual identity and field mappings are unchanged.
+
+## Business-unit filter
+
+Map your business-unit column to **Business unit (optional)**. The **Business unit** dropdown at the top starts at **All** and lists each delivered business unit separately, with **Not recorded** for blank values. Selecting a unit filters both monthly bars, their totals and details, and the overdue backlog counts and lists. **All** restores every delivered unit. The selection is saved in the report.
+
+The control stays visible while unmapped and reads **Map Business unit field** until that field is supplied. Screenshot mode hides controls but prints the selected unit in the chart footer; press Escape to restore the controls. Power BI report filters can further restrict which units and records are delivered.
 
 ## Import and map
 
-Import `site-submission-outlook-1.0.0.0.pbiviz` using **Visualizations → … → Import a visual from a file**. Add the visual and map these columns:
+Import `site-submission-outlook-1.1.0.0.pbiviz` using **Visualizations → … → Import a visual from a file**. Add the visual and map these columns:
 
 | Field well | Source column |
 |---|---|
@@ -25,7 +41,8 @@ Map raw columns, not Date hierarchies. A mapped date field can contain blanks. N
 - Each SubID counts once. Repeated source rows from product, country or other relationships do not increase counts.
 - Future, conflicting or invalid actual submission dates produce **Check date** rather than a guessed progress status. When present, this is a separate amber segment; Planned = In process + Submitted + Check date.
 - Missing, conflicting or invalid planned dates cannot be placed in a month and appear in Data checks. The checks are explicitly scoped; some concern records outside the displayed months.
-- **Overdue** means still In process with a planned date before today, within the two-month plan. Older backlog is outside this view.
+- **Overdue within this month's plan** means still In process with a planned date before today, within the two-month plan. **Overdue backlog** is the separate count of older planned submissions with a blank actual submission date. These counts do not overlap.
+- Backlog uses the same mapped planned-date column as the monthly bars. Submitted records, future plans, missing/invalid/conflicting planned dates, and records needing actual-date review are not counted as confirmed backlog. Invalid, future or conflicting actual dates remain in Data checks; the visual does not assume they are blank. Distinct IDs are resolved before local filters, so repeated source rows cannot inflate backlog or hide conflicting dates/sites.
 - The visual does not infer submission from lifecycle status or dispatch. Apply Power BI report/visual filters to remove any inactive, withdrawn, cancelled or otherwise out-of-scope work according to your reporting policy. A blank actual submission date remains In process among the delivered records.
 - A submission associated with multiple different sites is unallocated and listed in Data checks. It is not duplicated into several named sites. Blank-site records and rows without SubID are also reported. Site names are matched after trimming and ignoring case; different codes such as ABO and ABON are not silently equated.
 - The same calendar window is used for all sites. December correctly pairs with January of the next year. Today/current month use the viewer's local calendar; source date columns are treated as calendar dates. The view updates when data updates and at the next date change while open.
@@ -34,7 +51,7 @@ Map raw columns, not Date hierarchies. A mapped date field can contain blanks. N
 
 ## Use the visual
 
-Click or keyboard-activate a monthly column to see its submission IDs, planned dates, actual dates and progress. Search and pagination give access to every record in that column. Data checks open the affected records separately.
+Click or keyboard-activate a monthly column or backlog count to see its submission IDs, planned dates, actual dates and progress. Search and pagination give access to every record in that count. Data checks open the affected records separately.
 
 Light and dark themes are available. **Screenshot mode** hides controls and fits the chart to the visual's available space; focus the visual and press **Escape** to return. A wide visual around 1000–1400 pixels across works well for six sites. Very small captures reduce text readability. The chart's Submitted label does not imply that every submission was on time.
 
@@ -62,7 +79,7 @@ node package-test.cjs
 
 Extract the `.pbiviz` as a ZIP into `package-check` using your platform's archive tool when `unzip` is unavailable. To test with an installed Microsoft Edge browser instead of bundled Chromium, set `TRACKER_BROWSER_CHANNEL=msedge`. GitHub Actions runs the calculation, type, browser and packaged-runtime checks before publishing a separate release with the Power BI package, demo, preview, source archive and checksums. The release source archive includes the generated project's dependency lockfile.
 
-The included tests check count rules, duplicate rows, month rollover, dates, six-site focus, optional mappings, host delivery, keyboard interaction, screenshots and 10,000 distinct submissions. `preview.html` uses explicitly fictional data. The published screenshot uses a fixed October 2026 example; the live visual and demo advance with the current month.
+The included tests check count rules, duplicate rows, exclusive backlog cutoff, older years, late completion, independent plan/backlog totals, date/site conflicts, month rollover, sites/business units, optional mappings, host delivery, keyboard interaction, screenshots, backlog pagination/search and 10,000 distinct submissions. `preview.html` uses explicitly fictional data. The published screenshot uses a fixed October 2026 example; the live visual and demo advance with the current month.
 
 This is an uncertified custom visual. Package/browser tests do not validate your actual Power BI data relationships or your organisation's import policy. Verify the imported result against a standard Power BI table containing the same four source columns.
 

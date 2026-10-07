@@ -67,7 +67,8 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     if (!grouped.has(id)) grouped.set(id, []);
     grouped.get(id).push(row);
   }
-  const buckets = selectedSites.map(site => ({site, key: siteKey(site), delivered: 0, months: dates.months.map(month => ({
+  const backlog = {cutoff: dates.months[0].start, count: 0, rows: []};
+  const buckets = selectedSites.map(site => ({site, key: siteKey(site), delivered: 0, backlog: {count: 0, rows: []}, months: dates.months.map(month => ({
     ...month, site, planned: 0, inProcess: 0, submitted: 0, review: 0, overdue: 0, rows: []}))}));
   const lookup = new Map(buckets.map(b => [b.key, b]));
   const issues = [], checks = {missingIds, outsideSites: 0, unassignedSite: 0, multipleSites: 0, missingPlan: 0, planIssues: 0, actualIssues: 0, outsideMonths: 0};
@@ -100,7 +101,14 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     }
     if (actualIssue) issues.push({...record});
     const month = bucket.months.find(m => plan.day >= m.start && plan.day < m.end);
-    if (!month) { checks.outsideMonths++; continue; }
+    if (!month) {
+      if (plan.day < backlog.cutoff && actual.kind === 'blank') {
+        record.overdue = true;
+        bucket.backlog.count++; bucket.backlog.rows.push(record);
+        backlog.count++; backlog.rows.push(record);
+      } else checks.outsideMonths++;
+      continue;
+    }
     month.planned++;
     month[record.status === 'Submitted' ? 'submitted' : record.status === 'Check date' ? 'review' : 'inProcess']++;
     record.overdue = record.status === 'In process' && plan.day < dates.today;
@@ -109,15 +117,20 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
   }
   const totals = {planned: 0, inProcess: 0, submitted: 0, review: 0, overdue: 0};
   const monthTotals = dates.months.map(m => ({...m, ...totals}));
-  for (const site of buckets) site.months.forEach((m, i) => {
-    Object.keys(totals).forEach(key => {totals[key] += m[key]; monthTotals[i][key] += m[key];});
-    m.rows.sort((a, b) => a.plan.day - b.plan.day || a.id.localeCompare(b.id, undefined, {numeric: true}));
-  });
+  const oldestFirst = (a, b) => a.plan.day - b.plan.day || a.id.localeCompare(b.id, undefined, {numeric: true});
+  backlog.rows.sort(oldestFirst);
+  for (const site of buckets) {
+    site.backlog.rows.sort(oldestFirst);
+    site.months.forEach((m, i) => {
+      Object.keys(totals).forEach(key => {totals[key] += m[key]; monthTotals[i][key] += m[key];});
+      m.rows.sort(oldestFirst);
+    });
+  }
   const peak = Math.max(1, ...buckets.flatMap(site => site.months.map(m => m.planned)));
   const rawStep = peak / 5, magnitude = 10 ** Math.floor(Math.log10(rawStep));
   const step = Math.max(1, ([1, 2, 5, 10].find(s => s * magnitude >= rawStep) || 10) * magnitude);
   const axisMax = Math.max(5, Math.ceil(peak / step) * step);
-  return {...dates, buckets, totals, monthTotals, checks, issues, axisMax, step, scopedRecords,
+  return {...dates, buckets, totals, monthTotals, backlog, checks, issues, axisMax, step, scopedRecords,
     units: [...units].sort(), availableSites: [...availableSites.values()].sort(),
     issueCount: issues.length + missingIds, completion: totals.planned ? Math.round(totals.submitted / totals.planned * 100) : 0};
 }

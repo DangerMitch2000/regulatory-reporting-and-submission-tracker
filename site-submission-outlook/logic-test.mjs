@@ -35,9 +35,38 @@ assert.deepEqual(mapTable({columns, rows: [['A','ABO','2026-10-01',null,'ID']]})
 assert.equal(mapTable({columns: columns.slice(0,4), rows: []}).unitMapped, false);
 assert.deepEqual(mapTable({columns: columns.slice(0,3), rows: []}).missing, ['ActualSubmission']);
 assert.throws(() => mapTable({columns: [...columns, columns[0]], rows: []}), /only one/);
+const old = (id, patch = {}) => row(id, {PlannedSubmission:'2026-09-30', ...patch});
+const historical = [old('OLD', {PlannedSubmission:'2024-01-01'}), old('SEP'), old('SEP'),
+  old('CMI', {Site:'ADJ',BusinessUnit:'CMI'}), row('OCT-BOUNDARY',{PlannedSubmission:'2026-10-01'}), row('NOV',{PlannedSubmission:'2026-11-01'}),
+  old('LATE-SUBMITTED', {ActualSubmission:'2026-10-05'}), old('ALREADY-SUBMITTED',{ActualSubmission:'2026-09-20'}),
+  old('BLANK-AND-RECORDED'), old('BLANK-AND-RECORDED',{ActualSubmission:'2026-10-01'}),
+  old('FUTURE-ACTUAL',{ActualSubmission:'2026-10-20'}), old('BAD-ACTUAL',{ActualSubmission:'bad'}),
+  old('CONFLICT-ACTUAL',{ActualSubmission:'2026-09-25'}), old('CONFLICT-ACTUAL',{ActualSubmission:'2026-09-26'}),
+  old('CONFLICT-PLAN'), row('CONFLICT-PLAN'), old('MISSING-PLAN',{PlannedSubmission:null}), old('BAD-PLAN',{PlannedSubmission:'bad'}),
+  old('MULTISITE'), old('MULTISITE',{Site:'ADK'}), old('OUTSIDE',{Site:'OTHER'}), old('NOSITE',{Site:null}), old(''),
+  old('FUTURE-PLAN',{PlannedSubmission:'2026-12-01'})];
+const h=summarize(historical,{now});
+assert.equal(h.backlog.count,3);assert.equal(h.backlog.cutoff,Date.UTC(2026,9,1));
+assert.deepEqual(h.backlog.rows.map(r=>r.id),['OLD','CMI','SEP']);assert.ok(h.backlog.rows.every(r=>r.overdue&&r.actual.kind==='blank'));
+assert.deepEqual(h.buckets.map(s=>s.backlog.count),[2,1,0,0,0,0]);assert.equal(h.totals.planned,2);assert.equal(h.totals.inProcess,2);
+assert.ok(h.backlog.rows.every(r=>!h.buckets.some(s=>s.months.some(m=>m.rows.some(a=>a.id===r.id)))));
+assert.equal(summarize(historical,{now,unit:'CMI'}).backlog.count,1);assert.equal(summarize(historical,{now,sites:['ADJ']}).backlog.count,1);
+assert.equal(summarize(historical,{now,sites:[]}).backlog.count,0);
+assert.equal(summarize([old('U'),old('U',{BusinessUnit:'CMI',ActualSubmission:'2026-10-01'})],{now,unit:'ID'}).backlog.count,0);
+assert.equal(summarize([old('SITE'),old('SITE',{Site:'OTHER'})],{now,sites:['ABO']}).backlog.count,0);
+assert.ok(h.issues.some(r=>r.id==='FUTURE-ACTUAL'));assert.ok(h.issues.some(r=>r.id==='BAD-ACTUAL'));
+assert.ok(h.issues.some(r=>r.id==='CONFLICT-ACTUAL'));assert.ok(h.issues.some(r=>r.id==='CONFLICT-PLAN'));
+const carry=[old('SEP'),row('OCT',{PlannedSubmission:'2026-10-01'}),row('NOV',{PlannedSubmission:'2026-11-01'})];
+assert.equal(summarize(carry,{now}).backlog.count,1);assert.equal(summarize(carry,{now:new Date(2026,10,1)}).backlog.count,2);
+assert.equal(summarize([old('DEC',{PlannedSubmission:'2026-12-31'})],{now:new Date(2027,0,1)}).backlog.count,1);
+assert.equal(summarize([old('SEP',{ActualSubmission:'2026-10-07'})],{now}).backlog.count,0);
+assert.equal(summarize([],{now}).backlog.count,0);
 const big = Array.from({length:10000}, (_,i) => row('PERF-'+i, {Site: DEFAULT_SITES[i%6], ActualSubmission: i%2 ? null : '2026-10-01', PlannedSubmission: i%3 ? '2026-10-15' : '2026-11-15'}));
 const start = performance.now(), stress = summarize(big.flatMap(r => [r,r,r]), {now});
 const ms = performance.now() - start;
 assert.equal(stress.totals.planned, 10000); assert.equal(stress.totals.submitted,5000); assert.equal(stress.totals.inProcess,5000);
 assert.ok(ms < 5000, `30k-row calculation unexpectedly slow: ${ms}ms`);
-console.log(`PASS: planned-month cohorts, actual-date completion, 6 sites/ADJ, zero sites, duplicate/invalid/future/conflicting rows, scope, calendar rollover and 10,000 distinct submissions in ${Math.round(ms)}ms.`);
+const backlogStart=performance.now(),backlogStress=summarize(big.flatMap(r=>Array(3).fill({...r,PlannedSubmission:'2026-09-30'})),{now});
+assert.equal(backlogStress.backlog.count,5000);assert.equal(backlogStress.totals.planned,0);assert.equal(backlogStress.checks.outsideMonths,5000);
+assert.ok(performance.now()-backlogStart<5000);
+console.log(`PASS: planned-month cohorts, separate historical backlog, exclusive date cutoff, late completion, duplicates, date/site conflicts, site/unit scope, month/year rollover and 10,000 distinct submissions in ${Math.round(ms)}ms.`);
