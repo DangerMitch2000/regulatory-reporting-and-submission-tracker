@@ -1,0 +1,7 @@
+powerbi/
+verify/
+package-check/
+*.pbiviz
+*.png
+preview.js
+release/

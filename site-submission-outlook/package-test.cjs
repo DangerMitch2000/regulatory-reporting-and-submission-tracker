@@ -1,0 +1,46 @@
+const fs=require('node:fs'), path=require('node:path'), http=require('node:http'), assert=require('node:assert/strict');
+const {chromium}=require('./powerbi/node_modules/@playwright/test');
+(async()=>{
+ const guid='siteSubmissionOutlook8D94A67E43154927AC034613F8289C02';
+ const pkg=JSON.parse(fs.readFileSync(path.join(__dirname,'package-check','resources',guid+'.pbiviz.json'),'utf8'));
+ assert.equal(pkg.visual.version,'1.0.0.0'); assert.equal(pkg.visual.guid,guid);
+ assert.deepEqual(pkg.capabilities.privileges,[]);
+ const roles=pkg.capabilities.dataRoles.map(r=>r.name);
+ assert.deepEqual(roles,['SubID','Site','PlannedSubmission','ActualSubmission','BusinessUnit']);
+ const {sample}=await import('./demo.mjs');
+ const boot=`window.errors=[];const host={eventService:{renderingStarted(){},renderingFinished(){document.body.dataset.ready='true'},renderingFailed(o,e){errors.push(e)}},persistProperties(){},fetchMoreData(){return false},colorPalette:{isHighContrast:false}};
+ window.visual=window.powerbi.visuals.plugins[${JSON.stringify(guid)}].create({element:document.getElementById('host'),host});
+ window.send=(rows,omit=[])=>{const roles=${JSON.stringify(roles)}.filter(r=>!omit.includes(r));visual.update({type:2,viewport:{width:1440,height:800},dataViews:[{metadata:{},table:{columns:roles.map(r=>({displayName:r,roles:{[r]:true}})),rows:rows.map(r=>roles.map(k=>r[k]??null))}}]})};`;
+ const html='<!doctype html><html><meta charset="utf-8"><style>body{margin:0}'+pkg.content.css+'</style><div id="host"></div><script>window.powerbi={};</script><script src="/package.js"></script><script>'+boot+'</script></html>';
+ const server=http.createServer((req,res)=>{
+   const route=new URL(req.url,'http://localhost').pathname;
+   if(route==='/package.js') return res.writeHead(200,{'Content-Type':'text/javascript'}).end(pkg.content.js);
+   if(route==='/preview.html') return res.writeHead(200,{'Content-Type':'text/html'}).end(fs.readFileSync(path.join(__dirname,'preview.html')));
+   if(route==='/') return res.writeHead(200,{'Content-Type':'text/html'}).end(html);
+   res.writeHead(404).end();
+ });
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
+ try{
+   browser=await chromium.launch({headless:true,...(process.env.TRACKER_BROWSER_CHANNEL?{channel:process.env.TRACKER_BROWSER_CHANNEL}:{})});
+   const page=await browser.newPage({viewport:{width:1490,height:1050},timezoneId:'Europe/Dublin'}),errors=[];
+   page.on('pageerror',e=>errors.push(e.message)); await page.clock.setFixedTime(new Date('2026-10-07T12:00:00Z'));
+   const url='http://127.0.0.1:'+server.address().port;await page.goto(url);
+   await page.evaluate(rows=>send(rows),sample(new Date('2026-10-07T12:00:00Z')));
+   await page.waitForSelector('body[data-ready=true]'); assert.equal(await page.locator('.ssHit').count(),12);
+   assert.match(await page.locator('svg').getAttribute('aria-label'),/151 planned, 126 in process, 25 submitted/);
+   await page.locator('.ssHit[data-site=ADJ]').first().click();assert.match(await page.locator('.ssDetails').textContent(),/Showing 1–10 of 10/);
+   await page.getByRole('button',{name:'Close details'}).click();
+   await page.getByRole('combobox',{name:'Theme'}).selectOption('dark');assert.equal(await page.locator('.dark').count(),1);
+   await page.evaluate(rows=>send(rows,['ActualSubmission']),sample(new Date('2026-10-07T12:00:00Z')));
+   assert.match(await page.locator('.ssSetup').textContent(),/Actual submission date/);
+   const elapsed=await page.evaluate(()=>{const rows=Array.from({length:10000},(_,i)=>({SubID:'S-'+i,Site:['ABO','ADJ','ADK','AJG','ARDG','SCR'][i%6],PlannedSubmission:i%3?'2026-10-05':'2026-11-05',ActualSubmission:i%2?null:'2026-10-03'}));const start=performance.now();send(rows.flatMap(r=>[r,r,r]));return performance.now()-start;});
+   assert.match(await page.locator('svg').getAttribute('aria-label'),/10000 planned, 5000 in process, 5000 submitted/);assert.ok(elapsed<5000);
+   assert.deepEqual(await page.evaluate(()=>window.errors),[]);assert.deepEqual(errors,[]);
+   await page.goto(url+'/preview.html');await page.locator('svg').waitFor();
+   await page.getByRole('button',{name:'Screenshot mode'}).click();
+   assert.match(await page.locator('svg').textContent(),/ILLUSTRATIVE DATA/);
+   await page.locator('.siteSubmissions').screenshot({path:path.join(__dirname,'site-submission-outlook-preview.png')});
+   assert.deepEqual(errors,[]);
+   console.log(`PASS: actual packaged plugin loads, correct fields/version, no privileges, twelve columns, counts, ADJ details, theme, setup guard, 10,000 distinct submissions / 30,000 rows (${Math.round(elapsed)}ms); illustrative preview captured.`);
+ }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}
+})().catch(e=>{console.error(e);process.exitCode=1;});

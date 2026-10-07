@@ -4,6 +4,14 @@
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
 
+## Site Submission Outlook — new separate visual
+
+[Download Site Submission Outlook 1.0.0](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.0.0/site-submission-outlook-1.0.0.0.pbiviz) · [Live preview](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Field mappings and instructions](site-submission-outlook/README.md)
+
+Shows the **current and following month** for **ABO, ADJ, ADK, AJG, ARDG and SCR**. Each month's planned submissions split into **In process** and **Submitted**, using distinct submission IDs and actual submission dates. The planned date determines the column, including submissions completed early. Click a column to inspect its records. Includes totals, an overdue count within the displayed plan, optional business-unit filtering, light/dark themes and screenshot mode.
+
+Map Submission ID, Site, Initial planned submission date and Actual submission date; Business unit is optional. The package has its own visual identity and no change-response dependencies. The months advance automatically. Calculation, browser and packaged-runtime checks cover 10,000 distinct submissions with duplicate source rows. Preview data is fictional; verify the imported visual against your report.
+
 ## Country response IDs and dispatch progress — version 1.15.0
 
 Open a Change ID's **Details → Country progress** to see expected countries, assessment responses, linked submissions, dispatch progress, attention reasons and required documentation. The list is searchable and sorts by attention or country. It covers all delivered records for that change, including countries without a returned response or a linked submission. Local Gantt filters do not remove its expected-country list; report/model filters still limit the records delivered to the visual.
@@ -168,7 +176,7 @@ Map the Submission Dispatch required field to the optional Dispatch required (Di
 
 ## Updated visual downloads
 
-Map your **Submission dispatch required c** source field to **Dispatch required** in each updated visual. Keep the True / False / blank values; no calculated replacement field is needed.
+For the Tracker, Roadmap, IVDR, Key Submissions and Site Regulatory Plan, map your **Submission dispatch required c** source field to **Dispatch required**. Keep the True / False / blank values; no calculated replacement field is needed. Site Submission Outlook uses the separate four-field mapping above.
 
 | Visual | Download | Demo |
 | --- | --- | --- |
@@ -177,6 +185,7 @@ Map your **Submission dispatch required c** source field to **Dispatch required*
 | IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |
 | Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/key-preview.html) |
 | Site Regulatory Plan 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-plan-2026-v1.1.0/site-regulatory-plan-2026-1.1.0.0.pbiviz) | [Site plan](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-plan-preview.html) |
+| Site Submission Outlook 1.0.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.0.0/site-submission-outlook-1.0.0.0.pbiviz) | [Current and next month](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) |
 
 Roadmap shows False separately as **Dispatch not required**, retaining recorded dispatch reference dates. Records without a usable dispatch month but with current-year actual submission/approval evidence are shown separately outside the monthly chart. Blanks remain unknown; they are not assumed to mean False. An unmapped field retains the earlier classification behavior.
 

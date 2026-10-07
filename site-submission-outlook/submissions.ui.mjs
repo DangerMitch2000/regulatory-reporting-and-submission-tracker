@@ -1,0 +1,130 @@
+import {summarize, DEFAULT_SITES, normalizeSites, siteKey, formatDate} from './submissions.logic.mjs';
+const el = (tag, text, cls) => {const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n;};
+const svgEl = (tag, attrs = {}, text) => {const n = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const [k,v] of Object.entries(attrs)) n.setAttribute(k, String(v)); if (text !== undefined) n.textContent = text; return n;};
+const dateText = day => formatDate({kind: 'date', day});
+const labels = {SubID: 'Submission ID', Site: 'Site (legal manufacturer)', PlannedSubmission: 'Planned submission date', ActualSubmission: 'Actual submission date'};
+export function render(root, rows, options = {}) {
+  const {state = {}, onChange = () => {}, missing = [], notice = '', unitMapped = true, synthetic = false, now = new Date(), highContrast = null} = options;
+  const dark = state.theme === 'dark', compact = (options.width || root.clientWidth || 1280) < 900;
+  root.replaceChildren(); root.className = 'siteSubmissions' + (dark ? ' dark' : '') + (state.capture ? ' capture' : ''); root.tabIndex = 0;
+  root.onkeydown = e => {if (e.key === 'Escape') {onChange({capture: false, detail: null}); root.focus();}};
+  if (missing.length) {
+    const setup = el('section', undefined, 'ssSetup'); setup.append(el('h2', 'Site Submission Outlook'), el('p', 'Map these four fields to show this month and next month for your main six sites:'));
+    const list = el('ul'); missing.forEach(role => list.append(el('li', labels[role] || role))); setup.append(list, el('p', 'Use raw date columns, not date hierarchies. Use the initial planned submission date to match the reference slide. An actual-date column may contain blanks.')); root.append(setup); return;
+  }
+  const sites = normalizeSites(state.sites), r = summarize(rows, {sites, unit: unitMapped ? state.unit ?? '*' : '*', now});
+  const controls = el('div', undefined, 'ssControls');
+  const siteControl = el('details', undefined, 'ssSites'); siteControl.open = Boolean(state.sitesOpen);
+  siteControl.append(el('summary', `Sites · ${sites.length}`));
+  const panel = el('div', undefined, 'ssSitePanel'); panel.append(el('p', 'Choose up to six sites.'));
+  const choices = [...new Map([...sites, ...r.availableSites].map(name => [siteKey(name), name])).values()];
+  choices.forEach(name => {
+    const label = el('label'), box = el('input'); box.type = 'checkbox'; box.checked = sites.some(s => siteKey(s) === siteKey(name)); box.setAttribute('aria-label', `Include ${name}`);
+    box.disabled = !box.checked && sites.length >= 6;
+    box.onchange = () => onChange({sites: box.checked ? [...sites, name] : sites.filter(s => siteKey(s) !== siteKey(name)), sitesOpen: true, detail: null});
+    label.append(box, el('span', name)); if (!r.availableSites.some(s => siteKey(s) === siteKey(name))) label.append(el('small', 'No delivered rows')); panel.append(label);
+  });
+  const reset = el('button', 'Use main six sites'); reset.onclick = () => onChange({sites: [...DEFAULT_SITES], sitesOpen: true, detail: null}); panel.append(reset); siteControl.append(panel); controls.append(siteControl);
+  function select(label, value, opts, key) {
+    const wrap = el('label', label), input = el('select'); input.setAttribute('aria-label', label);
+    if (!opts.some(o => o.value === value)) opts.push({value, label: `${value || 'Blank'} (no records)`});
+    for (const o of opts) {const opt = el('option', o.label); opt.value = o.value; input.append(opt);} input.value = value;
+    input.onchange = () => onChange({[key]: input.value, detail: null}); wrap.append(input); controls.append(wrap);
+  }
+  if (unitMapped) select('Business unit', state.unit ?? '*', [{value: '*', label: 'All'}, ...r.units.map(value => ({value, label: value || 'Not recorded'}))], 'unit');
+  select('Theme', state.theme || 'light', [{value: 'light', label: 'Light'}, {value: 'dark', label: 'Dark'}], 'theme');
+  const capture = el('button', 'Screenshot mode', 'ssPush'); capture.title = 'Hide controls; press Escape to return.'; capture.onclick = () => {onChange({capture: true, sitesOpen: false}); root.focus();}; controls.append(capture); root.append(controls);
+  if (notice) root.append(el('p', notice, 'ssNotice'));
+  const W = compact ? 820 : 1280, H = compact ? 720 : 690;
+  const colors = {bg: dark ? '#152133' : '#ffffff', ink: dark ? '#e7edf7' : '#17324d', muted: dark ? '#acbed3' : '#536a80',
+    border: dark ? '#35455a' : '#dce6ef', panel: dark ? '#1d2d42' : '#f3f7fa', inProcess: dark ? '#479fe7' : '#176eb0', submitted: '#61cdb4', review: '#f6c66a'};
+  if (highContrast) Object.assign(colors, {bg: highContrast.background, ink: highContrast.foreground, muted: highContrast.foreground, border: highContrast.foreground, panel: highContrast.background, inProcess: highContrast.foreground, submitted: highContrast.background, review: highContrast.background});
+  const stage = el('div', undefined, 'ssStage'), svg = svgEl('svg', {viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Submissions planned for ${r.label}: ${r.totals.planned} planned, ${r.totals.inProcess} in process, ${r.totals.submitted} submitted, ${r.totals.review} needing date review.`});
+  stage.append(svg); root.append(stage);
+  svg.append(svgEl('rect', {width: W, height: H, fill: colors.bg}));
+  const text = (x, y, value, size = 18, fill = colors.ink, extra = {}) => {const node = svgEl('text', {x, y, 'font-size': size, fill, ...extra}, value); svg.append(node); return node;};
+  const bold = {'font-weight': 650}, centered = {'text-anchor': 'middle'};
+  text(34, 48, 'Site Submission Outlook', compact ? 29 : 32, colors.ink, bold);
+  text(35, 82, `${r.label} · Planned-month progress`, compact ? 19 : 21, colors.muted);
+  if (!compact) text(1238, 45, 'CURRENT + NEXT MONTH', 15, colors.muted, {'text-anchor': 'end', 'letter-spacing': 1});
+  const legend = [['inProcess', 'In process'], ['submitted', 'Submitted'], ...(r.totals.review ? [['review', 'Check date']] : [])];
+  legend.forEach(([key, label], i) => {const x = 36 + i * 177; svg.append(svgEl('rect', {x, y: 106, width: 15, height: 15, rx: 3, fill: colors[key], stroke: highContrast ? colors.ink : 'none'})); text(x + 24, 120, label, 17);});
+  if (compact) {
+    [['Planned', r.totals.planned], ['In process', r.totals.inProcess], ['Submitted', r.totals.submitted]].forEach(([label, value], i) => {
+      const x = 36 + i * 259; svg.append(svgEl('rect', {x, y: 143, width: 239, height: 75, rx: 9, fill: colors.panel})); text(x + 15, 169, label, 16, colors.muted); text(x + 15, 201, String(value), 29, colors.ink, bold);
+    });
+  }
+  const left = compact ? 57 : 72, right = compact ? W - 22 : 966, bottom = compact ? 554 : 548, top = compact ? 266 : 197, chartHeight = bottom - top;
+  const ticks = Array.from({length: Math.floor(r.axisMax / r.step) + 1}, (_, i) => i * r.step);
+  ticks.forEach(tick => {const y = bottom - tick / r.axisMax * chartHeight; svg.append(svgEl('line', {x1: left, x2: right, y1: y, y2: y, stroke: colors.border, 'stroke-width': tick ? 1 : 1.5})); text(left - 13, y + 6, String(tick), 16, colors.muted, {'text-anchor': 'end'});});
+  text(left, top - 29, 'Submissions', 15, colors.muted);
+  const groupWidth = (right - left) / Math.max(sites.length, 1), barWidth = Math.min(compact ? 40 : 45, groupWidth * .29), barGap = 11;
+  r.buckets.forEach((site, i) => {
+    const cx = left + groupWidth * (i + .5), start = cx - barWidth - barGap / 2;
+    if (i) svg.append(svgEl('line', {x1: left + groupWidth * i, x2: left + groupWidth * i, y1: bottom + 20, y2: bottom + 65, stroke: colors.border}));
+    site.months.forEach((month, mi) => {
+      const x = start + mi * (barWidth + barGap); let y = bottom;
+      [['inProcess', month.inProcess], ['submitted', month.submitted], ['review', month.review]].forEach(([key, count]) => {
+        const height = count / r.axisMax * chartHeight; y -= height;
+        if (count) svg.append(svgEl('rect', {x, y, width: barWidth, height, fill: colors[key], stroke: highContrast ? colors.ink : 'none', 'stroke-width': 2}));
+        if (height >= 25) text(x + barWidth / 2, y + height / 2 + 6, String(count), 18, highContrast ? (key === 'inProcess' ? colors.bg : colors.ink) : key === 'inProcess' ? (dark ? '#10253b' : '#ffffff') : '#173a35', {...centered, ...bold});
+      });
+      text(x + barWidth / 2, y - 11, String(month.planned), 20, colors.ink, {...centered, ...bold});
+      text(x + barWidth / 2, bottom + 31, month.short, 17, colors.muted, centered);
+      const isSelected = state.detail?.site === site.key && state.detail?.month === month.key;
+      const hit = svgEl('rect', {x: x - 3, y: Math.min(y - 32, bottom - 40), width: barWidth + 6, height: Math.max(bottom - y + 74, 82), fill: 'transparent', stroke: isSelected ? colors.ink : 'none', 'stroke-width': 2,
+        tabindex: 0, role: 'button', class: 'ssHit', 'data-site': site.key, 'data-month': month.key, 'aria-label': `${site.site}, ${month.label}: ${month.planned} planned, ${month.inProcess} in process, ${month.submitted} submitted${month.review ? `, ${month.review} check date` : ''}. View submissions.`});
+      hit.append(svgEl('title', {}, `${site.site} · ${month.label}\nPlanned: ${month.planned}\nIn process: ${month.inProcess}\nSubmitted: ${month.submitted}\nOverdue and still in process: ${month.overdue}${month.review ? `\nCheck actual date: ${month.review}` : ''}\nGrouped by planned submission month. Submitted may have occurred in another month.\nClick to view the submissions.`));
+      const activate = () => onChange({detail: {site: site.key, month: month.key}, query: '', status: 'all', page: 0, sitesOpen: false}); hit.onclick = activate;
+      hit.onkeydown = e => {if (e.key === 'Enter' || e.key === ' ') {e.preventDefault(); activate();}}; svg.append(hit);
+    });
+    text(cx, bottom + 64, site.site.length > 12 ? `${site.site.slice(0, 11)}…` : site.site, 20, colors.ink, {...centered, ...bold}).append(svgEl('title', {}, site.site));
+  });
+  if (!compact) {
+    const x = 1006, width = 242; svg.append(svgEl('rect', {x, y: 157, width, height: 443, rx: 13, fill: colors.panel, stroke: colors.border}));
+    text(x + 20, 190, 'Two-month plan', 20, colors.ink, bold); text(x + 20, 246, String(r.totals.planned), 47, colors.ink, bold); text(x + 20, 271, 'distinct submissions', 16, colors.muted);
+    const stat = (y, label, value) => {text(x + 20, y, label, 17); text(x + width - 20, y, String(value), 21, colors.ink, {...bold, 'text-anchor': 'end'});};
+    stat(317, 'In process', r.totals.inProcess); stat(350, 'Submitted', r.totals.submitted); if (r.totals.review) stat(383, 'Check date', r.totals.review);
+    text(x + 20, 418, `${r.completion}% submitted`, 20, colors.ink, bold);
+    svg.append(svgEl('rect', {x: x + 20, y: 433, width: width - 40, height: 9, rx: 4, fill: colors.border}));
+    svg.append(svgEl('rect', {x: x + 20, y: 433, width: (width - 40) * r.completion / 100, height: 9, rx: 4, fill: colors.submitted}));
+    text(x + 20, 480, `${r.totals.overdue} overdue`, 22, colors.ink, bold); text(x + 20, 504, 'within this month’s plan', 15, colors.muted);
+    text(x + 20, 547, `As of ${dateText(r.today)}`, 15, colors.muted); text(x + 20, 573, 'Click a column for details', 15, colors.muted);
+  }
+  if (!sites.length) text((left + right) / 2, top + 100, 'Choose up to six sites to start.', 22, colors.muted, centered);
+  else if (!r.totals.planned) text((left + right) / 2, top + 110, 'No planned submissions in these two months', 21, colors.muted, centered);
+  const footerY = compact ? 650 : 643;
+  text(35, footerY, `${synthetic ? 'ILLUSTRATIVE DATA · ' : ''}${sites.length} sites · ${unitMapped && state.unit && state.unit !== '*' ? state.unit : 'All business units'}${compact ? ` · ${r.completion}% submitted · ${r.totals.overdue} overdue` : ''}`, 15, colors.muted);
+  text(35, footerY + 23, 'Grouped by planned date; Submitted requires an actual date on or before today.', 15, colors.muted);
+  if (r.issueCount || compact) text(35, footerY + 44, `${compact ? `As of ${dateText(r.today)} · ` : ''}${r.issueCount ? `${r.issueCount} data checks — review below` : 'Distinct submission counts; duplicates do not increase totals.'}`, 14, colors.muted);
+  const checks = el('div', undefined, 'ssChecks'), review = el('button', `Data checks · ${r.issueCount}`);
+  review.onclick = () => onChange({detail: {kind: 'issues'}, query: '', status: 'all', page: 0}); checks.append(review, el('span', `${r.checks.outsideSites} submissions outside selected sites · ${r.checks.outsideMonths} outside these months · ${r.checks.missingIds} rows without an ID`)); root.append(checks);
+  if (state.detail) renderDetails(root, r, state, onChange);
+  return r;
+}
+
+function renderDetails(root, result, state, onChange) {
+  const issues = state.detail.kind === 'issues', month = issues ? null : result.buckets.find(b => b.key === state.detail.site)?.months.find(m => m.key === state.detail.month);
+  const records = issues ? result.issues : month?.rows || [], query = String(state.query || '').toLowerCase();
+  const filtered = records.filter(r => (!query || `${r.id} ${r.site} ${r.reason}`.toLowerCase().includes(query)) && (issues || !state.status || state.status === 'all' || r.status === state.status));
+  const pageSize = 50, page = Math.min(Math.max(0, state.page || 0), Math.max(0, Math.ceil(filtered.length / pageSize) - 1));
+  const section = el('section', undefined, 'ssDetails');
+  section.append(el('h3', issues ? 'Data checks' : `${month?.site || state.detail.site} · ${month?.label || state.detail.month}`));
+  if (issues) section.append(el('p', 'Site checks cover all delivered sites in the selected business unit. Date checks cover selected sites across all dates. Records needing date review are not assumed to be submitted.'));
+  else section.append(el('p', 'These submissions belong to the selected planned month. Actual submission dates can be earlier or later than that month.'));
+  const controls = el('div', undefined, 'ssDetailTools'), search = el('input'); search.placeholder = 'Find submission'; search.setAttribute('aria-label', 'Find submission'); search.value = state.query || '';
+  search.onchange = () => onChange({query: search.value, page: 0}); controls.append(search);
+  if (!issues) {
+    const statuses = el('select'); statuses.setAttribute('aria-label', 'Submission progress');
+    ['all', 'In process', 'Submitted', 'Check date'].forEach(s => {const o = el('option', s === 'all' ? 'All progress' : s); o.value = s; statuses.append(o);}); statuses.value = state.status || 'all'; statuses.onchange = () => onChange({status: statuses.value, page: 0}); controls.append(statuses);
+  }
+  const close = el('button', 'Close details', 'ssClose'); close.onclick = () => onChange({detail: null}); controls.append(close); section.append(controls);
+  if (filtered.length) {
+    const wrap = el('div', undefined, 'ssTableWrap'), table = el('table'), head = el('thead'), header = el('tr');
+    ['Submission ID', 'Site', 'Planned submission', 'Actual submission', issues ? 'Check' : 'Progress'].forEach(label => header.append(el('th', label))); head.append(header); table.append(head);
+    const body = el('tbody'); filtered.slice(page * pageSize, (page + 1) * pageSize).forEach(r => {const row = el('tr'); [r.id, r.site, formatDate(r.plan), formatDate(r.actual), issues ? r.reason : r.status + (r.overdue ? ' · Overdue' : '')].forEach(value => row.append(el('td', value))); body.append(row);}); table.append(body); wrap.append(table); section.append(wrap);
+    const pagination = el('div', undefined, 'ssPager'); pagination.append(el('span', `Showing ${page * pageSize + 1}–${Math.min((page + 1) * pageSize, filtered.length)} of ${filtered.length}`));
+    const prev = el('button', 'Previous'), next = el('button', 'Next'); prev.disabled = page === 0; next.disabled = (page + 1) * pageSize >= filtered.length; prev.onclick = () => onChange({page: page - 1}); next.onclick = () => onChange({page: page + 1}); pagination.append(prev, next); section.append(pagination);
+  } else section.append(el('p', issues && result.checks.missingIds ? `${result.checks.missingIds} rows have no submission ID and cannot be counted. No other matching checks.` : 'No matching submissions.'));
+  root.append(section);
+}
