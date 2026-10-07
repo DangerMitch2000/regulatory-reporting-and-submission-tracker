@@ -15,5 +15,16 @@ export function sample(now = new Date()) {
     }
     rows.push({SubID: `DEMO-${site}-PRIOR-SUBMITTED`, Site: site, PlannedSubmission: iso(-1,15), ActualSubmission: iso(0,Math.min(3,currentDay)), BusinessUnit: 'ID'});
   });
-  return rows;
+  const states = new Map();
+  return rows.map(row => {
+    if (!states.has(row.SubID)) {
+      const i = states.size;
+      states.set(row.SubID, {
+        SubStatus: row.ActualSubmission ? 'Completed' : ['In Progress','Planned','Ready For Submission','Cancelled','Withdrawn','Inactive',null][i%7],
+        ROStatus: row.ActualSubmission ? 'Health Authority Approved' : ['In Progress','Planned','Archived','Rejected','On Hold By Health Authority'][i%5],
+        AppStatus: i%6 ? 'Active' : 'Inactive'
+      });
+    }
+    return {...row,...states.get(row.SubID)};
+  });
 }

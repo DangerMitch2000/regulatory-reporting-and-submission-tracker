@@ -1,12 +1,22 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Site Submission Outlook — illustrative preview</title><style>.siteSubmissions{--ink:#17324d;--muted:#536a80;--border:#dce6ef;--surface:#fff;--bg:#f4f7fa;color:var(--ink);background:var(--surface);font:14px 'Segoe UI',Arial,sans-serif;box-sizing:border-box;overflow:auto;position:relative;line-height:1.45}.siteSubmissions *{box-sizing:border-box}.siteSubmissions.dark{--ink:#e7edf7;--muted:#acbed3;--border:#35455a;--surface:#152133;--bg:#1d2d42}.siteSubmissions button,.siteSubmissions select,.siteSubmissions input{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 9px}.siteSubmissions button{cursor:pointer}.siteSubmissions button:hover{background:var(--bg)}.siteSubmissions button:disabled{opacity:.5;cursor:default}.siteSubmissions :focus-visible{outline:3px solid #dc8c21;outline-offset:3px}.ssControls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 18px;border-bottom:1px solid var(--border)}.ssControls label{display:flex;gap:7px;align-items:center}.ssControls .ssPush{margin-left:auto}.ssSites{position:relative}.ssSites summary{cursor:pointer;border:1px solid var(--border);padding:6px 11px;border-radius:6px}.ssSitePanel{position:absolute;top:40px;left:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;box-shadow:0 12px 30px #0002;width:280px;z-index:3;max-height:330px;overflow:auto}.ssSitePanel label{padding:4px;display:flex;justify-content:space-between}.ssSitePanel small{color:var(--muted)}.ssSitePanel p{margin:0 0 10px}.ssStage{width:100%;min-width:530px}.ssStage svg{display:block;width:100%;height:auto}.ssStage text{font-family:'Segoe UI',Arial,sans-serif}.ssStage .ssHit{cursor:pointer}.ssStage .ssHit:hover{fill:rgba(60,130,170,.08)}.ssStage .ssHit:focus{stroke:#dc8c21;stroke-width:3;outline:none}.ssNotice{padding:10px 18px;margin:0;background:#fff3d6;color:#744000;font-weight:600}.ssSetup{padding:28px;max-width:800px}.ssSetup h2{font-size:23px}.ssSetup li{margin:8px 0}.ssChecks{padding:9px 18px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;color:var(--muted);border-top:1px solid var(--border)}.ssChecks span{font-size:12px}.ssDetails{margin:0 18px 20px;padding-top:14px;border-top:1px solid var(--border)}.ssDetails h3{font-size:17px;margin:0}.ssDetailTools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}.ssDetailTools input{min-width:190px;flex:1}.ssDetailTools .ssClose{margin-left:auto}.ssTableWrap{overflow:auto;max-height:360px}.ssDetails table{width:100%;border-collapse:collapse;text-align:left;font-size:13px}.ssDetails th{position:sticky;top:0;background:var(--bg);color:var(--muted);font-weight:600;z-index:1}.ssDetails td,.ssDetails th{padding:9px 10px;border-bottom:1px solid var(--border);white-space:nowrap}.ssDetails td:last-child{white-space:normal;min-width:150px}.ssStatus{font-weight:650}.ssPager{display:flex;align-items:center;gap:12px;margin-top:12px;color:var(--muted)}.ssPager span{margin-right:auto}.siteSubmissions.capture .ssControls,.siteSubmissions.capture .ssChecks,.siteSubmissions.capture .ssDetails{display:none}.siteSubmissions.capture{background:var(--surface)}.siteSubmissions.capture .ssStage{min-width:0}.ssEmpty{padding:22px;color:var(--muted)}@media(prefers-reduced-motion:no-preference){.ssControls button{transition:background .15s}}@media(max-width:600px){.ssControls{padding:8px}.ssControls .ssPush{margin-left:0}.ssDetails{margin-left:9px;margin-right:9px}}
 .siteSubmissions.capture{display:flex;flex-direction:column;overflow:hidden}.siteSubmissions.capture .ssStage{flex:1;min-height:0}.siteSubmissions.capture .ssStage svg{height:100%;width:100%}
 .ssStage .ssBacklogHit{cursor:pointer}.ssStage .ssBacklogHit:hover{fill:rgba(195,110,25,.1)}.ssStage .ssBacklogHit:focus{stroke:#dc8c21;stroke-width:3;outline:none}
+.ssStateControls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 18px;border-bottom:1px solid var(--border)}.ssStateFilter{position:relative}.ssStateFilter summary{cursor:pointer;border:1px solid var(--border);padding:6px 11px;border-radius:6px}.ssStatePanel{width:300px;max-width:calc(100vw - 35px)}.ssStatePanel label{justify-content:flex-start;align-items:flex-start;gap:9px;padding:6px 2px}.ssStatePanel label span{overflow-wrap:anywhere}.ssStatePanel label input{margin:4px 0 0;flex-shrink:0}.ssStatePanel small{margin-left:auto;max-width:80px}.ssStateActions{display:flex;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:5px}.ssDetails td.ssRecordedState{white-space:normal;min-width:135px;max-width:260px;overflow-wrap:anywhere}.siteSubmissions.capture .ssStateControls{display:none}@media(max-width:600px){.ssStateControls{padding:8px}.ssStatePanel{width:270px}}
 body{margin:0;padding:24px;background:#e7edf3;font:14px 'Segoe UI',sans-serif}nav{max-width:1440px;margin:0 auto 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}nav strong{margin-right:auto}nav button{padding:8px 12px;border:1px solid #c9d4e1;background:white;border-radius:6px;color:#17324d;cursor:pointer}#host{width:min(1440px,100%);height:800px;margin:0 auto;border:1px solid #d6e0eb;box-shadow:0 10px 40px #18365314;border-radius:9px}.demo-note{max-width:1440px;margin:18px auto;color:#536a80} </style></head><body><nav><strong>Preview · fictional submissions</strong><button id="wide">Wide preview</button><button id="small">Compact preview</button><button id="clean">Reset demo</button><button id="review">Data checks example</button></nav><div id="host"></div><p class="demo-note">Demonstration data only. The months follow your computer's current date. Import the Power BI package and map your real submission fields to see actual counts.</p><script>(()=>{
 const DEFAULT_SITES = ['ABO', 'ADJ', 'ADK', 'AJG', 'ARDG', 'SCR'];
-const ROLES = ['SubID', 'Site', 'PlannedSubmission', 'ActualSubmission', 'BusinessUnit'];
+const STATE_FIELDS = [{role:'SubStatus',label:'Submission state'}, {role:'ROStatus',label:'RO state'}, {role:'AppStatus',label:'Application state'}];
+const ROLES = ['SubID', 'Site', 'PlannedSubmission', 'ActualSubmission', 'BusinessUnit', ...STATE_FIELDS.map(f=>f.role)];
 const REQUIRED = ROLES.slice(0, 4);
 const clean = value => String(value ?? '').trim();
 const siteKey = value => clean(value).toLocaleUpperCase('en-GB');
+function normalizeStateFilters(filters = {}) {
+  return Object.fromEntries(STATE_FIELDS.map(({role}) => [role, Array.isArray(filters?.[role]) ? [...new Set(filters[role].filter(v=>typeof v==='string').map(clean))] : null]));
+}
+const stateLabel = value => value || 'Not recorded';
+function formatStates(values) {
+  if (!values) return 'Not mapped';
+  return (values.length > 1 ? 'Multiple: ' : '') + values.map(stateLabel).join(' / ');
+}
 function parseDay(value) {
   if (value == null || clean(value) === '') return {kind: 'blank'};
   let y, m, d;
@@ -48,7 +58,7 @@ function mapTable(table) {
     if (found.length) index[role] = found[0];
     else if (REQUIRED.includes(role)) missing.push(role);
   }
-  return {missing, unitMapped: index.BusinessUnit !== undefined,
+  return {missing, unitMapped: index.BusinessUnit !== undefined, stateMapped: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,index[role] !== undefined])),
     rows: (table?.rows || []).map(row => Object.fromEntries(ROLES.map(role => [role, index[role] === undefined ? null : row[index[role]]])))};
 }
 function normalizeSites(sites) {
@@ -60,14 +70,18 @@ function normalizeSites(sites) {
   }
   return result;
 }
-function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date()} = {}) {
+function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), stateFilters = {}, stateMapped} = {}) {
   const dates = calendar(now), selectedSites = normalizeSites(sites), grouped = new Map(), units = new Set(), availableSites = new Map();
+  const mappings = stateMapped ?? Object.fromEntries(STATE_FIELDS.map(({role})=>[role,rows.some(r=>Object.prototype.hasOwnProperty.call(r,role))]));
+  const filters = normalizeStateFilters(stateFilters), choices = Object.fromEntries(STATE_FIELDS.map(({role})=>[role,new Set()]));
+  const matches = row => (unit === '*' || clean(row.BusinessUnit) === unit) && STATE_FIELDS.every(({role}) => !mappings[role] || filters[role] === null || filters[role].includes(clean(row[role])));
   let missingIds = 0;
   for (const row of rows) {
     const bu = clean(row.BusinessUnit), site = clean(row.Site), id = clean(row.SubID);
     units.add(bu);
+    STATE_FIELDS.forEach(({role})=>{if(mappings[role])choices[role].add(clean(row[role]));});
     if (site && !availableSites.has(siteKey(site))) availableSites.set(siteKey(site), site);
-    if (!id) { if (unit === '*' || bu === unit) missingIds++; continue; }
+    if (!id) { if (matches(row)) missingIds++; continue; }
     if (!grouped.has(id)) grouped.set(id, []);
     grouped.get(id).push(row);
   }
@@ -78,12 +92,13 @@ function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date()} =
   const issues = [], checks = {missingIds, outsideSites: 0, unassignedSite: 0, multipleSites: 0, missingPlan: 0, planIssues: 0, actualIssues: 0, outsideMonths: 0};
   let scopedRecords = 0;
   for (const [id, list] of grouped) {
-    if (unit !== '*' && !list.some(row => clean(row.BusinessUnit) === unit)) continue;
+    if (!list.some(matches)) continue;
     scopedRecords++;
     const names = [...new Set(list.map(row => siteKey(row.Site)).filter(Boolean))];
     const plan = resolveDate(list.map(row => row.PlannedSubmission));
     const actual = resolveDate(list.map(row => row.ActualSubmission));
-    const record = {id, site: names.join(' / ') || 'Unassigned', plan, actual, status: 'In process', reason: ''};
+    const states = Object.fromEntries(STATE_FIELDS.map(({role})=>[role,mappings[role] ? [...new Set(list.map(row=>clean(row[role])))].sort() : null]));
+    const record = {id, site: names.join(' / ') || 'Unassigned', plan, actual, states, status: 'In process', reason: ''};
     if (names.length !== 1) {
       const reason = names.length ? 'Multiple sites: not allocated' : 'Site not recorded';
       checks[names.length ? 'multipleSites' : 'unassignedSite']++;
@@ -135,6 +150,7 @@ function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date()} =
   const step = Math.max(1, ([1, 2, 5, 10].find(s => s * magnitude >= rawStep) || 10) * magnitude);
   const axisMax = Math.max(5, Math.ceil(peak / step) * step);
   return {...dates, buckets, totals, monthTotals, backlog, checks, issues, axisMax, step, scopedRecords,
+    stateMapped: mappings, stateFilters: filters, stateChoices: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,[...choices[role]].sort((a,b)=>stateLabel(a).localeCompare(stateLabel(b)))])),
     units: [...units].sort(), availableSites: [...availableSites.values()].sort(),
     issueCount: issues.length + missingIds, completion: totals.planned ? Math.round(totals.submitted / totals.planned * 100) : 0};
 }
@@ -157,7 +173,7 @@ function render(root, rows, options = {}) {
     const setup = el('section', undefined, 'ssSetup'); setup.append(el('h2', 'Site Submission Outlook'), el('p', 'Map these four fields to show this month and next month for your main six sites:'));
     const list = el('ul'); missing.forEach(role => list.append(el('li', labels[role] || role))); setup.append(list, el('p', 'Use raw date columns, not date hierarchies. Use the initial planned submission date to match the reference slide. An actual-date column may contain blanks.')); root.append(setup); return;
   }
-  const sites = normalizeSites(state.sites), unit = unitMapped ? state.unit ?? '*' : '*', r = summarize(rows, {sites, unit, now});
+  const sites = normalizeSites(state.sites), unit = unitMapped ? state.unit ?? '*' : '*', r = summarize(rows, {sites, unit, now, stateFilters: state.stateFilters, stateMapped: options.stateMapped});
   const controls = el('div', undefined, 'ssControls');
   const siteControl = el('details', undefined, 'ssSites'); siteControl.open = Boolean(state.sitesOpen);
   siteControl.append(el('summary', `Sites · ${sites.length}`));
@@ -175,12 +191,31 @@ function render(root, rows, options = {}) {
     if (!opts.some(o => o.value === value)) opts.push({value, label: `${value || 'Blank'} (no records)`});
     for (const o of opts) {const opt = el('option', o.label); opt.value = o.value; input.append(opt);} input.value = value; input.disabled = disabled;
     if (disabled) input.title = 'Add your business-unit column to the Business unit (optional) field to enable this filter.';
-    input.onchange = () => onChange({[key]: input.value, detail: null}); wrap.append(input); controls.append(wrap);
+    input.onchange = () => onChange({[key]: input.value, detail: null, stateOpen: null}); wrap.append(input); controls.append(wrap);
   }
   if (unitMapped) select('Business unit', state.unit ?? '*', [{value: '*', label: 'All'}, ...r.units.map(value => ({value, label: value || 'Not recorded'}))], 'unit');
   else select('Business unit', '*', [{value: '*', label: 'Map Business unit field'}], 'unit', true);
   select('Theme', state.theme || 'light', [{value: 'light', label: 'Light'}, {value: 'dark', label: 'Dark'}], 'theme');
-  const capture = el('button', 'Screenshot mode', 'ssPush'); capture.title = 'Hide controls; press Escape to return.'; capture.onclick = () => {onChange({capture: true, sitesOpen: false}); root.focus();}; controls.append(capture); root.append(controls);
+  const capture = el('button', 'Screenshot mode', 'ssPush'); capture.title = 'Hide controls; press Escape to return.'; capture.onclick = () => {onChange({capture: true, sitesOpen: false, stateOpen: null}); root.focus();}; controls.append(capture); root.append(controls);
+  const stateControls = el('div', undefined, 'ssStateControls');
+  STATE_FIELDS.forEach(({role,label}) => {
+    if (!r.stateMapped[role]) {
+      const button = el('button', `${label} · Map field`); button.disabled = true; button.dataset.role = role; button.title = `Map ${label} (optional) to enable this filter.`; stateControls.append(button); return;
+    }
+    const values = r.stateFilters[role], menu = el('details', undefined, 'ssStateFilter'); menu.dataset.role = role; menu.open = state.stateOpen === role;
+    menu.append(el('summary', `${label} · ${values === null ? 'All' : values.length ? values.length + ' selected' : 'None'}`));
+    const list = el('div', undefined, 'ssSitePanel ssStatePanel'), buttons = el('div', undefined, 'ssStateActions');
+    const update = selection => onChange({stateFilters:{...r.stateFilters,[role]:selection},stateOpen:role,sitesOpen:false,detail:null,query:'',page:0});
+    const all = el('button','All'), none = el('button','None'); all.setAttribute('aria-label',`All ${label} values`); none.setAttribute('aria-label',`Clear ${label} values`); all.onclick=()=>update(null); none.onclick=()=>update([]); buttons.append(all,none);list.append(buttons);
+    const options = [...new Set([...r.stateChoices[role],...(values||[])])].sort((a,b)=>stateLabel(a).localeCompare(stateLabel(b)));
+    if(!options.length)list.append(el('p','No states delivered.'));
+    options.forEach(value=>{
+      const line=el('label'),box=el('input');box.type='checkbox';box.checked=values===null||values.includes(value);box.setAttribute('aria-label',`Include ${stateLabel(value)} in ${label}`);
+      box.onchange=()=>{const selected=values===null?[...options]:[...values];update(box.checked?[...new Set([...selected,value])]:selected.filter(v=>v!==value));};
+      line.append(box,el('span',stateLabel(value)));if(!r.stateChoices[role].includes(value))line.append(el('small','No delivered rows'));list.append(line);
+    });
+    menu.append(list);stateControls.append(menu);
+  });root.append(stateControls);
   if (notice) root.append(el('p', notice, 'ssNotice'));
   const W = compact ? 820 : 1280, H = compact ? 840 : 800;
   const colors = {bg: dark ? '#152133' : '#ffffff', ink: dark ? '#e7edf7' : '#17324d', muted: dark ? '#acbed3' : '#536a80',
@@ -267,6 +302,13 @@ function render(root, rows, options = {}) {
   text(35, footerY + 23, 'Backlog is separate from the two-month plan. Keep earlier dates in report filters.', 15, colors.muted);
   text(35, footerY + 44, `Submitted requires an actual date on or before today.${r.issueCount ? ` ${r.issueCount} data checks — review below.` : ''}`, 14, colors.muted);
   if (compact) text(35, footerY + 66, `${r.completion}% submitted · ${r.totals.overdue} overdue in this month’s plan · As of ${dateText(r.today)}`, 14, colors.muted);
+  const filterText = STATE_FIELDS.map(({role,label})=>`${label}: ${!r.stateMapped[role]?'Not mapped':r.stateFilters[role]===null?'All':r.stateFilters[role].length?r.stateFilters[role].map(stateLabel).join(', '):'None'}`).join(' · ');
+  let filterY=compact?832:810,line='',filterNode=text(35,filterY,'',13,colors.muted,{'data-state-scope':'true'});
+  for(const word of filterText.split(' ')) {
+    const candidate=line?line+' '+word:word;filterNode.textContent=candidate;
+    if(filterNode.getComputedTextLength()>W-70&&line){filterNode.textContent=line;filterY+=18;line=word;filterNode=text(35,filterY,line,13,colors.muted,{'data-state-scope':'true'});}else line=candidate;
+  }
+  const finalHeight=Math.max(H,filterY+18);svg.setAttribute('viewBox',`0 0 ${W} ${finalHeight}`);svg.firstElementChild.setAttribute('height',String(finalHeight));
   const checks = el('div', undefined, 'ssChecks'), review = el('button', `Data checks · ${r.issueCount}`);
   review.onclick = () => onChange({detail: {kind: 'issues'}, query: '', status: 'all', page: 0}); checks.append(review, el('span', `${r.checks.outsideSites} submissions outside selected sites · ${r.checks.outsideMonths} outside the month plan and backlog · ${r.checks.missingIds} rows without an ID`)); root.append(checks);
   if (state.detail) renderDetails(root, r, state, onChange);
@@ -277,13 +319,14 @@ function renderDetails(root, result, state, onChange) {
   const issues = state.detail.kind === 'issues', isBacklog = state.detail.kind === 'backlog', site = result.buckets.find(b => b.key === state.detail.site);
   const month = issues || isBacklog ? null : site?.months.find(m => m.key === state.detail.month);
   const records = issues ? result.issues : isBacklog ? (state.detail.site ? site?.backlog.rows || [] : result.backlog.rows) : month?.rows || [], query = String(state.query || '').toLowerCase();
-  const filtered = records.filter(r => (!query || `${r.id} ${r.site} ${r.reason}`.toLowerCase().includes(query)) && (issues || !state.status || state.status === 'all' || r.status === state.status));
+  const filtered = records.filter(r => (!query || `${r.id} ${r.site} ${r.reason} ${STATE_FIELDS.map(f=>formatStates(r.states?.[f.role])).join(' ')}`.toLowerCase().includes(query)) && (issues || !state.status || state.status === 'all' || r.status === state.status));
   const pageSize = 50, page = Math.min(Math.max(0, state.page || 0), Math.max(0, Math.ceil(filtered.length / pageSize) - 1));
   const section = el('section', undefined, 'ssDetails');
   section.append(el('h3', issues ? 'Data checks' : isBacklog ? `${site?.site || (state.detail.site ? state.detail.site : 'All selected sites')} · Overdue backlog` : `${month?.site || state.detail.site} · ${month?.label || state.detail.month}`));
-  if (issues) section.append(el('p', 'Site checks cover all delivered sites in the selected business unit. Date checks cover selected sites across all dates. Records needing date review are not assumed to be submitted.'));
+  if (issues) section.append(el('p', 'Checks respect the selected business unit and lifecycle states. Site checks cover all delivered sites; date checks cover selected sites across all dates. Records needing date review are not assumed to be submitted.'));
   else if (isBacklog) section.append(el('p', `Planned before ${dateText(result.backlog.cutoff)} with no actual submission date, oldest first. These records are separate from the two-month plan. Only records delivered by Power BI can appear; keep earlier dates in report filters.`));
   else section.append(el('p', 'These submissions belong to the selected planned month. Actual submission dates can be earlier or later than that month.'));
+  section.append(el('p','Recorded submission, RO and application states are shown separately from date-based progress. Multiple recorded values remain visible.'));
   const controls = el('div', undefined, 'ssDetailTools'), search = el('input'); search.placeholder = 'Find submission'; search.setAttribute('aria-label', 'Find submission'); search.value = state.query || '';
   search.onchange = () => onChange({query: search.value, page: 0}); controls.append(search);
   if (!issues && !isBacklog) {
@@ -293,8 +336,8 @@ function renderDetails(root, result, state, onChange) {
   const close = el('button', 'Close details', 'ssClose'); close.onclick = () => onChange({detail: null}); controls.append(close); section.append(controls);
   if (filtered.length) {
     const wrap = el('div', undefined, 'ssTableWrap'), table = el('table'), head = el('thead'), header = el('tr');
-    ['Submission ID', 'Site', 'Planned submission', 'Actual submission', issues ? 'Check' : 'Progress'].forEach(label => header.append(el('th', label))); head.append(header); table.append(head);
-    const body = el('tbody'); filtered.slice(page * pageSize, (page + 1) * pageSize).forEach(r => {const row = el('tr'); [r.id, r.site, formatDate(r.plan), formatDate(r.actual), issues ? r.reason : r.status + (r.overdue ? ' · Overdue' : '')].forEach(value => row.append(el('td', value))); body.append(row);}); table.append(body); wrap.append(table); section.append(wrap);
+    ['Submission ID', 'Site', 'Planned submission', 'Actual submission', issues ? 'Check' : 'Progress', ...STATE_FIELDS.map(f=>f.label)].forEach(label => header.append(el('th', label))); head.append(header); table.append(head);
+    const body = el('tbody'); filtered.slice(page * pageSize, (page + 1) * pageSize).forEach(r => {const row = el('tr'); [r.id, r.site, formatDate(r.plan), formatDate(r.actual), issues ? r.reason : r.status + (r.overdue ? ' · Overdue' : ''), ...STATE_FIELDS.map(f=>formatStates(r.states?.[f.role]))].forEach((value,i) => row.append(el('td', value, i>=5?'ssRecordedState':undefined))); body.append(row);}); table.append(body); wrap.append(table); section.append(wrap);
     const pagination = el('div', undefined, 'ssPager'); pagination.append(el('span', `Showing ${page * pageSize + 1}–${Math.min((page + 1) * pageSize, filtered.length)} of ${filtered.length}`));
     const prev = el('button', 'Previous'), next = el('button', 'Next'); prev.disabled = page === 0; next.disabled = (page + 1) * pageSize >= filtered.length; prev.onclick = () => onChange({page: page - 1}); next.onclick = () => onChange({page: page + 1}); pagination.append(prev, next); section.append(pagination);
   } else section.append(el('p', issues && result.checks.missingIds ? `${result.checks.missingIds} rows have no submission ID and cannot be counted. No other matching checks.` : 'No matching submissions.'));
@@ -317,7 +360,18 @@ function sample(now = new Date()) {
     }
     rows.push({SubID: `DEMO-${site}-PRIOR-SUBMITTED`, Site: site, PlannedSubmission: iso(-1,15), ActualSubmission: iso(0,Math.min(3,currentDay)), BusinessUnit: 'ID'});
   });
-  return rows;
+  const states = new Map();
+  return rows.map(row => {
+    if (!states.has(row.SubID)) {
+      const i = states.size;
+      states.set(row.SubID, {
+        SubStatus: row.ActualSubmission ? 'Completed' : ['In Progress','Planned','Ready For Submission','Cancelled','Withdrawn','Inactive',null][i%7],
+        ROStatus: row.ActualSubmission ? 'Health Authority Approved' : ['In Progress','Planned','Archived','Rejected','On Hold By Health Authority'][i%5],
+        AppStatus: i%6 ? 'Active' : 'Inactive'
+      });
+    }
+    return {...row,...states.get(row.SubID)};
+  });
 }
 
 const root = document.getElementById('host'); let state = {}, rows = sample();

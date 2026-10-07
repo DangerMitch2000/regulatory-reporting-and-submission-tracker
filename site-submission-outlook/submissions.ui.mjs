@@ -1,4 +1,4 @@
-import {summarize, DEFAULT_SITES, normalizeSites, siteKey, formatDate} from './submissions.logic.mjs';
+import {summarize, DEFAULT_SITES, STATE_FIELDS, normalizeSites, siteKey, formatDate, stateLabel, formatStates} from './submissions.logic.mjs';
 const el = (tag, text, cls) => {const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n;};
 const svgEl = (tag, attrs = {}, text) => {const n = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const [k,v] of Object.entries(attrs)) n.setAttribute(k, String(v)); if (text !== undefined) n.textContent = text; return n;};
 const dateText = day => formatDate({kind: 'date', day});
@@ -12,7 +12,7 @@ export function render(root, rows, options = {}) {
     const setup = el('section', undefined, 'ssSetup'); setup.append(el('h2', 'Site Submission Outlook'), el('p', 'Map these four fields to show this month and next month for your main six sites:'));
     const list = el('ul'); missing.forEach(role => list.append(el('li', labels[role] || role))); setup.append(list, el('p', 'Use raw date columns, not date hierarchies. Use the initial planned submission date to match the reference slide. An actual-date column may contain blanks.')); root.append(setup); return;
   }
-  const sites = normalizeSites(state.sites), unit = unitMapped ? state.unit ?? '*' : '*', r = summarize(rows, {sites, unit, now});
+  const sites = normalizeSites(state.sites), unit = unitMapped ? state.unit ?? '*' : '*', r = summarize(rows, {sites, unit, now, stateFilters: state.stateFilters, stateMapped: options.stateMapped});
   const controls = el('div', undefined, 'ssControls');
   const siteControl = el('details', undefined, 'ssSites'); siteControl.open = Boolean(state.sitesOpen);
   siteControl.append(el('summary', `Sites · ${sites.length}`));
@@ -30,12 +30,31 @@ export function render(root, rows, options = {}) {
     if (!opts.some(o => o.value === value)) opts.push({value, label: `${value || 'Blank'} (no records)`});
     for (const o of opts) {const opt = el('option', o.label); opt.value = o.value; input.append(opt);} input.value = value; input.disabled = disabled;
     if (disabled) input.title = 'Add your business-unit column to the Business unit (optional) field to enable this filter.';
-    input.onchange = () => onChange({[key]: input.value, detail: null}); wrap.append(input); controls.append(wrap);
+    input.onchange = () => onChange({[key]: input.value, detail: null, stateOpen: null}); wrap.append(input); controls.append(wrap);
   }
   if (unitMapped) select('Business unit', state.unit ?? '*', [{value: '*', label: 'All'}, ...r.units.map(value => ({value, label: value || 'Not recorded'}))], 'unit');
   else select('Business unit', '*', [{value: '*', label: 'Map Business unit field'}], 'unit', true);
   select('Theme', state.theme || 'light', [{value: 'light', label: 'Light'}, {value: 'dark', label: 'Dark'}], 'theme');
-  const capture = el('button', 'Screenshot mode', 'ssPush'); capture.title = 'Hide controls; press Escape to return.'; capture.onclick = () => {onChange({capture: true, sitesOpen: false}); root.focus();}; controls.append(capture); root.append(controls);
+  const capture = el('button', 'Screenshot mode', 'ssPush'); capture.title = 'Hide controls; press Escape to return.'; capture.onclick = () => {onChange({capture: true, sitesOpen: false, stateOpen: null}); root.focus();}; controls.append(capture); root.append(controls);
+  const stateControls = el('div', undefined, 'ssStateControls');
+  STATE_FIELDS.forEach(({role,label}) => {
+    if (!r.stateMapped[role]) {
+      const button = el('button', `${label} · Map field`); button.disabled = true; button.dataset.role = role; button.title = `Map ${label} (optional) to enable this filter.`; stateControls.append(button); return;
+    }
+    const values = r.stateFilters[role], menu = el('details', undefined, 'ssStateFilter'); menu.dataset.role = role; menu.open = state.stateOpen === role;
+    menu.append(el('summary', `${label} · ${values === null ? 'All' : values.length ? values.length + ' selected' : 'None'}`));
+    const list = el('div', undefined, 'ssSitePanel ssStatePanel'), buttons = el('div', undefined, 'ssStateActions');
+    const update = selection => onChange({stateFilters:{...r.stateFilters,[role]:selection},stateOpen:role,sitesOpen:false,detail:null,query:'',page:0});
+    const all = el('button','All'), none = el('button','None'); all.setAttribute('aria-label',`All ${label} values`); none.setAttribute('aria-label',`Clear ${label} values`); all.onclick=()=>update(null); none.onclick=()=>update([]); buttons.append(all,none);list.append(buttons);
+    const options = [...new Set([...r.stateChoices[role],...(values||[])])].sort((a,b)=>stateLabel(a).localeCompare(stateLabel(b)));
+    if(!options.length)list.append(el('p','No states delivered.'));
+    options.forEach(value=>{
+      const line=el('label'),box=el('input');box.type='checkbox';box.checked=values===null||values.includes(value);box.setAttribute('aria-label',`Include ${stateLabel(value)} in ${label}`);
+      box.onchange=()=>{const selected=values===null?[...options]:[...values];update(box.checked?[...new Set([...selected,value])]:selected.filter(v=>v!==value));};
+      line.append(box,el('span',stateLabel(value)));if(!r.stateChoices[role].includes(value))line.append(el('small','No delivered rows'));list.append(line);
+    });
+    menu.append(list);stateControls.append(menu);
+  });root.append(stateControls);
   if (notice) root.append(el('p', notice, 'ssNotice'));
   const W = compact ? 820 : 1280, H = compact ? 840 : 800;
   const colors = {bg: dark ? '#152133' : '#ffffff', ink: dark ? '#e7edf7' : '#17324d', muted: dark ? '#acbed3' : '#536a80',
@@ -122,6 +141,13 @@ export function render(root, rows, options = {}) {
   text(35, footerY + 23, 'Backlog is separate from the two-month plan. Keep earlier dates in report filters.', 15, colors.muted);
   text(35, footerY + 44, `Submitted requires an actual date on or before today.${r.issueCount ? ` ${r.issueCount} data checks — review below.` : ''}`, 14, colors.muted);
   if (compact) text(35, footerY + 66, `${r.completion}% submitted · ${r.totals.overdue} overdue in this month’s plan · As of ${dateText(r.today)}`, 14, colors.muted);
+  const filterText = STATE_FIELDS.map(({role,label})=>`${label}: ${!r.stateMapped[role]?'Not mapped':r.stateFilters[role]===null?'All':r.stateFilters[role].length?r.stateFilters[role].map(stateLabel).join(', '):'None'}`).join(' · ');
+  let filterY=compact?832:810,line='',filterNode=text(35,filterY,'',13,colors.muted,{'data-state-scope':'true'});
+  for(const word of filterText.split(' ')) {
+    const candidate=line?line+' '+word:word;filterNode.textContent=candidate;
+    if(filterNode.getComputedTextLength()>W-70&&line){filterNode.textContent=line;filterY+=18;line=word;filterNode=text(35,filterY,line,13,colors.muted,{'data-state-scope':'true'});}else line=candidate;
+  }
+  const finalHeight=Math.max(H,filterY+18);svg.setAttribute('viewBox',`0 0 ${W} ${finalHeight}`);svg.firstElementChild.setAttribute('height',String(finalHeight));
   const checks = el('div', undefined, 'ssChecks'), review = el('button', `Data checks · ${r.issueCount}`);
   review.onclick = () => onChange({detail: {kind: 'issues'}, query: '', status: 'all', page: 0}); checks.append(review, el('span', `${r.checks.outsideSites} submissions outside selected sites · ${r.checks.outsideMonths} outside the month plan and backlog · ${r.checks.missingIds} rows without an ID`)); root.append(checks);
   if (state.detail) renderDetails(root, r, state, onChange);
@@ -132,13 +158,14 @@ function renderDetails(root, result, state, onChange) {
   const issues = state.detail.kind === 'issues', isBacklog = state.detail.kind === 'backlog', site = result.buckets.find(b => b.key === state.detail.site);
   const month = issues || isBacklog ? null : site?.months.find(m => m.key === state.detail.month);
   const records = issues ? result.issues : isBacklog ? (state.detail.site ? site?.backlog.rows || [] : result.backlog.rows) : month?.rows || [], query = String(state.query || '').toLowerCase();
-  const filtered = records.filter(r => (!query || `${r.id} ${r.site} ${r.reason}`.toLowerCase().includes(query)) && (issues || !state.status || state.status === 'all' || r.status === state.status));
+  const filtered = records.filter(r => (!query || `${r.id} ${r.site} ${r.reason} ${STATE_FIELDS.map(f=>formatStates(r.states?.[f.role])).join(' ')}`.toLowerCase().includes(query)) && (issues || !state.status || state.status === 'all' || r.status === state.status));
   const pageSize = 50, page = Math.min(Math.max(0, state.page || 0), Math.max(0, Math.ceil(filtered.length / pageSize) - 1));
   const section = el('section', undefined, 'ssDetails');
   section.append(el('h3', issues ? 'Data checks' : isBacklog ? `${site?.site || (state.detail.site ? state.detail.site : 'All selected sites')} · Overdue backlog` : `${month?.site || state.detail.site} · ${month?.label || state.detail.month}`));
-  if (issues) section.append(el('p', 'Site checks cover all delivered sites in the selected business unit. Date checks cover selected sites across all dates. Records needing date review are not assumed to be submitted.'));
+  if (issues) section.append(el('p', 'Checks respect the selected business unit and lifecycle states. Site checks cover all delivered sites; date checks cover selected sites across all dates. Records needing date review are not assumed to be submitted.'));
   else if (isBacklog) section.append(el('p', `Planned before ${dateText(result.backlog.cutoff)} with no actual submission date, oldest first. These records are separate from the two-month plan. Only records delivered by Power BI can appear; keep earlier dates in report filters.`));
   else section.append(el('p', 'These submissions belong to the selected planned month. Actual submission dates can be earlier or later than that month.'));
+  section.append(el('p','Recorded submission, RO and application states are shown separately from date-based progress. Multiple recorded values remain visible.'));
   const controls = el('div', undefined, 'ssDetailTools'), search = el('input'); search.placeholder = 'Find submission'; search.setAttribute('aria-label', 'Find submission'); search.value = state.query || '';
   search.onchange = () => onChange({query: search.value, page: 0}); controls.append(search);
   if (!issues && !isBacklog) {
@@ -148,8 +175,8 @@ function renderDetails(root, result, state, onChange) {
   const close = el('button', 'Close details', 'ssClose'); close.onclick = () => onChange({detail: null}); controls.append(close); section.append(controls);
   if (filtered.length) {
     const wrap = el('div', undefined, 'ssTableWrap'), table = el('table'), head = el('thead'), header = el('tr');
-    ['Submission ID', 'Site', 'Planned submission', 'Actual submission', issues ? 'Check' : 'Progress'].forEach(label => header.append(el('th', label))); head.append(header); table.append(head);
-    const body = el('tbody'); filtered.slice(page * pageSize, (page + 1) * pageSize).forEach(r => {const row = el('tr'); [r.id, r.site, formatDate(r.plan), formatDate(r.actual), issues ? r.reason : r.status + (r.overdue ? ' · Overdue' : '')].forEach(value => row.append(el('td', value))); body.append(row);}); table.append(body); wrap.append(table); section.append(wrap);
+    ['Submission ID', 'Site', 'Planned submission', 'Actual submission', issues ? 'Check' : 'Progress', ...STATE_FIELDS.map(f=>f.label)].forEach(label => header.append(el('th', label))); head.append(header); table.append(head);
+    const body = el('tbody'); filtered.slice(page * pageSize, (page + 1) * pageSize).forEach(r => {const row = el('tr'); [r.id, r.site, formatDate(r.plan), formatDate(r.actual), issues ? r.reason : r.status + (r.overdue ? ' · Overdue' : ''), ...STATE_FIELDS.map(f=>formatStates(r.states?.[f.role]))].forEach((value,i) => row.append(el('td', value, i>=5?'ssRecordedState':undefined))); body.append(row);}); table.append(body); wrap.append(table); section.append(wrap);
     const pagination = el('div', undefined, 'ssPager'); pagination.append(el('span', `Showing ${page * pageSize + 1}–${Math.min((page + 1) * pageSize, filtered.length)} of ${filtered.length}`));
     const prev = el('button', 'Previous'), next = el('button', 'Next'); prev.disabled = page === 0; next.disabled = (page + 1) * pageSize >= filtered.length; prev.onclick = () => onChange({page: page - 1}); next.onclick = () => onChange({page: page + 1}); pagination.append(prev, next); section.append(pagination);
   } else section.append(el('p', issues && result.checks.missingIds ? `${result.checks.missingIds} rows have no submission ID and cannot be counted. No other matching checks.` : 'No matching submissions.'));

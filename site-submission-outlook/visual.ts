@@ -1,5 +1,5 @@
 import powerbi from 'powerbi-visuals-api';
-import {mapTable, normalizeSites, DEFAULT_SITES} from './submissions.logic.mjs';
+import {mapTable, normalizeSites, normalizeStateFilters, DEFAULT_SITES} from './submissions.logic.mjs';
 import {render} from './submissions.ui.mjs';
 import '../style/visual.less';
 
@@ -9,6 +9,7 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
   private rows: any[] = [];
   private missing = ['SubID', 'Site', 'PlannedSubmission', 'ActualSubmission'];
   private unitMapped = false;
+  private stateMapped: any = {};
   private notice = '';
   private state: any = {sites: [...DEFAULT_SITES], unit: '*', theme: 'light', capture: false};
   private preferenceText: string | undefined;
@@ -26,11 +27,11 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
     }, 60000);
   }
   private draw() {
-    render(this.root, this.rows, {state: this.state, width: this.width, missing: this.missing, unitMapped: this.unitMapped,
+    render(this.root, this.rows, {state: this.state, width: this.width, missing: this.missing, unitMapped: this.unitMapped, stateMapped: this.stateMapped,
       notice: this.notice, highContrast: this.highContrast, onChange: (patch: any) => {
         this.state = {...this.state, ...patch};
-        if (['sites', 'unit', 'theme'].some(k => k in patch)) {
-          const value = JSON.stringify({sites: this.state.sites, unit: this.state.unit, theme: this.state.theme});
+        if (['sites', 'unit', 'theme', 'stateFilters'].some(k => k in patch)) {
+          const value = JSON.stringify({sites: this.state.sites, unit: this.state.unit, theme: this.state.theme, stateFilters: normalizeStateFilters(this.state.stateFilters)});
           this.host.persistProperties?.({merge: [{objectName: 'preferences', selector: null, properties: {state: value}}]});
         }
         this.draw();
@@ -46,13 +47,13 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
       this.highContrast = palette?.isHighContrast ? {foreground: palette.foreground.value, background: palette.background.value} : null;
       if (options.dataViews?.[0] || (options.type & 2)) {
         const view = options.dataViews?.[0], mapped = mapTable(view?.table);
-        this.rows = mapped.rows; this.missing = mapped.missing; this.unitMapped = mapped.unitMapped;
+        this.rows = mapped.rows; this.missing = mapped.missing; this.unitMapped = mapped.unitMapped; this.stateMapped = mapped.stateMapped;
         const saved = view?.metadata?.objects?.preferences?.state;
         if (typeof saved === 'string' && saved !== this.preferenceText) {
           this.preferenceText = saved;
           try {
             const parsed = JSON.parse(saved);
-            this.state = {...this.state, sites: normalizeSites(parsed.sites), unit: typeof parsed.unit === 'string' ? parsed.unit : '*', theme: parsed.theme === 'dark' ? 'dark' : 'light'};
+            this.state = {...this.state, sites: normalizeSites(parsed.sites), unit: typeof parsed.unit === 'string' ? parsed.unit : '*', theme: parsed.theme === 'dark' ? 'dark' : 'light', stateFilters: normalizeStateFilters(parsed.stateFilters)};
           } catch { /* Keep the existing selections if report preferences are malformed. */ }
         }
         this.notice = '';

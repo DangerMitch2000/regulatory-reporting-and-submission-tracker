@@ -1,8 +1,17 @@
 export const DEFAULT_SITES = ['ABO', 'ADJ', 'ADK', 'AJG', 'ARDG', 'SCR'];
-export const ROLES = ['SubID', 'Site', 'PlannedSubmission', 'ActualSubmission', 'BusinessUnit'];
+export const STATE_FIELDS = [{role:'SubStatus',label:'Submission state'}, {role:'ROStatus',label:'RO state'}, {role:'AppStatus',label:'Application state'}];
+export const ROLES = ['SubID', 'Site', 'PlannedSubmission', 'ActualSubmission', 'BusinessUnit', ...STATE_FIELDS.map(f=>f.role)];
 export const REQUIRED = ROLES.slice(0, 4);
 export const clean = value => String(value ?? '').trim();
 export const siteKey = value => clean(value).toLocaleUpperCase('en-GB');
+export function normalizeStateFilters(filters = {}) {
+  return Object.fromEntries(STATE_FIELDS.map(({role}) => [role, Array.isArray(filters?.[role]) ? [...new Set(filters[role].filter(v=>typeof v==='string').map(clean))] : null]));
+}
+export const stateLabel = value => value || 'Not recorded';
+export function formatStates(values) {
+  if (!values) return 'Not mapped';
+  return (values.length > 1 ? 'Multiple: ' : '') + values.map(stateLabel).join(' / ');
+}
 export function parseDay(value) {
   if (value == null || clean(value) === '') return {kind: 'blank'};
   let y, m, d;
@@ -44,7 +53,7 @@ export function mapTable(table) {
     if (found.length) index[role] = found[0];
     else if (REQUIRED.includes(role)) missing.push(role);
   }
-  return {missing, unitMapped: index.BusinessUnit !== undefined,
+  return {missing, unitMapped: index.BusinessUnit !== undefined, stateMapped: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,index[role] !== undefined])),
     rows: (table?.rows || []).map(row => Object.fromEntries(ROLES.map(role => [role, index[role] === undefined ? null : row[index[role]]])))};
 }
 export function normalizeSites(sites) {
@@ -56,14 +65,18 @@ export function normalizeSites(sites) {
   }
   return result;
 }
-export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date()} = {}) {
+export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), stateFilters = {}, stateMapped} = {}) {
   const dates = calendar(now), selectedSites = normalizeSites(sites), grouped = new Map(), units = new Set(), availableSites = new Map();
+  const mappings = stateMapped ?? Object.fromEntries(STATE_FIELDS.map(({role})=>[role,rows.some(r=>Object.prototype.hasOwnProperty.call(r,role))]));
+  const filters = normalizeStateFilters(stateFilters), choices = Object.fromEntries(STATE_FIELDS.map(({role})=>[role,new Set()]));
+  const matches = row => (unit === '*' || clean(row.BusinessUnit) === unit) && STATE_FIELDS.every(({role}) => !mappings[role] || filters[role] === null || filters[role].includes(clean(row[role])));
   let missingIds = 0;
   for (const row of rows) {
     const bu = clean(row.BusinessUnit), site = clean(row.Site), id = clean(row.SubID);
     units.add(bu);
+    STATE_FIELDS.forEach(({role})=>{if(mappings[role])choices[role].add(clean(row[role]));});
     if (site && !availableSites.has(siteKey(site))) availableSites.set(siteKey(site), site);
-    if (!id) { if (unit === '*' || bu === unit) missingIds++; continue; }
+    if (!id) { if (matches(row)) missingIds++; continue; }
     if (!grouped.has(id)) grouped.set(id, []);
     grouped.get(id).push(row);
   }
@@ -74,12 +87,13 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
   const issues = [], checks = {missingIds, outsideSites: 0, unassignedSite: 0, multipleSites: 0, missingPlan: 0, planIssues: 0, actualIssues: 0, outsideMonths: 0};
   let scopedRecords = 0;
   for (const [id, list] of grouped) {
-    if (unit !== '*' && !list.some(row => clean(row.BusinessUnit) === unit)) continue;
+    if (!list.some(matches)) continue;
     scopedRecords++;
     const names = [...new Set(list.map(row => siteKey(row.Site)).filter(Boolean))];
     const plan = resolveDate(list.map(row => row.PlannedSubmission));
     const actual = resolveDate(list.map(row => row.ActualSubmission));
-    const record = {id, site: names.join(' / ') || 'Unassigned', plan, actual, status: 'In process', reason: ''};
+    const states = Object.fromEntries(STATE_FIELDS.map(({role})=>[role,mappings[role] ? [...new Set(list.map(row=>clean(row[role])))].sort() : null]));
+    const record = {id, site: names.join(' / ') || 'Unassigned', plan, actual, states, status: 'In process', reason: ''};
     if (names.length !== 1) {
       const reason = names.length ? 'Multiple sites: not allocated' : 'Site not recorded';
       checks[names.length ? 'multipleSites' : 'unassignedSite']++;
@@ -131,6 +145,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
   const step = Math.max(1, ([1, 2, 5, 10].find(s => s * magnitude >= rawStep) || 10) * magnitude);
   const axisMax = Math.max(5, Math.ceil(peak / step) * step);
   return {...dates, buckets, totals, monthTotals, backlog, checks, issues, axisMax, step, scopedRecords,
+    stateMapped: mappings, stateFilters: filters, stateChoices: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,[...choices[role]].sort((a,b)=>stateLabel(a).localeCompare(stateLabel(b)))])),
     units: [...units].sort(), availableSites: [...availableSites.values()].sort(),
     issueCount: issues.length + missingIds, completion: totals.planned ? Math.round(totals.submitted / totals.planned * 100) : 0};
 }

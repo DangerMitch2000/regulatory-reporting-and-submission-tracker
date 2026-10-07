@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {calendar, parseDay, mapTable, summarize, DEFAULT_SITES, ROLES, normalizeSites} from './submissions.logic.mjs';
+import {calendar, parseDay, mapTable, summarize, DEFAULT_SITES, ROLES, normalizeSites, normalizeStateFilters, formatStates} from './submissions.logic.mjs';
 const now = new Date(2026, 9, 7, 12), base = {Site: 'ABO', PlannedSubmission: '2026-10-15', ActualSubmission: null, BusinessUnit: 'ID'};
 const row = (id, patch = {}) => ({...base, SubID: id, ...patch});
 const data = [row('A'), row('A'), row('B', {ActualSubmission: '2026-09-20'}), row('C', {PlannedSubmission: '2026-11-03', ActualSubmission: '2026-10-01'}),
@@ -61,7 +61,49 @@ assert.equal(summarize(carry,{now}).backlog.count,1);assert.equal(summarize(carr
 assert.equal(summarize([old('DEC',{PlannedSubmission:'2026-12-31'})],{now:new Date(2027,0,1)}).backlog.count,1);
 assert.equal(summarize([old('SEP',{ActualSubmission:'2026-10-07'})],{now}).backlog.count,0);
 assert.equal(summarize([],{now}).backlog.count,0);
-const big = Array.from({length:10000}, (_,i) => row('PERF-'+i, {Site: DEFAULT_SITES[i%6], ActualSubmission: i%2 ? null : '2026-10-01', PlannedSubmission: i%3 ? '2026-10-15' : '2026-11-15'}));
+const lifecycle = [
+  row('CANCELLED',{SubStatus:'Cancelled',ROStatus:'Archived',AppStatus:'Inactive'}),
+  row('CANCELLED',{SubStatus:'Cancelled',ROStatus:'Archived',AppStatus:'Inactive'}),
+  row('ACTIVE',{SubStatus:'In Progress',ROStatus:'Planned',AppStatus:'Active'}),
+  old('WITHDRAWN',{SubStatus:'Withdrawn',ROStatus:'Archived',AppStatus:'Inactive'}),
+  row('CUSTOM',{SubStatus:'My custom state',ROStatus:'In Progress',AppStatus:'Active',ActualSubmission:'2026-10-01',PlannedSubmission:'2026-11-01'}),
+  old('BLANK',{SubStatus:null,ROStatus:null,AppStatus:null})
+];
+const scope=stateFilters=>summarize(lifecycle,{now,stateFilters});
+assert.equal(scope().totals.planned,3);assert.equal(scope().totals.submitted,1);assert.equal(scope().backlog.count,2);
+assert.deepEqual(scope().stateChoices.SubStatus,['Cancelled','In Progress','My custom state','','Withdrawn']);
+assert.equal(scope({SubStatus:['Cancelled']}).totals.inProcess,1);
+assert.equal(scope({SubStatus:['Cancelled']}).totals.submitted,0);
+assert.equal(scope({SubStatus:['Cancelled','Withdrawn']}).backlog.count,1);
+assert.equal(scope({SubStatus:['Cancelled','Withdrawn'],ROStatus:['Archived'],AppStatus:['Inactive']}).totals.planned,1);
+assert.equal(scope({SubStatus:['Cancelled','Withdrawn'],AppStatus:['Active']}).scopedRecords,0);
+assert.equal(scope({ROStatus:['Archived']}).backlog.count,1);
+assert.equal(scope({AppStatus:['Inactive']}).scopedRecords,2);
+assert.equal(scope({SubStatus:['']}).backlog.count,1);
+assert.equal(scope({SubStatus:[]}).scopedRecords,0);
+assert.equal(scope({SubStatus:null}).scopedRecords,5);
+assert.equal(scope({SubStatus:['My custom state']}).totals.submitted,1);
+assert.deepEqual(normalizeStateFilters({SubStatus:[' Cancelled ','Cancelled',null,3],AppStatus:'bad'}),{SubStatus:['Cancelled'],ROStatus:null,AppStatus:null});
+const statesMapped=mapTable({columns,rows:[['X','ABO','2026-10-01',null,'ID','Cancelled','Archived','Inactive']]});
+assert.deepEqual(statesMapped.stateMapped,{SubStatus:true,ROStatus:true,AppStatus:true});
+assert.equal(statesMapped.rows[0].SubStatus,'Cancelled');
+const unmapped=mapTable({columns:columns.slice(0,4),rows:[['X','ABO','2026-10-01',null]]});
+assert.deepEqual(unmapped.stateMapped,{SubStatus:false,ROStatus:false,AppStatus:false});
+assert.equal(summarize(unmapped.rows,{now,stateMapped:unmapped.stateMapped,stateFilters:{SubStatus:[]}}).totals.planned,1);
+assert.equal(formatStates(null),'Not mapped');assert.equal(formatStates(['']),'Not recorded');
+assert.equal(formatStates(['Archived','Planned']),'Multiple: Archived / Planned');
+const split=[row('SPLIT',{SubStatus:'Cancelled',AppStatus:'Active',BusinessUnit:'ID'}),row('SPLIT',{SubStatus:'Planned',AppStatus:'Inactive',BusinessUnit:'CMI'})];
+assert.equal(summarize(split,{now,stateFilters:{SubStatus:['Cancelled'],AppStatus:['Inactive']}}).scopedRecords,0);
+assert.equal(summarize(split,{now,unit:'CMI',stateFilters:{SubStatus:['Cancelled']}}).scopedRecords,0);
+assert.equal(summarize(split,{now,unit:'ID',stateFilters:{SubStatus:['Cancelled']}}).totals.planned,1);
+assert.deepEqual(summarize(split,{now,stateFilters:{SubStatus:['Cancelled']}}).buckets[0].months[0].rows[0].states.SubStatus,['Cancelled','Planned']);
+const evidence=[old('EVIDENCE',{SubStatus:'Planned'}),old('EVIDENCE',{SubStatus:'Completed',ActualSubmission:'2026-10-01'})];
+assert.equal(summarize(evidence,{now,stateFilters:{SubStatus:['Planned']}}).backlog.count,0);
+assert.equal(summarize(evidence.map(r=>({...r,PlannedSubmission:'2026-10-01'})),{now,stateFilters:{SubStatus:['Planned']}}).totals.submitted,1);
+assert.equal(summarize([row('CONFLICT',{SubStatus:'Planned'}),row('CONFLICT',{SubStatus:'Cancelled',Site:'ADK'})],{now,stateFilters:{SubStatus:['Planned']}}).checks.multipleSites,1);
+assert.equal(summarize([row('CONFLICT',{SubStatus:'Planned'}),row('CONFLICT',{SubStatus:'Cancelled',PlannedSubmission:'2026-11-01'})],{now,stateFilters:{SubStatus:['Planned']}}).checks.planIssues,1);
+assert.equal(summarize([row('ISSUE',{SubStatus:'Cancelled',ActualSubmission:'bad'}),row('ISSUE2',{SubStatus:'Planned',ActualSubmission:'bad'}),row('',{SubStatus:'Cancelled'})],{now,stateFilters:{SubStatus:['Cancelled']}}).issueCount,2);
+const big = Array.from({length:10000}, (_,i) => row('PERF-'+i, {Site: DEFAULT_SITES[i%6], ActualSubmission: i%2 ? null : '2026-10-01', PlannedSubmission: i%3 ? '2026-10-15' : '2026-11-15', SubStatus:i%2?'Cancelled':'Completed',ROStatus:i%3?'In Progress':'Archived',AppStatus:i%4?'Active':'Inactive'}));
 const start = performance.now(), stress = summarize(big.flatMap(r => [r,r,r]), {now});
 const ms = performance.now() - start;
 assert.equal(stress.totals.planned, 10000); assert.equal(stress.totals.submitted,5000); assert.equal(stress.totals.inProcess,5000);
@@ -69,4 +111,5 @@ assert.ok(ms < 5000, `30k-row calculation unexpectedly slow: ${ms}ms`);
 const backlogStart=performance.now(),backlogStress=summarize(big.flatMap(r=>Array(3).fill({...r,PlannedSubmission:'2026-09-30'})),{now});
 assert.equal(backlogStress.backlog.count,5000);assert.equal(backlogStress.totals.planned,0);assert.equal(backlogStress.checks.outsideMonths,5000);
 assert.ok(performance.now()-backlogStart<5000);
-console.log(`PASS: planned-month cohorts, separate historical backlog, exclusive date cutoff, late completion, duplicates, date/site conflicts, site/unit scope, month/year rollover and 10,000 distinct submissions in ${Math.round(ms)}ms.`);
+assert.equal(summarize(big.flatMap(r=>[r,r,r]),{now,stateFilters:{SubStatus:['Cancelled']}}).totals.inProcess,5000);
+console.log(`PASS: all three independent lifecycle states, exact/blank/unmapped states, duplicate evidence, combined state/BU filters, monthly/backlog totals, date/site conflicts, year rollover and 10,000 distinct submissions in ${Math.round(ms)}ms.`);
