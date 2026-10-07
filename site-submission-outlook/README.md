@@ -1,28 +1,44 @@
-# Site Submission Outlook — 1.2.0
+# Site Submission Outlook — 1.2.1
 
 A separate Power BI custom visual showing **the current and following calendar month** for **ABO, ADJ, ADK, AJG, ARDG and SCR**. Each month's planned submissions are split into **In process** and **Submitted**. The package has its own visual identity and does not replace the Regulatory Tracker.
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.2.0/site-submission-outlook-1.2.0.0.pbiviz) · [Live preview with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.2.0)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.2.1/site-submission-outlook-1.2.1.0.pbiviz) · [Live preview with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.2.1)
 
-## New in 1.2.0: separate lifecycle state filters
+## New in 1.2.1: Completed submissions count as Submitted
 
-Map **Submission state (optional)**, **RO state (optional)** and **Application state (optional)** to the recorded state on each respective record. Three independent dropdowns appear at the top, each starting at **All**. Every delivered state is listed separately; Cancelled, Inactive, Archived, Withdrawn and any additional source values remain available. There are no automatic lifecycle exclusions. Use the checkboxes to include or exclude states deliberately; **All** restores the complete delivered list and **None** selects no values.
+**Submission state = Completed now counts as Submitted**, even when the actual submission date is blank. This updates the monthly Submitted segment, In process count, completion percentage and details. A valid actual submission date on or before today still establishes Submitted independently. Each Submission ID counts once when either or both forms of evidence exist.
+
+Details show **Submitted · Completed state** when completion is established by state without a qualifying actual date. The source actual date stays blank or retains its original value; no date is invented. Invalid, future or conflicting actual dates still appear in Data checks even if Completed establishes the submission's progress.
+
+### Completed and approved records leave overdue backlog
+
+An older planned submission is excluded from overdue backlog when **Submission state = Completed OR RO state = Health Authority Approved**, even if its actual submission date is blank. Either condition is sufficient; both may also be true. This applies automatically to each site's backlog count, the total and the backlog details list.
+
+The rule uses the existing optional **Submission state** and **RO state** mappings. Map both to apply both conditions; if only one is mapped, its condition still applies. Unmapped or blank values cannot establish completion. Labels are compared ignoring letter case and extra whitespace. Other states, including Conditionally Approved, Archived, Cancelled and Inactive, do not automatically trigger this particular rule. Application state does not establish backlog completion.
+
+All delivered rows for the same SubID are checked: any recorded Completed submission state or Health Authority Approved RO state excludes that ID once. Local state or business-unit filters cannot hide that completion evidence and reintroduce it to backlog. Conflicting date/site data still remains in Data checks. No actual date is invented.
+
+**RO state Health Authority Approved only supplies the backlog exclusion**; it does not itself mark a monthly record Submitted. Submission state Completed supplies both Submitted progress and the backlog exclusion. No new mappings are introduced in 1.2.1.
+
+## Separate lifecycle state filters
+
+Map **Submission state (optional)**, **RO state (optional)** and **Application state (optional)** to the recorded state on each respective record. Three independent dropdowns appear at the top, each starting at **All**. Every delivered state is listed separately; Cancelled, Inactive, Archived, Withdrawn and any additional source values remain available. Use the checkboxes to include or exclude states deliberately; **All** restores the complete delivered list and **None** selects no values. Backlog additionally applies the completion rule above, even with all filters set to All.
 
 Selections apply to the monthly bars, totals, backlog and its lists, and the scope of Data checks. Several values within one field use OR; selections across fields and Business unit use AND. A submission is included when at least one of its source rows satisfies the combined selection. Its dates and site are still resolved across all its delivered rows, so a filter cannot hide conflicting data or a recorded actual submission date. A repeated SubID still counts once.
 
-Each details table includes **Submission state**, **RO state** and **Application state** alongside the date-based progress. Source labels are retained after trimming whitespace. Blank mapped values are **Not recorded**; an unmapped field is **Not mapped**. Different recorded states for the same submission are displayed together as **Multiple: …**, rather than silently choosing one. States are searchable in the details list. Only a valid actual submission date on or before today establishes Submitted; Completed, Cancelled or an RO/application state does not substitute for that date.
+Each details table includes **Submission state**, **RO state** and **Application state** alongside progress. Source labels are retained after trimming whitespace. Blank mapped values are **Not recorded**; an unmapped field is **Not mapped**. Different recorded states for the same submission are displayed together as **Multiple: …**, rather than silently choosing one. States are searchable in the details list. Submitted is established by a qualifying actual date or Completed submission state. Other submission states, RO states and application states do not establish monthly Submitted progress.
 
-The new mappings are optional. Until one is supplied, its filter stays disabled with a **Map field** prompt; any saved selection for that unmapped field is ignored. Existing report mappings keep working. State selections are saved in the report and printed in the chart footer, including screenshot mode.
+The state mappings are optional. Until one is supplied, its filter stays disabled with a **Map field** prompt; any saved selection for that unmapped field is ignored. Existing report mappings keep working. State selections are saved in the report and printed in the chart footer, including screenshot mode.
 
 ## Overdue backlog
 
-The orange count beneath each site shows submissions planned **before the first displayed month** that still have **no recorded actual submission date**. The summary includes a total for all selected sites. For October–November 2026, the cutoff is before **1 October 2026**, including any earlier year. When the chart advances to November–December, the cutoff advances to 1 November.
+The orange count beneath each site shows submissions planned **before the first displayed month** that still have **no recorded actual submission date**, excluding those with **Submission state Completed or RO state Health Authority Approved**. The summary includes a total for all selected sites. For October–November 2026, the cutoff is before **1 October 2026**, including any earlier year. When the chart advances to November–December, the cutoff advances to 1 November.
 
-Click a site's backlog count, or the total, to see the relevant submissions, oldest planned date first. The list supports search and pagination. Backlog remains separate from the two monthly bars, planned total and completion percentage. Recording an actual submission date removes that submission from the backlog at the next data update, even if it was submitted late.
+Click a site's backlog count, or the total, to see the relevant submissions, oldest planned date first. The list supports search and pagination. Backlog remains separate from the two monthly bars, planned total and completion percentage. Recording an actual submission date, a Completed submission state or a Health Authority Approved RO state removes that submission from the backlog at the next data update.
 
 **Keep earlier planned dates included in the Power BI data delivered to this visual.** A report, page or visual filter restricted to October–November would remove the rows needed to count the backlog. The visual selects the two displayed months itself; it cannot restore rows filtered out by Power BI. Business-unit, site and lifecycle state filters apply to the backlog as well as the monthly plan.
 
-Import 1.2.0 over the existing Site Submission Outlook visual. The visual identity and four required mappings are unchanged; add the three optional state mappings to enable the new filters.
+Import 1.2.1 over the existing Site Submission Outlook visual. The visual identity and mappings from 1.2.0 are unchanged. Ensure Submission state and RO state are mapped to apply both completion conditions.
 
 ## Business-unit filter
 
@@ -32,7 +48,7 @@ The control stays visible while unmapped and reads **Map Business unit field** u
 
 ## Import and map
 
-Import `site-submission-outlook-1.2.0.0.pbiviz` using **Visualizations → … → Import a visual from a file**. Add the visual and map these columns:
+Import `site-submission-outlook-1.2.1.0.pbiviz` using **Visualizations → … → Import a visual from a file**. Add the visual and map these columns:
 
 | Field well | Source column |
 |---|---|
@@ -51,14 +67,14 @@ Use the state from the correct source table for each field, even if all three co
 
 ## How counts work
 
-- **Planned month determines the column.** Within that month's planned cohort, a valid actual submission date on or before today means Submitted. A blank actual date means In process.
+- **Planned month determines the column.** Within that month's planned cohort, a valid actual submission date on or before today **or Submission state Completed** means Submitted. A blank actual date without Completed state means In process.
 - This is progress against a plan, **not submissions made during the calendar month**. An item planned for next month but already submitted appears in next month's Submitted segment. An item submitted this month with a plan outside the two displayed months is outside this chart.
 - Each SubID counts once. Repeated source rows from product, country or other relationships do not increase counts.
-- Future, conflicting or invalid actual submission dates produce **Check date** rather than a guessed progress status. When present, this is a separate amber segment; Planned = In process + Submitted + Check date.
+- Future, conflicting or invalid actual submission dates produce **Check date** when no Completed submission state establishes progress. Completed still counts as Submitted, with the actual-date issue retained in Data checks. Check date is a separate amber segment when present; Planned = In process + Submitted + Check date.
 - Missing, conflicting or invalid planned dates cannot be placed in a month and appear in Data checks. The checks are explicitly scoped; some concern records outside the displayed months.
-- **Overdue within this month's plan** means still In process with a planned date before today, within the two-month plan. **Overdue backlog** is the separate count of older planned submissions with a blank actual submission date. These counts do not overlap.
-- Backlog uses the same mapped planned-date column as the monthly bars. Submitted records, future plans, missing/invalid/conflicting planned dates, and records needing actual-date review are not counted as confirmed backlog. Invalid, future or conflicting actual dates remain in Data checks; the visual does not assume they are blank. Distinct IDs are resolved before local filters, so repeated source rows cannot inflate backlog or hide conflicting dates/sites.
-- The visual does not infer submission from lifecycle status or dispatch. All delivered states are included by default. Use the separate state dropdowns, or Power BI report/visual filters, to choose the scope according to your reporting policy. A blank actual submission date remains In process among the included records, even if its recorded state is Cancelled or Completed.
+- **Overdue within this month's plan** means still In process with a planned date before today, within the two-month plan. **Overdue backlog** is the separate count of older planned submissions with a blank actual submission date, excluding Completed submissions or Health Authority Approved ROs. These counts do not overlap.
+- Backlog uses the same mapped planned-date column as the monthly bars. Submitted records, records completed under the state rule, future plans, missing/invalid/conflicting planned dates, and records needing actual-date review are not counted as confirmed backlog. Invalid, future or conflicting actual dates remain in Data checks; the visual does not assume they are blank. Distinct IDs are resolved before local filters, so repeated source rows cannot inflate backlog or hide conflicting dates/sites or completion evidence.
+- A Completed submission state establishes Submitted progress without inferring an actual date. Other states and dispatch do not establish that progress. All delivered states are included by default in the monthly plan. Use the separate state dropdowns, or Power BI report/visual filters, to choose the scope according to your reporting policy. Backlog additionally excludes Health Authority Approved ROs.
 - A submission associated with multiple different sites is unallocated and listed in Data checks. It is not duplicated into several named sites. Blank-site records and rows without SubID are also reported. Site names are matched after trimming and ignoring case; different codes such as ABO and ABON are not silently equated.
 - The same calendar window is used for all sites. December correctly pairs with January of the next year. Today/current month use the viewer's local calendar; source date columns are treated as calendar dates. The view updates when data updates and at the next date change while open.
 - Sites start with the confirmed main six. The Sites menu allows up to six other delivered site values, retains zero-count sites and saves the chosen list in the report. Business-unit, site and state controls affect this visual only. Power BI filters also affect the delivered rows.

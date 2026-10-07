@@ -12,6 +12,12 @@ export function formatStates(values) {
   if (!values) return 'Not mapped';
   return (values.length > 1 ? 'Multiple: ' : '') + values.map(stateLabel).join(' / ');
 }
+// Use all delivered state evidence for a submission, before local filter selections.
+const hasState = (states, role, value) => Boolean(states[role]?.some(state => clean(state).replace(/\s+/g, ' ').toLocaleLowerCase('en-GB') === value));
+export const submissionCompleted = states => hasState(states, 'SubStatus', 'completed');
+export function completeForBacklog(states) {
+  return submissionCompleted(states) || hasState(states, 'ROStatus', 'health authority approved');
+}
 export function parseDay(value) {
   if (value == null || clean(value) === '') return {kind: 'blank'};
   let y, m, d;
@@ -107,7 +113,12 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     if (actualIssue) {
       record.status = 'Check date'; record.reason = actual.kind === 'issue' ? `${actual.reason}: actual submission` : 'Actual submission date is in the future';
       checks.actualIssues++;
-    } else if (actual.kind === 'date') record.status = 'Submitted';
+    }
+    const actualSubmitted = actual.kind === 'date' && !actualIssue;
+    if (actualSubmitted || submissionCompleted(states)) {
+      record.status = 'Submitted';
+      record.submittedByState = !actualSubmitted;
+    }
     if (plan.kind !== 'date') {
       checks[plan.kind === 'blank' ? 'missingPlan' : 'planIssues']++;
       issues.push({...record, reason: [plan.kind === 'blank' ? 'Planned submission date not recorded' : `${plan.reason}: planned submission`, record.reason].filter(Boolean).join('; ')});
@@ -116,7 +127,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     if (actualIssue) issues.push({...record});
     const month = bucket.months.find(m => plan.day >= m.start && plan.day < m.end);
     if (!month) {
-      if (plan.day < backlog.cutoff && actual.kind === 'blank') {
+      if (plan.day < backlog.cutoff && actual.kind === 'blank' && !completeForBacklog(states)) {
         record.overdue = true;
         bucket.backlog.count++; bucket.backlog.rows.push(record);
         backlog.count++; backlog.rows.push(record);

@@ -100,6 +100,55 @@ assert.deepEqual(summarize(split,{now,stateFilters:{SubStatus:['Cancelled']}}).b
 const evidence=[old('EVIDENCE',{SubStatus:'Planned'}),old('EVIDENCE',{SubStatus:'Completed',ActualSubmission:'2026-10-01'})];
 assert.equal(summarize(evidence,{now,stateFilters:{SubStatus:['Planned']}}).backlog.count,0);
 assert.equal(summarize(evidence.map(r=>({...r,PlannedSubmission:'2026-10-01'})),{now,stateFilters:{SubStatus:['Planned']}}).totals.submitted,1);
+const closureRows=[
+  old('CLOSED-SUB',{SubStatus:'Completed',ROStatus:'In Progress'}),
+  old('CLOSED-RO',{SubStatus:'In Progress',ROStatus:'Health Authority Approved'}),
+  old('CLOSED-BOTH',{SubStatus:'Completed',ROStatus:'Health Authority Approved'}),
+  old('CLOSED-BOTH',{SubStatus:'Completed',ROStatus:'Health Authority Approved'}),
+  old('CLOSED-CASE',{SubStatus:'  cOmPlEtEd  '}),
+  old('CLOSED-SPACING',{ROStatus:' health   AUTHORITY approved '}),
+  old('OPEN',{SubStatus:'In Progress',ROStatus:'In Progress'}),
+  old('CONDITIONAL',{ROStatus:'Conditionally Approved'}),
+  old('RO-COMPLETED',{ROStatus:'Completed'}),
+  old('WRONG-FIELD',{SubStatus:'Health Authority Approved',AppStatus:'Completed'}),
+  old('BLANK-STATES',{SubStatus:null,ROStatus:null}),
+  old('CHECK-ACTUAL',{SubStatus:'Completed',ActualSubmission:'bad'}),
+  row('MONTH-COMPLETED',{SubStatus:'Completed'}),
+  row('MONTH-APPROVED',{ROStatus:'Health Authority Approved'})
+];
+const closure=summarize(closureRows,{now});
+assert.deepEqual(closure.backlog.rows.map(r=>r.id),['BLANK-STATES','CONDITIONAL','OPEN','RO-COMPLETED','WRONG-FIELD']);
+assert.equal(closure.backlog.count,5);assert.equal(closure.buckets[0].backlog.count,5);
+assert.equal(closure.totals.planned,2);assert.equal(closure.totals.inProcess,1);assert.equal(closure.totals.submitted,1);
+assert.ok(closure.issues.some(r=>r.id==='CHECK-ACTUAL'));
+assert.equal(summarize(closureRows,{now,stateFilters:{SubStatus:['Completed']}}).backlog.count,0);
+const statusEvidence=[old('DUPLICATE',{SubStatus:'In Progress',ROStatus:'In Progress',BusinessUnit:'ID'}),old('DUPLICATE',{SubStatus:'Completed',ROStatus:'In Progress',BusinessUnit:'CMI'})];
+assert.equal(summarize(statusEvidence,{now,unit:'ID',stateFilters:{SubStatus:['In Progress']}}).backlog.count,0);
+assert.equal(summarize(statusEvidence.map(r=>({...r,SubStatus:'In Progress',ROStatus:r.BusinessUnit==='CMI'?'Health Authority Approved':'In Progress'})),{now,unit:'ID',stateFilters:{ROStatus:['In Progress']}}).backlog.count,0);
+const optionalClosure=[old('SUB-ONLY',{SubStatus:'Completed'}),old('RO-ONLY',{ROStatus:'Health Authority Approved'})];
+assert.equal(summarize(optionalClosure,{now,stateMapped:{SubStatus:false,ROStatus:false}}).backlog.count,2);
+assert.equal(summarize(optionalClosure,{now,stateMapped:{SubStatus:true,ROStatus:false}}).backlog.count,1);
+assert.equal(summarize(optionalClosure,{now,stateMapped:{SubStatus:false,ROStatus:true}}).backlog.count,1);
+assert.equal(summarize(optionalClosure,{now}).backlog.count,0);
+assert.equal(summarize([old('UPDATE',{SubStatus:'In Progress'})],{now}).backlog.count,1);
+assert.equal(summarize([old('UPDATE',{SubStatus:'Completed'})],{now}).backlog.count,0);
+const completedPlan=summarize([
+  row('NO-DATE',{SubStatus:'Completed',PlannedSubmission:'2026-10-01'}),
+  row('NO-DATE',{SubStatus:'Completed',PlannedSubmission:'2026-10-01'}),
+  row('CASE',{SubStatus:' completed ',PlannedSubmission:'2026-11-01'}),
+  row('VALID',{SubStatus:'In Progress',ActualSubmission:'2026-10-01'}),
+  row('APPROVED-ONLY',{SubStatus:'In Progress',ROStatus:'Health Authority Approved'}),
+  row('BAD-DATE',{SubStatus:'Completed',ActualSubmission:'invalid'}),
+  row('FUTURE-DATE',{SubStatus:'Completed',ActualSubmission:'2026-12-01'}),
+  row('CONFLICT-DATE',{SubStatus:'Completed',ActualSubmission:'2026-10-01'}),
+  row('CONFLICT-DATE',{SubStatus:'Completed',ActualSubmission:'2026-10-02'})
+],{now});
+assert.deepEqual(completedPlan.totals,{planned:7,inProcess:1,submitted:6,review:0,overdue:0});
+assert.equal(completedPlan.completion,86);assert.equal(completedPlan.checks.actualIssues,3);assert.equal(completedPlan.issues.length,3);
+assert.equal(completedPlan.buckets[0].months[0].rows.find(r=>r.id==='NO-DATE').actual.kind,'blank');
+assert.equal(completedPlan.buckets[0].months[0].rows.find(r=>r.id==='NO-DATE').submittedByState,true);
+assert.equal(summarize([row('OPTIONAL',{SubStatus:'Completed'})],{now,stateMapped:{SubStatus:false}}).totals.submitted,0);
+assert.equal(summarize(statusEvidence.map(r=>({...r,PlannedSubmission:'2026-10-01'})),{now,unit:'ID',stateFilters:{SubStatus:['In Progress']}}).totals.submitted,1);
 assert.equal(summarize([row('CONFLICT',{SubStatus:'Planned'}),row('CONFLICT',{SubStatus:'Cancelled',Site:'ADK'})],{now,stateFilters:{SubStatus:['Planned']}}).checks.multipleSites,1);
 assert.equal(summarize([row('CONFLICT',{SubStatus:'Planned'}),row('CONFLICT',{SubStatus:'Cancelled',PlannedSubmission:'2026-11-01'})],{now,stateFilters:{SubStatus:['Planned']}}).checks.planIssues,1);
 assert.equal(summarize([row('ISSUE',{SubStatus:'Cancelled',ActualSubmission:'bad'}),row('ISSUE2',{SubStatus:'Planned',ActualSubmission:'bad'}),row('',{SubStatus:'Cancelled'})],{now,stateFilters:{SubStatus:['Cancelled']}}).issueCount,2);

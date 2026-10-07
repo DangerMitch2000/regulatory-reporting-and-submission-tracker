@@ -16,7 +16,7 @@ export function sample(now = new Date()) {
     rows.push({SubID: `DEMO-${site}-PRIOR-SUBMITTED`, Site: site, PlannedSubmission: iso(-1,15), ActualSubmission: iso(0,Math.min(3,currentDay)), BusinessUnit: 'ID'});
   });
   const states = new Map();
-  return rows.map(row => {
+  const enriched = rows.map(row => {
     if (!states.has(row.SubID)) {
       const i = states.size;
       states.set(row.SubID, {
@@ -27,4 +27,10 @@ export function sample(now = new Date()) {
     }
     return {...row,...states.get(row.SubID)};
   });
+  // These old plans have no actual date but are complete for backlog purposes.
+  return [...enriched,
+    {SubID:'DEMO-CLOSED-BY-SUB',Site:'ABO',PlannedSubmission:iso(-1,1),ActualSubmission:null,BusinessUnit:'ID',SubStatus:'Completed',ROStatus:'In Progress',AppStatus:'Active'},
+    {SubID:'DEMO-CLOSED-BY-RO',Site:'ADJ',PlannedSubmission:iso(-1,1),ActualSubmission:null,BusinessUnit:'ID',SubStatus:'In Progress',ROStatus:'Health Authority Approved',AppStatus:'Active'},
+    {SubID:'DEMO-CLOSED-BY-BOTH',Site:'ADK',PlannedSubmission:iso(-1,1),ActualSubmission:null,BusinessUnit:'ID',SubStatus:'Completed',ROStatus:'Health Authority Approved',AppStatus:'Active'}
+  ];
 }

@@ -64,7 +64,7 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test'),assert=requi
   await page.clock.setFixedTime(new Date('2027-01-01T12:00:00Z'));await page.evaluate(()=>testApi.send(testApi.sample()));assert.match(await main.locator('svg').textContent(),/January & February 2027/);
   await page.clock.setFixedTime(new Date('2026-10-07T12:00:00Z'));
   await page.evaluate(()=>testApi.send([{SubID:'REVIEW',Site:'ABO',PlannedSubmission:'2026-10-03',ActualSubmission:'2026-10-30',BusinessUnit:'ID'}]));
-  assert.match(await main.locator('svg').getAttribute('aria-label'),/1 planned, 0 in process, 0 submitted, 1 needing/);await main.getByRole('button',{name:'Data checks · 1'}).click();assert.match(await main.locator('.ssDetails').textContent(),/date is in the future/);
+  assert.match(await main.locator('svg').getAttribute('aria-label'),/1 planned, 0 in process, 0 submitted, 1 in Check date/);await main.getByRole('button',{name:'Data checks · 1'}).click();assert.match(await main.locator('.ssDetails').textContent(),/date is in the future/);
   const stressMs=await page.evaluate(()=>{testApi.resize(1440,800);const rows=Array.from({length:10000},(_,i)=>({SubID:'STRESS-'+String(i).padStart(5,'0'),Site:['ABO','ADJ','ADK','AJG','ARDG','SCR'][i%6],PlannedSubmission:i%3?'2026-10-10':'2026-11-10',ActualSubmission:i%2?null:'2026-10-01',BusinessUnit:'ID',SubStatus:i%2?'Cancelled':'Completed',ROStatus:i%3?'In Progress':'Archived',AppStatus:i%4?'Active':'Inactive'}));const start=performance.now();testApi.send(rows.flatMap(r=>[r,r,r]));return performance.now()-start});
   assert.match(await main.locator('svg').getAttribute('aria-label'),/10000 planned, 5000 in process, 5000 submitted/);assert.ok(stressMs<5000,`Stress render slow: ${stressMs}ms`);
   await main.locator('.ssHit[data-site=ADJ]').first().click();assert.equal(await main.locator('tbody tr').count(),50);await main.getByRole('button',{name:'Next',exact:true}).click();assert.match(await main.locator('.ssPager').textContent(),/Showing 51–100/);
@@ -135,6 +135,33 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test'),assert=requi
   await closeStates();await main.locator('.ssBacklogHit[data-site=ABO]').click();assert.match(await main.locator('.ssDetails').textContent(),/Withdrawn.*Archived.*Inactive/);assert.match(await main.locator('.ssDetails').textContent(),/Not recorded/);
   await main.getByRole('button',{name:'Close details'}).click();await main.getByRole('combobox',{name:'Theme'}).selectOption('dark');await openState('SubStatus');
   await main.locator('.siteSubmissions').screenshot({path:path.join(root,'states-controls-dark.png')});
+  assert.deepEqual(await page.evaluate(()=>testApi.errors),[]);assert.deepEqual(errors,[]);
+  const closedBacklogRows=[
+    {SubID:'CLOSED-SUB',Site:'ABO',PlannedSubmission:'2026-09-01',ActualSubmission:null,SubStatus:'Completed',ROStatus:'In Progress'},
+    {SubID:'CLOSED-RO',Site:'ADJ',PlannedSubmission:'2026-09-01',ActualSubmission:null,SubStatus:'In Progress',ROStatus:'Health Authority Approved'},
+    {SubID:'CLOSED-BOTH',Site:'ADK',PlannedSubmission:'2026-09-01',ActualSubmission:null,SubStatus:'Completed',ROStatus:'Health Authority Approved'},
+    {SubID:'STILL-OPEN',Site:'ABO',PlannedSubmission:'2026-09-01',ActualSubmission:null,SubStatus:'In Progress',ROStatus:'In Progress'},
+    {SubID:'CURRENT-COMPLETED',Site:'ABO',PlannedSubmission:'2026-10-01',ActualSubmission:null,SubStatus:'Completed',ROStatus:'In Progress'}
+  ];
+  await page.evaluate(rows=>testApi.send(rows,{preferences:{unit:'*',theme:'light',stateFilters:{SubStatus:null,ROStatus:null,AppStatus:null}}}),closedBacklogRows);
+  assert.match(await main.locator('svg').getAttribute('aria-label'),/1 planned, 0 in process, 1 submitted/);assert.match(await main.locator('svg').getAttribute('aria-label'),/1 overdue backlog/);
+  assert.match(await main.locator('.ssBacklogHit[data-site=ADJ]').getAttribute('aria-label'),/0 overdue backlog/);
+  await main.locator('.ssBacklogHit[data-site="*"]').click();assert.deepEqual(await main.locator('tbody tr td:first-child').allTextContents(),['STILL-OPEN']);assert.match(await main.locator('.ssDetails').textContent(),/either state is sufficient/);
+  await main.getByRole('button',{name:'Close details'}).click();await main.locator('.ssHit[data-site=ABO]').first().click();assert.match(await main.locator('tbody tr').textContent(),/CURRENT-COMPLETED.*Submitted.*Completed state/);await main.getByRole('button',{name:'Close details'}).click();
+  await page.evaluate(rows=>testApi.send(rows.map(r=>r.SubID==='STILL-OPEN'?{...r,ROStatus:'Health Authority Approved'}:r)),closedBacklogRows);
+  assert.match(await main.locator('svg').getAttribute('aria-label'),/0 overdue backlog/);
+  await page.evaluate(rows=>testApi.send(rows,{omit:['SubStatus']}),closedBacklogRows);assert.match(await main.locator('svg').getAttribute('aria-label'),/2 overdue backlog/);
+  await page.evaluate(rows=>testApi.send(rows,{omit:['SubStatus','ROStatus']}),closedBacklogRows);assert.match(await main.locator('svg').getAttribute('aria-label'),/4 overdue backlog/);
+  await page.evaluate(rows=>testApi.send([...rows,{...rows[3],SubStatus:'Completed'}]),closedBacklogRows);assert.match(await main.locator('svg').getAttribute('aria-label'),/0 overdue backlog/);
+  await page.evaluate(()=>testApi.send([{SubID:'REFRESH',Site:'ABO',PlannedSubmission:'2026-10-01',ActualSubmission:null,SubStatus:'In Progress'}]));assert.match(await main.locator('svg').getAttribute('aria-label'),/1 planned, 1 in process, 0 submitted/);
+  await page.evaluate(()=>testApi.send([{SubID:'REFRESH',Site:'ABO',PlannedSubmission:'2026-10-01',ActualSubmission:null,SubStatus:'Completed'}]));assert.match(await main.locator('svg').getAttribute('aria-label'),/1 planned, 0 in process, 1 submitted/);assert.match(await main.locator('svg').textContent(),/100% submitted/);
+  await page.evaluate(()=>testApi.send([{SubID:'REVIEW-COMPLETED',Site:'ABO',PlannedSubmission:'2026-10-01',ActualSubmission:'invalid',SubStatus:'Completed'}]));assert.match(await main.locator('svg').getAttribute('aria-label'),/1 planned, 0 in process, 1 submitted, 0 in Check date/);
+  await main.getByRole('button',{name:'Data checks · 1'}).click();assert.match(await main.locator('tbody').textContent(),/REVIEW-COMPLETED.*Invalid date/);await main.getByRole('button',{name:'Close details'}).click();
+  for(const width of [760,1440]){
+    await page.evaluate(w=>testApi.resize(w,800),width);await main.getByRole('button',{name:'Screenshot mode'}).click();assert.match(await main.locator('svg').textContent(),/1 data checks — review below/);
+    assert.deepEqual(await main.locator('svg').evaluate(svg=>[...svg.querySelectorAll('text')].filter(t=>{const b=t.getBBox(),v=svg.viewBox.baseVal;return b.x<0||b.x+b.width>v.width+1||b.y+b.height>v.height+1}).map(t=>t.textContent)),[]);
+    await main.locator('.siteSubmissions').focus();await page.keyboard.press('Escape');
+  }
   assert.deepEqual(await page.evaluate(()=>testApi.errors),[]);assert.deepEqual(errors,[]);
   await page.goto(url+'/preview.html');await page.locator('svg').waitFor();assert.match(await page.locator('svg').textContent(),/ILLUSTRATIVE DATA/);assert.equal(await page.locator('.ssHit').count(),12);
   await page.getByRole('button',{name:'Data checks example'}).click();assert.match(await page.locator('svg').textContent(),/Check date/);

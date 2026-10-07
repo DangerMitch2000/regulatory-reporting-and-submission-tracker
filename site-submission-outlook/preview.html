@@ -17,6 +17,12 @@ function formatStates(values) {
   if (!values) return 'Not mapped';
   return (values.length > 1 ? 'Multiple: ' : '') + values.map(stateLabel).join(' / ');
 }
+// Use all delivered state evidence for a submission, before local filter selections.
+const hasState = (states, role, value) => Boolean(states[role]?.some(state => clean(state).replace(/\s+/g, ' ').toLocaleLowerCase('en-GB') === value));
+const submissionCompleted = states => hasState(states, 'SubStatus', 'completed');
+function completeForBacklog(states) {
+  return submissionCompleted(states) || hasState(states, 'ROStatus', 'health authority approved');
+}
 function parseDay(value) {
   if (value == null || clean(value) === '') return {kind: 'blank'};
   let y, m, d;
@@ -112,7 +118,12 @@ function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), s
     if (actualIssue) {
       record.status = 'Check date'; record.reason = actual.kind === 'issue' ? `${actual.reason}: actual submission` : 'Actual submission date is in the future';
       checks.actualIssues++;
-    } else if (actual.kind === 'date') record.status = 'Submitted';
+    }
+    const actualSubmitted = actual.kind === 'date' && !actualIssue;
+    if (actualSubmitted || submissionCompleted(states)) {
+      record.status = 'Submitted';
+      record.submittedByState = !actualSubmitted;
+    }
     if (plan.kind !== 'date') {
       checks[plan.kind === 'blank' ? 'missingPlan' : 'planIssues']++;
       issues.push({...record, reason: [plan.kind === 'blank' ? 'Planned submission date not recorded' : `${plan.reason}: planned submission`, record.reason].filter(Boolean).join('; ')});
@@ -121,7 +132,7 @@ function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), s
     if (actualIssue) issues.push({...record});
     const month = bucket.months.find(m => plan.day >= m.start && plan.day < m.end);
     if (!month) {
-      if (plan.day < backlog.cutoff && actual.kind === 'blank') {
+      if (plan.day < backlog.cutoff && actual.kind === 'blank' && !completeForBacklog(states)) {
         record.overdue = true;
         bucket.backlog.count++; bucket.backlog.rows.push(record);
         backlog.count++; backlog.rows.push(record);
@@ -221,7 +232,7 @@ function render(root, rows, options = {}) {
   const colors = {bg: dark ? '#152133' : '#ffffff', ink: dark ? '#e7edf7' : '#17324d', muted: dark ? '#acbed3' : '#536a80',
     border: dark ? '#35455a' : '#dce6ef', panel: dark ? '#1d2d42' : '#f3f7fa', inProcess: dark ? '#479fe7' : '#176eb0', submitted: '#61cdb4', review: '#f6c66a', backlog: dark ? '#ffb783' : '#a5450a', backlogBg: dark ? '#432d23' : '#fff2e7'};
   if (highContrast) Object.assign(colors, {bg: highContrast.background, ink: highContrast.foreground, muted: highContrast.foreground, border: highContrast.foreground, panel: highContrast.background, inProcess: highContrast.foreground, submitted: highContrast.background, review: highContrast.background, backlog: highContrast.foreground, backlogBg: highContrast.background});
-  const stage = el('div', undefined, 'ssStage'), svg = svgEl('svg', {viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Submissions planned for ${r.label}: ${r.totals.planned} planned, ${r.totals.inProcess} in process, ${r.totals.submitted} submitted, ${r.totals.review} needing date review. ${r.backlog.count} overdue backlog, planned before ${dateText(r.backlog.cutoff)} and still not submitted.`});
+  const stage = el('div', undefined, 'ssStage'), svg = svgEl('svg', {viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Submissions planned for ${r.label}: ${r.totals.planned} planned, ${r.totals.inProcess} in process, ${r.totals.submitted} submitted, ${r.totals.review} in Check date. ${r.backlog.count} overdue backlog, planned before ${dateText(r.backlog.cutoff)} and still not submitted.`});
   stage.append(svg); root.append(stage);
   svg.append(svgEl('rect', {width: W, height: H, fill: colors.bg}));
   const text = (x, y, value, size = 18, fill = colors.ink, extra = {}) => {const node = svgEl('text', {x, y, 'font-size': size, fill, ...extra}, value); svg.append(node); return node;};
@@ -229,8 +240,8 @@ function render(root, rows, options = {}) {
   function backlogHit(x, y, width, height, site = null) {
     const count = site ? site.backlog.count : r.backlog.count, scope = site ? site.site : 'All selected sites';
     const selected = state.detail?.kind === 'backlog' && (state.detail.site || '*') === (site?.key || '*');
-    const hit = svgEl('rect', {x, y, width, height, rx: 7, fill: 'transparent', stroke: selected ? colors.backlog : 'none', 'stroke-width': 2, tabindex: 0, role: 'button', class: 'ssBacklogHit', 'data-site': site?.key || '*', 'aria-label': `${scope}: ${count} overdue backlog. Planned before ${dateText(r.backlog.cutoff)} with no actual submission date. View submissions.`});
-    hit.append(svgEl('title', {}, `${scope} · Overdue backlog: ${count}\nPlanned before ${dateText(r.backlog.cutoff)} with no actual submission date.\nCounted separately from the two-month plan. Click to view oldest first.`));
+    const hit = svgEl('rect', {x, y, width, height, rx: 7, fill: 'transparent', stroke: selected ? colors.backlog : 'none', 'stroke-width': 2, tabindex: 0, role: 'button', class: 'ssBacklogHit', 'data-site': site?.key || '*', 'aria-label': `${scope}: ${count} overdue backlog. Planned before ${dateText(r.backlog.cutoff)} with no actual submission date. Excludes Completed submissions or Health Authority Approved ROs using mapped states. View submissions.`});
+    hit.append(svgEl('title', {}, `${scope} · Overdue backlog: ${count}\nPlanned before ${dateText(r.backlog.cutoff)} with no actual submission date.\nExcludes Submission state Completed or RO state Health Authority Approved, using mapped states.\nCounted separately from the two-month plan. Click to view oldest first.`));
     const activate = () => onChange({detail: {kind: 'backlog', ...(site ? {site: site.key} : {})}, query: '', status: 'all', page: 0, sitesOpen: false});
     hit.onclick = activate; hit.onkeydown = e => {if (e.key === 'Enter' || e.key === ' ') {e.preventDefault(); activate();}}; svg.append(hit);
   }
@@ -299,11 +310,13 @@ function render(root, rows, options = {}) {
   else if (!r.totals.planned) text((left + right) / 2, top + 110, 'No planned submissions in these two months', 21, colors.muted, centered);
   const footerY = 742;
   text(35, footerY, `${synthetic ? 'ILLUSTRATIVE DATA · ' : ''}${sites.length} sites · ${unit === '*' ? 'All business units' : unit || 'Not recorded'}`, 15, colors.muted);
-  text(35, footerY + 23, 'Backlog is separate from the two-month plan. Keep earlier dates in report filters.', 15, colors.muted);
-  text(35, footerY + 44, `Submitted requires an actual date on or before today.${r.issueCount ? ` ${r.issueCount} data checks — review below.` : ''}`, 14, colors.muted);
-  if (compact) text(35, footerY + 66, `${r.completion}% submitted · ${r.totals.overdue} overdue in this month’s plan · As of ${dateText(r.today)}`, 14, colors.muted);
+  text(35, footerY + 23, 'Backlog excludes Completed submissions or Health Authority Approved ROs.', 15, colors.muted);
+  text(35, footerY + 44, 'Submitted: actual date on/before today or Submission state Completed.', 14, colors.muted);
+  const issueOffset = r.issueCount ? 22 : 0;
+  if (r.issueCount) text(35, footerY + 66, `${r.issueCount} data checks — review below.`, 14, colors.muted);
+  if (compact) text(35, footerY + 66 + issueOffset, `${r.completion}% submitted · ${r.totals.overdue} overdue in this month’s plan · As of ${dateText(r.today)}`, 14, colors.muted);
   const filterText = STATE_FIELDS.map(({role,label})=>`${label}: ${!r.stateMapped[role]?'Not mapped':r.stateFilters[role]===null?'All':r.stateFilters[role].length?r.stateFilters[role].map(stateLabel).join(', '):'None'}`).join(' · ');
-  let filterY=compact?832:810,line='',filterNode=text(35,filterY,'',13,colors.muted,{'data-state-scope':'true'});
+  let filterY=(compact?832:810)+issueOffset,line='',filterNode=text(35,filterY,'',13,colors.muted,{'data-state-scope':'true'});
   for(const word of filterText.split(' ')) {
     const candidate=line?line+' '+word:word;filterNode.textContent=candidate;
     if(filterNode.getComputedTextLength()>W-70&&line){filterNode.textContent=line;filterY+=18;line=word;filterNode=text(35,filterY,line,13,colors.muted,{'data-state-scope':'true'});}else line=candidate;
@@ -323,10 +336,10 @@ function renderDetails(root, result, state, onChange) {
   const pageSize = 50, page = Math.min(Math.max(0, state.page || 0), Math.max(0, Math.ceil(filtered.length / pageSize) - 1));
   const section = el('section', undefined, 'ssDetails');
   section.append(el('h3', issues ? 'Data checks' : isBacklog ? `${site?.site || (state.detail.site ? state.detail.site : 'All selected sites')} · Overdue backlog` : `${month?.site || state.detail.site} · ${month?.label || state.detail.month}`));
-  if (issues) section.append(el('p', 'Checks respect the selected business unit and lifecycle states. Site checks cover all delivered sites; date checks cover selected sites across all dates. Records needing date review are not assumed to be submitted.'));
-  else if (isBacklog) section.append(el('p', `Planned before ${dateText(result.backlog.cutoff)} with no actual submission date, oldest first. These records are separate from the two-month plan. Only records delivered by Power BI can appear; keep earlier dates in report filters.`));
-  else section.append(el('p', 'These submissions belong to the selected planned month. Actual submission dates can be earlier or later than that month.'));
-  section.append(el('p','Recorded submission, RO and application states are shown separately from date-based progress. Multiple recorded values remain visible.'));
+  if (issues) section.append(el('p', 'Checks respect the selected business unit and lifecycle states. Site checks cover all delivered sites; date checks cover selected sites across all dates. A Completed submission state still counts as Submitted; recorded date problems remain here for review.'));
+  else if (isBacklog) section.append(el('p', `Planned before ${dateText(result.backlog.cutoff)} with no actual submission date, oldest first. Submission state Completed or RO state Health Authority Approved excludes a record from backlog; either state is sufficient, using all delivered values from the mapped fields. These records are separate from the two-month plan. Only records delivered by Power BI can appear; keep earlier dates in report filters.`));
+  else section.append(el('p', 'These submissions belong to the selected planned month. Submitted means a valid actual submission date on or before today, or Submission state Completed. Completed state can establish progress without an actual date; no date is invented.'));
+  section.append(el('p','Recorded submission, RO and application states are shown alongside progress. Multiple recorded values remain visible.'));
   const controls = el('div', undefined, 'ssDetailTools'), search = el('input'); search.placeholder = 'Find submission'; search.setAttribute('aria-label', 'Find submission'); search.value = state.query || '';
   search.onchange = () => onChange({query: search.value, page: 0}); controls.append(search);
   if (!issues && !isBacklog) {
@@ -337,7 +350,7 @@ function renderDetails(root, result, state, onChange) {
   if (filtered.length) {
     const wrap = el('div', undefined, 'ssTableWrap'), table = el('table'), head = el('thead'), header = el('tr');
     ['Submission ID', 'Site', 'Planned submission', 'Actual submission', issues ? 'Check' : 'Progress', ...STATE_FIELDS.map(f=>f.label)].forEach(label => header.append(el('th', label))); head.append(header); table.append(head);
-    const body = el('tbody'); filtered.slice(page * pageSize, (page + 1) * pageSize).forEach(r => {const row = el('tr'); [r.id, r.site, formatDate(r.plan), formatDate(r.actual), issues ? r.reason : r.status + (r.overdue ? ' · Overdue' : ''), ...STATE_FIELDS.map(f=>formatStates(r.states?.[f.role]))].forEach((value,i) => row.append(el('td', value, i>=5?'ssRecordedState':undefined))); body.append(row);}); table.append(body); wrap.append(table); section.append(wrap);
+    const body = el('tbody'); filtered.slice(page * pageSize, (page + 1) * pageSize).forEach(r => {const row = el('tr'); [r.id, r.site, formatDate(r.plan), formatDate(r.actual), issues ? r.reason : r.status + (r.submittedByState ? ' · Completed state' : '') + (r.overdue ? ' · Overdue' : ''), ...STATE_FIELDS.map(f=>formatStates(r.states?.[f.role]))].forEach((value,i) => row.append(el('td', value, i>=5?'ssRecordedState':undefined))); body.append(row);}); table.append(body); wrap.append(table); section.append(wrap);
     const pagination = el('div', undefined, 'ssPager'); pagination.append(el('span', `Showing ${page * pageSize + 1}–${Math.min((page + 1) * pageSize, filtered.length)} of ${filtered.length}`));
     const prev = el('button', 'Previous'), next = el('button', 'Next'); prev.disabled = page === 0; next.disabled = (page + 1) * pageSize >= filtered.length; prev.onclick = () => onChange({page: page - 1}); next.onclick = () => onChange({page: page + 1}); pagination.append(prev, next); section.append(pagination);
   } else section.append(el('p', issues && result.checks.missingIds ? `${result.checks.missingIds} rows have no submission ID and cannot be counted. No other matching checks.` : 'No matching submissions.'));
@@ -361,7 +374,7 @@ function sample(now = new Date()) {
     rows.push({SubID: `DEMO-${site}-PRIOR-SUBMITTED`, Site: site, PlannedSubmission: iso(-1,15), ActualSubmission: iso(0,Math.min(3,currentDay)), BusinessUnit: 'ID'});
   });
   const states = new Map();
-  return rows.map(row => {
+  const enriched = rows.map(row => {
     if (!states.has(row.SubID)) {
       const i = states.size;
       states.set(row.SubID, {
@@ -372,6 +385,12 @@ function sample(now = new Date()) {
     }
     return {...row,...states.get(row.SubID)};
   });
+  // These old plans have no actual date but are complete for backlog purposes.
+  return [...enriched,
+    {SubID:'DEMO-CLOSED-BY-SUB',Site:'ABO',PlannedSubmission:iso(-1,1),ActualSubmission:null,BusinessUnit:'ID',SubStatus:'Completed',ROStatus:'In Progress',AppStatus:'Active'},
+    {SubID:'DEMO-CLOSED-BY-RO',Site:'ADJ',PlannedSubmission:iso(-1,1),ActualSubmission:null,BusinessUnit:'ID',SubStatus:'In Progress',ROStatus:'Health Authority Approved',AppStatus:'Active'},
+    {SubID:'DEMO-CLOSED-BY-BOTH',Site:'ADK',PlannedSubmission:iso(-1,1),ActualSubmission:null,BusinessUnit:'ID',SubStatus:'Completed',ROStatus:'Health Authority Approved',AppStatus:'Active'}
+  ];
 }
 
 const root = document.getElementById('host'); let state = {}, rows = sample();
@@ -381,6 +400,6 @@ new ResizeObserver(() => draw()).observe(root);
 document.getElementById('wide').onclick = () => {root.style.width='min(1440px,100%)';root.style.height='800px';draw();};
 document.getElementById('small').onclick = () => {root.style.width='760px';root.style.height='720px';draw();};
 document.getElementById('clean').onclick = () => {rows=sample();state={};draw();};
-document.getElementById('review').onclick = () => {rows=sample();rows[0].ActualSubmission='invalid';rows.push({...rows[2], SubID:'DEMO-SITE-CHECK', Site:'ABO'}, {...rows[2],SubID:'DEMO-SITE-CHECK',Site:'SCR'});state={};draw();};
+document.getElementById('review').onclick = () => {rows=sample();const pending=rows.find(r=>!r.ActualSubmission&&r.SubStatus==='In Progress'&&!r.SubID.includes('CLOSED-BY'));pending.ActualSubmission='invalid';rows.push({...rows[2], SubID:'DEMO-SITE-CHECK', Site:'ABO'}, {...rows[2],SubID:'DEMO-SITE-CHECK',Site:'SCR'});state={};draw();};
 
 })();</script></body></html>
