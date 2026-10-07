@@ -135,6 +135,23 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test'),assert=requi
   await closeStates();await main.locator('.ssBacklogHit[data-site=ABO]').click();assert.match(await main.locator('.ssDetails').textContent(),/Withdrawn.*Archived.*Inactive/);assert.match(await main.locator('.ssDetails').textContent(),/Not recorded/);
   await main.getByRole('button',{name:'Close details'}).click();await main.getByRole('combobox',{name:'Theme'}).selectOption('dark');await openState('SubStatus');
   await main.locator('.siteSubmissions').screenshot({path:path.join(root,'states-controls-dark.png')});
+  const filingRows=['Completed','HA Received','Sent To Health Authority','Rejected','Distributed','Withdrawn'].flatMap((SubStatus,i)=>[
+    {SubID:'CURRENT-'+i,Site:'ABO',PlannedSubmission:'2026-10-01',ActualSubmission:null,SubStatus},
+    {SubID:'OLD-'+i,Site:'ABO',PlannedSubmission:'2026-09-01',ActualSubmission:null,SubStatus}
+  ]);
+  await page.evaluate(rows=>testApi.send(rows.flatMap(r=>[r,r]),{preferences:{unit:'*',theme:'light',stateFilters:{}}}),filingRows);
+  assert.match(await main.locator('svg').getAttribute('aria-label'),/6 planned, 2 in process, 4 submitted/);assert.match(await main.locator('svg').getAttribute('aria-label'),/2 overdue backlog/);
+  await main.locator('.ssHit[data-site=ABO]').first().click();
+  for(const [i,state] of ['Completed','HA Received','Sent To Health Authority','Rejected'].entries()){
+    const cells=await main.locator('tbody tr').filter({hasText:'CURRENT-'+i}).locator('td').allTextContents();
+    assert.equal(cells[3],'Not recorded');assert.equal(cells[4],`Submitted · ${state} state`);assert.equal(cells[5],state);
+  }
+  assert.match(await main.locator('.ssDetails').textContent(),/Rejected means filed and rejected by the health authority, not approved/);
+  await main.getByRole('button',{name:'Close details'}).click();
+  await main.locator('.ssBacklogHit[data-site="*"]').click();assert.deepEqual(await main.locator('tbody tr td:first-child').allTextContents(),['OLD-4','OLD-5']);await main.getByRole('button',{name:'Close details'}).click();
+  await openState('SubStatus');await main.getByRole('button',{name:'Clear Submission state values',exact:true}).click();await main.getByRole('checkbox',{name:'Include Rejected in Submission state',exact:true}).check();
+  assert.match(await main.locator('svg').getAttribute('aria-label'),/1 planned, 0 in process, 1 submitted/);assert.match(await main.locator('svg').getAttribute('aria-label'),/0 overdue backlog/);
+  await main.getByRole('button',{name:'All Submission state values',exact:true}).click();
   assert.deepEqual(await page.evaluate(()=>testApi.errors),[]);assert.deepEqual(errors,[]);
   const closedBacklogRows=[
     {SubID:'CLOSED-SUB',Site:'ABO',PlannedSubmission:'2026-09-01',ActualSubmission:null,SubStatus:'Completed',ROStatus:'In Progress'},
@@ -146,7 +163,7 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test'),assert=requi
   await page.evaluate(rows=>testApi.send(rows,{preferences:{unit:'*',theme:'light',stateFilters:{SubStatus:null,ROStatus:null,AppStatus:null}}}),closedBacklogRows);
   assert.match(await main.locator('svg').getAttribute('aria-label'),/1 planned, 0 in process, 1 submitted/);assert.match(await main.locator('svg').getAttribute('aria-label'),/1 overdue backlog/);
   assert.match(await main.locator('.ssBacklogHit[data-site=ADJ]').getAttribute('aria-label'),/0 overdue backlog/);
-  await main.locator('.ssBacklogHit[data-site="*"]').click();assert.deepEqual(await main.locator('tbody tr td:first-child').allTextContents(),['STILL-OPEN']);assert.match(await main.locator('.ssDetails').textContent(),/either state is sufficient/);
+  await main.locator('.ssBacklogHit[data-site="*"]').click();assert.deepEqual(await main.locator('tbody tr td:first-child').allTextContents(),['STILL-OPEN']);assert.match(await main.locator('.ssDetails').textContent(),/Any one is sufficient/);
   await main.getByRole('button',{name:'Close details'}).click();await main.locator('.ssHit[data-site=ABO]').first().click();assert.match(await main.locator('tbody tr').textContent(),/CURRENT-COMPLETED.*Submitted.*Completed state/);await main.getByRole('button',{name:'Close details'}).click();
   await page.evaluate(rows=>testApi.send(rows.map(r=>r.SubID==='STILL-OPEN'?{...r,ROStatus:'Health Authority Approved'}:r)),closedBacklogRows);
   assert.match(await main.locator('svg').getAttribute('aria-label'),/0 overdue backlog/);

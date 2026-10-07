@@ -149,6 +149,38 @@ assert.equal(completedPlan.buckets[0].months[0].rows.find(r=>r.id==='NO-DATE').a
 assert.equal(completedPlan.buckets[0].months[0].rows.find(r=>r.id==='NO-DATE').submittedByState,true);
 assert.equal(summarize([row('OPTIONAL',{SubStatus:'Completed'})],{now,stateMapped:{SubStatus:false}}).totals.submitted,0);
 assert.equal(summarize(statusEvidence.map(r=>({...r,PlannedSubmission:'2026-10-01'})),{now,unit:'ID',stateFilters:{SubStatus:['In Progress']}}).totals.submitted,1);
+// All source states: filing evidence differs from internal distribution and inactive work.
+const stateCases = [
+  ['Completed',true], ['HA Received',true], ['Sent To Health Authority',true], ['Rejected',true],
+  ['Distributed',false], ['Deferred',false], ['In Progress',false], ['Inactive',false],
+  ['Planned',false], ['Ready For Submission',false], ['Withdrawn',false], ['',false], [null,false],
+  ['Not completed',false], ['Awaiting HA Received',false], ['Rejected internally',false]
+];
+for (const [state,submitted] of stateCases) {
+  const source = row('STATE',{SubStatus:state,PlannedSubmission:'2026-10-01'});
+  const current = summarize([source,source],{now});
+  assert.deepEqual(current.totals,{planned:1,inProcess:submitted?0:1,submitted:submitted?1:0,review:0,overdue:submitted?0:1},String(state));
+  assert.equal(current.buckets[0].months[0].rows[0].actual.kind,'blank');
+  assert.equal(summarize([{...source,PlannedSubmission:'2026-09-01'}],{now}).backlog.count,submitted?0:1,String(state));
+  assert.equal(summarize([{...source,ActualSubmission:'2026-10-01'}],{now}).totals.submitted,1,'A valid actual date independently establishes filing');
+  assert.equal(summarize([source],{now,stateMapped:{SubStatus:false}}).totals.submitted,0);
+  assert.equal(summarize([row('WRONG-ROLE',{ROStatus:state,AppStatus:state})],{now}).totals.submitted,0);
+  if (submitted) {
+    assert.deepEqual(current.buckets[0].months[0].rows[0].submittedStates,[state]);
+    const variant={...source,SubStatus:'  '+state.toLowerCase().replaceAll(' ','   ')+'  '};
+    assert.equal(summarize([variant],{now}).totals.submitted,1);
+    const duplicate = [{...source,SubStatus:'In Progress',BusinessUnit:'ID'},{...source,BusinessUnit:'CMI'}];
+    assert.equal(summarize(duplicate,{now,unit:'ID',stateFilters:{SubStatus:['In Progress']}}).totals.submitted,1);
+    assert.equal(summarize(duplicate.map(r=>({...r,PlannedSubmission:'2026-09-01'})),{now,unit:'ID',stateFilters:{SubStatus:['In Progress']}}).backlog.count,0);
+    for (const actual of ['invalid','2026-12-01']) {
+      const check=summarize([{...source,ActualSubmission:actual}],{now});
+      assert.equal(check.totals.submitted,1);assert.equal(check.totals.review,0);assert.equal(check.checks.actualIssues,1);
+    }
+  }
+}
+const multiState=summarize(['Completed','HA Received','Sent To Health Authority','Rejected','Distributed'].map(SubStatus=>row('ONE',{SubStatus})),{now});
+assert.equal(multiState.totals.planned,1);assert.equal(multiState.totals.submitted,1);
+assert.deepEqual(multiState.buckets[0].months[0].rows[0].submittedStates,['Completed','HA Received','Sent To Health Authority','Rejected']);
 assert.equal(summarize([row('CONFLICT',{SubStatus:'Planned'}),row('CONFLICT',{SubStatus:'Cancelled',Site:'ADK'})],{now,stateFilters:{SubStatus:['Planned']}}).checks.multipleSites,1);
 assert.equal(summarize([row('CONFLICT',{SubStatus:'Planned'}),row('CONFLICT',{SubStatus:'Cancelled',PlannedSubmission:'2026-11-01'})],{now,stateFilters:{SubStatus:['Planned']}}).checks.planIssues,1);
 assert.equal(summarize([row('ISSUE',{SubStatus:'Cancelled',ActualSubmission:'bad'}),row('ISSUE2',{SubStatus:'Planned',ActualSubmission:'bad'}),row('',{SubStatus:'Cancelled'})],{now,stateFilters:{SubStatus:['Cancelled']}}).issueCount,2);

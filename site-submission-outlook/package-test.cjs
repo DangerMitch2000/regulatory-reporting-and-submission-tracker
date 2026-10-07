@@ -3,7 +3,7 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test');
 (async()=>{
  const guid='siteSubmissionOutlook8D94A67E43154927AC034613F8289C02';
  const pkg=JSON.parse(fs.readFileSync(path.join(__dirname,'package-check','resources',guid+'.pbiviz.json'),'utf8'));
- assert.equal(pkg.visual.version,'1.2.1.0'); assert.equal(pkg.visual.guid,guid);
+ assert.equal(pkg.visual.version,'1.2.2.0'); assert.equal(pkg.visual.guid,guid);
  assert.deepEqual(pkg.capabilities.privileges,[]);
  const roles=pkg.capabilities.dataRoles.map(r=>r.name);
  assert.deepEqual(roles,['SubID','Site','PlannedSubmission','ActualSubmission','BusinessUnit','SubStatus','ROStatus','AppStatus']);
@@ -50,6 +50,13 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test');
    ]));
    assert.match(await page.locator('svg').getAttribute('aria-label'),/1 overdue backlog/);assert.match(await page.locator('svg').getAttribute('aria-label'),/1 planned, 0 in process, 1 submitted/);
    await page.locator('.ssBacklogHit[data-site="*"]').click();assert.deepEqual(await page.locator('tbody tr td:first-child').allTextContents(),['OPEN']);await page.getByRole('button',{name:'Close details'}).click();
+   await page.evaluate(()=>send(['Completed','HA Received','Sent To Health Authority','Rejected','Distributed','Withdrawn'].flatMap((SubStatus,i)=>[
+     {SubID:'CURRENT-'+i,Site:'ABO',PlannedSubmission:'2026-10-01',ActualSubmission:null,SubStatus},
+     {SubID:'OLD-'+i,Site:'ABO',PlannedSubmission:'2026-09-01',ActualSubmission:null,SubStatus}
+   ]).flatMap(r=>[r,r])));
+   assert.match(await page.locator('svg').getAttribute('aria-label'),/6 planned, 2 in process, 4 submitted/);assert.match(await page.locator('svg').getAttribute('aria-label'),/2 overdue backlog/);
+   await page.locator('.ssHit[data-site=ABO]').first().click();assert.match(await page.locator('tbody').textContent(),/Submitted · Rejected state/);assert.match(await page.locator('tbody').textContent(),/Submitted · Sent To Health Authority state/);await page.getByRole('button',{name:'Close details'}).click();
+   await page.locator('.ssBacklogHit[data-site="*"]').click();assert.deepEqual(await page.locator('tbody tr td:first-child').allTextContents(),['OLD-4','OLD-5']);await page.getByRole('button',{name:'Close details'}).click();
    await page.evaluate(rows=>send(rows,['ActualSubmission']),sample(new Date('2026-10-07T12:00:00Z')));
    assert.match(await page.locator('.ssSetup').textContent(),/Actual submission date/);
    const elapsed=await page.evaluate(()=>{const rows=Array.from({length:10000},(_,i)=>({SubID:'S-'+i,Site:['ABO','ADJ','ADK','AJG','ARDG','SCR'][i%6],PlannedSubmission:i%3?'2026-10-05':'2026-11-05',ActualSubmission:i%2?null:'2026-10-03',SubStatus:i%2?'Cancelled':'Completed',ROStatus:i%3?'In Progress':'Archived',AppStatus:i%4?'Active':'Inactive'}));const start=performance.now();send(rows.flatMap(r=>[r,r,r]));return performance.now()-start;});

@@ -14,10 +14,8 @@ export function formatStates(values) {
 }
 // Use all delivered state evidence for a submission, before local filter selections.
 const hasState = (states, role, value) => Boolean(states[role]?.some(state => clean(state).replace(/\s+/g, ' ').toLocaleLowerCase('en-GB') === value));
-export const submissionCompleted = states => hasState(states, 'SubStatus', 'completed');
-export function completeForBacklog(states) {
-  return submissionCompleted(states) || hasState(states, 'ROStatus', 'health authority approved');
-}
+export const SUBMITTED_STATES = ['Completed', 'HA Received', 'Sent To Health Authority', 'Rejected'];
+export const submittedStateEvidence = states => SUBMITTED_STATES.filter(label => hasState(states, 'SubStatus', label.toLocaleLowerCase('en-GB')));
 export function parseDay(value) {
   if (value == null || clean(value) === '') return {kind: 'blank'};
   let y, m, d;
@@ -99,7 +97,8 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     const plan = resolveDate(list.map(row => row.PlannedSubmission));
     const actual = resolveDate(list.map(row => row.ActualSubmission));
     const states = Object.fromEntries(STATE_FIELDS.map(({role})=>[role,mappings[role] ? [...new Set(list.map(row=>clean(row[role])))].sort() : null]));
-    const record = {id, site: names.join(' / ') || 'Unassigned', plan, actual, states, status: 'In process', reason: ''};
+    const submittedStates = submittedStateEvidence(states);
+    const record = {id, site: names.join(' / ') || 'Unassigned', plan, actual, states, submittedStates, status: 'In process', reason: ''};
     if (names.length !== 1) {
       const reason = names.length ? 'Multiple sites: not allocated' : 'Site not recorded';
       checks[names.length ? 'multipleSites' : 'unassignedSite']++;
@@ -115,7 +114,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
       checks.actualIssues++;
     }
     const actualSubmitted = actual.kind === 'date' && !actualIssue;
-    if (actualSubmitted || submissionCompleted(states)) {
+    if (actualSubmitted || submittedStates.length) {
       record.status = 'Submitted';
       record.submittedByState = !actualSubmitted;
     }
@@ -127,7 +126,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     if (actualIssue) issues.push({...record});
     const month = bucket.months.find(m => plan.day >= m.start && plan.day < m.end);
     if (!month) {
-      if (plan.day < backlog.cutoff && actual.kind === 'blank' && !completeForBacklog(states)) {
+      if (plan.day < backlog.cutoff && actual.kind === 'blank' && !submittedStates.length && !hasState(states, 'ROStatus', 'health authority approved')) {
         record.overdue = true;
         bucket.backlog.count++; bucket.backlog.rows.push(record);
         backlog.count++; backlog.rows.push(record);
