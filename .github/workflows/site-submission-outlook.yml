@@ -42,6 +42,7 @@ jobs:
           npm --prefix powerbi run typecheck
           node prepare-tests.cjs
           node browser-test.cjs
+          node copy-test.cjs
       - name: Build Power BI package
         working-directory: site-submission-outlook/powerbi
         run: npm run package -- --no-stats
@@ -52,26 +53,26 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi/dist/*.pbiviz release/site-submission-outlook-1.2.2.0.pbiviz
+          cp powerbi/dist/*.pbiviz release/site-submission-outlook-1.2.3.0.pbiviz
           cp README.md release/SITE-SUBMISSION-OUTLOOK-INSTALL.md
           cp preview.html release/site-submission-outlook-demo.html
           cp site-submission-outlook-preview.png release/site-submission-outlook-preview.png
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf release/site-submission-outlook-source.tar.gz powerbi submissions.logic.mjs submissions.ui.mjs submissions.css visual.ts build.cjs demo.mjs preview-entry.mjs prepare-preview.cjs preview.html prepare-tests.cjs logic-test.mjs browser-test.cjs package-test.cjs serve.cjs README.md RELEASE-NOTES.md
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf release/site-submission-outlook-source.tar.gz powerbi submissions.logic.mjs submissions.ui.mjs submissions.css visual.ts build.cjs demo.mjs preview-entry.mjs prepare-preview.cjs preview.html prepare-tests.cjs logic-test.mjs browser-test.cjs copy-test.cjs package-test.cjs serve.cjs README.md RELEASE-NOTES.md
           cd release
           sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: site-submission-outlook-1.2.2
+          name: site-submission-outlook-1.2.3
           path: site-submission-outlook/release/
       - name: Publish separate Site Submission Outlook release
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: site-submission-outlook-v1.2.2
+          RELEASE_TAG: site-submission-outlook-v1.2.3
         run: |
           if gh release view "$RELEASE_TAG" --json isDraft,targetCommitish > release-state.json 2>/dev/null; then
             node -e 'const fs=require("fs"),r=JSON.parse(fs.readFileSync("release-state.json"));if(!r.isDraft||r.targetCommitish!==process.env.GITHUB_SHA)throw Error("This version already exists. Bump the version instead of replacing it.")'
           else
-            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --draft --title "Site Submission Outlook 1.2.2" --notes-file RELEASE-NOTES.md
+            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --draft --title "Site Submission Outlook 1.2.3" --notes-file RELEASE-NOTES.md
           fi
           gh release upload "$RELEASE_TAG" release/* --clobber
           gh release edit "$RELEASE_TAG" --draft=false --prerelease --latest=false

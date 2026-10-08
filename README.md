@@ -4,9 +4,11 @@
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
 
-## Site Submission Outlook — Filing states count as Submitted in 1.2.2
+## Site Submission Outlook — Copy submission IDs in 1.2.3
 
-[Download Site Submission Outlook 1.2.2](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.2.2/site-submission-outlook-1.2.2.0.pbiviz) · [Live preview](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Field mappings and instructions](site-submission-outlook/README.md)
+[Download Site Submission Outlook 1.2.3](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.2.3/site-submission-outlook-1.2.3.0.pbiviz) · [Live preview](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Field mappings and instructions](site-submission-outlook/README.md)
+
+**Copy submission IDs from Details.** Click an ID and press Ctrl+C, or use **Copy IDs** for all matching IDs across every page, one per line for pasting into Excel. Search, progress, business-unit and state filters are respected. This works in monthly, backlog and Data checks details. A selectable read-only list remains available for Ctrl+C if automatic clipboard access is unavailable. No new field mappings are required.
 
 Shows the **current and following month** for **ABO, ADJ, ADK, AJG, ARDG and SCR**. Each month's planned submissions split into **In process** and **Submitted**, using distinct submission IDs. A valid actual submission date on or before today **or Submission state Completed, HA Received, Sent To Health Authority or Rejected** establishes Submitted, including when the date is blank. Rejected means an authority rejection after filing; Distributed means internal distribution and does not qualify by itself. The planned date determines the column. Details identify the state evidence without inventing an actual date; recorded date problems remain in Data checks. Includes totals, business-unit/state filters, light/dark themes and screenshot mode.
 
@@ -191,7 +193,7 @@ For the Tracker, Roadmap, IVDR, Key Submissions and Site Regulatory Plan, map yo
 | IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |
 | Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/key-preview.html) |
 | Site Regulatory Plan 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-plan-2026-v1.1.0/site-regulatory-plan-2026-1.1.0.0.pbiviz) | [Site plan](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-plan-preview.html) |
-| Site Submission Outlook 1.2.2 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.2.2/site-submission-outlook-1.2.2.0.pbiviz) | [Current and next month](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) |
+| Site Submission Outlook 1.2.3 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.2.3/site-submission-outlook-1.2.3.0.pbiviz) | [Current and next month](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) |
 
 Roadmap shows False separately as **Dispatch not required**, retaining recorded dispatch reference dates. Records without a usable dispatch month but with current-year actual submission/approval evidence are shown separately outside the monthly chart. Blanks remain unknown; they are not assumed to mean False. An unmapped field retains the earlier classification behavior.
 

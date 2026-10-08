@@ -171,18 +171,58 @@ function renderDetails(root, result, state, onChange) {
   if (issues) section.append(el('p', `Checks respect the selected business unit and lifecycle states. Site checks cover all delivered sites; date checks cover selected sites across all dates. Submission states ${submittedStatesText} still count as Submitted; recorded date problems remain here for review.`));
   else if (isBacklog) section.append(el('p', `Planned before ${dateText(result.backlog.cutoff)} with no actual submission date, oldest first. Submission states ${submittedStatesText}, or RO state Health Authority Approved, exclude a record from backlog. Any one is sufficient, using all delivered values from the mapped fields. These records are separate from the two-month plan. Only records delivered by Power BI can appear; keep earlier dates in report filters.`));
   else section.append(el('p', `These submissions belong to the selected planned month. Submitted means a valid actual submission date on or before today, or Submission state ${submittedStatesText}. These states can establish progress without an actual date; no date is invented. Rejected means filed and rejected by the health authority, not approved. Distributed means internal distribution and does not establish Submitted by itself.`));
-  section.append(el('p','Recorded submission, RO and application states are shown alongside progress. Multiple recorded values remain visible.'));
+  section.append(el('p','Recorded submission, RO and application states are shown alongside progress. Click a submission ID to select it, then press Ctrl+C (Cmd+C on Mac). Copy IDs includes all matching pages, one ID per line.'));
   const controls = el('div', undefined, 'ssDetailTools'), search = el('input'); search.placeholder = 'Find submission'; search.setAttribute('aria-label', 'Find submission'); search.value = state.query || '';
   search.onchange = () => onChange({query: search.value, page: 0}); controls.append(search);
   if (!issues && !isBacklog) {
     const statuses = el('select'); statuses.setAttribute('aria-label', 'Submission progress');
     ['all', 'In process', 'Submitted', 'Check date'].forEach(s => {const o = el('option', s === 'all' ? 'All progress' : s); o.value = s; statuses.append(o);}); statuses.value = state.status || 'all'; statuses.onchange = () => onChange({status: statuses.value, page: 0}); controls.append(statuses);
   }
-  const close = el('button', 'Close details', 'ssClose'); close.onclick = () => onChange({detail: null}); controls.append(close); section.append(controls);
+  const copy = el('button', 'Copy IDs', 'ssCopyIDs'); copy.disabled = !filtered.length;
+  copy.title = 'Copy every matching submission ID across all pages, one per line.';
+  const copyPanel = el('div', undefined, 'ssCopyPanel'); copyPanel.hidden = true;
+  const copyStatus = el('p', '', 'ssCopyStatus'); copyStatus.setAttribute('role', 'status');
+  const copyText = el('textarea'); copyText.readOnly = true; copyText.spellcheck = false; copyText.rows = 5; copyText.wrap = 'off'; copyText.setAttribute('aria-label', 'Submission IDs to copy');
+  const selectCopyText = () => {copyText.focus({preventScroll:true}); copyText.select();};
+  const selectAll = el('button', 'Select all IDs'); selectAll.onclick = selectCopyText;
+  const hideCopy = el('button', 'Hide ID list'); hideCopy.onclick = () => {copyPanel.hidden = true; copy.focus();};
+  const copyActions = el('div', undefined, 'ssCopyActions'); copyActions.append(selectAll, hideCopy);
+  copyPanel.append(copyStatus, copyText, copyActions);
+  copy.onclick = async () => {
+    // Commit a just-typed search before copying so the table and the copied list agree.
+    if (search.value !== String(state.query || '')) {
+      search.onchange = null;
+      onChange({query: search.value, page: 0});
+      root.querySelector('.ssCopyIDs')?.click();
+      return;
+    }
+    const ids = [...new Set(filtered.map(r=>r.id).filter(Boolean))], value = ids.join('\n');
+    copyPanel.hidden = false; copyText.value = value; selectCopyText();
+    if (!ids.length) {copyStatus.textContent = 'No matching submission IDs to copy.'; return;}
+    copyStatus.textContent = `${ids.length} matching submission ${ids.length === 1 ? 'ID' : 'IDs'} selected across all pages. Press Ctrl+C (Cmd+C on Mac) to copy.`;
+    try {
+      if (typeof navigator.clipboard?.writeText !== 'function') return;
+      await navigator.clipboard.writeText(value);
+      if (copyPanel.isConnected) copyStatus.textContent = `Copied ${ids.length} submission ${ids.length === 1 ? 'ID' : 'IDs'}, one per line. Paste with Ctrl+V (Cmd+V on Mac).`;
+    } catch { /* The selected text remains available for native keyboard copying in restricted hosts. */ }
+  };
+  // Keep a pointer click from blurring the search box and replacing this button before it fires.
+  copy.onmousedown = event => event.preventDefault();
+  controls.append(copy);
+  const close = el('button', 'Close details', 'ssClose'); close.onclick = () => onChange({detail: null}); controls.append(close); section.append(controls, copyPanel);
+  section.addEventListener('keydown', event => {if ((event.ctrlKey || event.metaKey) && (event.key.toLowerCase()==='c' || event.target===copyText && event.key.toLowerCase()==='a') && (event.target === copyText || event.target.classList?.contains('ssSubmissionId'))) event.stopPropagation();});
   if (filtered.length) {
     const wrap = el('div', undefined, 'ssTableWrap'), table = el('table'), head = el('thead'), header = el('tr');
     ['Submission ID', 'Site', 'Planned submission', 'Actual submission', issues ? 'Check' : 'Progress', ...STATE_FIELDS.map(f=>f.label)].forEach(label => header.append(el('th', label))); head.append(header); table.append(head);
-    const body = el('tbody'); filtered.slice(page * pageSize, (page + 1) * pageSize).forEach(r => {const row = el('tr'); [r.id, r.site, formatDate(r.plan), formatDate(r.actual), issues ? r.reason : r.status + (r.submittedByState ? ` · ${r.submittedStates.join(' / ')} state` : '') + (r.overdue ? ' · Overdue' : ''), ...STATE_FIELDS.map(f=>formatStates(r.states?.[f.role]))].forEach((value,i) => row.append(el('td', value, i>=5?'ssRecordedState':undefined))); body.append(row);}); table.append(body); wrap.append(table); section.append(wrap);
+    const body = el('tbody'); filtered.slice(page * pageSize, (page + 1) * pageSize).forEach(r => {const row = el('tr'); [r.id, r.site, formatDate(r.plan), formatDate(r.actual), issues ? r.reason : r.status + (r.submittedByState ? ` · ${r.submittedStates.join(' / ')} state` : '') + (r.overdue ? ' · Overdue' : ''), ...STATE_FIELDS.map(f=>formatStates(r.states?.[f.role]))].forEach((value,i) => {
+      const cell = el('td', value, i===0?'ssSubmissionId':i>=5?'ssRecordedState':undefined);
+      if (i===0) {
+        cell.tabIndex = 0; cell.title = 'Click to select this submission ID, then press Ctrl+C (Cmd+C on Mac).';
+        const selectId = () => {const range = document.createRange(); range.selectNodeContents(cell); const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);};
+        cell.onclick = selectId; cell.onfocus = selectId;
+      }
+      row.append(cell);
+    }); body.append(row);}); table.append(body); wrap.append(table); section.append(wrap);
     const pagination = el('div', undefined, 'ssPager'); pagination.append(el('span', `Showing ${page * pageSize + 1}–${Math.min((page + 1) * pageSize, filtered.length)} of ${filtered.length}`));
     const prev = el('button', 'Previous'), next = el('button', 'Next'); prev.disabled = page === 0; next.disabled = (page + 1) * pageSize >= filtered.length; prev.onclick = () => onChange({page: page - 1}); next.onclick = () => onChange({page: page + 1}); pagination.append(prev, next); section.append(pagination);
   } else section.append(el('p', issues && result.checks.missingIds ? `${result.checks.missingIds} rows have no submission ID and cannot be counted. No other matching checks.` : 'No matching submissions.'));

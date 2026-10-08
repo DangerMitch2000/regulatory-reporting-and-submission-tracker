@@ -1,10 +1,20 @@
-# Site Submission Outlook — 1.2.2
+# Site Submission Outlook — 1.2.3
 
 A separate Power BI custom visual showing **the current and following calendar month** for **ABO, ADJ, ADK, AJG, ARDG and SCR**. Each month's planned submissions are split into **In process** and **Submitted**. The package has its own visual identity and does not replace the Regulatory Tracker.
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.2.2/site-submission-outlook-1.2.2.0.pbiviz) · [Live preview with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.2.2)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.2.3/site-submission-outlook-1.2.3.0.pbiviz) · [Live preview with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.2.3)
 
-## New in 1.2.2: Filing states count as Submitted
+## New in 1.2.3: Copy submission IDs from Details
+
+Open a monthly column, a backlog count or **Data checks** to show its Details list.
+
+- **One ID:** click the Submission ID cell, then press **Ctrl+C** (**Cmd+C** on Mac). The whole ID is selected, including hyphens. Keyboard users can tab to the ID cell and copy it.
+- **All matching IDs:** click **Copy IDs**. This copies distinct IDs from every matching page, one per line, so pasting into Excel places one ID on each row. It respects the selected site, month/backlog/checks list, business unit, lifecycle states, search and submission-progress filter. It is not limited to the 50 visible rows.
+- If automatic copying is unavailable, the read-only **Submission IDs to copy** box stays selected. Press **Ctrl+C**, then paste where needed. **Select all IDs** restores the selection; **Hide ID list** closes the box. A success message appears only when automatic copying succeeds.
+
+The copy list contains IDs only, without dates, headings or status text. Empty lists cannot be copied. Only records delivered by Power BI can be included. No additional fields, privileges or mapping changes are needed, and IDs are not sent to a server.
+
+## Filing states count as Submitted
 
 **Submission states Completed, HA Received, Sent To Health Authority and Rejected count as Submitted**, even when the actual submission date is blank. This updates the monthly Submitted segment, In process count, completion percentage and details. A valid actual submission date on or before today still establishes Submitted independently. Each Submission ID counts once when either or both forms of evidence exist.
 
@@ -30,7 +40,7 @@ The rule uses the existing optional **Submission state** and **RO state** mappin
 
 All delivered rows for the same SubID are checked: any qualifying submission state or Health Authority Approved RO state excludes that ID once. Local state or business-unit filters cannot hide that evidence and reintroduce it to backlog. Conflicting date/site data still remains in Data checks. No actual date is invented.
 
-**RO state Health Authority Approved only supplies the backlog exclusion**; it does not itself mark a monthly record Submitted. The four qualifying Submission states supply both Submitted progress and the backlog exclusion. Other RO states and Application states do not establish monthly Submitted progress. No new mappings are introduced in 1.2.2.
+**RO state Health Authority Approved only supplies the backlog exclusion**; it does not itself mark a monthly record Submitted. The four qualifying Submission states supply both Submitted progress and the backlog exclusion. Other RO states and Application states do not establish monthly Submitted progress. No new mappings are introduced in 1.2.3.
 
 ## Separate lifecycle state filters
 
@@ -50,7 +60,7 @@ Click a site's backlog count, or the total, to see the relevant submissions, old
 
 **Keep earlier planned dates included in the Power BI data delivered to this visual.** A report, page or visual filter restricted to October–November would remove the rows needed to count the backlog. The visual selects the two displayed months itself; it cannot restore rows filtered out by Power BI. Business-unit, site and lifecycle state filters apply to the backlog as well as the monthly plan.
 
-Import 1.2.2 over the existing Site Submission Outlook visual. The visual identity and mappings from 1.2.0 are unchanged. Ensure Submission state and RO state are mapped to apply both completion conditions.
+Import 1.2.3 over the existing Site Submission Outlook visual. The visual identity and mappings from 1.2.0 are unchanged. Ensure Submission state and RO state are mapped to apply both completion conditions.
 
 ## Business-unit filter
 
@@ -60,7 +70,7 @@ The control stays visible while unmapped and reads **Map Business unit field** u
 
 ## Import and map
 
-Import `site-submission-outlook-1.2.2.0.pbiviz` using **Visualizations → … → Import a visual from a file**. Add the visual and map these columns:
+Import `site-submission-outlook-1.2.3.0.pbiviz` using **Visualizations → … → Import a visual from a file**. Add the visual and map these columns:
 
 | Field well | Source column |
 |---|---|
@@ -113,6 +123,7 @@ cd ..
 node logic-test.mjs
 node prepare-tests.cjs
 node browser-test.cjs
+node copy-test.cjs
 cd powerbi
 npm run package -- --no-stats
 cd ..
