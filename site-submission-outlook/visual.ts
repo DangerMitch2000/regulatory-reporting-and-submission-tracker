@@ -10,6 +10,7 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
   private missing = ['SubID', 'Site', 'PlannedSubmission', 'ActualSubmission'];
   private unitMapped = false;
   private stateMapped: any = {};
+  private dispatchMapped: any = {};
   private notice = '';
   private state: any = {sites: [...DEFAULT_SITES], unit: '*', theme: 'light', capture: false};
   private preferenceText: string | undefined;
@@ -27,7 +28,7 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
     }, 60000);
   }
   private draw() {
-    render(this.root, this.rows, {state: this.state, width: this.width, missing: this.missing, unitMapped: this.unitMapped, stateMapped: this.stateMapped,
+    render(this.root, this.rows, {state: this.state, width: this.width, missing: this.missing, unitMapped: this.unitMapped, stateMapped: this.stateMapped, dispatchMapped: this.dispatchMapped,
       notice: this.notice, highContrast: this.highContrast, onChange: (patch: any) => {
         this.state = {...this.state, ...patch};
         if (['sites', 'unit', 'theme', 'stateFilters'].some(k => k in patch)) {
@@ -48,6 +49,7 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
       if (options.dataViews?.[0] || (options.type & 2)) {
         const view = options.dataViews?.[0], mapped = mapTable(view?.table);
         this.rows = mapped.rows; this.missing = mapped.missing; this.unitMapped = mapped.unitMapped; this.stateMapped = mapped.stateMapped;
+        this.dispatchMapped = mapped.dispatchMapped;
         const saved = view?.metadata?.objects?.preferences?.state;
         if (typeof saved === 'string' && saved !== this.preferenceText) {
           this.preferenceText = saved;

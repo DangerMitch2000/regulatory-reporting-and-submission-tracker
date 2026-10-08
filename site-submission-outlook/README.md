@@ -1,19 +1,43 @@
-# Site Submission Outlook — 1.2.4
+# Site Submission Outlook — 1.3.0
 
 A separate Power BI custom visual showing **the current and following calendar month** for **ABO, ADJ, ADK, AJG, ARDG and SCR**. Each month's planned submissions are split into **In process** and **Submitted**. The package has its own visual identity and does not replace the Regulatory Tracker.
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.2.4/site-submission-outlook-1.2.4.0.pbiviz) · [Live preview with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.2.4)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.3.0/site-submission-outlook-1.3.0.0.pbiviz) · [Live preview with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.3.0)
 
-## New in 1.2.4: Previous-day data label
+## New in 1.3.0: Dispatch and submission delays
+
+Add the three optional mappings **Dispatch required**, **Planned dispatch date** and **Actual dispatch date**. The monthly columns keep their In process/Submitted split. Details now show the dispatch stage, requirement and both dispatch dates; use **Dispatch stage** to separate work still pending internally from work awaiting submission to the authority.
+
+The new **Overdue by next action** section separates three groups. Its **Total overdue** counts each submission once:
+
+| Overdue group | Rule |
+|---|---|
+| Internal dispatch | Dispatch required is Yes, the mapped actual dispatch date is blank, and the planned dispatch date is before today. |
+| Authority submission | A valid actual dispatch date is on/before today, or dispatch required is No, and the planned submission date is before today. |
+| Check dispatch data | The submission plan is past due, but the dispatch stage or required dispatch due date cannot be established. The submission stays included in total overdue for review. |
+
+For example, dispatch planned for 5 October and submission planned for 20 October counts as **Internal dispatch overdue** on 7 October. Recording dispatch on 7 October removes it from that group. It only becomes a **Late authority submission** after 20 October if it remains unsubmitted. Due today is not overdue. Dispatch alone, including Submission state Distributed, never means submitted to the authority.
+
+Submitted records and **RO state Health Authority Approved** are excluded from all overdue groups, even without actual submission dates. The monthly Submitted calculation remains unchanged. An approved RO is labelled **RO approved** in dispatch Details; it is not counted as an authority-submission delay.
+
+**All overdue work covers all delivered dates**, including the historical backlog, the two-month plan, and internal dispatch already due for a later or missing submission plan. The backlog and monthly overdue counts are subsets of this total: do not add them to it. A missing submission plan still appears in Data checks and cannot be assigned to a monthly column. A required dispatch planned in the future is not overdue, even if the submission plan is older; reversed planned dates are flagged for review.
+
+Click a coloured overdue card or **Total overdue** to open its IDs, oldest applicable due date first. Filter these lists by site, dispatch stage or search; **Copy IDs** includes every matching page. Earlier-plan backlog counts remain below each site and use the same next-action rules.
+
+Required accepts Yes/No, true/false, 1/0 or Required/Not required, ignoring case and whitespace. Blanks, unmapped fields and unrecognized values are never assumed to mean No. A mapped blank actual dispatch is different from an unmapped field. Invalid/future/conflicting dispatch dates and contradictory requirements remain reviewable. If dispatch evidence is missing, a past-due submission plan remains in Check dispatch data rather than being labelled a confirmed authority delay. Entirely blank optional dispatch data does not flood Data checks; its overdue records are accessible in the check-dispatch group.
+
+Dates, dispatch requirements and filing/approval evidence are resolved across **all delivered rows for the same Submission ID**, before local filters. A business-unit or status selection cannot hide a recorded dispatch or completion, or resolve a conflicting requirement by discarding another row. All three new mappings are optional; existing report mappings continue to work.
+
+## Previous-day data label
 
 The **As of** label shows the previous calendar day to match the daily data refresh: for example, on 8 October it reads **As of 07 Oct 2026**. It updates automatically and appears in both the wide summary and compact footer, including screenshot mode. It is a rolling previous-day label based on the viewer's local calendar, not a timestamp read from Power BI refresh metadata. The current-and-next-month window and counting rules are unchanged.
 
 ## Copy submission IDs from Details
 
-Open a monthly column, a backlog count or **Data checks** to show its Details list.
+Open a monthly column, a backlog count, an overdue-action card or **Data checks** to show its Details list.
 
 - **One ID:** click the Submission ID cell, then press **Ctrl+C** (**Cmd+C** on Mac). The whole ID is selected, including hyphens. Keyboard users can tab to the ID cell and copy it.
-- **All matching IDs:** click **Copy IDs**. This copies distinct IDs from every matching page, one per line, so pasting into Excel places one ID on each row. It respects the selected site, month/backlog/checks list, business unit, lifecycle states, search and submission-progress filter. It is not limited to the 50 visible rows.
+- **All matching IDs:** click **Copy IDs**. This copies distinct IDs from every matching page, one per line, so pasting into Excel places one ID on each row. It respects the selected site, month/backlog/overdue/checks list, business unit, lifecycle states, search, submission-progress and dispatch-stage filters. It is not limited to the 50 visible rows.
 - If automatic copying is unavailable, the read-only **Submission IDs to copy** box stays selected. Press **Ctrl+C**, then paste where needed. **Select all IDs** restores the selection; **Hide ID list** closes the box. A success message appears only when automatic copying succeeds.
 
 The copy list contains IDs only, without dates, headings or status text. Empty lists cannot be copied. Only records delivered by Power BI can be included. No additional fields, privileges or mapping changes are needed, and IDs are not sent to a server.
@@ -44,7 +68,7 @@ The rule uses the existing optional **Submission state** and **RO state** mappin
 
 All delivered rows for the same SubID are checked: any qualifying submission state or Health Authority Approved RO state excludes that ID once. Local state or business-unit filters cannot hide that evidence and reintroduce it to backlog. Conflicting date/site data still remains in Data checks. No actual date is invented.
 
-**RO state Health Authority Approved only supplies the backlog exclusion**; it does not itself mark a monthly record Submitted. The four qualifying Submission states supply both Submitted progress and the backlog exclusion. Other RO states and Application states do not establish monthly Submitted progress. No new mappings are introduced in 1.2.4.
+**RO state Health Authority Approved supplies the overdue exclusion**; it does not itself mark a monthly record Submitted. The four qualifying Submission states supply both Submitted progress and the overdue exclusion. Other RO states and Application states do not establish monthly Submitted progress. Version 1.3.0 adds three optional dispatch mappings.
 
 ## Separate lifecycle state filters
 
@@ -58,13 +82,13 @@ The state mappings are optional. Until one is supplied, its filter stays disable
 
 ## Overdue backlog
 
-The orange count beneath each site shows submissions planned **before the first displayed month** that still have **no recorded actual submission date**, excluding records established as Submitted by state and records with **RO state Health Authority Approved**. The summary includes a total for all selected sites. For October–November 2026, the cutoff is before **1 October 2026**, including any earlier year. When the chart advances to November–December, the cutoff advances to 1 November.
+The orange count beneath each site shows submissions planned **before the first displayed month** whose next action is overdue under the dispatch/submission rules above. Records established as Submitted and records with **RO state Health Authority Approved** are excluded. Unknown dispatch stages with past-due submission plans remain included for review. The summary includes a total for all selected sites. For October–November 2026, the submission-plan cutoff is before **1 October 2026**, including any earlier year. When the chart advances to November–December, the cutoff advances to 1 November.
 
 Click a site's backlog count, or the total, to see the relevant submissions, oldest planned date first. The list supports search and pagination. Backlog remains separate from the two monthly bars, planned total and completion percentage. Recording an actual submission date, a qualifying Submission state or a Health Authority Approved RO state removes that submission from the backlog at the next data update.
 
 **Keep earlier planned dates included in the Power BI data delivered to this visual.** A report, page or visual filter restricted to October–November would remove the rows needed to count the backlog. The visual selects the two displayed months itself; it cannot restore rows filtered out by Power BI. Business-unit, site and lifecycle state filters apply to the backlog as well as the monthly plan.
 
-Import 1.2.4 over the existing Site Submission Outlook visual. The visual identity and mappings from 1.2.0 are unchanged. Ensure Submission state and RO state are mapped to apply both completion conditions.
+Import 1.3.0 over the existing Site Submission Outlook visual. The visual identity and mappings from 1.2.0 are unchanged. Ensure Submission state and RO state are mapped to apply both completion conditions.
 
 ## Business-unit filter
 
@@ -74,7 +98,7 @@ The control stays visible while unmapped and reads **Map Business unit field** u
 
 ## Import and map
 
-Import `site-submission-outlook-1.2.4.0.pbiviz` using **Visualizations → … → Import a visual from a file**. Add the visual and map these columns:
+Import `site-submission-outlook-1.3.0.0.pbiviz` using **Visualizations → … → Import a visual from a file**. Add the visual and map these columns:
 
 | Field well | Source column |
 |---|---|
@@ -86,6 +110,9 @@ Import `site-submission-outlook-1.2.4.0.pbiviz` using **Visualizations → … �
 | Submission state (optional) | The related submission's recorded status/state, for example Submission `state__v` |
 | RO state (optional) | The related regulatory objective's recorded status/state, for example Regulatory Objective `state__v` |
 | Application state (optional) | The related application's recorded status/state, for example Application `state__v` |
+| Dispatch required (optional) | The submission's dispatch-required flag, for example Submission `dispatch_required__c` / **Submission dispatch required c** |
+| Planned dispatch date (optional) | The submission's planned internal dispatch date, for example `planned_dispatch_date__c` |
+| Actual dispatch date (optional) | The submission's recorded actual internal dispatch date, for example `dispatch_date__rim` |
 
 Map raw columns, not Date hierarchies. A mapped date field can contain blanks. No event, change-initiation or response fields are needed. If you prefer a revised plan, map the latest planned submission date instead; the visual always uses the date column supplied and does not silently fall back to another date.
 
@@ -98,7 +125,7 @@ Use the state from the correct source table for each field, even if all three co
 - Each SubID counts once. Repeated source rows from product, country or other relationships do not increase counts.
 - Future, conflicting or invalid actual submission dates produce **Check date** when no qualifying Submission state establishes progress. A qualifying state still counts as Submitted, with the actual-date issue retained in Data checks. Check date is a separate amber segment when present; Planned = In process + Submitted + Check date.
 - Missing, conflicting or invalid planned dates cannot be placed in a month and appear in Data checks. The checks are explicitly scoped; some concern records outside the displayed months.
-- **Overdue within this month's plan** means still In process with a planned date before today, within the two-month plan. **Overdue backlog** is the separate count of older planned submissions with a blank actual submission date, excluding Submitted records or Health Authority Approved ROs. These counts do not overlap.
+- **Overdue within the two-month plan** uses the applicable next-action due date for those monthly cohorts. **Overdue backlog** covers older submission plans under the same rules. These subsets do not overlap; both are included in **Total overdue**, which also covers already-due dispatch for later/missing submission plans. Submitted records and Health Authority Approved ROs are excluded.
 - Backlog uses the same mapped planned-date column as the monthly bars. Submitted records, records completed under the state rule, future plans, missing/invalid/conflicting planned dates, and records needing actual-date review are not counted as confirmed backlog. Invalid, future or conflicting actual dates remain in Data checks; the visual does not assume they are blank. Distinct IDs are resolved before local filters, so repeated source rows cannot inflate backlog or hide conflicting dates/sites or completion evidence.
 - The four qualifying Submission states establish Submitted progress without inferring an actual date. Other states, internal distribution and dispatch do not establish that progress. All delivered states are included by default in the monthly plan. Use the separate state dropdowns, or Power BI report/visual filters, to choose the scope according to your reporting policy. Backlog additionally excludes Health Authority Approved ROs.
 - A submission associated with multiple different sites is unallocated and listed in Data checks. It is not duplicated into several named sites. Blank-site records and rows without SubID are also reported. Site names are matched after trimming and ignoring case; different codes such as ABO and ABON are not silently equated.
@@ -108,7 +135,7 @@ Use the state from the correct source table for each field, even if all three co
 
 ## Use the visual
 
-Click or keyboard-activate a monthly column or backlog count to see its submission IDs, planned dates, actual dates, progress and all three recorded lifecycle states. Search and pagination give access to every record in that count. Data checks open the affected records separately.
+Click or keyboard-activate a monthly column, backlog count or overdue-action card to see its submission IDs, dates, progress, all three recorded lifecycle states and the dispatch requirement, stage and dates. Search, stage/site filters and pagination give access to every record in that count. Data checks open the affected records separately. In normal mode, scroll down to see the overdue-action cards and Details; Screenshot mode fits the full chart to the visual.
 
 Light and dark themes are available. **Screenshot mode** hides controls and fits the chart to the visual's available space; focus the visual and press **Escape** to return. A wide visual around 1000–1400 pixels across works well for six sites. Very small captures reduce text readability. The chart's Submitted label does not imply that every submission was on time.
 
@@ -125,9 +152,11 @@ npm run typecheck
 npx playwright install chromium
 cd ..
 node logic-test.mjs
+node dispatch-test.mjs
 node prepare-tests.cjs
 node browser-test.cjs
 node copy-test.cjs
+node dispatch-browser-test.cjs
 cd powerbi
 npm run package -- --no-stats
 cd ..
@@ -137,7 +166,7 @@ node package-test.cjs
 
 Extract the `.pbiviz` as a ZIP into `package-check` using your platform's archive tool when `unzip` is unavailable. To test with an installed Microsoft Edge browser instead of bundled Chromium, set `TRACKER_BROWSER_CHANNEL=msedge`. GitHub Actions runs the calculation, type, browser and packaged-runtime checks before publishing a separate release with the Power BI package, demo, preview, source archive and checksums. The release source archive includes the generated project's dependency lockfile.
 
-The included tests check count rules, duplicate rows, exclusive backlog cutoff, older years, late completion, independent plan/backlog totals, date/site conflicts, month rollover, sites/business units, all three state filters, combined selections, exact/custom/blank states, unmapped fields, saved selections, host delivery, keyboard interaction, screenshots, backlog pagination/search and 10,000 distinct submissions. `preview.html` uses explicitly fictional data. The published screenshot uses a fixed October 2026 example; the live visual and demo advance with the current month.
+The included tests check count rules, duplicate rows, exclusive backlog cutoff, older years, late completion, independent plan/backlog totals, date/site conflicts, month rollover, sites/business units, all three state filters, combined selections, exact/custom/blank states, unmapped fields, saved selections, host delivery, keyboard interaction, screenshots, backlog pagination/search and 10,000 distinct submissions. Dispatch checks cover separate due dates, no double counting, missing/conflicting flags and dates, omitted mappings, recorded-dispatch transitions, future/missing submission plans, filtering and copying across pages. The same dispatch interaction checks run against the actual packaged runtime. `preview.html` uses explicitly fictional data. The published screenshot uses a fixed October 2026 example; the live visual and demo advance with the current month.
 
 This is an uncertified custom visual. Package/browser tests do not validate your actual Power BI data relationships or your organisation's import policy. Verify the imported result against a standard Power BI table containing the same mapped source columns and filters.
 

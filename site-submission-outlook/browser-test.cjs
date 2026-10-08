@@ -102,7 +102,7 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test'),assert=requi
   assert.match(await main.locator('svg').getAttribute('aria-label'),/1 overdue backlog/);
   const saved=await page.evaluate(()=>JSON.parse(testApi.persisted.at(-1).merge[0].properties.state));assert.deepEqual(saved.stateFilters.SubStatus,['Cancelled','Withdrawn']);
   await closeStates();await main.locator('.ssHit[data-site=ABO]').first().click();
-  assert.deepEqual(await main.locator('th').allTextContents(),['Submission ID','Site','Planned submission','Actual submission','Progress','Submission state','RO state','Application state']);
+  assert.deepEqual(await main.locator('th').allTextContents(),['Submission ID','Site','Planned submission','Actual submission','Progress','Submission state','RO state','Application state','Dispatch stage','Dispatch required','Planned dispatch','Actual dispatch','Overdue basis / dispatch notes']);
   assert.match(await main.locator('tbody tr').textContent(),/Cancelled.*Archived.*Inactive/);
   await main.getByRole('button',{name:'Close details'}).click();
   await openState('AppStatus');await main.getByRole('button',{name:'Clear Application state values',exact:true}).click();await main.getByRole('checkbox',{name:'Include Active in Application state',exact:true}).check();

@@ -1,6 +1,7 @@
 export const DEFAULT_SITES = ['ABO', 'ADJ', 'ADK', 'AJG', 'ARDG', 'SCR'];
 export const STATE_FIELDS = [{role:'SubStatus',label:'Submission state'}, {role:'ROStatus',label:'RO state'}, {role:'AppStatus',label:'Application state'}];
-export const ROLES = ['SubID', 'Site', 'PlannedSubmission', 'ActualSubmission', 'BusinessUnit', ...STATE_FIELDS.map(f=>f.role)];
+export const DISPATCH_ROLES = ['DispatchRequired', 'PlannedDispatch', 'ActualDispatch'];
+export const ROLES = ['SubID', 'Site', 'PlannedSubmission', 'ActualSubmission', 'BusinessUnit', ...STATE_FIELDS.map(f=>f.role), ...DISPATCH_ROLES];
 export const REQUIRED = ROLES.slice(0, 4);
 export const clean = value => String(value ?? '').trim();
 export const siteKey = value => clean(value).toLocaleUpperCase('en-GB');
@@ -37,6 +38,45 @@ export function resolveDate(values) {
   if (days.length > 1) return {kind: 'issue', reason: 'Conflicting dates'};
   return days.length ? {kind: 'date', day: days[0]} : {kind: 'blank'};
 }
+export function resolveRequired(values, mapped = true) {
+  if (!mapped) return {kind: 'unmapped', values: []};
+  const recorded = [...new Set(values.map(clean).filter(Boolean))];
+  if (!recorded.length) return {kind: 'blank', values: []};
+  const normalized = recorded.map(value => {
+    const text = value.toLowerCase().replace(/\s+/g, ' ');
+    return ['yes', 'true', '1', 'required'].includes(text) ? true : ['no', 'false', '0', 'not required'].includes(text) ? false : null;
+  });
+  if (normalized.includes(null)) return {kind: 'issue', reason: 'Unrecognized dispatch requirement', values: recorded};
+  if (new Set(normalized).size > 1) return {kind: 'issue', reason: 'Conflicting dispatch requirements', values: recorded};
+  return {kind: 'value', required: normalized[0], values: recorded};
+}
+const overdueGroup = () => ({count: 0, internal: 0, authority: 0, unclassified: 0, rows: []});
+const addOverdue = (group, record) => {group.count++; group[record.overdueStage]++; group.rows.push(record);};
+function dispatchProgress(record, today) {
+  const d = record.dispatch, notes = [], required = d.required, actual = d.actual, plan = d.planned;
+  if (required.kind === 'issue') notes.push(required.reason);
+  if (plan.kind === 'issue') notes.push(`${plan.reason}: planned dispatch`);
+  if (actual.kind === 'issue') notes.push(`${actual.reason}: actual dispatch`);
+  if (actual.kind === 'date' && actual.day > today) notes.push('Actual dispatch date is in the future');
+  if (plan.kind === 'date' && record.plan.kind === 'date' && plan.day > record.plan.day) notes.push('Planned dispatch is after planned submission');
+  if (actual.kind === 'date' && record.actual.kind === 'date' && actual.day > record.actual.day) notes.push('Actual dispatch is after actual submission');
+  record.overdue = false;
+  record.dispatchStage = record.status === 'Submitted' ? 'Submitted' : record.approved ? 'RO approved' : record.status === 'Check date' ? 'Check submission date' :
+    (actual.kind === 'date' && actual.day <= today || required.kind === 'value' && !required.required) ? 'Awaiting authority submission' :
+    required.kind === 'value' && required.required && actual.kind === 'blank' ? 'Pending internal dispatch' : 'Check dispatch data';
+  if (record.dispatchStage === 'Pending internal dispatch' && plan.kind !== 'date') notes.push(plan.kind === 'unmapped' ? 'Planned dispatch date is not mapped' : plan.kind === 'blank' ? 'Planned dispatch date not recorded' : 'Dispatch due date needs review');
+  if (record.dispatchStage === 'Check dispatch data') {
+    if (required.kind === 'blank' || required.kind === 'unmapped') notes.push(`Dispatch required is ${required.kind === 'unmapped' ? 'not mapped' : 'not recorded'}`);
+    if (actual.kind === 'unmapped') notes.push('Actual dispatch date is not mapped');
+  }
+  if (record.dispatchStage === 'Pending internal dispatch' && plan.kind === 'date') {
+    if (plan.day < today) {record.overdue = true; record.overdueStage = 'internal'; record.overdueDate = plan.day;}
+  } else if (['Pending internal dispatch', 'Awaiting authority submission', 'Check dispatch data'].includes(record.dispatchStage) && record.plan.kind === 'date' && record.plan.day < today) {
+    record.overdue = true; record.overdueStage = record.dispatchStage === 'Awaiting authority submission' ? 'authority' : 'unclassified'; record.overdueDate = record.plan.day;
+  }
+  record.dispatchNotes = [...new Set(notes)].join('; ');
+  if (record.dispatchNotes) record.reason = [record.reason, record.dispatchNotes].filter(Boolean).join('; ');
+}
 export function calendar(now = new Date()) {
   const y = now.getFullYear(), m = now.getMonth();
   const today = Date.UTC(y, m, now.getDate());
@@ -57,7 +97,7 @@ export function mapTable(table) {
     if (found.length) index[role] = found[0];
     else if (REQUIRED.includes(role)) missing.push(role);
   }
-  return {missing, unitMapped: index.BusinessUnit !== undefined, stateMapped: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,index[role] !== undefined])),
+  return {missing, unitMapped: index.BusinessUnit !== undefined, dispatchMapped: Object.fromEntries(DISPATCH_ROLES.map(role=>[role,index[role] !== undefined])), stateMapped: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,index[role] !== undefined])),
     rows: (table?.rows || []).map(row => Object.fromEntries(ROLES.map(role => [role, index[role] === undefined ? null : row[index[role]]])))};
 }
 export function normalizeSites(sites) {
@@ -69,9 +109,11 @@ export function normalizeSites(sites) {
   }
   return result;
 }
-export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), stateFilters = {}, stateMapped} = {}) {
+export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), stateFilters = {}, stateMapped, dispatchMapped} = {}) {
   const dates = calendar(now), selectedSites = normalizeSites(sites), grouped = new Map(), units = new Set(), availableSites = new Map();
   const mappings = stateMapped ?? Object.fromEntries(STATE_FIELDS.map(({role})=>[role,rows.some(r=>Object.prototype.hasOwnProperty.call(r,role))]));
+  const dispatchMappings = dispatchMapped ?? Object.fromEntries(DISPATCH_ROLES.map(role=>[role,rows.some(r=>Object.prototype.hasOwnProperty.call(r,role))]));
+  const dispatchEnabled = DISPATCH_ROLES.some(role=>dispatchMappings[role]);
   const filters = normalizeStateFilters(stateFilters), choices = Object.fromEntries(STATE_FIELDS.map(({role})=>[role,new Set()]));
   const matches = row => (unit === '*' || clean(row.BusinessUnit) === unit) && STATE_FIELDS.every(({role}) => !mappings[role] || filters[role] === null || filters[role].includes(clean(row[role])));
   let missingIds = 0;
@@ -84,11 +126,11 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     if (!grouped.has(id)) grouped.set(id, []);
     grouped.get(id).push(row);
   }
-  const backlog = {cutoff: dates.months[0].start, count: 0, rows: []};
-  const buckets = selectedSites.map(site => ({site, key: siteKey(site), delivered: 0, backlog: {count: 0, rows: []}, months: dates.months.map(month => ({
+  const backlog = {cutoff: dates.months[0].start, ...overdueGroup()}, overdue = overdueGroup();
+  const buckets = selectedSites.map(site => ({site, key: siteKey(site), delivered: 0, backlog: overdueGroup(), overdue: overdueGroup(), months: dates.months.map(month => ({
     ...month, site, planned: 0, inProcess: 0, submitted: 0, review: 0, overdue: 0, rows: []}))}));
   const lookup = new Map(buckets.map(b => [b.key, b]));
-  const issues = [], checks = {missingIds, outsideSites: 0, unassignedSite: 0, multipleSites: 0, missingPlan: 0, planIssues: 0, actualIssues: 0, outsideMonths: 0};
+  const issues = [], checks = {missingIds, outsideSites: 0, unassignedSite: 0, multipleSites: 0, missingPlan: 0, planIssues: 0, actualIssues: 0, dispatchIssues: 0, outsideMonths: 0};
   let scopedRecords = 0;
   for (const [id, list] of grouped) {
     if (!list.some(matches)) continue;
@@ -99,6 +141,10 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     const states = Object.fromEntries(STATE_FIELDS.map(({role})=>[role,mappings[role] ? [...new Set(list.map(row=>clean(row[role])))].sort() : null]));
     const submittedStates = submittedStateEvidence(states);
     const record = {id, site: names.join(' / ') || 'Unassigned', plan, actual, states, submittedStates, status: 'In process', reason: ''};
+    record.approved = hasState(states, 'ROStatus', 'health authority approved');
+    record.dispatch = {required: resolveRequired(list.map(row=>row.DispatchRequired), dispatchMappings.DispatchRequired),
+      planned: dispatchMappings.PlannedDispatch ? resolveDate(list.map(row=>row.PlannedDispatch)) : {kind:'unmapped'},
+      actual: dispatchMappings.ActualDispatch ? resolveDate(list.map(row=>row.ActualDispatch)) : {kind:'unmapped'}};
     if (names.length !== 1) {
       const reason = names.length ? 'Multiple sites: not allocated' : 'Site not recorded';
       checks[names.length ? 'multipleSites' : 'unassignedSite']++;
@@ -118,33 +164,39 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
       record.status = 'Submitted';
       record.submittedByState = !actualSubmitted;
     }
+    dispatchProgress(record, dates.today);
+    const dispatchIssue = Boolean(record.dispatchNotes && (record.dispatch.required.values.length || [record.dispatch.planned,record.dispatch.actual].some(date=>date.kind!=='blank'&&date.kind!=='unmapped')));
+    if (dispatchIssue) checks.dispatchIssues++;
+    // All overdue work is independent of the monthly cohort; an early dispatch can be due
+    // even when submission is planned later, or its submission plan is still missing.
+    if (record.overdue) {addOverdue(overdue, record); addOverdue(bucket.overdue, record);}
     if (plan.kind !== 'date') {
       checks[plan.kind === 'blank' ? 'missingPlan' : 'planIssues']++;
       issues.push({...record, reason: [plan.kind === 'blank' ? 'Planned submission date not recorded' : `${plan.reason}: planned submission`, record.reason].filter(Boolean).join('; ')});
       continue;
     }
-    if (actualIssue) issues.push({...record});
+    if (actualIssue || dispatchIssue) issues.push({...record});
     const month = bucket.months.find(m => plan.day >= m.start && plan.day < m.end);
     if (!month) {
-      if (plan.day < backlog.cutoff && actual.kind === 'blank' && !submittedStates.length && !hasState(states, 'ROStatus', 'health authority approved')) {
-        record.overdue = true;
-        bucket.backlog.count++; bucket.backlog.rows.push(record);
-        backlog.count++; backlog.rows.push(record);
+      if (plan.day < backlog.cutoff && record.overdue) {
+        addOverdue(bucket.backlog, record); addOverdue(backlog, record);
       } else checks.outsideMonths++;
       continue;
     }
     month.planned++;
     month[record.status === 'Submitted' ? 'submitted' : record.status === 'Check date' ? 'review' : 'inProcess']++;
-    record.overdue = record.status === 'In process' && plan.day < dates.today;
     if (record.overdue) month.overdue++;
     month.rows.push(record);
   }
   const totals = {planned: 0, inProcess: 0, submitted: 0, review: 0, overdue: 0};
   const monthTotals = dates.months.map(m => ({...m, ...totals}));
   const oldestFirst = (a, b) => a.plan.day - b.plan.day || a.id.localeCompare(b.id, undefined, {numeric: true});
+  const overdueFirst = (a,b) => a.overdueDate - b.overdueDate || a.id.localeCompare(b.id, undefined, {numeric:true});
+  overdue.rows.sort(overdueFirst);
   backlog.rows.sort(oldestFirst);
   for (const site of buckets) {
     site.backlog.rows.sort(oldestFirst);
+    site.overdue.rows.sort(overdueFirst);
     site.months.forEach((m, i) => {
       Object.keys(totals).forEach(key => {totals[key] += m[key]; monthTotals[i][key] += m[key];});
       m.rows.sort(oldestFirst);
@@ -154,7 +206,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
   const rawStep = peak / 5, magnitude = 10 ** Math.floor(Math.log10(rawStep));
   const step = Math.max(1, ([1, 2, 5, 10].find(s => s * magnitude >= rawStep) || 10) * magnitude);
   const axisMax = Math.max(5, Math.ceil(peak / step) * step);
-  return {...dates, buckets, totals, monthTotals, backlog, checks, issues, axisMax, step, scopedRecords,
+  return {...dates, buckets, totals, monthTotals, backlog, overdue, checks, issues, axisMax, step, scopedRecords, dispatchMapped: dispatchMappings, dispatchEnabled,
     stateMapped: mappings, stateFilters: filters, stateChoices: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,[...choices[role]].sort((a,b)=>stateLabel(a).localeCompare(stateLabel(b)))])),
     units: [...units].sort(), availableSites: [...availableSites.values()].sort(),
     issueCount: issues.length + missingIds, completion: totals.planned ? Math.round(totals.submitted / totals.planned * 100) : 0};
@@ -162,5 +214,5 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
 
 export function formatDate(resolved) {
   return resolved?.kind === 'date' ? new Date(resolved.day).toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC'})
-    : resolved?.kind === 'issue' ? resolved.reason : 'Not recorded';
+    : resolved?.kind === 'issue' ? resolved.reason : resolved?.kind === 'unmapped' ? 'Not mapped' : 'Not recorded';
 }

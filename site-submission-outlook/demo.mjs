@@ -22,7 +22,10 @@ export function sample(now = new Date()) {
       states.set(row.SubID, {
         SubStatus: row.ActualSubmission ? 'Completed' : ['In Progress','Planned','Ready For Submission','Cancelled','Withdrawn','Inactive',null][i%7],
         ROStatus: row.ActualSubmission ? 'Health Authority Approved' : ['In Progress','Planned','Archived','Rejected','On Hold By Health Authority'][i%5],
-        AppStatus: i%6 ? 'Active' : 'Inactive'
+        AppStatus: i%6 ? 'Active' : 'Inactive',
+        DispatchRequired: i%3 === 0 ? 'No' : 'Yes',
+        PlannedDispatch: new Date(Date.parse(row.PlannedSubmission)-14*86400000).toISOString().slice(0,10),
+        ActualDispatch: row.ActualSubmission ? row.ActualSubmission : i%3===2 ? iso(-1,1) : null
       });
     }
     return {...row,...states.get(row.SubID)};
