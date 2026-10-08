@@ -1,4 +1,6 @@
-Site Submission Outlook 1.2.3 makes **submission IDs selectable and copyable from Details**. Click an ID, then press Ctrl+C (Cmd+C on Mac), or choose **Copy IDs** for the whole matching list, one ID per line. All matching pages are included, with distinct IDs and no headings or extra columns.
+Site Submission Outlook 1.2.4 changes the **As of** label to the **previous calendar day**, matching the daily data refresh. On 8 October 2026 it shows **As of 07 Oct 2026**. The label updates automatically in the wide summary, compact footer and screenshot mode. It uses the viewer's local calendar rather than Power BI refresh metadata. Counting rules and the current-and-next-month window are unchanged.
+
+Submission IDs remain selectable and copyable from Details. Click an ID, then press Ctrl+C (Cmd+C on Mac), or choose **Copy IDs** for the whole matching list, one ID per line. All matching pages are included, with distinct IDs and no headings or extra columns.
 
 Copying works in monthly, overdue-backlog and Data checks details. It respects site, business-unit and lifecycle filters, search and submission progress. If automatic clipboard access is unavailable, the read-only ID box remains selected for keyboard copying. Select all IDs restores the selection. Only confirmed clipboard writes show a Copied message. No additional fields or privileges are required; nothing is sent to a server.
 
@@ -10,7 +12,7 @@ Historical **overdue backlog excludes all four qualifying Submission states OR R
 
 Filing and RO approval evidence is checked across every delivered row for each distinct Submission ID before local filters can hide it. Labels ignore case and extra whitespace. Other states such as Conditionally Approved, Cancelled, Archived or an Application state do not automatically establish Submitted progress or a backlog exclusion. Invalid or conflicting date/site data remains available in Data checks.
 
-**Import `site-submission-outlook-1.2.3.0.pbiviz` over the existing visual.** No new fields are introduced. Ensure the existing **Submission state** and **RO state** fields are mapped so both rules can apply. If only one is mapped, its own rule still works; blanks and unmapped values cannot establish filing or approval. The stable visual identity is unchanged.
+**Import `site-submission-outlook-1.2.4.0.pbiviz` over the existing visual.** No new fields are introduced. Ensure the existing **Submission state** and **RO state** fields are mapped so both rules can apply. If only one is mapped, its own rule still works; blanks and unmapped values cannot establish filing or approval. The stable visual identity is unchanged.
 
 Details identify the actual evidence, for example **Submitted · HA Received state** or **Submitted · Rejected state**. No actual date is invented. Invalid, future or conflicting actual dates remain in Data checks even when a qualifying state establishes progress. RO Health Authority Approved alone supplies the backlog exclusion, not monthly Submitted progress. Keep older rows included in report/page/visual filters. See `SITE-SUBMISSION-OUTLOOK-INSTALL.md` for the full rules.
 

@@ -3,7 +3,7 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test');
 (async()=>{
  const guid='siteSubmissionOutlook8D94A67E43154927AC034613F8289C02';
  const pkg=JSON.parse(fs.readFileSync(path.join(__dirname,'package-check','resources',guid+'.pbiviz.json'),'utf8'));
- assert.equal(pkg.visual.version,'1.2.3.0'); assert.equal(pkg.visual.guid,guid);
+ assert.equal(pkg.visual.version,'1.2.4.0'); assert.equal(pkg.visual.guid,guid);
  assert.deepEqual(pkg.capabilities.privileges,[]);
  const roles=pkg.capabilities.dataRoles.map(r=>r.name);
  assert.deepEqual(roles,['SubID','Site','PlannedSubmission','ActualSubmission','BusinessUnit','SubStatus','ROStatus','AppStatus']);

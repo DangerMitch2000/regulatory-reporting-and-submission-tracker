@@ -186,6 +186,7 @@ function render(root, rows, options = {}) {
     const list = el('ul'); missing.forEach(role => list.append(el('li', labels[role] || role))); setup.append(list, el('p', 'Use raw date columns, not date hierarchies. Use the initial planned submission date to match the reference slide. An actual-date column may contain blanks.')); root.append(setup); return;
   }
   const sites = normalizeSites(state.sites), unit = unitMapped ? state.unit ?? '*' : '*', r = summarize(rows, {sites, unit, now, stateFilters: state.stateFilters, stateMapped: options.stateMapped});
+  const asOf = r.today - 24 * 60 * 60 * 1000;
   const controls = el('div', undefined, 'ssControls');
   const siteControl = el('details', undefined, 'ssSites'); siteControl.open = Boolean(state.sitesOpen);
   siteControl.append(el('summary', `Sites · ${sites.length}`));
@@ -305,7 +306,7 @@ function render(root, rows, options = {}) {
     svg.append(svgEl('rect', {x: x + 14, y: 527, width: width - 28, height: 97, rx: 8, fill: colors.backlogBg, stroke: highContrast ? colors.ink : 'none'}));
     text(x + 26, 552, 'Overdue backlog', 18, colors.backlog, bold); text(x + 26, 589, String(r.backlog.count), 31, colors.backlog, bold);
     text(x + 26, 611, `Before ${dateText(r.backlog.cutoff)}`, 14, colors.backlog); backlogHit(x + 14, 527, width - 28, 97);
-    text(x + 20, 655, `As of ${dateText(r.today)}`, 15, colors.muted); text(x + 20, 683, 'Click counts for details', 15, colors.muted);
+    text(x + 20, 655, `As of ${dateText(asOf)}`, 15, colors.muted); text(x + 20, 683, 'Click counts for details', 15, colors.muted);
   }
   if (!sites.length) text((left + right) / 2, top + 100, 'Choose up to six sites to start.', 22, colors.muted, centered);
   else if (!r.totals.planned) text((left + right) / 2, top + 110, 'No planned submissions in these two months', 21, colors.muted, centered);
@@ -322,7 +323,7 @@ function render(root, rows, options = {}) {
   footer(`Submitted: actual date on/before today or Submission state ${submittedStatesText}.`);
   footer('Backlog excludes Submitted records and Health Authority Approved ROs.');
   if (r.issueCount) footer(`${r.issueCount} data checks — review below.`);
-  if (compact) footer(`${r.completion}% submitted · ${r.totals.overdue} overdue in this month’s plan · As of ${dateText(r.today)}`);
+  if (compact) footer(`${r.completion}% submitted · ${r.totals.overdue} overdue in this month’s plan · As of ${dateText(asOf)}`);
   const filterText = STATE_FIELDS.map(({role,label})=>`${label}: ${!r.stateMapped[role]?'Not mapped':r.stateFilters[role]===null?'All':r.stateFilters[role].length?r.stateFilters[role].map(stateLabel).join(', '):'None'}`).join(' · ');
   footer(filterText, 13, {'data-state-scope':'true'});
   const finalHeight=Math.max(H,footerY);svg.setAttribute('viewBox',`0 0 ${W} ${finalHeight}`);svg.firstElementChild.setAttribute('height',String(finalHeight));

@@ -1,10 +1,14 @@
-# Site Submission Outlook — 1.2.3
+# Site Submission Outlook — 1.2.4
 
 A separate Power BI custom visual showing **the current and following calendar month** for **ABO, ADJ, ADK, AJG, ARDG and SCR**. Each month's planned submissions are split into **In process** and **Submitted**. The package has its own visual identity and does not replace the Regulatory Tracker.
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.2.3/site-submission-outlook-1.2.3.0.pbiviz) · [Live preview with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.2.3)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.2.4/site-submission-outlook-1.2.4.0.pbiviz) · [Live preview with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.2.4)
 
-## New in 1.2.3: Copy submission IDs from Details
+## New in 1.2.4: Previous-day data label
+
+The **As of** label shows the previous calendar day to match the daily data refresh: for example, on 8 October it reads **As of 07 Oct 2026**. It updates automatically and appears in both the wide summary and compact footer, including screenshot mode. It is a rolling previous-day label based on the viewer's local calendar, not a timestamp read from Power BI refresh metadata. The current-and-next-month window and counting rules are unchanged.
+
+## Copy submission IDs from Details
 
 Open a monthly column, a backlog count or **Data checks** to show its Details list.
 
@@ -40,7 +44,7 @@ The rule uses the existing optional **Submission state** and **RO state** mappin
 
 All delivered rows for the same SubID are checked: any qualifying submission state or Health Authority Approved RO state excludes that ID once. Local state or business-unit filters cannot hide that evidence and reintroduce it to backlog. Conflicting date/site data still remains in Data checks. No actual date is invented.
 
-**RO state Health Authority Approved only supplies the backlog exclusion**; it does not itself mark a monthly record Submitted. The four qualifying Submission states supply both Submitted progress and the backlog exclusion. Other RO states and Application states do not establish monthly Submitted progress. No new mappings are introduced in 1.2.3.
+**RO state Health Authority Approved only supplies the backlog exclusion**; it does not itself mark a monthly record Submitted. The four qualifying Submission states supply both Submitted progress and the backlog exclusion. Other RO states and Application states do not establish monthly Submitted progress. No new mappings are introduced in 1.2.4.
 
 ## Separate lifecycle state filters
 
@@ -60,7 +64,7 @@ Click a site's backlog count, or the total, to see the relevant submissions, old
 
 **Keep earlier planned dates included in the Power BI data delivered to this visual.** A report, page or visual filter restricted to October–November would remove the rows needed to count the backlog. The visual selects the two displayed months itself; it cannot restore rows filtered out by Power BI. Business-unit, site and lifecycle state filters apply to the backlog as well as the monthly plan.
 
-Import 1.2.3 over the existing Site Submission Outlook visual. The visual identity and mappings from 1.2.0 are unchanged. Ensure Submission state and RO state are mapped to apply both completion conditions.
+Import 1.2.4 over the existing Site Submission Outlook visual. The visual identity and mappings from 1.2.0 are unchanged. Ensure Submission state and RO state are mapped to apply both completion conditions.
 
 ## Business-unit filter
 
@@ -70,7 +74,7 @@ The control stays visible while unmapped and reads **Map Business unit field** u
 
 ## Import and map
 
-Import `site-submission-outlook-1.2.3.0.pbiviz` using **Visualizations → … → Import a visual from a file**. Add the visual and map these columns:
+Import `site-submission-outlook-1.2.4.0.pbiviz` using **Visualizations → … → Import a visual from a file**. Add the visual and map these columns:
 
 | Field well | Source column |
 |---|---|
