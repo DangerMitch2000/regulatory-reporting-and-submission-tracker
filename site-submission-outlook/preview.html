@@ -4,13 +4,18 @@
 .ssDetails{user-select:text;-webkit-user-select:text}.ssDetails .ssSubmissionId{user-select:all;-webkit-user-select:all;cursor:text}.ssCopyPanel{border:1px solid var(--border);border-radius:8px;padding:12px;margin:10px 0;background:var(--bg)}.ssCopyPanel[hidden]{display:none}.ssCopyStatus{margin:0 0 8px}.siteSubmissions .ssCopyPanel textarea{font:13px Consolas,monospace;color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:8px;width:100%;min-height:80px;resize:vertical;user-select:text;-webkit-user-select:text}.ssCopyActions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 .ssStateControls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 18px;border-bottom:1px solid var(--border)}.ssStateFilter{position:relative}.ssStateFilter summary{cursor:pointer;border:1px solid var(--border);padding:6px 11px;border-radius:6px}.ssStatePanel{width:300px;max-width:calc(100vw - 35px)}.ssStatePanel label{justify-content:flex-start;align-items:flex-start;gap:9px;padding:6px 2px}.ssStatePanel label span{overflow-wrap:anywhere}.ssStatePanel label input{margin:4px 0 0;flex-shrink:0}.ssStatePanel small{margin-left:auto;max-width:80px}.ssStateActions{display:flex;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:5px}.ssDetails td.ssRecordedState{white-space:normal;min-width:135px;max-width:260px;overflow-wrap:anywhere}.siteSubmissions.capture .ssStateControls{display:none}@media(max-width:600px){.ssStateControls{padding:8px}.ssStatePanel{width:270px}}
 .ssStage .ssOverdueHit{cursor:pointer}.ssStage .ssOverdueHit:hover{fill:rgba(100,80,160,.08)}.ssStage .ssOverdueHit:focus{stroke:#dc8c21;stroke-width:3;outline:none}
+.ssDetails td.ssRegistrations{min-width:245px;max-width:330px;white-space:normal;vertical-align:top;overflow-wrap:anywhere}.ssRegistration{padding:7px 0}.ssRegistration+.ssRegistration{border-top:1px solid var(--border)}.ssRegistration strong,.ssRegistration span{display:block}.ssRegistrationEvidence{font-weight:650;color:#216854}.dark .ssRegistrationEvidence{color:#93dbc3}.ssRegistrationNote{color:var(--muted);margin-top:4px}
 .ssStage .ssMetricHit,.ssStage .ssSegmentHit{cursor:pointer}.ssStage .ssMetricHit:hover,.ssStage .ssSegmentHit:hover{fill:rgba(60,130,170,.1)}.ssStage .ssMetricHit:focus,.ssStage .ssSegmentHit:focus{stroke:#dc8c21;stroke-width:3;outline:none}.ssChecks .ssCoverageCount{font-size:12px}.ssDetails h3:focus{outline:2px solid var(--border);outline-offset:4px}
 .ssAttention{--attention:#536a80;--attention-bg:#eef3f7;min-width:245px;max-width:320px;white-space:normal!important;vertical-align:top}.ssAttention[data-tone=urgent]{--attention:#9f351e;--attention-bg:#ffede7}.ssAttention[data-tone=dispatch]{--attention:#6346a4;--attention-bg:#f0eafd}.ssAttention[data-tone=review]{--attention:#805715;--attention-bg:#fff4d9}.ssAttention[data-tone=complete]{--attention:#216854;--attention-bg:#e5f6f0}.ssAttention[data-tone=info]{--attention:#245e86;--attention-bg:#eaf4ff}.ssAttentionBadge{display:inline-block;color:var(--attention);background:var(--attention-bg);border-left:3px solid var(--attention);border-radius:4px;padding:4px 7px;margin-bottom:5px}.ssAttentionReason,.ssAttentionAction{display:block;line-height:1.4}.ssAttentionReason{color:var(--ink)}.ssAttentionAction{color:var(--muted);margin-top:5px}.dark .ssAttention[data-tone=urgent]{--attention:#ffb4a0;--attention-bg:#432a29}.dark .ssAttention[data-tone=dispatch]{--attention:#d1baff;--attention-bg:#302947}.dark .ssAttention[data-tone=review]{--attention:#f5d28c;--attention-bg:#3b3223}.dark .ssAttention[data-tone=complete]{--attention:#93dbc3;--attention-bg:#213d38}.dark .ssAttention[data-tone=info]{--attention:#a5d2f6;--attention-bg:#24394e}
+
+.ssCountry{min-width:150px;white-space:normal!important}.ssCountry small{display:block;color:var(--muted)}
 body{margin:0;padding:24px;background:#e7edf3;font:14px 'Segoe UI',sans-serif}nav{max-width:1440px;margin:0 auto 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}nav strong{margin-right:auto}nav button{padding:8px 12px;border:1px solid #c9d4e1;background:white;border-radius:6px;color:#17324d;cursor:pointer}#host{width:min(1440px,100%);height:800px;margin:0 auto;border:1px solid #d6e0eb;box-shadow:0 10px 40px #18365314;border-radius:9px}.demo-note{max-width:1440px;margin:18px auto;color:#536a80} </style></head><body><nav><strong>Preview · fictional submissions</strong><button id="wide">Wide preview</button><button id="small">Compact preview</button><button id="clean">Reset demo</button><button id="review">Data checks example</button></nav><div id="host"></div><p class="demo-note">Demonstration data only. The months follow your computer's current date. Import the Power BI package and map your real submission fields to see actual counts.</p><script>(()=>{
 const DEFAULT_SITES = ['ABO', 'ADJ', 'ADK', 'AJG', 'ARDG', 'SCR'];
 const STATE_FIELDS = [{role:'SubStatus',label:'Submission state'}, {role:'ROStatus',label:'RO state'}, {role:'AppStatus',label:'Application state'}];
 const DISPATCH_ROLES = ['DispatchRequired', 'PlannedDispatch', 'ActualDispatch'];
-const ROLES = ['SubID', 'Site', 'PlannedSubmission', 'ActualSubmission', 'BusinessUnit', ...STATE_FIELDS.map(f=>f.role), ...DISPATCH_ROLES];
+const REGISTRATION_ROLES = ['RegistrationID', 'RegistrationCountry', 'RegistrationStatus', 'RegistrationStart', 'RegistrationEnd'];
+const REGISTRATION_COMPLETE_STATES = ['Approved', 'Conditionally Approved'];
+const ROLES = ['SubID', 'Site', 'PlannedSubmission', 'ActualSubmission', 'BusinessUnit', ...STATE_FIELDS.map(f=>f.role), ...DISPATCH_ROLES, ...REGISTRATION_ROLES, 'FallbackCountry'];
 const REQUIRED = ROLES.slice(0, 4);
 const clean = value => String(value ?? '').trim();
 const siteKey = value => clean(value).toLocaleUpperCase('en-GB');
@@ -46,6 +51,35 @@ function resolveDate(values) {
   if (parsed.some(x => x.kind === 'invalid')) return {kind: 'issue', reason: 'Invalid date'};
   if (days.length > 1) return {kind: 'issue', reason: 'Conflicting dates'};
   return days.length ? {kind: 'date', day: days[0]} : {kind: 'blank'};
+}
+// Keep each delivered registration's fields together: never borrow an ID, state or
+// country from another joined row. Repeated joins must not inflate submissions.
+function registrationEvidence(rows, mapped = Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,true]))) {
+  const distinct = new Map();
+  for (const row of rows) {
+    const values = Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,mapped[role] ? row[role] : null]));
+    if (!Object.values(values).some(value=>clean(value))) continue;
+    const key = JSON.stringify(REGISTRATION_ROLES.map(role=>values[role] instanceof Date && Number.isFinite(+values[role]) ? values[role].toISOString() : clean(values[role])));
+    if (distinct.has(key)) continue;
+    const id=clean(values.RegistrationID), country=clean(values.RegistrationCountry), state=clean(values.RegistrationStatus);
+    const start=mapped.RegistrationStart?resolveDate([values.RegistrationStart]):{kind:'unmapped'}, end=mapped.RegistrationEnd?resolveDate([values.RegistrationEnd]):{kind:'unmapped'};
+    const complete=Boolean(id && REGISTRATION_COMPLETE_STATES.some(value=>value.toLowerCase()===state.toLowerCase().replace(/\s+/g,' ')));
+    const notes=[];
+    if(start.kind==='issue')notes.push(`${start.reason}: registration start`);
+    if(end.kind==='issue')notes.push(`${end.reason}: registration end`);
+    if(start.kind==='date'&&end.kind==='date'&&end.day<start.day)notes.push('Registration end date is before its start date');
+    if(!id && state)notes.push('Registration ID not recorded; state alone cannot identify the linked registration');
+    distinct.set(key,{id,country,state,start,end,complete,notes,rawStart:clean(values.RegistrationStart),rawEnd:clean(values.RegistrationEnd)});
+  }
+  const records=[...distinct.values()].sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true})||a.country.localeCompare(b.country)||a.state.localeCompare(b.state)||a.rawStart.localeCompare(b.rawStart)||a.rawEnd.localeCompare(b.rawEnd));
+  return {records, qualifying:records.filter(record=>record.complete), notes:[...new Set(records.flatMap(record=>record.notes.map(note=>`${record.id||'Registration without ID'}: ${note}`)))]};
+}
+function resolveCountry(rows, registration, fallbackMapped = true) {
+  const distinct=values=>[...new Map(values.map(clean).filter(Boolean).map(value=>[value.toLocaleLowerCase('en-GB'),value])).values()].sort((a,b)=>a.localeCompare(b));
+  const primary=distinct(registration.records.map(record=>record.country));
+  if(primary.length)return {values:primary,source:'Registration country'};
+  const secondary=fallbackMapped?distinct(rows.map(row=>row.FallbackCountry)):[];
+  return {values:secondary,source:secondary.length?'Secondary country':'Not recorded'};
 }
 function resolveRequired(values, mapped = true) {
   if (!mapped) return {kind: 'unmapped', values: []};
@@ -106,7 +140,7 @@ function mapTable(table) {
     if (found.length) index[role] = found[0];
     else if (REQUIRED.includes(role)) missing.push(role);
   }
-  return {missing, unitMapped: index.BusinessUnit !== undefined, dispatchMapped: Object.fromEntries(DISPATCH_ROLES.map(role=>[role,index[role] !== undefined])), stateMapped: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,index[role] !== undefined])),
+  return {missing, unitMapped: index.BusinessUnit !== undefined, fallbackCountryMapped:index.FallbackCountry!==undefined, registrationMapped: Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,index[role] !== undefined])), dispatchMapped: Object.fromEntries(DISPATCH_ROLES.map(role=>[role,index[role] !== undefined])), stateMapped: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,index[role] !== undefined])),
     rows: (table?.rows || []).map(row => Object.fromEntries(ROLES.map(role => [role, index[role] === undefined ? null : row[index[role]]])))};
 }
 function normalizeSites(sites) {
@@ -118,11 +152,14 @@ function normalizeSites(sites) {
   }
   return result;
 }
-function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), stateFilters = {}, stateMapped, dispatchMapped} = {}) {
+function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), stateFilters = {}, stateMapped, dispatchMapped, registrationMapped, fallbackCountryMapped} = {}) {
   const dates = calendar(now), selectedSites = normalizeSites(sites), grouped = new Map(), units = new Set(), availableSites = new Map();
   const mappings = stateMapped ?? Object.fromEntries(STATE_FIELDS.map(({role})=>[role,rows.some(r=>Object.prototype.hasOwnProperty.call(r,role))]));
   const dispatchMappings = dispatchMapped ?? Object.fromEntries(DISPATCH_ROLES.map(role=>[role,rows.some(r=>Object.prototype.hasOwnProperty.call(r,role))]));
   const dispatchEnabled = DISPATCH_ROLES.some(role=>dispatchMappings[role]);
+  const registrationMappings=registrationMapped??Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,rows.some(row=>Object.prototype.hasOwnProperty.call(row,role))]));
+  const registrationEnabled=REGISTRATION_ROLES.some(role=>registrationMappings[role]);
+  const fallbackMapped=fallbackCountryMapped??rows.some(row=>Object.prototype.hasOwnProperty.call(row,'FallbackCountry'));
   const filters = normalizeStateFilters(stateFilters), choices = Object.fromEntries(STATE_FIELDS.map(({role})=>[role,new Set()]));
   const coverage = {outsideSites: [], outsideMonths: [], missingIds: []};
   const matches = row => (unit === '*' || clean(row.BusinessUnit) === unit) && STATE_FIELDS.every(({role}) => !mappings[role] || filters[role] === null || filters[role].includes(clean(row[role])));
@@ -135,8 +172,9 @@ function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), s
     if (!id) {
       if (matches(row)) {
         missingIds++;
+        const registration=registrationEvidence([row],registrationMappings);
         coverage.missingIds.push({id:'', site:site || 'Unassigned', plan:resolveDate([row.PlannedSubmission]), actual:resolveDate([row.ActualSubmission]), status:'Not counted', reason:'Submission ID not recorded; this source row cannot be counted as a distinct submission',
-          states:Object.fromEntries(STATE_FIELDS.map(({role})=>[role,mappings[role]?[clean(row[role])]:null])),
+          states:Object.fromEntries(STATE_FIELDS.map(({role})=>[role,mappings[role]?[clean(row[role])]:null])), registration, country:resolveCountry([row],registration,fallbackMapped),
           dispatch:{required:resolveRequired([row.DispatchRequired],dispatchMappings.DispatchRequired),planned:dispatchMappings.PlannedDispatch?resolveDate([row.PlannedDispatch]):{kind:'unmapped'},actual:dispatchMappings.ActualDispatch?resolveDate([row.ActualDispatch]):{kind:'unmapped'}}});
       }
       continue;
@@ -148,7 +186,7 @@ function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), s
   const buckets = selectedSites.map(site => ({site, key: siteKey(site), delivered: 0, backlog: overdueGroup(), overdue: overdueGroup(), months: dates.months.map(month => ({
     ...month, site, planned: 0, inProcess: 0, submitted: 0, review: 0, overdue: 0, rows: []}))}));
   const lookup = new Map(buckets.map(b => [b.key, b]));
-  const issues = [], checks = {missingIds, outsideSites: 0, unassignedSite: 0, multipleSites: 0, missingPlan: 0, planIssues: 0, actualIssues: 0, dispatchIssues: 0, outsideMonths: 0};
+  const issues = [], checks = {missingIds, outsideSites: 0, unassignedSite: 0, multipleSites: 0, missingPlan: 0, planIssues: 0, actualIssues: 0, dispatchIssues: 0, registrationIssues: 0, outsideMonths: 0};
   let scopedRecords = 0;
   for (const [id, list] of grouped) {
     if (!list.some(matches)) continue;
@@ -160,6 +198,9 @@ function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), s
     const submittedStates = submittedStateEvidence(states);
     const record = {id, site: names.join(' / ') || 'Unassigned', plan, actual, states, submittedStates, status: 'In process', reason: ''};
     record.approved = hasState(states, 'ROStatus', 'health authority approved');
+    record.registration=registrationEvidence(list,registrationMappings);
+    record.registrationComplete=record.registration.qualifying.length>0;
+    record.country=resolveCountry(list,record.registration,fallbackMapped);
     record.dispatch = {required: resolveRequired(list.map(row=>row.DispatchRequired), dispatchMappings.DispatchRequired),
       planned: dispatchMappings.PlannedDispatch ? resolveDate(list.map(row=>row.PlannedDispatch)) : {kind:'unmapped'},
       actual: dispatchMappings.ActualDispatch ? resolveDate(list.map(row=>row.ActualDispatch)) : {kind:'unmapped'}};
@@ -171,7 +212,7 @@ function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), s
     const bucket = lookup.get(names[0]);
     if (!bucket) {
       checks.outsideSites++;
-      if (actual.kind === 'date' && actual.day <= dates.today || submittedStates.length) {record.status='Submitted';record.submittedByState=!(actual.kind==='date'&&actual.day<=dates.today);}
+      if (actual.kind === 'date' && actual.day <= dates.today || submittedStates.length || record.registrationComplete) {record.status='Submitted';record.submittedByState=!(actual.kind==='date'&&actual.day<=dates.today)&&submittedStates.length>0;record.submittedByRegistration=!(actual.kind==='date'&&actual.day<=dates.today)&&!submittedStates.length&&record.registrationComplete;}
       else if (actual.kind==='issue'||actual.kind==='date'&&actual.day>dates.today) record.status='Check date';
       dispatchProgress(record,dates.today);
       coverage.outsideSites.push(record);continue;
@@ -184,10 +225,13 @@ function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), s
       checks.actualIssues++;
     }
     const actualSubmitted = actual.kind === 'date' && !actualIssue;
-    if (actualSubmitted || submittedStates.length) {
+    if (actualSubmitted || submittedStates.length || record.registrationComplete) {
       record.status = 'Submitted';
-      record.submittedByState = !actualSubmitted;
+      record.submittedByState = !actualSubmitted && submittedStates.length>0;
+      record.submittedByRegistration = !actualSubmitted && !submittedStates.length && record.registrationComplete;
     }
+    const registrationIssue=record.registration.notes.length>0;
+    if(registrationIssue){checks.registrationIssues++;record.reason=[record.reason,...record.registration.notes].filter(Boolean).join('; ');}
     dispatchProgress(record, dates.today);
     const dispatchIssue = Boolean(record.dispatchNotes && (record.dispatch.required.values.length || [record.dispatch.planned,record.dispatch.actual].some(date=>date.kind!=='blank'&&date.kind!=='unmapped')));
     if (dispatchIssue) checks.dispatchIssues++;
@@ -199,7 +243,7 @@ function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), s
       issues.push({...record, reason: [plan.kind === 'blank' ? 'Planned submission date not recorded' : `${plan.reason}: planned submission`, record.reason].filter(Boolean).join('; ')});
       continue;
     }
-    if (actualIssue || dispatchIssue) issues.push({...record});
+    if (actualIssue || dispatchIssue || registrationIssue) issues.push({...record});
     const month = bucket.months.find(m => plan.day >= m.start && plan.day < m.end);
     if (!month) {
       if (plan.day < backlog.cutoff && record.overdue) {
@@ -230,7 +274,7 @@ function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), s
   const rawStep = peak / 5, magnitude = 10 ** Math.floor(Math.log10(rawStep));
   const step = Math.max(1, ([1, 2, 5, 10].find(s => s * magnitude >= rawStep) || 10) * magnitude);
   const axisMax = Math.max(5, Math.ceil(peak / step) * step);
-  return {...dates, buckets, totals, monthTotals, backlog, overdue, checks, issues, coverage, axisMax, step, scopedRecords, dispatchMapped: dispatchMappings, dispatchEnabled,
+  return {...dates, buckets, totals, monthTotals, backlog, overdue, checks, issues, coverage, axisMax, step, scopedRecords, dispatchMapped: dispatchMappings, dispatchEnabled, registrationMapped:registrationMappings, registrationEnabled, countryEnabled:Boolean(registrationMappings.RegistrationCountry||fallbackMapped), fallbackCountryMapped:fallbackMapped,
     stateMapped: mappings, stateFilters: filters, stateChoices: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,[...choices[role]].sort((a,b)=>stateLabel(a).localeCompare(stateLabel(b)))])),
     units: [...units].sort(), availableSites: [...availableSites.values()].sort(),
     issueCount: issues.length + missingIds, completion: totals.planned ? Math.round(totals.submitted / totals.planned * 100) : 0};
@@ -250,6 +294,8 @@ function attentionFor(record) {
   if(/Multiple sites|Site not recorded/.test(reason))return note('data','review','Check site assignment',reason,'Confirm the submission’s site before allocating it.');
   if(record.actual?.kind==='issue'||record.status==='Check date'||/Actual submission date is in the future/.test(reason))return note('data','review','Check actual submission date',record.actual?.kind==='issue'?`${record.actual.reason}: actual submission.`:'The recorded actual submission date is in the future.','Verify the recorded filing date; no date is inferred.');
   if(record.plan?.kind==='issue')return note('data','review','Check planned submission date',`${record.plan.reason}: planned submission.`,'Confirm the applicable planned submission date.');
+  if(record.registration?.notes.length)return note('registrationReview','review','Check registration details',record.registration.notes.join('; '),record.registrationComplete?'Registration approval still establishes Submitted. Verify the recorded registration details.':'Verify the linked registration ID, state and dates.');
+  if(record.registrationComplete)return note('registration','complete','Registration approval recorded',record.registration.qualifying.map(r=>`${r.id}${r.country?' · '+r.country:''}: ${r.state}`).join('; '),'Counted as Submitted and excluded from overdue work. Review any outdated submission, RO or application states.');
   if(d.required?.kind==='issue')return note('dispatchReview','review','Check dispatch requirement',d.required.reason,'Confirm whether internal dispatch is required.');
   if(d.actual?.kind==='issue'||/Actual dispatch date is in the future|Actual dispatch is after actual submission/.test(dispatchNotes))return note('dispatchReview','review','Check actual dispatch date',dispatchNotes,'Verify the dispatch date before relying on its stage.');
   if(d.planned?.kind==='issue'||/Planned dispatch is after planned submission/.test(dispatchNotes))return note('dispatchReview','review','Check planned dispatch date',dispatchNotes,'Confirm the dispatch deadline and sequence of dates.');
@@ -290,7 +336,7 @@ function render(root, rows, options = {}) {
     const setup = el('section', undefined, 'ssSetup'); setup.append(el('h2', 'Site Submission Outlook'), el('p', 'Map these four fields to show this month and next month for your main six sites:'));
     const list = el('ul'); missing.forEach(role => list.append(el('li', labels[role] || role))); setup.append(list, el('p', 'Use raw date columns, not date hierarchies. Use the initial planned submission date to match the reference slide. An actual-date column may contain blanks.')); root.append(setup); return;
   }
-  const sites = normalizeSites(state.sites), unit = unitMapped ? state.unit ?? '*' : '*', r = summarize(rows, {sites, unit, now, stateFilters: state.stateFilters, stateMapped: options.stateMapped, dispatchMapped: options.dispatchMapped});
+  const sites = normalizeSites(state.sites), unit = unitMapped ? state.unit ?? '*' : '*', r = summarize(rows, {sites, unit, now, stateFilters: state.stateFilters, stateMapped: options.stateMapped, dispatchMapped: options.dispatchMapped, registrationMapped:options.registrationMapped, fallbackCountryMapped:options.fallbackCountryMapped});
   const asOf = r.today - 24 * 60 * 60 * 1000;
   function openDetails(detail) {
     onChange({detail,query:'',status:'all',dispatchStage:'all',detailSite:'*',page:0,sitesOpen:false,stateOpen:null,capture:false});
@@ -468,6 +514,8 @@ function render(root, rows, options = {}) {
   }
   footer(`${synthetic ? 'ILLUSTRATIVE DATA · ' : ''}${sites.length} sites · ${unit === '*' ? 'All business units' : unit || 'Not recorded'}`, 15);
   footer(`Submitted: actual date on/before today or Submission state ${submittedStatesText}.`);
+  if(r.registrationEnabled)footer('Also Submitted: a linked Registration ID with state Approved or Conditionally Approved.');
+  if(r.registrationEnabled&&(!r.registrationMapped.RegistrationID||!r.registrationMapped.RegistrationStatus))footer('Map both Registration ID and Registration state to use registration approval as completion evidence.');
   footer('Backlog excludes Submitted records and Health Authority Approved ROs.');
   footer('Overdue: required internal dispatch uses its planned dispatch date; dispatched/not-required items use their planned submission date.');
   if (!Object.values(r.dispatchMapped).every(Boolean)) footer('Map Dispatch required, Planned dispatch date and Actual dispatch date to classify internal dispatch separately.');
@@ -496,7 +544,7 @@ function renderDetails(root, result, state, onChange) {
   const issues = state.detail.kind === 'issues', isBacklog = state.detail.kind === 'backlog', isOverdue=state.detail.kind==='overdue', isPlan=state.detail.kind==='plan', isCoverage=state.detail.kind==='coverage', site = result.buckets.find(b => b.key === state.detail.site);
   const month = issues || isBacklog || isOverdue || isPlan || isCoverage ? null : site?.months.find(m => m.key === state.detail.month);
   const records = issues ? [...result.issues,...result.coverage.missingIds] : isCoverage ? result.coverage[state.detail.group] || [] : isPlan ? result.buckets.flatMap(b=>b.months.flatMap(m=>m.rows)).filter(r=>matchesMetric(r,state.detail.metric)).sort((a,b)=>(state.detail.metric==='overdue'?a.overdueDate-b.overdueDate:a.plan.day-b.plan.day)||a.id.localeCompare(b.id,undefined,{numeric:true})) : isOverdue ? result.overdue.rows.filter(r=>state.detail.group==='all'||r.overdueStage===state.detail.group) : isBacklog ? (state.detail.site ? site?.backlog.rows || [] : result.backlog.rows) : (month?.rows || []).filter(r=>matchesMetric(r,state.detail.metric)), query = String(state.query || '').toLowerCase();
-  const filtered = records.map(r=>({...r,attention:attentionFor(r)})).filter(r => (!query || `${r.id} ${r.site} ${r.reason} ${r.dispatchStage} ${r.attention.title} ${r.attention.reason} ${r.attention.action} ${STATE_FIELDS.map(f=>formatStates(r.states?.[f.role])).join(' ')}`.toLowerCase().includes(query)) && (issues || isCoverage || !state.status || state.status === 'all' || r.status === state.status) && (issues || isCoverage || !state.dispatchStage || state.dispatchStage==='all'||r.dispatchStage===state.dispatchStage) && (!(isOverdue||isPlan)||!state.detailSite||state.detailSite==='*'||siteKey(r.site)===state.detailSite));
+  const filtered = records.map(r=>({...r,attention:attentionFor(r)})).filter(r => (!query || `${r.id} ${r.site} ${(r.country?.values||[]).join(' ')} ${r.country?.source||''} ${r.reason} ${r.dispatchStage} ${r.attention.title} ${r.attention.reason} ${r.attention.action} ${STATE_FIELDS.map(f=>formatStates(r.states?.[f.role])).join(' ')} ${(r.registration?.records||[]).map(reg=>[reg.id,reg.country,reg.state,reg.rawStart,reg.rawEnd,formatDate(reg.start),formatDate(reg.end)].join(' ')).join(' ')}`.toLowerCase().includes(query)) && (issues || isCoverage || !state.status || state.status === 'all' || r.status === state.status) && (issues || isCoverage || !state.dispatchStage || state.dispatchStage==='all'||r.dispatchStage===state.dispatchStage) && (!(isOverdue||isPlan)||!state.detailSite||state.detailSite==='*'||siteKey(r.site)===state.detailSite));
   const pageSize = 50, page = Math.min(Math.max(0, state.page || 0), Math.max(0, Math.ceil(filtered.length / pageSize) - 1));
   const section = el('section', undefined, 'ssDetails');
   const heading=el('h3', issues ? 'Data checks' : isCoverage ? coverageLabels[state.detail.group] : isPlan ? `Two-month plan · ${metricLabels[state.detail.metric]}` : isOverdue ? overdueLabels[state.detail.group] : isBacklog ? `${site?.site || (state.detail.site ? state.detail.site : 'All selected sites')} · Overdue backlog` : `${month?.site || state.detail.site} · ${month?.label || state.detail.month}${state.detail.metric?' · '+metricLabels[state.detail.metric]:''}`);heading.tabIndex=-1;section.append(heading);
@@ -510,6 +558,7 @@ function renderDetails(root, result, state, onChange) {
   else section.append(el('p', `These submissions belong to the selected planned month. Submitted means a valid actual submission date on or before today, or Submission state ${submittedStatesText}. These states can establish progress without an actual date; no date is invented. Rejected means filed and rejected by the health authority, not approved. Distributed means internal distribution and does not establish Submitted by itself.`));
   section.append(el('p','Recorded submission, RO and application states are shown alongside progress. Click a submission ID to select it, then press Ctrl+C (Cmd+C on Mac). Copy IDs includes all matching pages, one ID per line.'));
   section.append(el('p','Main issue / next action highlights the clearest signal from recorded dates and states. Missing or conflicting evidence is marked for review.'));
+  if(result.registrationEnabled)section.append(el('p','A Registration ID with state Approved or Conditionally Approved, linked through this submission’s RO, also establishes Submitted and excludes overdue work. ID, country or dates alone do not establish completion. Registration dates describe the registration; they do not replace the actual submission date. Other registration states are retained as recorded.'));
   const controls = el('div', undefined, 'ssDetailTools'), search = el('input'); search.placeholder = 'Find submission'; search.setAttribute('aria-label', 'Find submission'); search.value = state.query || '';
   search.onchange = () => onChange({query: search.value, page: 0}); controls.append(search);
   if (!issues && !isCoverage && !isBacklog && !isOverdue && (!state.detail.metric||state.detail.metric==='planned')) {
@@ -559,8 +608,8 @@ function renderDetails(root, result, state, onChange) {
   section.addEventListener('keydown', event => {if ((event.ctrlKey || event.metaKey) && (event.key.toLowerCase()==='c' || event.target===copyText && event.key.toLowerCase()==='a') && (event.target === copyText || event.target.classList?.contains('ssSubmissionId'))) event.stopPropagation();});
   if (filtered.length) {
     const wrap = el('div', undefined, 'ssTableWrap'), table = el('table'), head = el('thead'), header = el('tr');
-    ['Submission ID', 'Main issue / next action', 'Site', 'Planned submission', 'Actual submission', issues ? 'Check' : 'Progress', ...STATE_FIELDS.map(f=>f.label), 'Dispatch stage', 'Dispatch required', 'Planned dispatch', 'Actual dispatch', 'Overdue basis / dispatch notes'].forEach(label => header.append(el('th', label))); head.append(header); table.append(head);
-    const body = el('tbody'); filtered.slice(page * pageSize, (page + 1) * pageSize).forEach(r => {const row = el('tr'); [r.id, r.site, formatDate(r.plan), formatDate(r.actual), issues ? r.reason : r.status + (r.submittedByState ? ` · ${r.submittedStates.join(' / ')} state` : '') + (r.overdue ? ' · Overdue' : ''), ...STATE_FIELDS.map(f=>formatStates(r.states?.[f.role])), r.dispatchStage || 'Check record', requiredText(r.dispatch?.required), formatDate(r.dispatch?.planned), formatDate(r.dispatch?.actual), [r.overdue ? `${overdueLabels[r.overdueStage]} · Due ${dateText(r.overdueDate)}` : '',r.dispatchNotes].filter(Boolean).join('; ') || '—'].forEach((value,i) => {
+    ['Submission ID', 'Main issue / next action', 'Site', 'Planned submission', 'Actual submission', issues ? 'Check' : 'Progress', ...STATE_FIELDS.map(f=>f.label), 'Dispatch stage', 'Dispatch required', 'Planned dispatch', 'Actual dispatch', 'Overdue basis / dispatch notes', ...(result.countryEnabled?['Country']:[]), ...(result.registrationEnabled?['Linked registrations']:[])].forEach(label => header.append(el('th', label))); head.append(header); table.append(head);
+    const body = el('tbody'); filtered.slice(page * pageSize, (page + 1) * pageSize).forEach(r => {const row = el('tr'); [r.id, r.site, formatDate(r.plan), formatDate(r.actual), issues ? r.reason : r.status + (r.submittedByState ? ` · ${r.submittedStates.join(' / ')} state` : r.submittedByRegistration ? ' · Registration approval' : '') + (r.overdue ? ' · Overdue' : ''), ...STATE_FIELDS.map(f=>formatStates(r.states?.[f.role])), r.dispatchStage || 'Check record', requiredText(r.dispatch?.required), formatDate(r.dispatch?.planned), formatDate(r.dispatch?.actual), [r.overdue ? `${overdueLabels[r.overdueStage]} · Due ${dateText(r.overdueDate)}` : '',r.dispatchNotes].filter(Boolean).join('; ') || '—'].forEach((value,i) => {
       const cell = el('td', i===0&&!value?'Not recorded':value, i===0&&value?'ssSubmissionId':i>=5?'ssRecordedState':undefined);
       if (i===0&&value) {
         cell.tabIndex = 0; cell.title = 'Click to select this submission ID, then press Ctrl+C (Cmd+C on Mac).';
@@ -572,7 +621,24 @@ function renderDetails(root, result, state, onChange) {
         const attention=el('td',undefined,'ssAttention');attention.dataset.tone=r.attention.tone;attention.dataset.attention=r.attention.key;
         attention.append(el('strong',r.attention.title,'ssAttentionBadge'),el('span',r.attention.reason,'ssAttentionReason'),el('span',`Next action: ${r.attention.action}`,'ssAttentionAction'));row.append(attention);
       }
-    }); body.append(row);}); table.append(body); wrap.append(table); section.append(wrap);
+    });
+      if(result.countryEnabled){const cell=el('td',undefined,'ssCountry');cell.append(el('span',r.country?.values?.length?r.country.values.join(' / '):'Not recorded'));if(r.country?.values?.length)cell.append(el('small',r.country.source));row.append(cell);}
+      if(result.registrationEnabled){
+        const cell=el('td',undefined,'ssRegistrations'), registrations=r.registration?.records||[];
+        if(!registrations.length)cell.textContent='Not recorded';
+        for(const registration of registrations){
+          const item=el('div',undefined,'ssRegistration');item.dataset.complete=String(registration.complete);
+          item.append(el('strong',registration.id||(!result.registrationMapped.RegistrationID?'Registration ID not mapped':'Registration ID not recorded')));
+          item.append(el('span',`Country: ${registration.country||(!result.registrationMapped.RegistrationCountry?'Not mapped':'Not recorded')}`));
+          item.append(el('span',`State: ${registration.state||(!result.registrationMapped.RegistrationStatus?'Not mapped':'Not recorded')}`));
+          for(const [label,key,raw] of [['Start','start','rawStart'],['End','end','rawEnd']])item.append(el('span',`${label}: ${formatDate(registration[key])}${registration[key].kind==='issue'?' · '+registration[raw]:''}`));
+          if(registration.complete)item.append(el('span','Confirms Submitted','ssRegistrationEvidence'));
+          if(registration.notes.length)item.append(el('span',registration.notes.join('; '),'ssRegistrationNote'));
+          cell.append(item);
+        }
+        row.append(cell);
+      }
+      body.append(row);}); table.append(body); wrap.append(table); section.append(wrap);
     const pagination = el('div', undefined, 'ssPager'); pagination.append(el('span', `Showing ${page * pageSize + 1}–${Math.min((page + 1) * pageSize, filtered.length)} of ${filtered.length}`));
     const prev = el('button', 'Previous'), next = el('button', 'Next'); prev.disabled = page === 0; next.disabled = (page + 1) * pageSize >= filtered.length; prev.onclick = () => onChange({page: page - 1}); next.onclick = () => onChange({page: page + 1}); pagination.append(prev, next); section.append(pagination);
   } else section.append(el('p', issues && result.checks.missingIds ? `${result.checks.missingIds} rows have no submission ID and cannot be counted. No other matching checks.` : 'No matching submissions.'));
@@ -608,7 +674,8 @@ function sample(now = new Date()) {
         ActualDispatch: row.ActualSubmission ? row.ActualSubmission : i%3===2 ? iso(-1,1) : null
       });
     }
-    return {...row,...states.get(row.SubID)};
+    const registration=row.SubID==='DEMO-ABO-1-001'?{RegistrationID:'DEMO-REG-001',RegistrationCountry:'Ireland',RegistrationStatus:'Approved',RegistrationStart:iso(-1,1),RegistrationEnd:iso(12,1)}:row.SubID==='DEMO-ADJ-2-001'?{RegistrationID:'DEMO-REG-002',RegistrationCountry:'Germany',RegistrationStatus:'Conditionally Approved',RegistrationStart:iso(0,1),RegistrationEnd:iso(12,1)}:{};
+    return {...row,...states.get(row.SubID),FallbackCountry:['France','Spain','Germany','Italy','Poland','Ireland'][DEFAULT_SITES.indexOf(row.Site)],...registration};
   });
   // These old plans have no actual date but are complete for backlog purposes.
   return [...enriched,

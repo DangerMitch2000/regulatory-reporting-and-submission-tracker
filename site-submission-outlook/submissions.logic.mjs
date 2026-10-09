@@ -1,7 +1,9 @@
 export const DEFAULT_SITES = ['ABO', 'ADJ', 'ADK', 'AJG', 'ARDG', 'SCR'];
 export const STATE_FIELDS = [{role:'SubStatus',label:'Submission state'}, {role:'ROStatus',label:'RO state'}, {role:'AppStatus',label:'Application state'}];
 export const DISPATCH_ROLES = ['DispatchRequired', 'PlannedDispatch', 'ActualDispatch'];
-export const ROLES = ['SubID', 'Site', 'PlannedSubmission', 'ActualSubmission', 'BusinessUnit', ...STATE_FIELDS.map(f=>f.role), ...DISPATCH_ROLES];
+export const REGISTRATION_ROLES = ['RegistrationID', 'RegistrationCountry', 'RegistrationStatus', 'RegistrationStart', 'RegistrationEnd'];
+export const REGISTRATION_COMPLETE_STATES = ['Approved', 'Conditionally Approved'];
+export const ROLES = ['SubID', 'Site', 'PlannedSubmission', 'ActualSubmission', 'BusinessUnit', ...STATE_FIELDS.map(f=>f.role), ...DISPATCH_ROLES, ...REGISTRATION_ROLES, 'FallbackCountry'];
 export const REQUIRED = ROLES.slice(0, 4);
 export const clean = value => String(value ?? '').trim();
 export const siteKey = value => clean(value).toLocaleUpperCase('en-GB');
@@ -37,6 +39,35 @@ export function resolveDate(values) {
   if (parsed.some(x => x.kind === 'invalid')) return {kind: 'issue', reason: 'Invalid date'};
   if (days.length > 1) return {kind: 'issue', reason: 'Conflicting dates'};
   return days.length ? {kind: 'date', day: days[0]} : {kind: 'blank'};
+}
+// Keep each delivered registration's fields together: never borrow an ID, state or
+// country from another joined row. Repeated joins must not inflate submissions.
+export function registrationEvidence(rows, mapped = Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,true]))) {
+  const distinct = new Map();
+  for (const row of rows) {
+    const values = Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,mapped[role] ? row[role] : null]));
+    if (!Object.values(values).some(value=>clean(value))) continue;
+    const key = JSON.stringify(REGISTRATION_ROLES.map(role=>values[role] instanceof Date && Number.isFinite(+values[role]) ? values[role].toISOString() : clean(values[role])));
+    if (distinct.has(key)) continue;
+    const id=clean(values.RegistrationID), country=clean(values.RegistrationCountry), state=clean(values.RegistrationStatus);
+    const start=mapped.RegistrationStart?resolveDate([values.RegistrationStart]):{kind:'unmapped'}, end=mapped.RegistrationEnd?resolveDate([values.RegistrationEnd]):{kind:'unmapped'};
+    const complete=Boolean(id && REGISTRATION_COMPLETE_STATES.some(value=>value.toLowerCase()===state.toLowerCase().replace(/\s+/g,' ')));
+    const notes=[];
+    if(start.kind==='issue')notes.push(`${start.reason}: registration start`);
+    if(end.kind==='issue')notes.push(`${end.reason}: registration end`);
+    if(start.kind==='date'&&end.kind==='date'&&end.day<start.day)notes.push('Registration end date is before its start date');
+    if(!id && state)notes.push('Registration ID not recorded; state alone cannot identify the linked registration');
+    distinct.set(key,{id,country,state,start,end,complete,notes,rawStart:clean(values.RegistrationStart),rawEnd:clean(values.RegistrationEnd)});
+  }
+  const records=[...distinct.values()].sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true})||a.country.localeCompare(b.country)||a.state.localeCompare(b.state)||a.rawStart.localeCompare(b.rawStart)||a.rawEnd.localeCompare(b.rawEnd));
+  return {records, qualifying:records.filter(record=>record.complete), notes:[...new Set(records.flatMap(record=>record.notes.map(note=>`${record.id||'Registration without ID'}: ${note}`)))]};
+}
+export function resolveCountry(rows, registration, fallbackMapped = true) {
+  const distinct=values=>[...new Map(values.map(clean).filter(Boolean).map(value=>[value.toLocaleLowerCase('en-GB'),value])).values()].sort((a,b)=>a.localeCompare(b));
+  const primary=distinct(registration.records.map(record=>record.country));
+  if(primary.length)return {values:primary,source:'Registration country'};
+  const secondary=fallbackMapped?distinct(rows.map(row=>row.FallbackCountry)):[];
+  return {values:secondary,source:secondary.length?'Secondary country':'Not recorded'};
 }
 export function resolveRequired(values, mapped = true) {
   if (!mapped) return {kind: 'unmapped', values: []};
@@ -97,7 +128,7 @@ export function mapTable(table) {
     if (found.length) index[role] = found[0];
     else if (REQUIRED.includes(role)) missing.push(role);
   }
-  return {missing, unitMapped: index.BusinessUnit !== undefined, dispatchMapped: Object.fromEntries(DISPATCH_ROLES.map(role=>[role,index[role] !== undefined])), stateMapped: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,index[role] !== undefined])),
+  return {missing, unitMapped: index.BusinessUnit !== undefined, fallbackCountryMapped:index.FallbackCountry!==undefined, registrationMapped: Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,index[role] !== undefined])), dispatchMapped: Object.fromEntries(DISPATCH_ROLES.map(role=>[role,index[role] !== undefined])), stateMapped: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,index[role] !== undefined])),
     rows: (table?.rows || []).map(row => Object.fromEntries(ROLES.map(role => [role, index[role] === undefined ? null : row[index[role]]])))};
 }
 export function normalizeSites(sites) {
@@ -109,11 +140,14 @@ export function normalizeSites(sites) {
   }
   return result;
 }
-export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), stateFilters = {}, stateMapped, dispatchMapped} = {}) {
+export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), stateFilters = {}, stateMapped, dispatchMapped, registrationMapped, fallbackCountryMapped} = {}) {
   const dates = calendar(now), selectedSites = normalizeSites(sites), grouped = new Map(), units = new Set(), availableSites = new Map();
   const mappings = stateMapped ?? Object.fromEntries(STATE_FIELDS.map(({role})=>[role,rows.some(r=>Object.prototype.hasOwnProperty.call(r,role))]));
   const dispatchMappings = dispatchMapped ?? Object.fromEntries(DISPATCH_ROLES.map(role=>[role,rows.some(r=>Object.prototype.hasOwnProperty.call(r,role))]));
   const dispatchEnabled = DISPATCH_ROLES.some(role=>dispatchMappings[role]);
+  const registrationMappings=registrationMapped??Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,rows.some(row=>Object.prototype.hasOwnProperty.call(row,role))]));
+  const registrationEnabled=REGISTRATION_ROLES.some(role=>registrationMappings[role]);
+  const fallbackMapped=fallbackCountryMapped??rows.some(row=>Object.prototype.hasOwnProperty.call(row,'FallbackCountry'));
   const filters = normalizeStateFilters(stateFilters), choices = Object.fromEntries(STATE_FIELDS.map(({role})=>[role,new Set()]));
   const coverage = {outsideSites: [], outsideMonths: [], missingIds: []};
   const matches = row => (unit === '*' || clean(row.BusinessUnit) === unit) && STATE_FIELDS.every(({role}) => !mappings[role] || filters[role] === null || filters[role].includes(clean(row[role])));
@@ -126,8 +160,9 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     if (!id) {
       if (matches(row)) {
         missingIds++;
+        const registration=registrationEvidence([row],registrationMappings);
         coverage.missingIds.push({id:'', site:site || 'Unassigned', plan:resolveDate([row.PlannedSubmission]), actual:resolveDate([row.ActualSubmission]), status:'Not counted', reason:'Submission ID not recorded; this source row cannot be counted as a distinct submission',
-          states:Object.fromEntries(STATE_FIELDS.map(({role})=>[role,mappings[role]?[clean(row[role])]:null])),
+          states:Object.fromEntries(STATE_FIELDS.map(({role})=>[role,mappings[role]?[clean(row[role])]:null])), registration, country:resolveCountry([row],registration,fallbackMapped),
           dispatch:{required:resolveRequired([row.DispatchRequired],dispatchMappings.DispatchRequired),planned:dispatchMappings.PlannedDispatch?resolveDate([row.PlannedDispatch]):{kind:'unmapped'},actual:dispatchMappings.ActualDispatch?resolveDate([row.ActualDispatch]):{kind:'unmapped'}}});
       }
       continue;
@@ -139,7 +174,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
   const buckets = selectedSites.map(site => ({site, key: siteKey(site), delivered: 0, backlog: overdueGroup(), overdue: overdueGroup(), months: dates.months.map(month => ({
     ...month, site, planned: 0, inProcess: 0, submitted: 0, review: 0, overdue: 0, rows: []}))}));
   const lookup = new Map(buckets.map(b => [b.key, b]));
-  const issues = [], checks = {missingIds, outsideSites: 0, unassignedSite: 0, multipleSites: 0, missingPlan: 0, planIssues: 0, actualIssues: 0, dispatchIssues: 0, outsideMonths: 0};
+  const issues = [], checks = {missingIds, outsideSites: 0, unassignedSite: 0, multipleSites: 0, missingPlan: 0, planIssues: 0, actualIssues: 0, dispatchIssues: 0, registrationIssues: 0, outsideMonths: 0};
   let scopedRecords = 0;
   for (const [id, list] of grouped) {
     if (!list.some(matches)) continue;
@@ -151,6 +186,9 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     const submittedStates = submittedStateEvidence(states);
     const record = {id, site: names.join(' / ') || 'Unassigned', plan, actual, states, submittedStates, status: 'In process', reason: ''};
     record.approved = hasState(states, 'ROStatus', 'health authority approved');
+    record.registration=registrationEvidence(list,registrationMappings);
+    record.registrationComplete=record.registration.qualifying.length>0;
+    record.country=resolveCountry(list,record.registration,fallbackMapped);
     record.dispatch = {required: resolveRequired(list.map(row=>row.DispatchRequired), dispatchMappings.DispatchRequired),
       planned: dispatchMappings.PlannedDispatch ? resolveDate(list.map(row=>row.PlannedDispatch)) : {kind:'unmapped'},
       actual: dispatchMappings.ActualDispatch ? resolveDate(list.map(row=>row.ActualDispatch)) : {kind:'unmapped'}};
@@ -162,7 +200,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     const bucket = lookup.get(names[0]);
     if (!bucket) {
       checks.outsideSites++;
-      if (actual.kind === 'date' && actual.day <= dates.today || submittedStates.length) {record.status='Submitted';record.submittedByState=!(actual.kind==='date'&&actual.day<=dates.today);}
+      if (actual.kind === 'date' && actual.day <= dates.today || submittedStates.length || record.registrationComplete) {record.status='Submitted';record.submittedByState=!(actual.kind==='date'&&actual.day<=dates.today)&&submittedStates.length>0;record.submittedByRegistration=!(actual.kind==='date'&&actual.day<=dates.today)&&!submittedStates.length&&record.registrationComplete;}
       else if (actual.kind==='issue'||actual.kind==='date'&&actual.day>dates.today) record.status='Check date';
       dispatchProgress(record,dates.today);
       coverage.outsideSites.push(record);continue;
@@ -175,10 +213,13 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
       checks.actualIssues++;
     }
     const actualSubmitted = actual.kind === 'date' && !actualIssue;
-    if (actualSubmitted || submittedStates.length) {
+    if (actualSubmitted || submittedStates.length || record.registrationComplete) {
       record.status = 'Submitted';
-      record.submittedByState = !actualSubmitted;
+      record.submittedByState = !actualSubmitted && submittedStates.length>0;
+      record.submittedByRegistration = !actualSubmitted && !submittedStates.length && record.registrationComplete;
     }
+    const registrationIssue=record.registration.notes.length>0;
+    if(registrationIssue){checks.registrationIssues++;record.reason=[record.reason,...record.registration.notes].filter(Boolean).join('; ');}
     dispatchProgress(record, dates.today);
     const dispatchIssue = Boolean(record.dispatchNotes && (record.dispatch.required.values.length || [record.dispatch.planned,record.dispatch.actual].some(date=>date.kind!=='blank'&&date.kind!=='unmapped')));
     if (dispatchIssue) checks.dispatchIssues++;
@@ -190,7 +231,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
       issues.push({...record, reason: [plan.kind === 'blank' ? 'Planned submission date not recorded' : `${plan.reason}: planned submission`, record.reason].filter(Boolean).join('; ')});
       continue;
     }
-    if (actualIssue || dispatchIssue) issues.push({...record});
+    if (actualIssue || dispatchIssue || registrationIssue) issues.push({...record});
     const month = bucket.months.find(m => plan.day >= m.start && plan.day < m.end);
     if (!month) {
       if (plan.day < backlog.cutoff && record.overdue) {
@@ -221,7 +262,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
   const rawStep = peak / 5, magnitude = 10 ** Math.floor(Math.log10(rawStep));
   const step = Math.max(1, ([1, 2, 5, 10].find(s => s * magnitude >= rawStep) || 10) * magnitude);
   const axisMax = Math.max(5, Math.ceil(peak / step) * step);
-  return {...dates, buckets, totals, monthTotals, backlog, overdue, checks, issues, coverage, axisMax, step, scopedRecords, dispatchMapped: dispatchMappings, dispatchEnabled,
+  return {...dates, buckets, totals, monthTotals, backlog, overdue, checks, issues, coverage, axisMax, step, scopedRecords, dispatchMapped: dispatchMappings, dispatchEnabled, registrationMapped:registrationMappings, registrationEnabled, countryEnabled:Boolean(registrationMappings.RegistrationCountry||fallbackMapped), fallbackCountryMapped:fallbackMapped,
     stateMapped: mappings, stateFilters: filters, stateChoices: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,[...choices[role]].sort((a,b)=>stateLabel(a).localeCompare(stateLabel(b)))])),
     units: [...units].sort(), availableSites: [...availableSites.values()].sort(),
     issueCount: issues.length + missingIds, completion: totals.planned ? Math.round(totals.submitted / totals.planned * 100) : 0};
@@ -241,6 +282,8 @@ export function attentionFor(record) {
   if(/Multiple sites|Site not recorded/.test(reason))return note('data','review','Check site assignment',reason,'Confirm the submission’s site before allocating it.');
   if(record.actual?.kind==='issue'||record.status==='Check date'||/Actual submission date is in the future/.test(reason))return note('data','review','Check actual submission date',record.actual?.kind==='issue'?`${record.actual.reason}: actual submission.`:'The recorded actual submission date is in the future.','Verify the recorded filing date; no date is inferred.');
   if(record.plan?.kind==='issue')return note('data','review','Check planned submission date',`${record.plan.reason}: planned submission.`,'Confirm the applicable planned submission date.');
+  if(record.registration?.notes.length)return note('registrationReview','review','Check registration details',record.registration.notes.join('; '),record.registrationComplete?'Registration approval still establishes Submitted. Verify the recorded registration details.':'Verify the linked registration ID, state and dates.');
+  if(record.registrationComplete)return note('registration','complete','Registration approval recorded',record.registration.qualifying.map(r=>`${r.id}${r.country?' · '+r.country:''}: ${r.state}`).join('; '),'Counted as Submitted and excluded from overdue work. Review any outdated submission, RO or application states.');
   if(d.required?.kind==='issue')return note('dispatchReview','review','Check dispatch requirement',d.required.reason,'Confirm whether internal dispatch is required.');
   if(d.actual?.kind==='issue'||/Actual dispatch date is in the future|Actual dispatch is after actual submission/.test(dispatchNotes))return note('dispatchReview','review','Check actual dispatch date',dispatchNotes,'Verify the dispatch date before relying on its stage.');
   if(d.planned?.kind==='issue'||/Planned dispatch is after planned submission/.test(dispatchNotes))return note('dispatchReview','review','Check planned dispatch date',dispatchNotes,'Confirm the dispatch deadline and sequence of dates.');

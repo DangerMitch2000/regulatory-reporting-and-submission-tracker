@@ -19,7 +19,7 @@ export function render(root, rows, options = {}) {
     const setup = el('section', undefined, 'ssSetup'); setup.append(el('h2', 'Site Submission Outlook'), el('p', 'Map these four fields to show this month and next month for your main six sites:'));
     const list = el('ul'); missing.forEach(role => list.append(el('li', labels[role] || role))); setup.append(list, el('p', 'Use raw date columns, not date hierarchies. Use the initial planned submission date to match the reference slide. An actual-date column may contain blanks.')); root.append(setup); return;
   }
-  const sites = normalizeSites(state.sites), unit = unitMapped ? state.unit ?? '*' : '*', r = summarize(rows, {sites, unit, now, stateFilters: state.stateFilters, stateMapped: options.stateMapped, dispatchMapped: options.dispatchMapped});
+  const sites = normalizeSites(state.sites), unit = unitMapped ? state.unit ?? '*' : '*', r = summarize(rows, {sites, unit, now, stateFilters: state.stateFilters, stateMapped: options.stateMapped, dispatchMapped: options.dispatchMapped, registrationMapped:options.registrationMapped, fallbackCountryMapped:options.fallbackCountryMapped});
   const asOf = r.today - 24 * 60 * 60 * 1000;
   function openDetails(detail) {
     onChange({detail,query:'',status:'all',dispatchStage:'all',detailSite:'*',page:0,sitesOpen:false,stateOpen:null,capture:false});
@@ -197,6 +197,8 @@ export function render(root, rows, options = {}) {
   }
   footer(`${synthetic ? 'ILLUSTRATIVE DATA · ' : ''}${sites.length} sites · ${unit === '*' ? 'All business units' : unit || 'Not recorded'}`, 15);
   footer(`Submitted: actual date on/before today or Submission state ${submittedStatesText}.`);
+  if(r.registrationEnabled)footer('Also Submitted: a linked Registration ID with state Approved or Conditionally Approved.');
+  if(r.registrationEnabled&&(!r.registrationMapped.RegistrationID||!r.registrationMapped.RegistrationStatus))footer('Map both Registration ID and Registration state to use registration approval as completion evidence.');
   footer('Backlog excludes Submitted records and Health Authority Approved ROs.');
   footer('Overdue: required internal dispatch uses its planned dispatch date; dispatched/not-required items use their planned submission date.');
   if (!Object.values(r.dispatchMapped).every(Boolean)) footer('Map Dispatch required, Planned dispatch date and Actual dispatch date to classify internal dispatch separately.');
@@ -225,7 +227,7 @@ function renderDetails(root, result, state, onChange) {
   const issues = state.detail.kind === 'issues', isBacklog = state.detail.kind === 'backlog', isOverdue=state.detail.kind==='overdue', isPlan=state.detail.kind==='plan', isCoverage=state.detail.kind==='coverage', site = result.buckets.find(b => b.key === state.detail.site);
   const month = issues || isBacklog || isOverdue || isPlan || isCoverage ? null : site?.months.find(m => m.key === state.detail.month);
   const records = issues ? [...result.issues,...result.coverage.missingIds] : isCoverage ? result.coverage[state.detail.group] || [] : isPlan ? result.buckets.flatMap(b=>b.months.flatMap(m=>m.rows)).filter(r=>matchesMetric(r,state.detail.metric)).sort((a,b)=>(state.detail.metric==='overdue'?a.overdueDate-b.overdueDate:a.plan.day-b.plan.day)||a.id.localeCompare(b.id,undefined,{numeric:true})) : isOverdue ? result.overdue.rows.filter(r=>state.detail.group==='all'||r.overdueStage===state.detail.group) : isBacklog ? (state.detail.site ? site?.backlog.rows || [] : result.backlog.rows) : (month?.rows || []).filter(r=>matchesMetric(r,state.detail.metric)), query = String(state.query || '').toLowerCase();
-  const filtered = records.map(r=>({...r,attention:attentionFor(r)})).filter(r => (!query || `${r.id} ${r.site} ${r.reason} ${r.dispatchStage} ${r.attention.title} ${r.attention.reason} ${r.attention.action} ${STATE_FIELDS.map(f=>formatStates(r.states?.[f.role])).join(' ')}`.toLowerCase().includes(query)) && (issues || isCoverage || !state.status || state.status === 'all' || r.status === state.status) && (issues || isCoverage || !state.dispatchStage || state.dispatchStage==='all'||r.dispatchStage===state.dispatchStage) && (!(isOverdue||isPlan)||!state.detailSite||state.detailSite==='*'||siteKey(r.site)===state.detailSite));
+  const filtered = records.map(r=>({...r,attention:attentionFor(r)})).filter(r => (!query || `${r.id} ${r.site} ${(r.country?.values||[]).join(' ')} ${r.country?.source||''} ${r.reason} ${r.dispatchStage} ${r.attention.title} ${r.attention.reason} ${r.attention.action} ${STATE_FIELDS.map(f=>formatStates(r.states?.[f.role])).join(' ')} ${(r.registration?.records||[]).map(reg=>[reg.id,reg.country,reg.state,reg.rawStart,reg.rawEnd,formatDate(reg.start),formatDate(reg.end)].join(' ')).join(' ')}`.toLowerCase().includes(query)) && (issues || isCoverage || !state.status || state.status === 'all' || r.status === state.status) && (issues || isCoverage || !state.dispatchStage || state.dispatchStage==='all'||r.dispatchStage===state.dispatchStage) && (!(isOverdue||isPlan)||!state.detailSite||state.detailSite==='*'||siteKey(r.site)===state.detailSite));
   const pageSize = 50, page = Math.min(Math.max(0, state.page || 0), Math.max(0, Math.ceil(filtered.length / pageSize) - 1));
   const section = el('section', undefined, 'ssDetails');
   const heading=el('h3', issues ? 'Data checks' : isCoverage ? coverageLabels[state.detail.group] : isPlan ? `Two-month plan · ${metricLabels[state.detail.metric]}` : isOverdue ? overdueLabels[state.detail.group] : isBacklog ? `${site?.site || (state.detail.site ? state.detail.site : 'All selected sites')} · Overdue backlog` : `${month?.site || state.detail.site} · ${month?.label || state.detail.month}${state.detail.metric?' · '+metricLabels[state.detail.metric]:''}`);heading.tabIndex=-1;section.append(heading);
@@ -239,6 +241,7 @@ function renderDetails(root, result, state, onChange) {
   else section.append(el('p', `These submissions belong to the selected planned month. Submitted means a valid actual submission date on or before today, or Submission state ${submittedStatesText}. These states can establish progress without an actual date; no date is invented. Rejected means filed and rejected by the health authority, not approved. Distributed means internal distribution and does not establish Submitted by itself.`));
   section.append(el('p','Recorded submission, RO and application states are shown alongside progress. Click a submission ID to select it, then press Ctrl+C (Cmd+C on Mac). Copy IDs includes all matching pages, one ID per line.'));
   section.append(el('p','Main issue / next action highlights the clearest signal from recorded dates and states. Missing or conflicting evidence is marked for review.'));
+  if(result.registrationEnabled)section.append(el('p','A Registration ID with state Approved or Conditionally Approved, linked through this submission’s RO, also establishes Submitted and excludes overdue work. ID, country or dates alone do not establish completion. Registration dates describe the registration; they do not replace the actual submission date. Other registration states are retained as recorded.'));
   const controls = el('div', undefined, 'ssDetailTools'), search = el('input'); search.placeholder = 'Find submission'; search.setAttribute('aria-label', 'Find submission'); search.value = state.query || '';
   search.onchange = () => onChange({query: search.value, page: 0}); controls.append(search);
   if (!issues && !isCoverage && !isBacklog && !isOverdue && (!state.detail.metric||state.detail.metric==='planned')) {
@@ -288,8 +291,8 @@ function renderDetails(root, result, state, onChange) {
   section.addEventListener('keydown', event => {if ((event.ctrlKey || event.metaKey) && (event.key.toLowerCase()==='c' || event.target===copyText && event.key.toLowerCase()==='a') && (event.target === copyText || event.target.classList?.contains('ssSubmissionId'))) event.stopPropagation();});
   if (filtered.length) {
     const wrap = el('div', undefined, 'ssTableWrap'), table = el('table'), head = el('thead'), header = el('tr');
-    ['Submission ID', 'Main issue / next action', 'Site', 'Planned submission', 'Actual submission', issues ? 'Check' : 'Progress', ...STATE_FIELDS.map(f=>f.label), 'Dispatch stage', 'Dispatch required', 'Planned dispatch', 'Actual dispatch', 'Overdue basis / dispatch notes'].forEach(label => header.append(el('th', label))); head.append(header); table.append(head);
-    const body = el('tbody'); filtered.slice(page * pageSize, (page + 1) * pageSize).forEach(r => {const row = el('tr'); [r.id, r.site, formatDate(r.plan), formatDate(r.actual), issues ? r.reason : r.status + (r.submittedByState ? ` · ${r.submittedStates.join(' / ')} state` : '') + (r.overdue ? ' · Overdue' : ''), ...STATE_FIELDS.map(f=>formatStates(r.states?.[f.role])), r.dispatchStage || 'Check record', requiredText(r.dispatch?.required), formatDate(r.dispatch?.planned), formatDate(r.dispatch?.actual), [r.overdue ? `${overdueLabels[r.overdueStage]} · Due ${dateText(r.overdueDate)}` : '',r.dispatchNotes].filter(Boolean).join('; ') || '—'].forEach((value,i) => {
+    ['Submission ID', 'Main issue / next action', 'Site', 'Planned submission', 'Actual submission', issues ? 'Check' : 'Progress', ...STATE_FIELDS.map(f=>f.label), 'Dispatch stage', 'Dispatch required', 'Planned dispatch', 'Actual dispatch', 'Overdue basis / dispatch notes', ...(result.countryEnabled?['Country']:[]), ...(result.registrationEnabled?['Linked registrations']:[])].forEach(label => header.append(el('th', label))); head.append(header); table.append(head);
+    const body = el('tbody'); filtered.slice(page * pageSize, (page + 1) * pageSize).forEach(r => {const row = el('tr'); [r.id, r.site, formatDate(r.plan), formatDate(r.actual), issues ? r.reason : r.status + (r.submittedByState ? ` · ${r.submittedStates.join(' / ')} state` : r.submittedByRegistration ? ' · Registration approval' : '') + (r.overdue ? ' · Overdue' : ''), ...STATE_FIELDS.map(f=>formatStates(r.states?.[f.role])), r.dispatchStage || 'Check record', requiredText(r.dispatch?.required), formatDate(r.dispatch?.planned), formatDate(r.dispatch?.actual), [r.overdue ? `${overdueLabels[r.overdueStage]} · Due ${dateText(r.overdueDate)}` : '',r.dispatchNotes].filter(Boolean).join('; ') || '—'].forEach((value,i) => {
       const cell = el('td', i===0&&!value?'Not recorded':value, i===0&&value?'ssSubmissionId':i>=5?'ssRecordedState':undefined);
       if (i===0&&value) {
         cell.tabIndex = 0; cell.title = 'Click to select this submission ID, then press Ctrl+C (Cmd+C on Mac).';
@@ -301,7 +304,24 @@ function renderDetails(root, result, state, onChange) {
         const attention=el('td',undefined,'ssAttention');attention.dataset.tone=r.attention.tone;attention.dataset.attention=r.attention.key;
         attention.append(el('strong',r.attention.title,'ssAttentionBadge'),el('span',r.attention.reason,'ssAttentionReason'),el('span',`Next action: ${r.attention.action}`,'ssAttentionAction'));row.append(attention);
       }
-    }); body.append(row);}); table.append(body); wrap.append(table); section.append(wrap);
+    });
+      if(result.countryEnabled){const cell=el('td',undefined,'ssCountry');cell.append(el('span',r.country?.values?.length?r.country.values.join(' / '):'Not recorded'));if(r.country?.values?.length)cell.append(el('small',r.country.source));row.append(cell);}
+      if(result.registrationEnabled){
+        const cell=el('td',undefined,'ssRegistrations'), registrations=r.registration?.records||[];
+        if(!registrations.length)cell.textContent='Not recorded';
+        for(const registration of registrations){
+          const item=el('div',undefined,'ssRegistration');item.dataset.complete=String(registration.complete);
+          item.append(el('strong',registration.id||(!result.registrationMapped.RegistrationID?'Registration ID not mapped':'Registration ID not recorded')));
+          item.append(el('span',`Country: ${registration.country||(!result.registrationMapped.RegistrationCountry?'Not mapped':'Not recorded')}`));
+          item.append(el('span',`State: ${registration.state||(!result.registrationMapped.RegistrationStatus?'Not mapped':'Not recorded')}`));
+          for(const [label,key,raw] of [['Start','start','rawStart'],['End','end','rawEnd']])item.append(el('span',`${label}: ${formatDate(registration[key])}${registration[key].kind==='issue'?' · '+registration[raw]:''}`));
+          if(registration.complete)item.append(el('span','Confirms Submitted','ssRegistrationEvidence'));
+          if(registration.notes.length)item.append(el('span',registration.notes.join('; '),'ssRegistrationNote'));
+          cell.append(item);
+        }
+        row.append(cell);
+      }
+      body.append(row);}); table.append(body); wrap.append(table); section.append(wrap);
     const pagination = el('div', undefined, 'ssPager'); pagination.append(el('span', `Showing ${page * pageSize + 1}–${Math.min((page + 1) * pageSize, filtered.length)} of ${filtered.length}`));
     const prev = el('button', 'Previous'), next = el('button', 'Next'); prev.disabled = page === 0; next.disabled = (page + 1) * pageSize >= filtered.length; prev.onclick = () => onChange({page: page - 1}); next.onclick = () => onChange({page: page + 1}); pagination.append(prev, next); section.append(pagination);
   } else section.append(el('p', issues && result.checks.missingIds ? `${result.checks.missingIds} rows have no submission ID and cannot be counted. No other matching checks.` : 'No matching submissions.'));
