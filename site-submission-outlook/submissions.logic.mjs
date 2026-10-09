@@ -3,7 +3,8 @@ export const STATE_FIELDS = [{role:'SubStatus',label:'Submission state'}, {role:
 export const DISPATCH_ROLES = ['DispatchRequired', 'PlannedDispatch', 'ActualDispatch'];
 export const REGISTRATION_ROLES = ['RegistrationID', 'RegistrationCountry', 'RegistrationStatus', 'RegistrationStart', 'RegistrationEnd'];
 export const REGISTRATION_COMPLETE_STATES = ['Approved', 'Conditionally Approved'];
-export const ROLES = ['SubID', 'Site', 'PlannedSubmission', 'ActualSubmission', 'BusinessUnit', ...STATE_FIELDS.map(f=>f.role), ...DISPATCH_ROLES, ...REGISTRATION_ROLES, 'FallbackCountry'];
+export const IDENTIFIER_FIELDS = [{role:'ROID',label:'RO ID'},{role:'AppID',label:'Application ID'}];
+export const ROLES = ['SubID', 'Site', 'PlannedSubmission', 'ActualSubmission', 'BusinessUnit', ...STATE_FIELDS.map(f=>f.role), ...DISPATCH_ROLES, ...REGISTRATION_ROLES, 'FallbackCountry', ...IDENTIFIER_FIELDS.map(field=>field.role)];
 export const REQUIRED = ROLES.slice(0, 4);
 export const clean = value => String(value ?? '').trim();
 export const siteKey = value => clean(value).toLocaleUpperCase('en-GB');
@@ -69,6 +70,16 @@ export function resolveCountry(rows, registration, fallbackMapped = true) {
   const secondary=fallbackMapped?distinct(rows.map(row=>row.FallbackCountry)):[];
   return {values:secondary,source:secondary.length?'Secondary country':'Not recorded'};
 }
+export function relatedEvidence(rows, mapped) {
+  const pairs=new Map();
+  for(const row of rows){
+    const roId=mapped.ROID?clean(row.ROID):'', appId=mapped.AppID?clean(row.AppID):'';
+    if(roId||appId)pairs.set(JSON.stringify([roId,appId]),{roId,appId});
+  }
+  const relatedRecords=[...pairs.values()].sort((a,b)=>a.roId.localeCompare(b.roId,undefined,{numeric:true})||a.appId.localeCompare(b.appId,undefined,{numeric:true}));
+  const relatedIds=Object.fromEntries(IDENTIFIER_FIELDS.map(({role})=>[role,mapped[role]?[...new Set(relatedRecords.map(pair=>role==='ROID'?pair.roId:pair.appId).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})):null]));
+  return {relatedIds,relatedRecords};
+}
 export function resolveRequired(values, mapped = true) {
   if (!mapped) return {kind: 'unmapped', values: []};
   const recorded = [...new Set(values.map(clean).filter(Boolean))];
@@ -128,7 +139,7 @@ export function mapTable(table) {
     if (found.length) index[role] = found[0];
     else if (REQUIRED.includes(role)) missing.push(role);
   }
-  return {missing, unitMapped: index.BusinessUnit !== undefined, fallbackCountryMapped:index.FallbackCountry!==undefined, registrationMapped: Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,index[role] !== undefined])), dispatchMapped: Object.fromEntries(DISPATCH_ROLES.map(role=>[role,index[role] !== undefined])), stateMapped: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,index[role] !== undefined])),
+  return {missing, unitMapped: index.BusinessUnit !== undefined, identifierMapped:Object.fromEntries(IDENTIFIER_FIELDS.map(({role})=>[role,index[role]!==undefined])), fallbackCountryMapped:index.FallbackCountry!==undefined, registrationMapped: Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,index[role] !== undefined])), dispatchMapped: Object.fromEntries(DISPATCH_ROLES.map(role=>[role,index[role] !== undefined])), stateMapped: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,index[role] !== undefined])),
     rows: (table?.rows || []).map(row => Object.fromEntries(ROLES.map(role => [role, index[role] === undefined ? null : row[index[role]]])))};
 }
 export function normalizeSites(sites) {
@@ -140,7 +151,7 @@ export function normalizeSites(sites) {
   }
   return result;
 }
-export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), stateFilters = {}, stateMapped, dispatchMapped, registrationMapped, fallbackCountryMapped} = {}) {
+export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), stateFilters = {}, stateMapped, dispatchMapped, registrationMapped, fallbackCountryMapped, identifierMapped} = {}) {
   const dates = calendar(now), selectedSites = normalizeSites(sites), grouped = new Map(), units = new Set(), availableSites = new Map();
   const mappings = stateMapped ?? Object.fromEntries(STATE_FIELDS.map(({role})=>[role,rows.some(r=>Object.prototype.hasOwnProperty.call(r,role))]));
   const dispatchMappings = dispatchMapped ?? Object.fromEntries(DISPATCH_ROLES.map(role=>[role,rows.some(r=>Object.prototype.hasOwnProperty.call(r,role))]));
@@ -148,6 +159,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
   const registrationMappings=registrationMapped??Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,rows.some(row=>Object.prototype.hasOwnProperty.call(row,role))]));
   const registrationEnabled=REGISTRATION_ROLES.some(role=>registrationMappings[role]);
   const fallbackMapped=fallbackCountryMapped??rows.some(row=>Object.prototype.hasOwnProperty.call(row,'FallbackCountry'));
+  const identifiers=identifierMapped??Object.fromEntries(IDENTIFIER_FIELDS.map(({role})=>[role,rows.some(row=>Object.prototype.hasOwnProperty.call(row,role))]));
   const filters = normalizeStateFilters(stateFilters), choices = Object.fromEntries(STATE_FIELDS.map(({role})=>[role,new Set()]));
   const coverage = {outsideSites: [], outsideMonths: [], missingIds: []};
   const matches = row => (unit === '*' || clean(row.BusinessUnit) === unit) && STATE_FIELDS.every(({role}) => !mappings[role] || filters[role] === null || filters[role].includes(clean(row[role])));
@@ -162,7 +174,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
         missingIds++;
         const registration=registrationEvidence([row],registrationMappings);
         coverage.missingIds.push({id:'', site:site || 'Unassigned', plan:resolveDate([row.PlannedSubmission]), actual:resolveDate([row.ActualSubmission]), status:'Not counted', reason:'Submission ID not recorded; this source row cannot be counted as a distinct submission',
-          states:Object.fromEntries(STATE_FIELDS.map(({role})=>[role,mappings[role]?[clean(row[role])]:null])), registration, country:resolveCountry([row],registration,fallbackMapped),
+          states:Object.fromEntries(STATE_FIELDS.map(({role})=>[role,mappings[role]?[clean(row[role])]:null])), ...relatedEvidence([row],identifiers), registration, country:resolveCountry([row],registration,fallbackMapped),
           dispatch:{required:resolveRequired([row.DispatchRequired],dispatchMappings.DispatchRequired),planned:dispatchMappings.PlannedDispatch?resolveDate([row.PlannedDispatch]):{kind:'unmapped'},actual:dispatchMappings.ActualDispatch?resolveDate([row.ActualDispatch]):{kind:'unmapped'}}});
       }
       continue;
@@ -184,7 +196,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     const actual = resolveDate(list.map(row => row.ActualSubmission));
     const states = Object.fromEntries(STATE_FIELDS.map(({role})=>[role,mappings[role] ? [...new Set(list.map(row=>clean(row[role])))].sort() : null]));
     const submittedStates = submittedStateEvidence(states);
-    const record = {id, site: names.join(' / ') || 'Unassigned', plan, actual, states, submittedStates, status: 'In process', reason: ''};
+    const record = {id, site: names.join(' / ') || 'Unassigned', plan, actual, states, submittedStates, ...relatedEvidence(list,identifiers), status: 'In process', reason: ''};
     record.approved = hasState(states, 'ROStatus', 'health authority approved');
     record.registration=registrationEvidence(list,registrationMappings);
     record.registrationComplete=record.registration.qualifying.length>0;
@@ -262,7 +274,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
   const rawStep = peak / 5, magnitude = 10 ** Math.floor(Math.log10(rawStep));
   const step = Math.max(1, ([1, 2, 5, 10].find(s => s * magnitude >= rawStep) || 10) * magnitude);
   const axisMax = Math.max(5, Math.ceil(peak / step) * step);
-  return {...dates, buckets, totals, monthTotals, backlog, overdue, checks, issues, coverage, axisMax, step, scopedRecords, dispatchMapped: dispatchMappings, dispatchEnabled, registrationMapped:registrationMappings, registrationEnabled, countryEnabled:Boolean(registrationMappings.RegistrationCountry||fallbackMapped), fallbackCountryMapped:fallbackMapped,
+  return {...dates, buckets, totals, monthTotals, backlog, overdue, checks, issues, coverage, axisMax, step, scopedRecords, identifierMapped:identifiers, identifiersEnabled:IDENTIFIER_FIELDS.some(({role})=>identifiers[role]), dispatchMapped: dispatchMappings, dispatchEnabled, registrationMapped:registrationMappings, registrationEnabled, countryEnabled:Boolean(registrationMappings.RegistrationCountry||fallbackMapped), fallbackCountryMapped:fallbackMapped,
     stateMapped: mappings, stateFilters: filters, stateChoices: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,[...choices[role]].sort((a,b)=>stateLabel(a).localeCompare(stateLabel(b)))])),
     units: [...units].sort(), availableSites: [...availableSites.values()].sort(),
     issueCount: issues.length + missingIds, completion: totals.planned ? Math.round(totals.submitted / totals.planned * 100) : 0};
@@ -278,7 +290,11 @@ export function formatDate(resolved) {
 export function attentionFor(record) {
   const note=(key,tone,title,reason,action)=>({key,tone,title,reason,action});
   const states=record.states||{}, d=record.dispatch||{}, reason=record.reason||'', dispatchNotes=record.dispatchNotes||'';
-  if(!record.id)return note('data','review','Submission ID missing','This source row has no submission ID.','Map or correct the source submission ID.');
+  if(!record.id){
+    const references=IDENTIFIER_FIELDS.flatMap(({role,label})=>(record.relatedIds?.[role]||[]).map(id=>`${label}: ${id}`));
+    if(references.length)return note('missingSubmission','review','Submission ID not recorded',references.join('; '),'Use these related IDs to check whether the submission awaits creation or its ID is missing from the mapped data. This row stays visible and is not counted as a distinct submission.');
+    return note('data','review','Submission ID missing','This source row has no submission ID.','Map or correct the source submission ID.');
+  }
   if(/Multiple sites|Site not recorded/.test(reason))return note('data','review','Check site assignment',reason,'Confirm the submission’s site before allocating it.');
   if(record.actual?.kind==='issue'||record.status==='Check date'||/Actual submission date is in the future/.test(reason))return note('data','review','Check actual submission date',record.actual?.kind==='issue'?`${record.actual.reason}: actual submission.`:'The recorded actual submission date is in the future.','Verify the recorded filing date; no date is inferred.');
   if(record.plan?.kind==='issue')return note('data','review','Check planned submission date',`${record.plan.reason}: planned submission.`,'Confirm the applicable planned submission date.');

@@ -4,9 +4,11 @@
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
 
-## Site Submission Outlook — Registration evidence in 1.4.0
+## Site Submission Outlook — Related record IDs in 1.5.0
 
-[Download Site Submission Outlook 1.4.0](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.4.0/site-submission-outlook-1.4.0.0.pbiviz) · [Live preview](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Field mappings and instructions](site-submission-outlook/README.md)
+[Download Site Submission Outlook 1.5.0](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.5.0/site-submission-outlook-1.5.0.0.pbiviz) · [Live preview](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Field mappings and instructions](site-submission-outlook/README.md)
+
+**RO ID and Application ID** are now optional mappings. Details preserves their actual source pairings and offers search, individual selection and separate **Copy RO IDs** / **Copy application IDs** buttons. Click the missing-Submission-ID count to see every delivered row, including rows without registrations. Blank Submission IDs never become guessed submission counts; repeated unidentified rows remain visible. Report/model filters can still limit what Power BI delivers.
 
 Shows the current and following month for **ABO, ADJ, ADK, AJG, ARDG and SCR**, splitting planned submissions into In process and Submitted. A Registration ID in **Approved or Conditionally Approved** state, linked through the submission’s RO, now establishes Submitted and removes the item from overdue work even if its source submission state is stale. Registration ID or dates alone do not establish completion. The existing actual-date, Submission-state and RO-approved rules remain available.
 
@@ -16,7 +18,7 @@ All displayed summary counts, percentages, bar segments, two-month overdue and b
 
 Internal-dispatch overdue uses planned dispatch date; authority-submission overdue uses planned submission date after dispatch or when dispatch is not required. Earlier-plan backlog and two-month overdue are subsets of all overdue work. Submitted records and Health Authority Approved ROs are excluded. Keep all relevant dates delivered by report filters.
 
-The six new mappings are optional and the visual identity is unchanged. Map the specific registration associated with the submission’s RO, rather than an unrelated registration on the same application. Registration dates remain visible and do not invent actual submission dates. Tests cover duplicates, country fallback, all seven registration states, invalid dates, optional mappings, ID copying, both themes and 10,000 submissions. The public demo uses fictional records.
+The registration/country and two new identifier mappings are optional; the visual identity is unchanged. Map the specific registration associated with the submission’s RO, rather than an unrelated registration on the same application. Registration dates remain visible and do not invent actual submission dates. Tests cover duplicates, country fallback, all seven registration states, invalid dates, optional mappings, ID copying, both themes and 10,000 submissions. The public demo uses fictional records.
 
 ## Country response IDs and dispatch progress — version 1.15.0
 
@@ -187,11 +189,11 @@ For the Tracker, Roadmap, IVDR, Key Submissions and Site Regulatory Plan, map yo
 | Visual | Download | Demo |
 | --- | --- | --- |
 | Regulatory Tracker 1.15.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.15.0/regulatory-tracker-1.15.0.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
-| Registration Overview / Roadmap 1.4.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.4.0/roadmap-2026-1.4.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap-preview.html) |
+| Registration Overview / Roadmap 1.5.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.5.0/roadmap-2026-1.5.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap-preview.html) |
 | IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |
 | Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/key-preview.html) |
 | Site Regulatory Plan 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-plan-2026-v1.1.0/site-regulatory-plan-2026-1.1.0.0.pbiviz) | [Site plan](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-plan-preview.html) |
-| Site Submission Outlook 1.4.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.4.0/site-submission-outlook-1.4.0.0.pbiviz) | [Current and next month](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) |
+| Site Submission Outlook 1.5.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.5.0/site-submission-outlook-1.5.0.0.pbiviz) | [Current and next month](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) |
 
 Roadmap shows False separately as **Dispatch not required**, retaining recorded dispatch reference dates. Records without a usable dispatch month but with current-year actual submission/approval evidence are shown separately outside the monthly chart. Blanks remain unknown; they are not assumed to mean False. An unmapped field retains the earlier classification behavior.
 
@@ -273,7 +275,7 @@ Supporting history is calculated before this visual’s local filters, including
 
 ## Previous Power BI visual — 1.4 preview
 
-[Download the installable .pbiviz](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/powerbi-v1.4.0-preview.1/regulatory-timeline-1.4.0.0.pbiviz) · [Installation guide, source and previews](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/powerbi-v1.4.0-preview.1)
+[Download the installable .pbiviz](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/powerbi-v1.5.0-preview.1/regulatory-timeline-1.5.0.0.pbiviz) · [Installation guide, source and previews](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/powerbi-v1.5.0-preview.1)
 
 This custom Power BI visual carries over the demo's dark interface, styled search and filters, comparison controls, and selectable HTML details. Import the `.pbiviz` through Power BI's **Visualizations (…) → Import a visual from a file**, then map source columns to the named field wells. Start with AppID, ROID and SubID; map dates as raw Date columns, not Date hierarchies. You do not need Deneb or field renaming for this version.
 

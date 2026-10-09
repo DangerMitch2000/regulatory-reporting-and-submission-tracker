@@ -1,10 +1,31 @@
-# Site Submission Outlook — 1.4.0
+# Site Submission Outlook — 1.5.0
 
 A separate Power BI custom visual showing **the current and following calendar month** for **ABO, ADJ, ADK, AJG, ARDG and SCR**. Each month's planned submissions are split into **In process** and **Submitted**. The package has its own visual identity and does not replace the Regulatory Tracker.
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.4.0/site-submission-outlook-1.4.0.0.pbiviz) · [Live preview with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.4.0)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.5.0/site-submission-outlook-1.5.0.0.pbiviz) · [Live preview with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.5.0)
 
-## New in 1.4.0: Linked registration evidence and country fallback
+## New in 1.5.0: RO and application identifiers
+
+Add the optional **RO ID** and **Application ID** mappings to identify records even when Submission ID and Registration ID are blank. Map IDs from the RO and application related to each delivered source row. No registration is needed for these identifiers to appear.
+
+**Related records**, beside Main issue / next action, displays each RO/application pairing from the source rows. It appears throughout Details, including monthly lists, overdue lists, coverage and Data checks. For a known Submission ID, repeated joins do not increase submission totals; distinct related pairs remain visible. Search accepts RO IDs and Application IDs as well as submission and registration IDs.
+
+Click the **source rows without a submission ID** count below the chart to open every matching delivered row. These records also remain in Data checks. Identical rows and rows sharing the same RO or application are preserved separately: the visual cannot know whether they represent separate future submissions or repeated model joins. Their dates, states, country, registration and related identifiers remain available. The list respects business-unit and lifecycle selections and covers all delivered sites and dates, including records outside the six-site/month scope.
+
+Rows with no Submission ID are **not counted as distinct submissions**. An RO ID, Application ID or Registration ID is never substituted for a Submission ID or used to merge those rows. This also means one RO with several real Submission IDs still counts each real submission once. A linked registration approval remains visible on an unidentified row but cannot invent a submission count. The explanatory highlight suggests checking whether the submission awaits creation or whether its ID is missing from the mapped data.
+
+Keep **Submission ID** mapped to its real source column; blank values are allowed. **RO ID** and **Application ID** are optional and cannot replace that mapping. If neither is mapped, existing behavior remains available. Unmapped optional fields are not searched or used as identifiers; mapped blanks remain Not recorded.
+
+Copying is explicit by ID type:
+
+- **Copy IDs** copies actual Submission IDs only, excluding blank values.
+- **Copy RO IDs** copies the distinct recorded RO IDs across all matching pages.
+- **Copy application IDs** copies the distinct recorded Application IDs across all matching pages.
+- Each visible identifier can also be selected and copied with Ctrl+C (Cmd+C on Mac). Clipboard restrictions use the same selectable text fallback. Blank IDs and display placeholders are never copied.
+
+The visual preserves rows **delivered by Power BI**. Adding IDs cannot recover records excluded by model relationships or report/page/visual filters. Check a standard Power BI table with the same IDs and fields if an expected RO or application is not delivered. For existing submissions, related IDs are collected across all delivered rows before the local business-unit and lifecycle filters, preserving their actual source pairings.
+
+## Linked registration evidence and country fallback (introduced in 1.4.0)
 
 Add the five optional fields from the **Registration record associated with the submission’s regulatory objective (RO)**: Registration ID, country, state, start date and end date. The Registration record is an object/table; it is not an extra field. The RO link is supplied by your existing model relationships.
 
@@ -43,7 +64,7 @@ Each count opens a fresh list with detail search, page, progress, dispatch-stage
 
 **Main issue / next action** appears beside each submission ID with a coloured label, the recorded evidence and a suggested follow-up. It highlights internal dispatch delays, late authority filing, recorded holds or inactive/paused states, health-authority rejection, and missing/conflicting data. A submitted or approved record is marked accordingly. The explanation uses source evidence and does not guess a missing document or a root cause. Highlighting does not change counts or automatically exclude records. You can search the issue wording as well as IDs and states.
 
-Data checks include source rows with no submission ID so their displayed count can be inspected. Such rows remain uncounted as distinct submissions; no replacement ID is invented, and Copy IDs skips them. The three coverage counts show records outside selected sites, outside the month plan/backlog, or missing an ID.
+Data checks include source rows with no submission ID so their displayed count can be inspected. Such rows remain uncounted as distinct submissions; no replacement ID is invented, and Copy IDs skips them. Their recorded RO/application IDs can be searched and copied with the separately labelled controls. The three coverage counts show records outside selected sites, outside the month plan/backlog, or missing an ID.
 
 Keep the existing submission, status, business-unit and dispatch mappings. Add the optional registration and secondary-country mappings above to enable the new evidence and country display.
 
@@ -111,7 +132,7 @@ The rule uses the existing optional **Submission state** and **RO state** mappin
 
 All delivered rows for the same SubID are checked: any qualifying submission state or Health Authority Approved RO state excludes that ID once. Local state or business-unit filters cannot hide that evidence and reintroduce it to backlog. Conflicting date/site data still remains in Data checks. No actual date is invented.
 
-**RO state Health Authority Approved supplies the overdue exclusion**; it does not itself mark a monthly record Submitted. The four qualifying Submission states supply both Submitted progress and the overdue exclusion. Other RO states and Application states do not establish monthly Submitted progress. Version 1.3.0 introduced the three optional dispatch mappings; they are retained in 1.4.0.
+**RO state Health Authority Approved supplies the overdue exclusion**; it does not itself mark a monthly record Submitted. The four qualifying Submission states supply both Submitted progress and the overdue exclusion. Other RO states and Application states do not establish monthly Submitted progress. Version 1.3.0 introduced the three optional dispatch mappings; they are retained in 1.5.0.
 
 ## Separate lifecycle state filters
 
@@ -131,7 +152,7 @@ Click a site's backlog count, or the total, to see the relevant submissions, old
 
 **Keep earlier planned dates included in the Power BI data delivered to this visual.** A report, page or visual filter restricted to October–November would remove the rows needed to count the backlog. The visual selects the two displayed months itself; it cannot restore rows filtered out by Power BI. Business-unit, site and lifecycle state filters apply to the backlog as well as the monthly plan.
 
-Import 1.4.0 over the existing Site Submission Outlook visual. The visual identity and mappings from 1.2.0 are unchanged. Keep Submission state and RO state mapped, and add Registration ID and Registration state to apply the registration completion rule.
+Import 1.5.0 over the existing Site Submission Outlook visual. The visual identity and mappings from 1.2.0 are unchanged. Keep Submission state and RO state mapped, and add Registration ID and Registration state to apply the registration completion rule.
 
 ## Business-unit filter
 
@@ -141,7 +162,7 @@ The control stays visible while unmapped and reads **Map Business unit field** u
 
 ## Import and map
 
-Import `site-submission-outlook-1.4.0.0.pbiviz` using **Visualizations → … → Import a visual from a file**. Add the visual and map these columns:
+Import `site-submission-outlook-1.5.0.0.pbiviz` using **Visualizations → … → Import a visual from a file**. Add the visual and map these columns:
 
 | Field well | Source column |
 |---|---|
@@ -162,6 +183,8 @@ Import `site-submission-outlook-1.4.0.0.pbiviz` using **Visualizations → … �
 | Registration start date (optional) | The raw start-date column on the same Registration record |
 | Registration end date (optional) | The raw end-date column on the same Registration record |
 | Secondary country (optional) | Your related country-name column, used only when Registration country is blank; no Registration ID is required |
+| RO ID (optional) | The identifier of the regulatory objective associated with this source row |
+| Application ID (optional) | The identifier of the application associated with this source row |
 
 Map raw columns, not Date hierarchies. A mapped date field can contain blanks. No event, change-initiation or response fields are needed. If you prefer a revised plan, map the latest planned submission date instead; the visual always uses the date column supplied and does not silently fall back to another date.
 
@@ -204,12 +227,14 @@ node logic-test.mjs
 node dispatch-test.mjs
 node attention-test.mjs
 node registration-test.mjs
+node identity-test.mjs
 node prepare-tests.cjs
 node browser-test.cjs
 node copy-test.cjs
 node dispatch-browser-test.cjs
 node metrics-browser-test.cjs
 node registration-browser-test.cjs
+node identity-browser-test.cjs
 cd powerbi
 npm run package -- --no-stats
 cd ..
@@ -219,7 +244,7 @@ node package-test.cjs
 
 Extract the `.pbiviz` as a ZIP into `package-check` using your platform's archive tool when `unzip` is unavailable. To test with an installed Microsoft Edge browser instead of bundled Chromium, set `TRACKER_BROWSER_CHANNEL=msedge`. GitHub Actions runs the calculation, type, browser and packaged-runtime checks before publishing a separate release with the Power BI package, demo, preview, source archive and checksums. The release source archive includes the generated project's dependency lockfile.
 
-The included tests check count rules, duplicate rows, exclusive backlog cutoff, older years, late completion, independent plan/backlog totals, date/site conflicts, month rollover, sites/business units, all three state filters, combined selections, exact/custom/blank states, unmapped fields, saved selections, host delivery, keyboard interaction, screenshots, backlog pagination/search and 10,000 distinct submissions. Dispatch checks cover separate due dates, no double counting, missing/conflicting flags and dates, omitted mappings, recorded-dispatch transitions, future/missing submission plans, filtering and copying across pages. The same dispatch, selectable-count and registration interaction checks run against the actual packaged runtime. Registration checks cover all seven states, missing IDs, same-record evidence, primary/fallback countries, multiple registrations, date issues, stale states, omitted fields, refreshes and 10,000 submissions. Additional tests cover exact two-month-overdue membership, summary/percentage/segment selection, detail filter reset, all-page ID copying, missing-ID source rows, issue/action highlights, zero counts and keyboard access. `preview.html` uses explicitly fictional data. The published screenshot uses a fixed October 2026 example; the live visual and demo advance with the current month.
+The included tests check count rules, duplicate rows, exclusive backlog cutoff, older years, late completion, independent plan/backlog totals, date/site conflicts, month rollover, sites/business units, all three state filters, combined selections, exact/custom/blank states, unmapped fields, saved selections, host delivery, keyboard interaction, screenshots, backlog pagination/search and 10,000 distinct submissions. Dispatch checks cover separate due dates, no double counting, missing/conflicting flags and dates, omitted mappings, recorded-dispatch transitions, future/missing submission plans, filtering and copying across pages. The same dispatch, selectable-count, registration and related-ID interaction checks run against the actual packaged runtime. Identity tests cover missing Submission and Registration IDs, preserved duplicate source rows, original RO/application pairings, known submissions sharing a parent, search, all-page copy by ID type, omitted fields and 10,000 submissions plus 1,000 blank-ID rows. Registration checks cover all seven states, missing IDs, same-record evidence, primary/fallback countries, multiple registrations, date issues, stale states, omitted fields, refreshes and 10,000 submissions. Additional tests cover exact two-month-overdue membership, summary/percentage/segment selection, detail filter reset, all-page ID copying, missing-ID source rows, issue/action highlights, zero counts and keyboard access. `preview.html` uses explicitly fictional data. The published screenshot uses a fixed October 2026 example; the live visual and demo advance with the current month.
 
 This is an uncertified custom visual. Package/browser tests do not validate your actual Power BI data relationships or your organisation's import policy. Verify the imported result against a standard Power BI table containing the same mapped source columns and filters.
 

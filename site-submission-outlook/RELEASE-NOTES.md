@@ -1,11 +1,12 @@
-# Site Submission Outlook 1.4.0
+# Site Submission Outlook 1.5.0
 
-Recognize a completed submission from its linked registration when source submission states have not been updated. A nonblank Registration ID with state Approved or Conditionally Approved on the same linked record counts as Submitted and leaves all overdue groups. Canceled, Expired, Planned, Rejected and Withdrawn registration states remain visible and do not independently establish completion.
+Identify records without Submission IDs or Registration IDs using two new optional mappings: RO ID and Application ID.
 
-Six optional mappings are added: Registration ID, Registration country, Registration state, Registration start date, Registration end date and Secondary country. Country uses the registration value first, then the secondary source. It works without a Registration ID and labels which source supplied the value.
+- Details shows each source RO/application pairing and includes these IDs in search.
+- Every delivered missing-Submission-ID source row remains in Details, including repeated rows and rows sharing the same parent identifiers. These rows are not counted as distinct submissions and parent IDs never substitute for Submission IDs.
+- Copy RO IDs and Copy application IDs produce separate distinct ID lists across all matching pages. Copy IDs still contains Submission IDs only. Individual selection and the clipboard fallback support each ID type.
+- Existing submission counts, registration completion, country fallback, overdue groups, filters and visual identity are preserved. Keep Submission ID mapped; its values may be blank.
 
-Details shows each registration's fields together and highlights recorded approval evidence or registration data issues. Multiple registrations do not increase the submission count, and dates never replace actual submission dates. Existing mappings, local filters, selectable counts and ID copying are preserved.
+Only rows delivered by Power BI can be preserved. Review report filters and model relationships if expected parent records are absent from both the visual and a standard table.
 
-Map registrations through the submission's specific RO. The visual cannot identify an incorrect model join to an older, unrelated registration. Invalid registration dates remain reviewable without undoing confirmed filing evidence.
-
-Calculation, browser and packaged-runtime checks cover all seven states, missing IDs, primary/fallback countries, multiple registrations, date issues, optional mappings, refreshes, both themes and 10,000 distinct submissions. The package has the same visual identity and requests no extra privileges.
+Calculation, browser and actual-package tests cover missing identifiers, source pairs, duplicates, optional mappings, filtered search/copy, clipboard restrictions, both themes and 10,000 submissions plus 1,000 unidentified source rows. All public demonstration records are fictional.

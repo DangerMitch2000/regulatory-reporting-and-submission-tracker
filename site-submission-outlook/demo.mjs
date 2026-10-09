@@ -29,7 +29,7 @@ export function sample(now = new Date()) {
       });
     }
     const registration=row.SubID==='DEMO-ABO-1-001'?{RegistrationID:'DEMO-REG-001',RegistrationCountry:'Ireland',RegistrationStatus:'Approved',RegistrationStart:iso(-1,1),RegistrationEnd:iso(12,1)}:row.SubID==='DEMO-ADJ-2-001'?{RegistrationID:'DEMO-REG-002',RegistrationCountry:'Germany',RegistrationStatus:'Conditionally Approved',RegistrationStart:iso(0,1),RegistrationEnd:iso(12,1)}:{};
-    return {...row,...states.get(row.SubID),FallbackCountry:['France','Spain','Germany','Italy','Poland','Ireland'][DEFAULT_SITES.indexOf(row.Site)],...registration};
+    return {...row,ROID:'DEMO-RO-'+row.SubID.slice(5),AppID:'DEMO-APP-'+row.Site,...states.get(row.SubID),FallbackCountry:['France','Spain','Germany','Italy','Poland','Ireland'][DEFAULT_SITES.indexOf(row.Site)],...registration};
   });
   // These old plans have no actual date but are complete for backlog purposes.
   return [...enriched,

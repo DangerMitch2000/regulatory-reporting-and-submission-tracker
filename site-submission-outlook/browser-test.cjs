@@ -102,7 +102,7 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test'),assert=requi
   assert.match(await main.locator('svg').getAttribute('aria-label'),/1 overdue backlog/);
   const saved=await page.evaluate(()=>JSON.parse(testApi.persisted.at(-1).merge[0].properties.state));assert.deepEqual(saved.stateFilters.SubStatus,['Cancelled','Withdrawn']);
   await closeStates();await main.locator('.ssHit[data-site=ABO]').first().click();
-  assert.deepEqual(await main.locator('th').allTextContents(),['Submission ID','Main issue / next action','Site','Planned submission','Actual submission','Progress','Submission state','RO state','Application state','Dispatch stage','Dispatch required','Planned dispatch','Actual dispatch','Overdue basis / dispatch notes','Country','Linked registrations']);
+  assert.deepEqual(await main.locator('th').allTextContents(),['Submission ID','Main issue / next action','Related records','Site','Planned submission','Actual submission','Progress','Submission state','RO state','Application state','Dispatch stage','Dispatch required','Planned dispatch','Actual dispatch','Overdue basis / dispatch notes','Country','Linked registrations']);
   assert.match(await main.locator('tbody tr').textContent(),/Cancelled.*Archived.*Inactive/);
   await main.getByRole('button',{name:'Close details'}).click();
   await openState('AppStatus');await main.getByRole('button',{name:'Clear Application state values',exact:true}).click();await main.getByRole('checkbox',{name:'Include Active in Application state',exact:true}).check();
@@ -144,7 +144,7 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test'),assert=requi
   await main.locator('.ssHit[data-site=ABO]').first().click();
   for(const [i,state] of ['Completed','HA Received','Sent To Health Authority','Rejected'].entries()){
     const cells=await main.locator('tbody tr').filter({hasText:'CURRENT-'+i}).locator('td').allTextContents();
-    assert.equal(cells[4],'Not recorded');assert.equal(cells[5],`Submitted · ${state} state`);assert.equal(cells[6],state);
+    assert.equal(cells[5],'Not recorded');assert.equal(cells[6],`Submitted · ${state} state`);assert.equal(cells[7],state);
   }
   assert.match(await main.locator('.ssDetails').textContent(),/Rejected means filed and rejected by the health authority, not approved/);
   await main.getByRole('button',{name:'Close details'}).click();

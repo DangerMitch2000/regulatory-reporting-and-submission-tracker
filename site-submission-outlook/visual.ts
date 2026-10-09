@@ -13,6 +13,7 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
   private dispatchMapped: any = {};
   private registrationMapped: any = {};
   private fallbackCountryMapped = false;
+  private identifierMapped: any = {};
   private notice = '';
   private state: any = {sites: [...DEFAULT_SITES], unit: '*', theme: 'light', capture: false};
   private preferenceText: string | undefined;
@@ -30,7 +31,7 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
     }, 60000);
   }
   private draw() {
-    render(this.root, this.rows, {state: this.state, width: this.width, missing: this.missing, unitMapped: this.unitMapped, stateMapped: this.stateMapped, dispatchMapped: this.dispatchMapped, registrationMapped:this.registrationMapped, fallbackCountryMapped:this.fallbackCountryMapped,
+    render(this.root, this.rows, {state: this.state, width: this.width, missing: this.missing, unitMapped: this.unitMapped, stateMapped: this.stateMapped, dispatchMapped: this.dispatchMapped, registrationMapped:this.registrationMapped, fallbackCountryMapped:this.fallbackCountryMapped, identifierMapped:this.identifierMapped,
       notice: this.notice, highContrast: this.highContrast, onChange: (patch: any) => {
         this.state = {...this.state, ...patch};
         if (['sites', 'unit', 'theme', 'stateFilters'].some(k => k in patch)) {
@@ -54,6 +55,7 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
         this.dispatchMapped = mapped.dispatchMapped;
         this.registrationMapped = mapped.registrationMapped;
         this.fallbackCountryMapped = mapped.fallbackCountryMapped;
+        this.identifierMapped = mapped.identifierMapped;
         const saved = view?.metadata?.objects?.preferences?.state;
         if (typeof saved === 'string' && saved !== this.preferenceText) {
           this.preferenceText = saved;
