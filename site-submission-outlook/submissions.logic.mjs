@@ -115,6 +115,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
   const dispatchMappings = dispatchMapped ?? Object.fromEntries(DISPATCH_ROLES.map(role=>[role,rows.some(r=>Object.prototype.hasOwnProperty.call(r,role))]));
   const dispatchEnabled = DISPATCH_ROLES.some(role=>dispatchMappings[role]);
   const filters = normalizeStateFilters(stateFilters), choices = Object.fromEntries(STATE_FIELDS.map(({role})=>[role,new Set()]));
+  const coverage = {outsideSites: [], outsideMonths: [], missingIds: []};
   const matches = row => (unit === '*' || clean(row.BusinessUnit) === unit) && STATE_FIELDS.every(({role}) => !mappings[role] || filters[role] === null || filters[role].includes(clean(row[role])));
   let missingIds = 0;
   for (const row of rows) {
@@ -122,7 +123,15 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     units.add(bu);
     STATE_FIELDS.forEach(({role})=>{if(mappings[role])choices[role].add(clean(row[role]));});
     if (site && !availableSites.has(siteKey(site))) availableSites.set(siteKey(site), site);
-    if (!id) { if (matches(row)) missingIds++; continue; }
+    if (!id) {
+      if (matches(row)) {
+        missingIds++;
+        coverage.missingIds.push({id:'', site:site || 'Unassigned', plan:resolveDate([row.PlannedSubmission]), actual:resolveDate([row.ActualSubmission]), status:'Not counted', reason:'Submission ID not recorded; this source row cannot be counted as a distinct submission',
+          states:Object.fromEntries(STATE_FIELDS.map(({role})=>[role,mappings[role]?[clean(row[role])]:null])),
+          dispatch:{required:resolveRequired([row.DispatchRequired],dispatchMappings.DispatchRequired),planned:dispatchMappings.PlannedDispatch?resolveDate([row.PlannedDispatch]):{kind:'unmapped'},actual:dispatchMappings.ActualDispatch?resolveDate([row.ActualDispatch]):{kind:'unmapped'}}});
+      }
+      continue;
+    }
     if (!grouped.has(id)) grouped.set(id, []);
     grouped.get(id).push(row);
   }
@@ -151,7 +160,13 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
       issues.push({...record, reason}); continue;
     }
     const bucket = lookup.get(names[0]);
-    if (!bucket) { checks.outsideSites++; continue; }
+    if (!bucket) {
+      checks.outsideSites++;
+      if (actual.kind === 'date' && actual.day <= dates.today || submittedStates.length) {record.status='Submitted';record.submittedByState=!(actual.kind==='date'&&actual.day<=dates.today);}
+      else if (actual.kind==='issue'||actual.kind==='date'&&actual.day>dates.today) record.status='Check date';
+      dispatchProgress(record,dates.today);
+      coverage.outsideSites.push(record);continue;
+    }
     bucket.delivered++;
     record.site = bucket.site;
     const actualIssue = actual.kind === 'issue' || actual.kind === 'date' && actual.day > dates.today;
@@ -180,7 +195,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     if (!month) {
       if (plan.day < backlog.cutoff && record.overdue) {
         addOverdue(bucket.backlog, record); addOverdue(backlog, record);
-      } else checks.outsideMonths++;
+      } else {checks.outsideMonths++;coverage.outsideMonths.push(record);}
       continue;
     }
     month.planned++;
@@ -206,7 +221,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
   const rawStep = peak / 5, magnitude = 10 ** Math.floor(Math.log10(rawStep));
   const step = Math.max(1, ([1, 2, 5, 10].find(s => s * magnitude >= rawStep) || 10) * magnitude);
   const axisMax = Math.max(5, Math.ceil(peak / step) * step);
-  return {...dates, buckets, totals, monthTotals, backlog, overdue, checks, issues, axisMax, step, scopedRecords, dispatchMapped: dispatchMappings, dispatchEnabled,
+  return {...dates, buckets, totals, monthTotals, backlog, overdue, checks, issues, coverage, axisMax, step, scopedRecords, dispatchMapped: dispatchMappings, dispatchEnabled,
     stateMapped: mappings, stateFilters: filters, stateChoices: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,[...choices[role]].sort((a,b)=>stateLabel(a).localeCompare(stateLabel(b)))])),
     units: [...units].sort(), availableSites: [...availableSites.values()].sort(),
     issueCount: issues.length + missingIds, completion: totals.planned ? Math.round(totals.submitted / totals.planned * 100) : 0};
@@ -215,4 +230,33 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
 export function formatDate(resolved) {
   return resolved?.kind === 'date' ? new Date(resolved.day).toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC'})
     : resolved?.kind === 'issue' ? resolved.reason : resolved?.kind === 'unmapped' ? 'Not mapped' : 'Not recorded';
+}
+
+// Explanations use only delivered dates/states; they never change the counting rules
+// or infer that a particular document, person or team caused a delay.
+export function attentionFor(record) {
+  const note=(key,tone,title,reason,action)=>({key,tone,title,reason,action});
+  const states=record.states||{}, d=record.dispatch||{}, reason=record.reason||'', dispatchNotes=record.dispatchNotes||'';
+  if(!record.id)return note('data','review','Submission ID missing','This source row has no submission ID.','Map or correct the source submission ID.');
+  if(/Multiple sites|Site not recorded/.test(reason))return note('data','review','Check site assignment',reason,'Confirm the submission’s site before allocating it.');
+  if(record.actual?.kind==='issue'||record.status==='Check date'||/Actual submission date is in the future/.test(reason))return note('data','review','Check actual submission date',record.actual?.kind==='issue'?`${record.actual.reason}: actual submission.`:'The recorded actual submission date is in the future.','Verify the recorded filing date; no date is inferred.');
+  if(record.plan?.kind==='issue')return note('data','review','Check planned submission date',`${record.plan.reason}: planned submission.`,'Confirm the applicable planned submission date.');
+  if(d.required?.kind==='issue')return note('dispatchReview','review','Check dispatch requirement',d.required.reason,'Confirm whether internal dispatch is required.');
+  if(d.actual?.kind==='issue'||/Actual dispatch date is in the future|Actual dispatch is after actual submission/.test(dispatchNotes))return note('dispatchReview','review','Check actual dispatch date',dispatchNotes,'Verify the dispatch date before relying on its stage.');
+  if(d.planned?.kind==='issue'||/Planned dispatch is after planned submission/.test(dispatchNotes))return note('dispatchReview','review','Check planned dispatch date',dispatchNotes,'Confirm the dispatch deadline and sequence of dates.');
+  if(hasState(states,'SubStatus','rejected'))return note('rejection','urgent','Health authority rejection','Submission state is Rejected: filing occurred, but the authority rejected it.','Review the authority’s response and the next regulatory action.');
+  if(hasState(states,'ROStatus','rejected'))return note('rejection','urgent','Review rejected RO','The related regulatory objective is recorded as Rejected.','Review the recorded outcome and required follow-up.');
+  if(record.approved)return note('complete','complete','Health authority approved','The related RO is Health Authority Approved.','Excluded from overdue follow-up.');
+  const paused=STATE_FIELDS.flatMap(({role,label})=>(states[role]||[]).filter(value=>['cancelled','canceled','inactive','archived','withdrawn','deferred'].includes(clean(value).toLowerCase().replace(/\s+/g,' '))).map(value=>`${label}: ${value}`));
+  if(paused.length)return note('status','review','Review inactive or paused status',paused.join('; '),'Confirm whether this record should remain in active follow-up.');
+  const holds=STATE_FIELDS.flatMap(({role,label})=>(states[role]||[]).filter(value=>/^on hold(?:\s|$)/i.test(clean(value))).map(value=>`${label}: ${value}`));
+  if(holds.length)return note('hold','review','On hold',holds.join('; '),'Check the recorded hold reason before progressing the filing.');
+  if(record.status==='Submitted')return note('complete','complete','Submitted',record.submittedByState?`Filing is established by Submission state ${record.submittedStates.join(' / ')}.`:`Actual submission: ${formatDate(record.actual)}.`,'No unsubmitted backlog action.');
+  if(record.overdueStage==='internal')return note('internal','dispatch','Internal dispatch overdue',`Dispatch is required; no actual dispatch is recorded. Planned dispatch: ${formatDate(d.planned)}.`,'Complete internal dispatch or confirm and record its actual date.');
+  if(record.overdueStage==='authority')return note('authority','urgent','Authority submission overdue',`${d.actual?.kind==='date'?`Actual dispatch: ${formatDate(d.actual)}`:'Internal dispatch is not required'}. Planned submission: ${formatDate(record.plan)}. No qualifying filing evidence is recorded.`,'Check authority filing progress and record the actual submission date or state.');
+  if(record.overdueStage==='unclassified'||record.dispatchStage==='Check dispatch data')return note('dispatchReview','review','Confirm dispatch information',dispatchNotes||'The dispatch stage cannot be established from the mapped data.','Confirm the dispatch requirement and planned/actual dispatch dates.');
+  if(record.plan?.kind==='blank')return note('data','review','Planned submission date missing','This record has no usable submission plan.','Confirm and record the planned submission date.');
+  if(record.dispatchStage==='Pending internal dispatch')return note('next','info','Awaiting internal dispatch',`Planned dispatch: ${formatDate(d.planned)}.`,'Complete dispatch before progressing to authority submission.');
+  if(record.dispatchStage==='Awaiting authority submission')return note('next','info','Awaiting authority submission',`Planned submission: ${formatDate(record.plan)}.`,'Progress the filing to its planned submission date.');
+  return note('data','review','Review source record',reason||'The next action cannot be established from the delivered record.','Review its dates, status and field mappings.');
 }

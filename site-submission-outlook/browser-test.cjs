@@ -102,7 +102,7 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test'),assert=requi
   assert.match(await main.locator('svg').getAttribute('aria-label'),/1 overdue backlog/);
   const saved=await page.evaluate(()=>JSON.parse(testApi.persisted.at(-1).merge[0].properties.state));assert.deepEqual(saved.stateFilters.SubStatus,['Cancelled','Withdrawn']);
   await closeStates();await main.locator('.ssHit[data-site=ABO]').first().click();
-  assert.deepEqual(await main.locator('th').allTextContents(),['Submission ID','Site','Planned submission','Actual submission','Progress','Submission state','RO state','Application state','Dispatch stage','Dispatch required','Planned dispatch','Actual dispatch','Overdue basis / dispatch notes']);
+  assert.deepEqual(await main.locator('th').allTextContents(),['Submission ID','Main issue / next action','Site','Planned submission','Actual submission','Progress','Submission state','RO state','Application state','Dispatch stage','Dispatch required','Planned dispatch','Actual dispatch','Overdue basis / dispatch notes']);
   assert.match(await main.locator('tbody tr').textContent(),/Cancelled.*Archived.*Inactive/);
   await main.getByRole('button',{name:'Close details'}).click();
   await openState('AppStatus');await main.getByRole('button',{name:'Clear Application state values',exact:true}).click();await main.getByRole('checkbox',{name:'Include Active in Application state',exact:true}).check();
@@ -144,7 +144,7 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test'),assert=requi
   await main.locator('.ssHit[data-site=ABO]').first().click();
   for(const [i,state] of ['Completed','HA Received','Sent To Health Authority','Rejected'].entries()){
     const cells=await main.locator('tbody tr').filter({hasText:'CURRENT-'+i}).locator('td').allTextContents();
-    assert.equal(cells[3],'Not recorded');assert.equal(cells[4],`Submitted · ${state} state`);assert.equal(cells[5],state);
+    assert.equal(cells[4],'Not recorded');assert.equal(cells[5],`Submitted · ${state} state`);assert.equal(cells[6],state);
   }
   assert.match(await main.locator('.ssDetails').textContent(),/Rejected means filed and rejected by the health authority, not approved/);
   await main.getByRole('button',{name:'Close details'}).click();
@@ -175,7 +175,7 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test'),assert=requi
   await page.evaluate(()=>testApi.send([{SubID:'REVIEW-COMPLETED',Site:'ABO',PlannedSubmission:'2026-10-01',ActualSubmission:'invalid',SubStatus:'Completed'}]));assert.match(await main.locator('svg').getAttribute('aria-label'),/1 planned, 0 in process, 1 submitted, 0 in Check date/);
   await main.getByRole('button',{name:'Data checks · 1'}).click();assert.match(await main.locator('tbody').textContent(),/REVIEW-COMPLETED.*Invalid date/);await main.getByRole('button',{name:'Close details'}).click();
   for(const width of [760,1440]){
-    await page.evaluate(w=>testApi.resize(w,800),width);await main.getByRole('button',{name:'Screenshot mode'}).click();assert.match(await main.locator('svg').textContent(),/1 data checks — review below/);
+    await page.evaluate(w=>testApi.resize(w,800),width);await main.getByRole('button',{name:'Screenshot mode'}).click();assert.match(await main.locator('svg').textContent(),/1 data checks — click for details/);
     assert.deepEqual(await main.locator('svg').evaluate(svg=>[...svg.querySelectorAll('text')].filter(t=>{const b=t.getBBox(),v=svg.viewBox.baseVal;return b.x<0||b.x+b.width>v.width+1||b.y+b.height>v.height+1}).map(t=>t.textContent)),[]);
     await main.locator('.siteSubmissions').focus();await page.keyboard.press('Escape');
   }

@@ -1,10 +1,24 @@
-# Site Submission Outlook — 1.3.0
+# Site Submission Outlook — 1.3.1
 
 A separate Power BI custom visual showing **the current and following calendar month** for **ABO, ADJ, ADK, AJG, ARDG and SCR**. Each month's planned submissions are split into **In process** and **Submitted**. The package has its own visual identity and does not replace the Regulatory Tracker.
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.3.0/site-submission-outlook-1.3.0.0.pbiviz) · [Live preview with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.3.0)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.3.1/site-submission-outlook-1.3.1.0.pbiviz) · [Live preview with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.3.1)
 
-## New in 1.3.0: Dispatch and submission delays
+## New in 1.3.1: Selectable counts and highlighted issues
+
+Click **overdue within the two-month plan** to open only the overdue submissions planned for the two displayed months. It uses the existing dispatch/submission due-date rules and excludes earlier backlog, later submission plans and records without a submission plan.
+
+All summary counts now open their matching Details: Planned, In process, Submitted, Check date and the submitted percentage. The percentage opens the Submitted records and explains the numerator and denominator. The totals above monthly bars open the complete site/month list; the coloured segments and their numbers open only that segment's records. Existing backlog and overdue-action cards remain selectable. The record counts below the chart also open their included/excluded records, including source rows without an ID. Dates, axis tick marks and pagination labels remain reference information.
+
+Each count opens a fresh list with detail search, page, progress, dispatch-stage and site filters reset, while keeping the chart's business-unit, lifecycle and selected-site scope. Details scrolls into view and receives keyboard focus. Enter or Space activates a focused count. Clicking a count in Screenshot mode exits that mode and opens Details. Zero counts open an empty list. Copy IDs continues to include all matching pages.
+
+**Main issue / next action** appears beside each submission ID with a coloured label, the recorded evidence and a suggested follow-up. It highlights internal dispatch delays, late authority filing, recorded holds or inactive/paused states, health-authority rejection, and missing/conflicting data. A submitted or approved record is marked accordingly. The explanation uses source evidence and does not guess a missing document or a root cause. Highlighting does not change counts or automatically exclude records. You can search the issue wording as well as IDs and states.
+
+Data checks include source rows with no submission ID so their displayed count can be inspected. Such rows remain uncounted as distinct submissions; no replacement ID is invented, and Copy IDs skips them. The three coverage counts show records outside selected sites, outside the month plan/backlog, or missing an ID.
+
+**No new mappings are required for 1.3.1.** Keep the existing submission, status, business-unit and dispatch mappings.
+
+## Dispatch and submission delays
 
 Add the three optional mappings **Dispatch required**, **Planned dispatch date** and **Actual dispatch date**. The monthly columns keep their In process/Submitted split. Details now show the dispatch stage, requirement and both dispatch dates; use **Dispatch stage** to separate work still pending internally from work awaiting submission to the authority.
 
@@ -68,7 +82,7 @@ The rule uses the existing optional **Submission state** and **RO state** mappin
 
 All delivered rows for the same SubID are checked: any qualifying submission state or Health Authority Approved RO state excludes that ID once. Local state or business-unit filters cannot hide that evidence and reintroduce it to backlog. Conflicting date/site data still remains in Data checks. No actual date is invented.
 
-**RO state Health Authority Approved supplies the overdue exclusion**; it does not itself mark a monthly record Submitted. The four qualifying Submission states supply both Submitted progress and the overdue exclusion. Other RO states and Application states do not establish monthly Submitted progress. Version 1.3.0 adds three optional dispatch mappings.
+**RO state Health Authority Approved supplies the overdue exclusion**; it does not itself mark a monthly record Submitted. The four qualifying Submission states supply both Submitted progress and the overdue exclusion. Other RO states and Application states do not establish monthly Submitted progress. Version 1.3.0 introduced the three optional dispatch mappings; they are retained in 1.3.1.
 
 ## Separate lifecycle state filters
 
@@ -88,7 +102,7 @@ Click a site's backlog count, or the total, to see the relevant submissions, old
 
 **Keep earlier planned dates included in the Power BI data delivered to this visual.** A report, page or visual filter restricted to October–November would remove the rows needed to count the backlog. The visual selects the two displayed months itself; it cannot restore rows filtered out by Power BI. Business-unit, site and lifecycle state filters apply to the backlog as well as the monthly plan.
 
-Import 1.3.0 over the existing Site Submission Outlook visual. The visual identity and mappings from 1.2.0 are unchanged. Ensure Submission state and RO state are mapped to apply both completion conditions.
+Import 1.3.1 over the existing Site Submission Outlook visual. The visual identity and mappings from 1.2.0 are unchanged. Ensure Submission state and RO state are mapped to apply both completion conditions.
 
 ## Business-unit filter
 
@@ -98,7 +112,7 @@ The control stays visible while unmapped and reads **Map Business unit field** u
 
 ## Import and map
 
-Import `site-submission-outlook-1.3.0.0.pbiviz` using **Visualizations → … → Import a visual from a file**. Add the visual and map these columns:
+Import `site-submission-outlook-1.3.1.0.pbiviz` using **Visualizations → … → Import a visual from a file**. Add the visual and map these columns:
 
 | Field well | Source column |
 |---|---|
@@ -153,10 +167,12 @@ npx playwright install chromium
 cd ..
 node logic-test.mjs
 node dispatch-test.mjs
+node attention-test.mjs
 node prepare-tests.cjs
 node browser-test.cjs
 node copy-test.cjs
 node dispatch-browser-test.cjs
+node metrics-browser-test.cjs
 cd powerbi
 npm run package -- --no-stats
 cd ..
@@ -166,7 +182,7 @@ node package-test.cjs
 
 Extract the `.pbiviz` as a ZIP into `package-check` using your platform's archive tool when `unzip` is unavailable. To test with an installed Microsoft Edge browser instead of bundled Chromium, set `TRACKER_BROWSER_CHANNEL=msedge`. GitHub Actions runs the calculation, type, browser and packaged-runtime checks before publishing a separate release with the Power BI package, demo, preview, source archive and checksums. The release source archive includes the generated project's dependency lockfile.
 
-The included tests check count rules, duplicate rows, exclusive backlog cutoff, older years, late completion, independent plan/backlog totals, date/site conflicts, month rollover, sites/business units, all three state filters, combined selections, exact/custom/blank states, unmapped fields, saved selections, host delivery, keyboard interaction, screenshots, backlog pagination/search and 10,000 distinct submissions. Dispatch checks cover separate due dates, no double counting, missing/conflicting flags and dates, omitted mappings, recorded-dispatch transitions, future/missing submission plans, filtering and copying across pages. The same dispatch interaction checks run against the actual packaged runtime. `preview.html` uses explicitly fictional data. The published screenshot uses a fixed October 2026 example; the live visual and demo advance with the current month.
+The included tests check count rules, duplicate rows, exclusive backlog cutoff, older years, late completion, independent plan/backlog totals, date/site conflicts, month rollover, sites/business units, all three state filters, combined selections, exact/custom/blank states, unmapped fields, saved selections, host delivery, keyboard interaction, screenshots, backlog pagination/search and 10,000 distinct submissions. Dispatch checks cover separate due dates, no double counting, missing/conflicting flags and dates, omitted mappings, recorded-dispatch transitions, future/missing submission plans, filtering and copying across pages. The same dispatch and selectable-count interaction checks run against the actual packaged runtime. Additional tests cover exact two-month-overdue membership, summary/percentage/segment selection, detail filter reset, all-page ID copying, missing-ID source rows, issue/action highlights, zero counts and keyboard access. `preview.html` uses explicitly fictional data. The published screenshot uses a fixed October 2026 example; the live visual and demo advance with the current month.
 
 This is an uncertified custom visual. Package/browser tests do not validate your actual Power BI data relationships or your organisation's import policy. Verify the imported result against a standard Power BI table containing the same mapped source columns and filters.
 

@@ -3,7 +3,7 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test');
 (async()=>{
  const guid='siteSubmissionOutlook8D94A67E43154927AC034613F8289C02';
  const pkg=JSON.parse(fs.readFileSync(path.join(__dirname,'package-check','resources',guid+'.pbiviz.json'),'utf8'));
- assert.equal(pkg.visual.version,'1.3.0.0'); assert.equal(pkg.visual.guid,guid);
+ assert.equal(pkg.visual.version,'1.3.1.0'); assert.equal(pkg.visual.guid,guid);
  assert.deepEqual(pkg.capabilities.privileges,[]);
  const roles=pkg.capabilities.dataRoles.map(r=>r.name);
  assert.deepEqual(roles,['SubID','Site','PlannedSubmission','ActualSubmission','BusinessUnit','SubStatus','ROStatus','AppStatus','DispatchRequired','PlannedDispatch','ActualDispatch']);
@@ -68,6 +68,7 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test');
    assert.match(await page.locator('svg').getAttribute('aria-label'),/10000 planned, 5000 in process, 5000 submitted/);assert.ok(elapsed<5000);
    assert.deepEqual(await page.evaluate(()=>window.errors),[]);assert.deepEqual(errors,[]);
    await require('./dispatch-browser-check.cjs')(page);
+   await require('./metrics-browser-check.cjs')(page);
    assert.deepEqual(await page.evaluate(()=>window.errors),[]);assert.deepEqual(errors,[]);
    await page.goto(url+'/preview.html');await page.locator('svg').waitFor();
    await page.getByRole('button',{name:'Screenshot mode'}).click();
