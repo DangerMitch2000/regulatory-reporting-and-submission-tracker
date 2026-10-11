@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.17.2 — 2026-10-11
+
+- Reduce loading and interaction work by filtering inactive hierarchies and collapsed rows before copying full records, narrowing date-domain tuples, and preparing formatted Details only for the selected record.
+- Avoid duplicate event, change and registration copies and repeated rank searches; keep shared source tuples isolated from layout mutations.
+- Resolve full catalog associations on demand and cache source-state analysis until the delivered data changes. Preserve full-source conflicts, memberships and complete catalog copy/search behavior.
+- Render accumulated Power BI data batches once at completion, show loading progress and retain an explicit partial-data notice when additional rows cannot be fetched. Supersede stale queued data and skip unchanged-dimension updates.
+- Add regressions for source isolation, cross-change membership scope, lazy parent catalog Details, and actual generated host batching, refresh, refusal, resize and error handling.
+- On the same local 10,000-submission / 10,000-registration synthetic browser fixture, median load improved from 14.1 to 8.7 seconds and product-filter reset from 12.7 to 7.1 seconds. This excludes Power BI model/network refresh and is not a measurement of a production report.
+
 ## 1.17.1 — 2026-10-11
 
 - Show products on one line, with a count before long names and countries underneath. Keep full product/catalog lists in Details.

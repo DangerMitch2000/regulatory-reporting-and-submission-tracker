@@ -46,6 +46,7 @@ async function verify(page,{outputDir=__dirname,url='http://127.0.0.1:8771/index
    // Choose the deepest unexpanded parent so previously opened rows are never collapsed.
    const next=snapshot.visible.filter(r=>r.level<3&&((r.level===-2&&r.ChangeID==='REG-C1')||(r.level===-1&&r.EventName==='REG-E1')||(r.level===0&&r.AppID==='REG-A1')||(r.level===1&&r.ROID==='REG-R1')||(r.level===2&&r.SubID==='REG-S1'))).sort((a,b)=>b.level-a.level)[0];
    const beforeDetails=snapshot.visible.map(r=>r.key);await details(next.key);assert.deepEqual((await state()).visible.map(r=>r.key),beforeDetails,'Details does not toggle the parent hierarchy');
+   const parentCatalogs=await page.locator('#host .catalog-table').innerText();for(const code of ['000100','000900'])assert.ok(parentCatalogs.includes(code),'On-demand parent catalogs retain '+code+' in '+group);assert.ok(!parentCatalogs.includes('000200'),'Parent catalogs exclude another application in '+group);
    await page.locator('#host #selected-details').evaluate(e=>e.open=false);await reveal(next.key);await clickMark('#host .toggle path',next.key);
   }
   snapshot=await state();const reg=snapshot.visible.find(r=>r.RegistrationID==='REG-LONG'&&r.level===3);assert.ok(reg,'Registration expands under submission in '+group);

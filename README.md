@@ -1,8 +1,16 @@
-# Regulatory Tracker 1.17.1
+# Regulatory Tracker 1.17.2
 
-[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.17.1 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.17.1) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.17.1/regulatory-tracker-1.17.1.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.17.2 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.17.2) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.17.2/regulatory-tracker-1.17.2.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
+
+## Faster loading and interactions — version 1.17.2
+
+The chart filters inactive hierarchies and collapsed rows before copying their full details. Event, change and registration grouping avoids repeated copies and rank searches. Catalog lists and formatted date details are prepared when selected, while full-source conflict checks remain intact. Unchanged dimensions no longer trigger redundant chart updates.
+
+Power BI's accumulated data batches are requested before the chart is rebuilt. A loading notice shows the received row count; the chart appears when the final batch arrives. If Power BI cannot deliver more rows, the delivered data is shown with a clear limitation notice. A new data update supersedes queued older work.
+
+In a local synthetic browser comparison with **10,000 submissions, 10,000 registrations and 20,100 source rows**, median load time fell from **14.1 to 8.7 seconds** (38% faster), and clearing a product filter fell from **12.7 to 7.1 seconds** (44% faster). Median grouping changes fell from **1.49 to 1.23 seconds**. These measure the visual with the same fixture and hardware, not Power BI model queries or network refresh; real-report timings vary. Distinct counts, record IDs, field mappings, dates and catalog associations are retained. Import the updated package; no additional fields are required.
 
 ## More timeline space — version 1.17.1
 

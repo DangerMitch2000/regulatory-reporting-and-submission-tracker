@@ -1,6 +1,7 @@
 (function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./states.js'):root.regulatoryStates);if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.regulatoryRegistrations=api;})(typeof globalThis==='object'?globalThis:this,function(states){
  'use strict';
  const text=v=>v==null?'':String(v).trim(),key=(...v)=>JSON.stringify(v),unique=v=>[...new Set(v)],natural=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'}).compare;
+ function copyFields(...sources){const row={};for(const source of sources)for(const field of Object.keys(source)){if(field==='__proto__')Object.defineProperty(row,field,{value:source[field],writable:true,enumerable:true,configurable:true});else row[field]=source[field];}return row;}
  const fields=['RegistrationID','RegistrationNumber','RegistrationCountry','RegistrationState','RegistrationStart','RegistrationEnd','RegistrationHolder','RegistrationAuthority','RegistrationRegion','RegistrationDivision','RegistrationProductFamily','RegistrationApplicationType','RegistrationMarketingStatus','RegistrationRenewalRequired','RegistrationRenewalStart','RegistrationRenewalTarget','RegistrationComments','RegistrationSKU','RegistrationManufacturingSite','RegistrationURL'];
  const statesList=['Approved','Canceled','Conditionally Approved','Expired','Planned','Rejected','Withdrawn','Not recorded'];
  const canonicalState=v=>{const s=text(v);return statesList.find(x=>x.toLowerCase()===s.toLowerCase())||s||'Not recorded';};
@@ -27,20 +28,18 @@
    for(const f of ['Manufacturer','Product'])row[f+'Info']=membership(visible,f);row.CountryInfo=membership(visible,'RegistrationCountry');row.SiteLabel=row.ManufacturerInfo.label;row.ProductLabel=row.ProductInfo.label;row.ProductCountLabel=row.ProductInfo.count+' products';row.CountryCountLabel=row.CountryInfo.count===1?row.CountryInfo.detail:row.CountryInfo.count+' countries';row.shortTip={Record:id,State:state,'Registration start':start.label,'Registration end':end.label};
    records.push(row);byID.set(id,row);if(submissionID){if(!bySubID.has(submissionID))bySubID.set(submissionID,[]);bySubID.get(submissionID).push(row);}else unmatched.push(row);
   }
-  return {records,byID,bySubID,unmatched,catalogs:catalogGroups(source)};
+  const ranks=new Map(records.map(r=>r.RegistrationID).sort(natural).map((id,i)=>[id,i]));
+  return {records,byID,bySubID,unmatched,catalogs:catalogGroups(source),ranks};
  }
  function attach(prepared,hierarchyRows,groupBy='Application'){
-  const rows=[],registrationRows=[],attached=new Set(),registeredParents=new Set(),empty=()=>membership([],'Product'),ranks=new Map(prepared.records.map(r=>r.RegistrationID).sort(natural).map((id,i)=>[id,i]));
-  const child=(registration,parent)=>{const info=registration.RegistrationInfo;return {...parent,...registration,level:3,key:key(parent.key,'registration',registration.RegistrationID),subKey:parent.key,registrationGroup:groupBy,registrationRank:ranks.get(registration.RegistrationID),RegistrationInfo:info,registrationContainer:0,registrationUnlinked:0,n:0,sortDate:0,shortTip:{...registration.shortTip,Submission:parent.SubID,Action:'Select registration details'}};};
+  const rows=[],registrationRows=[],attached=new Set(),registeredParents=new Set(),empty=()=>membership([],'Product'),ranks=prepared.ranks||new Map(prepared.records.map(r=>r.RegistrationID).sort(natural).map((id,i)=>[id,i]));
+  const child=(registration,parent)=>{const info=registration.RegistrationInfo;return copyFields(parent,registration,{level:3,key:key(parent.key,'registration',registration.RegistrationID),subKey:parent.key,registrationGroup:groupBy,registrationRank:ranks.get(registration.RegistrationID),RegistrationInfo:info,registrationContainer:0,registrationUnlinked:0,n:0,sortDate:0,shortTip:{...registration.shortTip,Submission:parent.SubID,Action:'Select registration details'}});};
   for(const parent of hierarchyRows){rows.push(parent);if(parent.level!==2)continue;const candidates=prepared.bySubID.get(text(parent.SubID))||[];for(const r of candidates){const l=r.RegistrationInfo.link;if(l.applicationIDs.length&&l.applicationIDs[0]!==text(parent.AppID)||l.objectiveIDs.length&&l.objectiveIDs[0]!==text(parent.ROID))continue;const next=child(r,parent);if(registeredParents.has(next.key))continue;registeredParents.add(next.key);attached.add(r.RegistrationID);registrationRows.push(next);rows.push(next);}}
   const orphans=prepared.records.filter(r=>!attached.has(r.RegistrationID));
   if(orphans.length){const containerKey=key('registrations-unmatched',groupBy),container={level:0,registrationContainer:1,registrationGroup:groupBy,registrationRank:-1,key:containerKey,appKey:containerKey,roKey:null,subKey:null,AppID:'',ROID:'',SubID:'',ChangeID:'',EventName:'',State:'Not applicable',StateColor:states.colour('Not recorded'),start:null,end:null,n:0,ROCount:0,AppCount:0,RegistrationCount:orphans.length,sortRO:'',sortDate:0,ManufacturerInfo:empty(),ProductInfo:empty(),CountryInfo:empty(),SiteLabel:'',ProductLabel:'',ProductCountLabel:'',CountryCountLabel:'',shortTip:{Record:'Registrations without linked submission',Action:'Expand to review missing or conflicting links'},issues:orphans.length};rows.push(container);registrationRows.push(container);for(const r of orphans){const issue=r.RegistrationInfo.link.issue||'Linked submission is not present in this hierarchy.',info={...r.RegistrationInfo,issues:unique([...r.RegistrationInfo.issues,issue])},next={...container,...r,RegistrationInfo:info,level:3,key:key(container.key,'registration',r.RegistrationID),registrationRank:ranks.get(r.RegistrationID),registrationContainer:0,registrationUnlinked:1,subKey:null,issues:info.issues.length,shortTip:{...r.shortTip,Link:issue}};registrationRows.push(next);rows.push(next);}}
-  // Vega tuple IDs are enumerable symbols. Spreading a live submission tuple
-  // copies its internal identity, making different children collide during
-  // later changeset removals. Keep normal hierarchy tuples intact, but strip
-  // symbol metadata from every newly created registration/container tuple.
-  const clean=new Map(registrationRows.map(r=>[r,Object.fromEntries(Object.entries(r))]));
-  return {rows:rows.map(r=>clean.get(r)||r),registrationRows:[...clean.values()],count:prepared.records.length};
+  // New children exclude Vega's symbol identity at the first copy; ordinary
+  // hierarchy tuples retain their existing identities unchanged.
+  return {rows,registrationRows,count:prepared.records.length};
  }
  return {fields,states:statesList,prepare,attach,catalogGroups,membership,dateField};
 });

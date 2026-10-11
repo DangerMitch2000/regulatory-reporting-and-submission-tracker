@@ -19,10 +19,10 @@
  function build(source,sub,apps,ros,prepared=events.prepare(sub,apps,ros)){
   const groups=new Map(),get=id=>{if(!groups.has(id))groups.set(id,{records:[],children:[]});return groups.get(id);};
   for(const r of source){const id=text(r.ChangeID);if(id)get(id).records.push(r);if(linked(r))get(id).children.push(r);else if(text(r.EventName)||text(r.AppID)||text(r.ROID)||text(r.SubID)){get('').records.push(r);get('').children.push(r);}}
-  const names=[...groups.keys()].filter(Boolean).sort(natural),result=[];
+  const names=[...groups.keys()].filter(Boolean).sort(natural),ranks=new Map(names.map((name,i)=>[name,i])),result=[];
   for(const [id,{records:rs,children:input}]of groups){
    const child=events.build(input,sub,apps,ros,prepared);if(!id&&!child.length)continue;
-   const ck=key('change',id),common={ChangeID:id,changeKey:ck,changeRank:names.indexOf(id),changeOther:id?0:1};
+   const ck=key('change',id),common={ChangeID:id,changeKey:ck,changeRank:ranks.get(id)??-1,changeOther:id?0:1};
    for(const row of child){row.key=key(ck,row.key);for(const f of ['appKey','roKey','eventKey'])if(row[f])row[f]=key(ck,row[f]);Object.assign(row,common);}
    const stateValues=unique(rs.map(r=>text(r.ChangeStatus)).filter(Boolean)),state=id?(stateValues.length>1?'Conflicting values':stateValues[0]||'Not recorded'):'Not applicable',planned=events.dateField(rs,'ChangePlannedImplementation');
    const count=(level,f)=>unique(child.filter(r=>r.level===level).map(r=>text(r[f])).filter(Boolean)).length;
@@ -30,7 +30,8 @@
    for(const f of ['Manufacturer','Country','Product']){const members=unique(rs.map(r=>text(r[f])).filter(Boolean)).sort().map(label=>({label}));p[f+'Info']={members,count:members.length,detail:members.map(x=>x.label).join(' · '),label:members.length===1?members[0].label:members.length+' values'};}
    p.SiteLabel=p.ManufacturerInfo.label;p.ProductLabel=p.ProductInfo.label;p.ProductCountLabel=p.ProductInfo.count+' products';p.CountryCountLabel=p.CountryInfo.count+' countries';p.shortTip={Record:id||'Other regulatory events',State:state};result.push(p,...child);
   }
-  return result.map(r=>Object.fromEntries(Object.entries(r)));
+  // events.build already returns independent records without Vega identities.
+  return result;
  }
  function order(rows,descending){const ranks=f=>{const names=unique(rows.map(r=>text(r[f])).filter(Boolean)).sort(natural);return new Map(names.map((n,i)=>[n,descending?names.length-i:i+1]));},a=ranks('AppID'),r=ranks('ROID'),s=ranks('SubID');return rows.map(row=>({key:row.key,rankApp:row.level<0?0:a.get(row.AppID)||0,rankRO:row.level<1?0:r.get(row.ROID)||0,rankSub:row.level<2?0:s.get(row.SubID)||0}));}
  return {responses,linked,duration,survey,countryResponses,submissionSurvey,related,index,build,order};

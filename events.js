@@ -1,6 +1,8 @@
 (function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./states.js'):root.regulatoryStates);if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.regulatoryEvents=api;})(typeof globalThis==='object'?globalThis:this,function(states){
  'use strict';
  const text=v=>v==null?'':String(v).trim(),key=(...v)=>JSON.stringify(v),unique=v=>[...new Set(v)],finite=v=>v!=null&&Number.isFinite(v);
+ // Copy public fields once, excluding Vega's enumerable symbol identity.
+ function copyFields(...sources){const row={};for(const source of sources)for(const field of Object.keys(source)){if(field==='__proto__')Object.defineProperty(row,field,{value:source[field],writable:true,enumerable:true,configurable:true});else row[field]=source[field];}return row;}
  function day(v){if(v==null||v==='')return null;const s=v instanceof Date?v.toISOString():String(v),m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(!m)return NaN;const n=Date.UTC(+m[1],+m[2]-1,+m[3]),d=new Date(n);return +m[1]>=1900&&+m[1]<=2100&&d.getUTCFullYear()===+m[1]&&d.getUTCMonth()===+m[2]-1&&d.getUTCDate()===+m[3]?n:NaN;}
  function dateField(rows,f){const v=rows.map(r=>day(r[f])).filter(v=>v!==null);return v.some(Number.isNaN)?{value:null,label:'Invalid date — withheld'}:unique(v).length>1?{value:null,label:'Conflicting dates — withheld'}:v.length?{value:v[0],label:new Date(v[0]).toISOString().slice(0,10)}:{value:null,label:'Not recorded'};}
  const colour=states.colour;
@@ -16,13 +18,13 @@
    if(s ? !base.has(key(a,o,s)) : o ? !ros.has(key(a,o)) : a ? !apps.has(a) : !name)continue;
    if(!groups.has(name))groups.set(name,[]);groups.get(name).push(r);
   }
-  const names=[...groups.keys()].filter(Boolean).sort(natural);
+  const names=[...groups.keys()].filter(Boolean).sort(natural),ranks=new Map(names.map((name,i)=>[name,i]));
   const count=(rs,f)=>unique(rs.map(r=>text(r[f])).filter(Boolean)).length;
   for(const [name,records]of groups){
-   const eventKey=key('event',name),common={EventName:name||'No linked event',eventKey,eventRank:names.indexOf(name),unlinked:name?0:1};
+   const eventKey=key('event',name),common={EventName:name||'No linked event',eventKey,eventRank:ranks.get(name)??-1,unlinked:name?0:1};
    const children=[];const bySub=new Map();for(const r of records){if(!text(r.SubID))continue;const k=key(text(r.AppID),text(r.ROID),text(r.SubID));if(!bySub.has(k))bySub.set(k,[]);bySub.get(k).push(r);}
-   for(const [k,rs]of bySub){const s=base.get(k);children.push(decorate({...s,...common,key:key(eventKey,s.key),appKey:key(eventKey,s.appKey),roKey:key(eventKey,s.roKey),baseKey:s.key},rs));}
-   const parent=(template,cs,rs,level,k)=>{const starts=cs.map(s=>s.start).filter(finite),ends=cs.map(s=>s.end).filter(finite);return decorate({...template,...common,baseKey:template.key,key:k,level,n:count(rs,'SubID'),ROCount:count(rs,'ROID'),AppCount:count(rs,'AppID'),start:starts.length?Math.min(...starts):null,end:ends.length?Math.max(...ends):null,issues:cs.reduce((n,s)=>n+(s.issues||0),0),Breakdown:{label:unique(cs.map(s=>s.State)).join(' · ')||'No linked submissions'},sortDate:0},rs);};
+   for(const [k,rs]of bySub){const s=base.get(k);children.push(decorate(copyFields(s,common,{key:key(eventKey,s.key),appKey:key(eventKey,s.appKey),roKey:key(eventKey,s.roKey),baseKey:s.key}),rs));}
+   const parent=(template,cs,rs,level,k)=>{const starts=cs.map(s=>s.start).filter(finite),ends=cs.map(s=>s.end).filter(finite);return decorate(copyFields(template,common,{baseKey:template.key,key:k,level,n:count(rs,'SubID'),ROCount:count(rs,'ROID'),AppCount:count(rs,'AppID'),start:starts.length?Math.min(...starts):null,end:ends.length?Math.max(...ends):null,issues:cs.reduce((n,s)=>n+(s.issues||0),0),Breakdown:{label:unique(cs.map(s=>s.State)).join(' · ')||'No linked submissions'},sortDate:0}),rs);};
    const stateValues=unique(records.map(r=>text(r.EventState)).filter(Boolean)),state=!name?'Not applicable':stateValues.length>1?'Conflicting values':stateValues[0]||'Not recorded',start=dateField(records,'EventPlannedStart'),end=dateField(records,'EventPlannedCompletion');
    const event=parent({AppID:'',ROID:'',sortRO:''},children,records,-1,eventKey);Object.assign(event,{State:state,StateColor:colour(state),start:null,end:null,EventStartLabel:start.label,EventEndLabel:end.label,EventPlanNote:'Both event planned dates are needed to draw a span.'});
    if(name&&start.value!==null&&end.value!==null){if(end.value>=start.value)Object.assign(event,{start:start.value,end:end.value,EventPlanNote:'Event plan; independent of submission milestone dates.'});else event.EventPlanNote='Planned completion is before planned start — span withheld.';}
@@ -33,7 +35,7 @@
     const roChildren=partition(ac,'ROID');
     for(const [roId,rr]of partition(ar.filter(r=>text(r.ROID)||text(r.SubID)),'ROID')){const rt=ros.get(key(appId,roId));if(!rt)continue;const rc=roChildren.get(roId)||[],ro=parent(rt,rc,rr,1,key(eventKey,rt.key));ro.appKey=app.key;ro.roKey=ro.key;result.push(ro,...rc);}
    }
-  }return result.map(row=>Object.fromEntries(Object.entries(row)));
+  }return result;
  }
  return {build,dateField,prepare};
 });
