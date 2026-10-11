@@ -33,7 +33,7 @@ const named=r=>r.filter(x=>x.level===3);
  const source=[sample({Product:'',CatalogNumber:'001,002'}),sample({CatalogNumber:'0001',RegistrationID:'R1'}),sample({CatalogNumber:'0001',RegistrationID:'R2'}),sample({CatalogNumber:0,RegistrationID:'R2'})];const groups=registration.catalogGroups(source);assert(groups.some(g=>g.product===''&&g.codes[0]==='001,002'),'Opaque catalog code remains intact with missing product');assert.equal(groups.filter(g=>g.codes.includes('0001')).length,2,'Keep each registration association');assert(groups.some(g=>g.codes.includes('0')));assert.equal(registration.prepare([sample({RegistrationID:null})]).records.length,0,'No fabricated registration ID');
 }
 {
- const vega=require('./powerbi-visual/node_modules/vega'),liveParent=vega.ingest(parent()),source=[sample(),sample({RegistrationID:'REG-2',RegistrationState:'Expired'})],prepared=registration.prepare(source),first=registration.attach(prepared,[liveParent]);
+ const vega=require('./vega.js'),liveParent=vega.ingest(parent()),source=[sample(),sample({RegistrationID:'REG-2',RegistrationState:'Expired'})],prepared=registration.prepare(source),first=registration.attach(prepared,[liveParent]);
  assert(Object.getOwnPropertySymbols(liveParent).length>0,'Fixture uses actual Vega tuple metadata');
  assert.equal(first.rows[0],liveParent,'Normal hierarchy tuples retain their existing identity');
  for(const row of first.registrationRows)assert.equal(Object.getOwnPropertySymbols(row).length,0,'New children must not inherit submission tuple IDs');
