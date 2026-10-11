@@ -66,10 +66,11 @@ async function create(source=rows){
   const labels=['Product A','00101, 00102 +3 more','Product B','00401','Product C','00501'];
   view.change('membershipRows',vega.changeset().insert({key:sub.key,MembershipLabels:labels}));await view.runAsync();
   const p=marks(view,'productText').find(n=>n.datum.key===sub.key),c=marks(view,'countryText').find(n=>n.datum.key===sub.key);
-  assert.deepEqual([...p.text],labels,'Three products keep associated catalog previews');
-  assert.ok(p.bounds.y2<c.bounds.y1,'Catalog preview does not overlap country text');
+  assert.equal(p.text,'Product A','Legacy multi-line catalog previews stay compact and use the real product membership');
+  assert.equal(c.y-p.y,view.signal('rowLineH'),'Country follows the single product line');
+  assert.ok(p.bounds.y2<c.bounds.y1,'Compact product preview does not overlap country text');
   const pageRow=view.data('pageRows').find(r=>r.key===sub.key);
-  assert.ok(c.bounds.y2<pageRow.y+pageRow.rowHeight,'Catalogs and country fit inside their adaptive row height');
+  assert.ok(c.bounds.y2<pageRow.y+pageRow.rowHeight,'Product and country fit inside their compact row height');
   view.signal('selectedKey',view.data('visible').find(r=>r.level===3).key);await view.runAsync();
   assert.equal(view.data('selectedRow')[0].level,3,'Registration selects its own Details context');
   view.signal('showRegistrationEnd',true).signal('range',null);await view.runAsync();

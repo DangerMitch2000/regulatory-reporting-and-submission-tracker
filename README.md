@@ -1,8 +1,12 @@
-# Regulatory Tracker 1.17.0
+# Regulatory Tracker 1.17.1
 
-[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.17.0 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.17.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.17.0/regulatory-tracker-1.17.0.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.17.1 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.17.1) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.17.1/regulatory-tracker-1.17.1.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
+
+## More timeline space — version 1.17.1
+
+Products now use a single preview line, with countries underneath. Multiple products show a count and the first name; the full product and catalog lists stay searchable and copyable in Details. Narrower frozen columns leave more width for the timeline, and parent counts use **ROs · Subs · Regs** on one line. Details starts shorter; choose **Expand Details** when you need more room, or **Compact Details** to restore chart space. All record IDs, milestone dates, filters and calculations are retained.
 
 ## Compact layout, manufacturing sites and source links — version 1.17.0
 

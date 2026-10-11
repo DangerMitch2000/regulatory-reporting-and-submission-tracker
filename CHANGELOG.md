@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.17.1 — 2026-10-11
+
+- Show products on one line, with a count before long names and countries underneath. Keep full product/catalog lists in Details.
+- Narrow the frozen columns to give more width to the timeline. Use concise ROs, Subs and Regs counts on one line.
+- Start Details in a shorter panel and add Expand Details / Compact Details so users can choose between chart and detail space.
+- Preserve full record IDs, all dates, filters, grouping, registrations and calculations.
+
 ## 1.17.0 — 2026-10-11
 
 - Compact the header and move existing filters into a labelled drawer, retaining active-filter feedback and all filter behavior.

@@ -17,7 +17,7 @@
  const duration=x=>x==null?'Not recorded / withheld':Math.round(x)+' days';
  document.body.dataset.theme='dark';
  try{
-  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.17.0');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();prepareQuality();qualityPanel=qualityUI.mount($('quality-view'),{exportWorklist});
+  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.17.1');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();prepareQuality();qualityPanel=qualityUI.mount($('quality-view'),{exportWorklist});
   for(const {key,label} of dispatchRequired.options){const option=el('option',label);option.value=key;$('dispatch-required').append(option);}$('dispatch-required').value='all';$('dispatch-required').onchange=()=>filter();
   const showQuality=enabled=>{$('quality-view').hidden=!enabled;$('timeline-view').hidden=enabled;$('bindings').hidden=enabled;requestLayout();$('timeline-tab').setAttribute('aria-pressed',String(!enabled));$('quality-tab').setAttribute('aria-pressed',String(enabled));$('tooltip').hidden=true;};
   $('quality-tab').onclick=()=>showQuality(true);$('timeline-tab').onclick=()=>showQuality(false);
@@ -83,6 +83,7 @@
   $('copy-id').onclick=async()=>{const row=view.data('selectedRow')[0];if(row)await copy(recordID(row),$('copy-status'));};
   $('clear-pins').onclick=()=>run(async()=>{view.change('pinned',vega.changeset().remove(()=>true));await view.runAsync();updateStatus();});
   detail.ontoggle=()=>{document.body.classList.toggle('details-expanded',detail.open);requestLayout();};
+  $('expand-details').onclick=()=>{const roomy=document.body.classList.toggle('details-roomy');$('expand-details').textContent=roomy?'Compact Details':'Expand Details';$('expand-details').setAttribute('aria-pressed',String(roomy));requestLayout();};
   let layoutFrame=null;const requestLayout=()=>{if(layoutFrame===null)layoutFrame=requestAnimationFrame(()=>{layoutFrame=null;updateLayout();});};
   const layoutObserver=new ResizeObserver(requestLayout);for(const node of [$('tracker-main'),$('tracker-toolbar'),detail,$('tracker-main').querySelector('footer')].filter(Boolean))layoutObserver.observe(node);window.addEventListener('resize',requestLayout);
   function updateLayout(){const main=$('tracker-main'),host=parseFloat(document.body.style.getPropertyValue('--host-height'))||innerHeight,width=main.clientWidth;document.body.style.setProperty('--ui-font',Math.max(14,Math.min(16,14+(width-900)/500))+'px');const used=chart.getBoundingClientRect().top-document.body.getBoundingClientRect().top+detail.getBoundingClientRect().height+(main.querySelector('footer')?.getBoundingClientRect().height||0)+35;const height=Math.max(280,Math.floor(host-used));if(document.body.style.getPropertyValue('--chart-height')!==height+'px')document.body.style.setProperty('--chart-height',height+'px');}
@@ -128,9 +129,8 @@
   function catalogPreview(row,groups){
    if(!groups.length||row.registrationContainer)return null;
    const products=(row.ProductInfo?.members||[]).filter(m=>m.label&&m.label!=='(missing)').map(m=>m.label);
-   if(products.length<1||products.length>3)return null;
-   const labels=[];for(const product of products){const codes=[...new Set(groups.filter(g=>g.product===product).flatMap(g=>g.codes))];labels.push(product+(row.ProductInfo?.missing&&product===products[products.length-1]?' *':''));labels.push(codes.length?codes.slice(0,2).join(', ')+(codes.length>2?' · +'+(codes.length-2)+' more':''):'Catalog numbers not recorded');}
-   return labels;
+   if(!products.length)return null;
+   return [(products.length>1?products.length+' products · ':'')+products[0]+(row.ProductInfo?.missing?' *':'')];
   }
   function catalogEntries(row){const q=detailQuery.trim().toLowerCase();return (catalogIndex.get(row.key)||[]).flatMap(g=>g.codes.map(code=>({...g,code}))).filter(g=>[g.product,g.code,g.country,g.registrationCountry,g.registrationID].join(' ').toLowerCase().includes(q));}
   function renderCatalogs(body,row){

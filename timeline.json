@@ -52,7 +52,7 @@
     },
     {
       "name": "left",
-      "update": "mode==='Compare' && compareLevel===2 ? clamp(width*0.46,400,660) : clamp(width*0.52,400,760)"
+      "update": "mode==='Compare' && compareLevel===2 ? clamp(width*0.46,400,660) : clamp(width*0.38,400,600)"
     },
     {
       "name": "hierarchyW",
@@ -3394,7 +3394,7 @@
         {
           "type": "formula",
           "as": "ProductCompactLabels",
-          "expr": "!isValid(datum.ProductInfo) || datum.ProductInfo.count<1 || datum.ProductInfo.count>3 ? null : datum.ProductInfo.count===1 ? [datum.ProductInfo.members[0+(datum.ProductMissingIndex>=0 && datum.ProductMissingIndex<=0 ? 1 : 0)].label+(datum.ProductInfo.missing ? ' *' : '')] : datum.ProductInfo.count===2 ? [datum.ProductInfo.members[0+(datum.ProductMissingIndex>=0 && datum.ProductMissingIndex<=0 ? 1 : 0)].label,datum.ProductInfo.members[1+(datum.ProductMissingIndex>=0 && datum.ProductMissingIndex<=1 ? 1 : 0)].label+(datum.ProductInfo.missing ? ' *' : '')] : [datum.ProductInfo.members[0+(datum.ProductMissingIndex>=0 && datum.ProductMissingIndex<=0 ? 1 : 0)].label,datum.ProductInfo.members[1+(datum.ProductMissingIndex>=0 && datum.ProductMissingIndex<=1 ? 1 : 0)].label,datum.ProductInfo.members[2+(datum.ProductMissingIndex>=0 && datum.ProductMissingIndex<=2 ? 1 : 0)].label+(datum.ProductInfo.missing ? ' *' : '')]"
+          "expr": "!isValid(datum.ProductInfo) || datum.ProductInfo.count<1 ? null : [(datum.ProductInfo.count>1 ? datum.ProductInfo.count+' products · ' : '')+datum.ProductInfo.members[datum.ProductMissingIndex===0 ? 1 : 0].label+(datum.ProductInfo.missing ? ' *' : '')]"
         },
         {
           "type": "lookup",
@@ -3411,6 +3411,11 @@
           "type": "formula",
           "as": "MembershipLabels",
           "expr": "isValid(datum.membershipInfo) && isValid(datum.membershipInfo.MembershipLabels) && length(datum.membershipInfo.MembershipLabels)>0 ? slice(datum.membershipInfo.MembershipLabels,0,6) : null"
+        },
+        {
+          "type": "formula",
+          "as": "ProductPreview",
+          "expr": "replace(isValid(datum.ProductCompactLabels) ? datum.ProductCompactLabels[0] : isValid(datum.MembershipLabels) ? datum.MembershipLabels[0] : datum.ProductCountLabel,regexp('[\\r\\n]+','g'),' ')"
         },
         {
           "type": "formula",
@@ -3435,17 +3440,17 @@
         {
           "type": "formula",
           "as": "HierarchyMeta",
-          "expr": "datum.registrationContainer ? ['Link needs review'] : datum.level===0 ? [(datum.ROCount || 0)+' ROs · '+datum.n+' submissions',(datum.RegistrationCount || 0)+' registrations'] : datum.level===-2 ? [(datum.EventCount || 0)+' events · '+datum.n+' submissions',(datum.RegistrationCount || 0)+' registrations'] : datum.level===-1 ? [(datum.AppCount || 0)+' applications · '+datum.n+' submissions',(datum.RegistrationCount || 0)+' registrations'] : datum.level===1 ? [datum.n+' submissions · '+(datum.RegistrationCount || 0)+' registrations'] : datum.level===2 ? [datum.RegistrationCount>0 ? datum.RegistrationCount+(datum.RegistrationCount===1 ? ' registration' : ' registrations') : datum.SubmissionType] : [datum.registrationUnlinked ? 'Link needs review' : 'Registration']"
+          "expr": "datum.registrationContainer ? [(datum.RegistrationCount || 0)+' Regs · Link needs review'] : datum.level===0 ? [(datum.ROCount || 0)+' ROs · '+datum.n+' Subs · '+(datum.RegistrationCount || 0)+' Regs'] : datum.level===-2 ? [(datum.EventCount || 0)+' Events · '+datum.n+' Subs · '+(datum.RegistrationCount || 0)+' Regs'] : datum.level===-1 ? [(datum.AppCount || 0)+' Apps · '+datum.n+' Subs · '+(datum.RegistrationCount || 0)+' Regs'] : datum.level===1 ? [datum.n+' Subs · '+(datum.RegistrationCount || 0)+' Regs'] : datum.level===2 ? [datum.RegistrationCount>0 ? datum.RegistrationCount+' Regs' : datum.SubmissionType] : [datum.registrationUnlinked ? 'Link needs review' : 'Registration']"
         },
         {
           "type": "formula",
-          "as": "membershipLineCount",
-          "expr": "mode==='Compare' && compareLevel===2 ? 2 : isValid(datum.MembershipLabels) ? length(datum.MembershipLabels)+1 : isValid(datum.ProductCompactLabels) ? length(datum.ProductCompactLabels)+1 : 2"
+          "as": "HierarchyCounts",
+          "expr": "datum.registrationContainer ? (datum.RegistrationCount || 0)+' registrations needing link review' : datum.level===0 ? (datum.ROCount || 0)+' regulatory objectives · '+datum.n+' submissions · '+(datum.RegistrationCount || 0)+' registrations' : datum.level===-2 ? (datum.EventCount || 0)+' events · '+datum.n+' submissions · '+(datum.RegistrationCount || 0)+' registrations' : datum.level===-1 ? (datum.AppCount || 0)+' applications · '+datum.n+' submissions · '+(datum.RegistrationCount || 0)+' registrations' : datum.level===1 ? datum.n+' submissions · '+(datum.RegistrationCount || 0)+' registrations' : datum.level===2 ? (datum.RegistrationCount || 0)+' registrations' : '1 registration'"
         },
         {
           "type": "formula",
           "as": "rowHeight",
-          "expr": "max(rowH,(length(datum.HierarchyMeta)+2)*rowLineH+14,datum.membershipLineCount*rowLineH+14,(isValid(datum.SiteLabels) ? min(4,length(datum.SiteLabels)) : 1)*rowLineH+14)"
+          "expr": "max(rowH,(length(datum.HierarchyMeta)+2)*rowLineH+14,(isValid(datum.SiteLabels) ? min(4,length(datum.SiteLabels)) : 1)*rowLineH+14)"
         },
         {
           "type": "window",
@@ -5096,7 +5101,7 @@
             "signal": "max(16,hierarchyW-datum.labelX-8)"
           },
           "tooltip": {
-            "signal": "{'ID':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Action':'Select record details. Use + or − to expand or collapse.'}"
+            "signal": "{'ID':datum.shortTip.ID,'State':datum.State,'Counts':datum.HierarchyCounts,'Action':'Select record details. Use + or − to expand or collapse.'}"
           },
           "cursor": {
             "value": "pointer"
@@ -5178,7 +5183,7 @@
             "signal": "max(16,hierarchyW-datum.labelX-8)"
           },
           "tooltip": {
-            "signal": "{'ID':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Action':'Select record details. Use + or − to expand or collapse.'}"
+            "signal": "{'ID':datum.shortTip.ID,'State':datum.State,'Counts':datum.HierarchyCounts,'Action':'Select record details. Use + or − to expand or collapse.'}"
           },
           "cursor": {
             "value": "pointer"
@@ -5252,7 +5257,7 @@
             "signal": "datum.y+14"
           },
           "text": {
-            "signal": "mode==='Compare' && compareLevel===2 ? (isValid(datum.ApprovalDays) ? format(datum.ApprovalDays,'.0f')+' days' : indexof(datum.OpenAge,'Open approval ')===0 ? ['Awaiting approval',format(floor((nowDate-datum.ActualSubmission)/86400000),'.0f')+' days waiting'] : '—') : isValid(datum.MembershipLabels) ? datum.MembershipLabels : isValid(datum.ProductCompactLabels) ? datum.ProductCompactLabels : datum.ProductCountLabel"
+            "signal": "mode==='Compare' && compareLevel===2 ? (isValid(datum.ApprovalDays) ? format(datum.ApprovalDays,'.0f')+' days' : indexof(datum.OpenAge,'Open approval ')===0 ? ['Awaiting approval',format(floor((nowDate-datum.ActualSubmission)/86400000),'.0f')+' days waiting'] : '—') : datum.ProductPreview"
           },
           "limit": {
             "signal": "left-hierarchyW-siteW-12"
@@ -6065,7 +6070,7 @@
             "signal": "hierarchyW+siteW+6"
           },
           "y": {
-            "signal": "datum.y+14+(isValid(datum.MembershipLabels) ? length(datum.MembershipLabels) : isValid(datum.ProductCompactLabels) ? length(datum.ProductCompactLabels) : 1)*rowLineH"
+            "signal": "datum.y+14+rowLineH"
           },
           "text": {
             "signal": "mode==='Compare' && compareLevel===2 ? '' : datum.CountryCountLabel"
@@ -6480,7 +6485,7 @@
             "signal": "max(16,hierarchyW-datum.labelX-8)"
           },
           "tooltip": {
-            "signal": "{'ID':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Action':'Select record details. Use + or − to expand or collapse.'}"
+            "signal": "{'ID':datum.shortTip.ID,'State':datum.State,'Counts':datum.HierarchyCounts,'Action':'Select record details. Use + or − to expand or collapse.'}"
           },
           "cursor": {
             "value": "pointer"

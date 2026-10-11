@@ -109,7 +109,7 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.17.0.0.pbiviz
+          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.17.1.0.pbiviz
           cp powerbi-visual/README.md release/POWER-BI-INSTALL.md
           cp powerbi-visual/verify/preparation-light.png release/preparation-light.png
           cp powerbi-visual/verify/changes-dark.png release/changes-dark.png
@@ -148,11 +148,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view v1.17.0 >/dev/null 2>&1; then
-            gh release create v1.17.0 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.17.0" --notes "Adds a compact responsive layout, larger wrapped labels, an organized filter drawer and Details from record names or bars. Adds distinct registration counts on parent rows, separate legal and registration manufacturing sites, and four optional mapped source-record URLs opened through the Power BI host. Five new optional roles bring mappings to 69; invalid or conflicting links are withheld. All milestone dates, estimates and calculations remain unchanged. Includes both-theme responsive layouts, scoped memberships, safe-link checks and 10,000-submission regressions. Source fields and mapping guidance are in README. Built from commit $GITHUB_SHA."
+          if ! gh release view v1.17.1 >/dev/null 2>&1; then
+            gh release create v1.17.1 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.17.1" --notes "Gives the Gantt more space with single-line product previews, narrower frozen columns, concise ROs/Subs/Regs counts and a smaller Details panel with an Expand Details control. Full products, catalogs, IDs and every milestone remain available. No field mappings or calculations change. Includes responsive layout and existing lifecycle regressions. Built from commit $GITHUB_SHA."
           else
-            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.17.0" -f sha="$GITHUB_SHA" -F force=false
-            gh release edit v1.17.0 --target "$GITHUB_SHA" --notes "Adds a compact responsive layout, larger wrapped labels, an organized filter drawer and Details from record names or bars. Adds distinct registration counts on parent rows, separate legal and registration manufacturing sites, and four optional mapped source-record URLs opened through the Power BI host. Five new optional roles bring mappings to 69; invalid or conflicting links are withheld. All milestone dates, estimates and calculations remain unchanged. Includes both-theme responsive layouts, scoped memberships, safe-link checks and 10,000-submission regressions. Source fields and mapping guidance are in README. Built from commit $GITHUB_SHA."
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.17.1" -f sha="$GITHUB_SHA" -F force=false
+            gh release edit v1.17.1 --target "$GITHUB_SHA" --notes "Gives the Gantt more space with single-line product previews, narrower frozen columns, concise ROs/Subs/Regs counts and a smaller Details panel with an Expand Details control. Full products, catalogs, IDs and every milestone remain available. No field mappings or calculations change. Includes responsive layout and existing lifecycle regressions. Built from commit $GITHUB_SHA."
           fi
-          gh release upload v1.17.0 release/* --clobber
+          gh release upload v1.17.1 release/* --clobber
 

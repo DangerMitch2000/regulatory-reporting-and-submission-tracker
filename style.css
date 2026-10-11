@@ -189,7 +189,8 @@ header{gap:12px;margin:0 0 8px;flex-wrap:wrap}header h1{font-size:1.3em;white-sp
 .filter-drawer-content .legend label{font-size:1em;padding:6px}.filter-drawer-content button,.filter-help,.dispatch-filter{font-size:.92em}
 #chart,.details-expanded #chart{height:var(--chart-height,550px);min-height:280px}
 #selected-details{margin-top:8px}#selected-details>summary{padding:8px 10px;font-size:.98em}
-.detail-content{padding:10px 14px;max-height:clamp(190px,calc(var(--host-height,900px)*.3),340px);font-size:var(--ui-font,14px);line-height:1.4;scrollbar-width:thin}
+.detail-content{padding:8px 14px;max-height:clamp(150px,calc(var(--host-height,900px)*.18),190px);font-size:var(--ui-font,14px);line-height:1.4;scrollbar-width:thin}
+body.details-roomy .detail-content{max-height:clamp(240px,calc(var(--host-height,900px)*.4),420px)}
 #detail-body h2{font-size:1.12em;margin:2px 0 10px}.state-badge{font-size:.86em;margin-left:10px}
 .copy-actions{float:right;position:relative;flex-wrap:wrap;gap:6px;margin:0 0 8px 16px}.copy-actions button{font-size:.88em;padding:5px 8px}#copy-status:empty{display:none}
 #record-link-message:not([hidden]){clear:both;margin:4px 0}
