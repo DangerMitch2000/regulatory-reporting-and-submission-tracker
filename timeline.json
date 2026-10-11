@@ -1,6 +1,6 @@
 {
   "$schema": "https://vega.github.io/schema/vega/v5.json",
-  "description": "Regulatory Tracker 1.16.0: registration records nested beneath submissions, catalog memberships, explicit row Details and clipped lifecycle bars. Registration validity never controls Fit all; missing and far-future ends retain their source values in Details.",
+  "description": "Regulatory Tracker 1.17.0: compact responsive hierarchy, source-labelled manufacturing sites, direct record Details and optional mapped record links. All workflow dates, estimates and registration validity remain intact; registration dates never control Fit all.",
   "padding": 0,
   "autosize": "none",
   "background": {
@@ -48,43 +48,39 @@
     },
     {
       "name": "height",
-      "update": "max(480,denebContainer.height)"
+      "update": "max(280,denebContainer.height)"
     },
     {
       "name": "left",
-      "update": "mode==='Compare' && compareLevel===2 ? clamp(width*0.4,420,520) : clamp(width*0.33,360,460)"
+      "update": "mode==='Compare' && compareLevel===2 ? clamp(width*0.46,400,660) : clamp(width*0.52,400,760)"
     },
     {
       "name": "hierarchyW",
-      "update": "left*(mode==='Compare' && compareLevel===2 ? 0.40 : 0.53)"
+      "update": "left*(mode==='Compare' && compareLevel===2 ? 0.42 : 0.44)"
     },
     {
       "name": "siteW",
-      "update": "left*(mode==='Compare' && compareLevel===2 ? 0.29 : 0.18)"
+      "update": "left*(mode==='Compare' && compareLevel===2 ? 0.29 : 0.27)"
     },
     {
       "name": "top",
-      "value": 110
+      "value": 118
     },
     {
       "name": "rowH",
-      "value": 84
+      "update": "max(72,3*rowLineH+14)"
     },
     {
       "name": "pageSize",
-      "update": "max(2,min(60,floor((height-detailH-top-30)/rowH)))"
+      "update": "max(1,min(60,floor((viewBottom-top)/rowH)))"
     },
     {
       "name": "clicked",
       "value": null,
       "on": [
         {
-          "events": "@toggle:click, @parentLabel:click, @parentBar:click, @parentCell:click, @parentBarContinuation:click",
+          "events": "@toggle:click",
           "update": "{key:datum.key,rel:datum.idx-1-scrollTop,fallback:scrollTop,opening:!indata('expanded','key',datum.key)}"
-        },
-        {
-          "events": "@subLabel:click",
-          "update": "mode==='Hierarchy' && datum.RegistrationCount>0 ? {key:datum.key,rel:datum.idx-1-scrollTop,fallback:scrollTop,opening:!indata('expanded','key',datum.key)} : clicked"
         }
       ]
     },
@@ -197,7 +193,7 @@
       "value": "",
       "on": [
         {
-          "events": "@rowBg:mouseover, @parentCell:mouseover, @parentLabel:mouseover, @toggle:mouseover, @parentBar:mouseover, @subLabel:mouseover, @siteText:mouseover, @productText:mouseover, @milestone:mouseover, @connector:mouseover, @predictionRange:mouseover, @predictionApproval:mouseover, @preparationRange:mouseover, @preparationLabel:mouseover, @parentBarContinuation:mouseover, @preparationRangeContinuation:mouseover, @predictionRangeContinuation:mouseover, @connectorContinuation:mouseover, @surveyRange:mouseover, @surveyRangeContinuation:mouseover, @registrationLabel:mouseover, @registrationMeta:mouseover, @registrationBar:mouseover, @registrationBarContinuation:mouseover, @rowDetailsButton:mouseover, @rowDetailsText:mouseover",
+          "events": "@rowBg:mouseover, @parentCell:mouseover, @parentLabel:mouseover, @toggle:mouseover, @parentBar:mouseover, @subLabel:mouseover, @siteText:mouseover, @productText:mouseover, @milestone:mouseover, @connector:mouseover, @predictionRange:mouseover, @predictionApproval:mouseover, @preparationRange:mouseover, @preparationLabel:mouseover, @parentBarContinuation:mouseover, @preparationRangeContinuation:mouseover, @predictionRangeContinuation:mouseover, @connectorContinuation:mouseover, @surveyRange:mouseover, @surveyRangeContinuation:mouseover, @registrationLabel:mouseover, @registrationMeta:mouseover, @registrationBar:mouseover, @registrationBarContinuation:mouseover, @externalLink:mouseover",
           "update": "datum.key"
         },
         {
@@ -230,7 +226,7 @@
     },
     {
       "name": "maxScroll",
-      "update": "max(0,rowCount-pageSize)"
+      "update": "length(data('tailRow')) && isValid(data('tailRow')[0].idx) ? max(0,data('tailRow')[0].idx-1) : 0"
     },
     {
       "name": "viewportAnchor",
@@ -309,7 +305,7 @@
       "value": false,
       "on": [
         {
-          "events": "@toggle:click, @parentLabel:click, @parentBar:click, @parentCell:click, @rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @next:click, @nextText:click, @prev:click, @prevText:click, @scrollTrack:pointerdown, @scrollThumb:pointerdown, @predictionRange:click, @predictionApproval:click, @preparationRange:click, @preparationLabel:click, @surveyRange:click, @registrationLabel:click, @registrationBar:click, @registrationBarContinuation:click, @rowDetailsButton:click, @rowDetailsText:click",
+          "events": "@toggle:click, @parentLabel:click, @parentBar:click, @parentCell:click, @rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @next:click, @nextText:click, @prev:click, @prevText:click, @scrollTrack:pointerdown, @scrollThumb:pointerdown, @predictionRange:click, @predictionApproval:click, @preparationRange:click, @preparationLabel:click, @surveyRange:click, @registrationLabel:click, @registrationBar:click, @registrationBarContinuation:click, @externalLink:click",
           "update": "true"
         },
         {
@@ -334,11 +330,11 @@
     },
     {
       "name": "thumbH",
-      "update": "max(28,(viewBottom-top)*min(1,pageSize/max(1,rowCount)))"
+      "update": "max(28,(viewBottom-top)*min(1,(viewBottom-top)/max(1,totalRowsHeight)))"
     },
     {
       "name": "thumbY",
-      "update": "top+(viewBottom-top-thumbH)*scrollTop/max(1,maxScroll)"
+      "update": "top+(viewBottom-top-thumbH)*clamp(scrollPixel/max(1,totalRowsHeight-(viewBottom-top)),0,1)"
     },
     {
       "name": "rowRequest",
@@ -359,11 +355,11 @@
         },
         {
           "events": "@next:click, @nextText:click",
-          "update": "{pos:scrollTop+max(1,pageSize-1)}"
+          "update": "{pos:scrollTop+max(1,max(1,pageRowCount-1))}"
         },
         {
           "events": "@prev:click, @prevText:click",
-          "update": "{pos:scrollTop-max(1,pageSize-1)}"
+          "update": "{pos:scrollTop-max(1,max(1,pageRowCount-1))}"
         },
         {
           "events": "@scrollTrack:pointerdown",
@@ -398,7 +394,7 @@
             ],
             "consume": true
           },
-          "update": "((navFocused) && (!searchFocused)) ? ({pos:event.key==='Home' ? 0 : event.key==='End' ? maxScroll : scrollTop+(event.key==='ArrowDown' ? 1 : event.key==='ArrowUp' ? -1 : event.key==='PageDown' ? pageSize-1 : 1-pageSize)}) : rowRequest"
+          "update": "((navFocused) && (!searchFocused)) ? ({pos:event.key==='Home' ? 0 : event.key==='End' ? maxScroll : scrollTop+(event.key==='ArrowDown' ? 1 : event.key==='ArrowUp' ? -1 : event.key==='PageDown' ? max(1,pageRowCount-1) : -max(1,pageRowCount-1))}) : rowRequest"
         }
       ]
     },
@@ -407,12 +403,8 @@
       "value": "",
       "on": [
         {
-          "events": "@rowBg:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @predictionRange:click, @predictionApproval:click, @preparationRange:click, @preparationLabel:click, @surveyRange:click, @preparationRangeContinuation:click, @predictionRangeContinuation:click, @connectorContinuation:click, @surveyRangeContinuation:click, @registrationLabel:click, @registrationMeta:click, @registrationBar:click, @registrationBarContinuation:click, @rowDetailsButton:click, @rowDetailsText:click",
+          "events": "@rowBg:click, @parentLabel:click, @parentCell:click, @parentBar:click, @parentBarContinuation:click, @subLabel:click, @subMeta:click, @selectGroup:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @connectorContinuation:click, @predictionRange:click, @predictionApproval:click, @predictionRangeContinuation:click, @preparationRange:click, @preparationLabel:click, @preparationRangeContinuation:click, @surveyRange:click, @surveyRangeContinuation:click, @registrationLabel:click, @registrationMeta:click, @registrationBar:click, @registrationBarContinuation:click",
           "update": "datum.key"
-        },
-        {
-          "events": "@subLabel:click",
-          "update": "mode==='Hierarchy' && datum.RegistrationCount>0 ? selectedKey : datum.key"
         },
         {
           "events": {
@@ -575,11 +567,7 @@
     },
     {
       "name": "showRegistrationEnd",
-      "value": false,
-      "bind": {
-        "input": "checkbox",
-        "name": "Show registration end "
-      }
+      "value": true
     },
     {
       "name": "detailQuery",
@@ -670,13 +658,50 @@
       "value": 0,
       "on": [
         {
-          "events": "@rowDetailsButton:click, @rowDetailsText:click",
+          "events": "@parentLabel:click, @parentCell:click, @parentBar:click, @parentBarContinuation:click, @subLabel:click, @subMeta:click, @selectGroup:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @connectorContinuation:click, @predictionRange:click, @predictionApproval:click, @predictionRangeContinuation:click, @preparationRange:click, @preparationLabel:click, @preparationRangeContinuation:click, @surveyRange:click, @surveyRangeContinuation:click, @registrationLabel:click, @registrationMeta:click, @registrationBar:click, @registrationBarContinuation:click",
           "update": "detailsRequest+1"
         }
       ]
+    },
+    {
+      "name": "bodyFont",
+      "update": "clamp(min(round(width/95),floor((height-top-43)/7)-3),13,16)"
+    },
+    {
+      "name": "rowLineH",
+      "update": "bodyFont+3"
+    },
+    {
+      "name": "indentStep",
+      "update": "width<1000 ? 8 : 12"
+    },
+    {
+      "name": "externalLinkRequest",
+      "value": null,
+      "on": [
+        {
+          "events": "@externalLink:click",
+          "update": "{url:datum.RecordURL,key:datum.key,nonce:externalLinkRequest ? externalLinkRequest.nonce+1 : 1}"
+        }
+      ]
+    },
+    {
+      "name": "totalRowsHeight",
+      "update": "length(data('rowTotal')) && isValid(data('rowTotal')[0].height) ? data('rowTotal')[0].height : 0"
+    },
+    {
+      "name": "scrollPixel",
+      "update": "rowCount && isValid(data('visible')[scrollTop]) ? data('visible')[scrollTop].rowTop : 0"
+    },
+    {
+      "name": "pageRowCount",
+      "update": "length(data('pageRows'))"
     }
   ],
   "data": [
+    {
+      "name": "presentationRows"
+    },
     {
       "name": "registrationRows"
     },
@@ -3112,6 +3137,52 @@
           "type": "formula",
           "as": "RegistrationCount",
           "expr": "isValid(datum.registrationCountInfo) ? datum.registrationCountInfo.count : 0"
+        },
+        {
+          "type": "lookup",
+          "from": "presentationRows",
+          "key": "key",
+          "fields": [
+            "key"
+          ],
+          "as": [
+            "presentationInfo"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "RegistrationCount",
+          "expr": "isValid(datum.presentationInfo) && isValid(datum.presentationInfo.RegistrationCount) ? datum.presentationInfo.RegistrationCount : datum.RegistrationCount"
+        },
+        {
+          "type": "formula",
+          "as": "SiteLabels",
+          "expr": "isValid(datum.presentationInfo) && isValid(datum.presentationInfo.SiteLabels) ? datum.presentationInfo.SiteLabels : null"
+        },
+        {
+          "type": "formula",
+          "as": "LegalSites",
+          "expr": "isValid(datum.presentationInfo) ? datum.presentationInfo.LegalSites : null"
+        },
+        {
+          "type": "formula",
+          "as": "RegistrationSites",
+          "expr": "isValid(datum.presentationInfo) ? datum.presentationInfo.RegistrationSites : null"
+        },
+        {
+          "type": "formula",
+          "as": "RecordURL",
+          "expr": "isValid(datum.presentationInfo) ? datum.presentationInfo.RecordURL : null"
+        },
+        {
+          "type": "formula",
+          "as": "RecordURLIssue",
+          "expr": "isValid(datum.presentationInfo) ? datum.presentationInfo.RecordURLIssue : null"
+        },
+        {
+          "type": "formula",
+          "as": "shortTip",
+          "expr": "{'ID':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===1 ? (datum.ROID || 'RO not recorded') : datum.level===0 ? (datum.AppID || 'Application not recorded') : datum.level===-1 ? datum.EventName : (datum.ChangeID || 'Other regulatory events'),'State':datum.State,'Action':'Select the name or bar for Details. Use + or − to expand or collapse.'}"
         }
       ]
     },
@@ -3314,21 +3385,6 @@
           "as": [
             "idx"
           ]
-        }
-      ]
-    },
-    {
-      "name": "pageRows",
-      "source": "visible",
-      "transform": [
-        {
-          "type": "filter",
-          "expr": "datum.idx>scrollTop && datum.idx<=scrollTop+pageSize"
-        },
-        {
-          "type": "formula",
-          "as": "y",
-          "expr": "top+(datum.idx-scrollTop-1)*rowH"
         },
         {
           "type": "formula",
@@ -3355,6 +3411,86 @@
           "type": "formula",
           "as": "MembershipLabels",
           "expr": "isValid(datum.membershipInfo) && isValid(datum.membershipInfo.MembershipLabels) && length(datum.membershipInfo.MembershipLabels)>0 ? slice(datum.membershipInfo.MembershipLabels,0,6) : null"
+        },
+        {
+          "type": "formula",
+          "as": "rowDepth",
+          "expr": "datum.registrationContainer ? 0 : datum.registrationUnlinked ? 1 : max(0,datum.level+(changeMode ? 2 : eventMode ? 1 : 0))"
+        },
+        {
+          "type": "formula",
+          "as": "labelX",
+          "expr": "31+datum.rowDepth*indentStep"
+        },
+        {
+          "type": "formula",
+          "as": "validRecordURL",
+          "expr": "isString(datum.RecordURL) && test(regexp('^https?://[^\\\\s]+$','i'),datum.RecordURL) && !datum.RecordURLIssue"
+        },
+        {
+          "type": "formula",
+          "as": "labelLimit",
+          "expr": "max(16,hierarchyW-datum.labelX-(datum.validRecordURL ? 30 : 8))"
+        },
+        {
+          "type": "formula",
+          "as": "HierarchyMeta",
+          "expr": "datum.registrationContainer ? ['Link needs review'] : datum.level===0 ? [(datum.ROCount || 0)+' ROs · '+datum.n+' submissions',(datum.RegistrationCount || 0)+' registrations'] : datum.level===-2 ? [(datum.EventCount || 0)+' events · '+datum.n+' submissions',(datum.RegistrationCount || 0)+' registrations'] : datum.level===-1 ? [(datum.AppCount || 0)+' applications · '+datum.n+' submissions',(datum.RegistrationCount || 0)+' registrations'] : datum.level===1 ? [datum.n+' submissions · '+(datum.RegistrationCount || 0)+' registrations'] : datum.level===2 ? [datum.RegistrationCount>0 ? datum.RegistrationCount+(datum.RegistrationCount===1 ? ' registration' : ' registrations') : datum.SubmissionType] : [datum.registrationUnlinked ? 'Link needs review' : 'Registration']"
+        },
+        {
+          "type": "formula",
+          "as": "membershipLineCount",
+          "expr": "mode==='Compare' && compareLevel===2 ? 2 : isValid(datum.MembershipLabels) ? length(datum.MembershipLabels)+1 : isValid(datum.ProductCompactLabels) ? length(datum.ProductCompactLabels)+1 : 2"
+        },
+        {
+          "type": "formula",
+          "as": "rowHeight",
+          "expr": "max(rowH,(length(datum.HierarchyMeta)+2)*rowLineH+14,datum.membershipLineCount*rowLineH+14,(isValid(datum.SiteLabels) ? min(4,length(datum.SiteLabels)) : 1)*rowLineH+14)"
+        },
+        {
+          "type": "window",
+          "sort": {
+            "field": [
+              "idx"
+            ]
+          },
+          "ops": [
+            "sum"
+          ],
+          "fields": [
+            "rowHeight"
+          ],
+          "as": [
+            "rowBottom"
+          ],
+          "frame": [
+            null,
+            0
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "rowTop",
+          "expr": "datum.rowBottom-datum.rowHeight"
+        }
+      ]
+    },
+    {
+      "name": "pageRows",
+      "source": "visible",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.idx>scrollTop"
+        },
+        {
+          "type": "formula",
+          "as": "y",
+          "expr": "top+datum.rowTop-scrollPixel"
+        },
+        {
+          "type": "filter",
+          "expr": "datum.y+datum.rowHeight<=viewBottom+0.5"
         }
       ]
     },
@@ -4119,6 +4255,56 @@
           "expr": "datum.continuationSide==='left' ? datum.start<xlo : datum.RegistrationOpenEnd || datum.end>xhi"
         }
       ]
+    },
+    {
+      "name": "rowTotal",
+      "source": "visible",
+      "transform": [
+        {
+          "type": "aggregate",
+          "fields": [
+            "rowBottom"
+          ],
+          "ops": [
+            "max"
+          ],
+          "as": [
+            "height"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "tailRow",
+      "source": "visible",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.rowTop>=max(0,totalRowsHeight-(viewBottom-top))"
+        },
+        {
+          "type": "aggregate",
+          "fields": [
+            "idx"
+          ],
+          "ops": [
+            "min"
+          ],
+          "as": [
+            "idx"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "externalLinkRows",
+      "source": "pageRows",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.validRecordURL"
+        }
+      ]
     }
   ],
   "scales": [
@@ -4363,7 +4549,7 @@
             "signal": "width"
           },
           "height": {
-            "value": 32
+            "value": 40
           },
           "fill": {
             "signal": "themePalette.header"
@@ -4379,7 +4565,7 @@
       "encode": {
         "update": {
           "fontSize": {
-            "value": 13
+            "signal": "min(bodyFont,14)"
           },
           "baseline": {
             "value": "middle"
@@ -4414,7 +4600,7 @@
       "encode": {
         "update": {
           "fontSize": {
-            "signal": "mode==='Compare' && compareLevel===2 ? 12 : 13"
+            "signal": "min(bodyFont,14)"
           },
           "baseline": {
             "value": "middle"
@@ -4423,10 +4609,10 @@
             "signal": "hierarchyW+7"
           },
           "y": {
-            "signal": "mode==='Compare' && compareLevel===2 ? 87 : 94"
+            "value": 88
           },
           "text": {
-            "signal": "mode==='Compare' && compareLevel===2 ? [\"Dispatch to\",\"submission (days)\"] : 'Site (LM)'"
+            "signal": "mode==='Compare' && compareLevel===2 ? [\"Dispatch to\",\"submission (days)\"] : ['Manufacturing','sites']"
           },
           "fontWeight": {
             "value": 600
@@ -4435,10 +4621,10 @@
             "signal": "themePalette.headerText"
           },
           "tooltip": {
-            "signal": "mode==='Compare' && compareLevel===2 ? \"Completed time from actual dispatch to actual submission. Pending rows show time waiting to submit.\" : \"Legal manufacturer\""
+            "signal": "mode==='Compare' && compareLevel===2 ? \"Completed time from actual dispatch to actual submission. Pending rows show time waiting to submit.\" : \"Legal manufacturer and Registration site, labelled by source\""
           },
           "lineHeight": {
-            "value": 14
+            "value": 17
           },
           "limit": {
             "signal": "siteW-12"
@@ -4451,7 +4637,7 @@
       "encode": {
         "update": {
           "fontSize": {
-            "value": 12
+            "signal": "min(bodyFont,14)"
           },
           "baseline": {
             "value": "middle"
@@ -4460,7 +4646,7 @@
             "signal": "hierarchyW+siteW+7"
           },
           "y": {
-            "value": 87
+            "value": 88
           },
           "text": {
             "signal": "mode==='Compare' && compareLevel===2 ? [\"Submission to\",\"approval (days)\"] : ['Products &','countries']"
@@ -4475,7 +4661,7 @@
             "signal": "mode==='Compare' && compareLevel===2 ? \"Completed time from actual submission to actual approval. Pending rows show time waiting for approval.\" : \"Products and countries\""
           },
           "lineHeight": {
-            "value": 13
+            "value": 17
           },
           "limit": {
             "signal": "left-hierarchyW-siteW-12"
@@ -4501,7 +4687,7 @@
             "signal": "width"
           },
           "height": {
-            "signal": "rowH"
+            "signal": "datum.rowHeight"
           },
           "fill": {
             "signal": "datum.key===selectedKey ? themePalette.rowSelected : datum.key===hoverKey ? themePalette.rowHover : datum.level===0 ? themePalette.rowApplication : datum.level===1 ? themePalette.rowObjective : datum.idx%2 ? themePalette.rowOdd : themePalette.rowEven"
@@ -4714,7 +4900,7 @@
             "signal": "width"
           },
           "y": {
-            "signal": "datum.y+rowH"
+            "signal": "datum.y+datum.rowHeight"
           },
           "stroke": {
             "signal": "themePalette.rowDivider"
@@ -4743,7 +4929,7 @@
             "signal": "hierarchyW-2"
           },
           "height": {
-            "signal": "rowH-1"
+            "signal": "datum.rowHeight-1"
           },
           "fill": {
             "signal": "themePalette.markerHover"
@@ -4755,7 +4941,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "field": "shortTip"
+            "value": "Select record details; use the + or − control to expand or collapse."
           }
         },
         "hover": {
@@ -4774,16 +4960,16 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "8+(datum.registrationContainer ? 0 : datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
+            "signal": "8+datum.rowDepth*indentStep"
           },
           "y": {
-            "signal": "datum.y+11"
+            "signal": "datum.y+5"
           },
           "width": {
-            "value": 17
+            "value": 19
           },
           "height": {
-            "value": 17
+            "value": 19
           },
           "cornerRadius": {
             "value": 2
@@ -4817,10 +5003,10 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "16.5+(datum.registrationContainer ? 0 : datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
+            "signal": "17.5+datum.rowDepth*indentStep"
           },
           "y": {
-            "signal": "datum.y+19.5"
+            "signal": "datum.y+14.5"
           },
           "baseline": {
             "value": "middle"
@@ -4832,7 +5018,7 @@
             "signal": "indata(\"expanded\",\"key\",datum.key) ? \"−\" : \"+\""
           },
           "fontSize": {
-            "value": 15
+            "signal": "bodyFont"
           },
           "fill": {
             "signal": "themePalette.expandText"
@@ -4849,13 +5035,13 @@
       "encode": {
         "update": {
           "fontSize": {
-            "value": 13
+            "signal": "bodyFont"
           },
           "baseline": {
             "value": "middle"
           },
           "x": {
-            "signal": "datum.registrationContainer ? 31 : 31+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
+            "field": "labelX"
           },
           "y": {
             "signal": "datum.y+14"
@@ -4867,13 +5053,13 @@
             "value": 600
           },
           "limit": {
-            "signal": "hierarchyW-37-(datum.registrationContainer ? 0 : datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
+            "field": "labelLimit"
           },
           "cursor": {
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "{'ID':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Action':datum.level===3 ? 'Open registration Details' : datum.level<2 || datum.RegistrationCount>0 ? 'Click name to expand; Details opens record information' : 'Open submission Details'}"
+            "signal": "{'ID':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Action':'Select record details. Use + or − to expand or collapse.'}"
           },
           "fill": {
             "signal": "themeStateColors[datum.StateColor] || datum.StateColor"
@@ -4889,31 +5075,34 @@
       "encode": {
         "update": {
           "fontSize": {
-            "value": 12
+            "signal": "bodyFont"
           },
           "baseline": {
             "value": "middle"
           },
           "x": {
-            "signal": "datum.registrationContainer ? 31 : 31+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
+            "field": "labelX"
           },
           "y": {
-            "signal": "datum.y+32"
+            "signal": "datum.y+14+2*rowLineH"
           },
           "text": {
-            "signal": "datum.registrationContainer ? 'Missing or conflicting submission link' : (datum.level===-1 ? datum.AppCount+' applications · ' : datum.level===0 ? datum.ROCount+' ROs · ' : '')+datum.n+' submissions'"
+            "field": "HierarchyMeta"
           },
           "fill": {
             "signal": "themePalette.subText"
           },
           "limit": {
-            "signal": "hierarchyW-37-(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
+            "signal": "max(16,hierarchyW-datum.labelX-8)"
           },
           "tooltip": {
-            "field": "shortTip"
+            "signal": "{'ID':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Action':'Select record details. Use + or − to expand or collapse.'}"
           },
           "cursor": {
             "value": "pointer"
+          },
+          "lineHeight": {
+            "signal": "rowLineH"
           }
         }
       },
@@ -4928,31 +5117,34 @@
       "encode": {
         "update": {
           "fontSize": {
-            "value": 13
+            "signal": "bodyFont"
           },
           "baseline": {
             "value": "middle"
           },
           "x": {
-            "signal": "datum.RegistrationCount>0 && mode==='Hierarchy' ? 55+(changeMode ? 24 : eventMode ? 12 : 0) : 43+(changeMode ? 24 : eventMode ? 12 : 0)"
+            "field": "labelX"
           },
           "y": {
-            "signal": "datum.y+13"
+            "signal": "datum.y+14"
           },
           "text": {
             "field": "SubID"
           },
           "limit": {
-            "signal": "max(12,hierarchyW-61-(changeMode ? 24 : eventMode ? 12 : 0))"
+            "field": "labelLimit"
           },
           "tooltip": {
-            "signal": "{'ID':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Action':datum.level===3 ? 'Open registration Details' : datum.level<2 || datum.RegistrationCount>0 ? 'Click name to expand; Details opens record information' : 'Open submission Details'}"
+            "signal": "{'ID':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Action':'Select record details. Use + or − to expand or collapse.'}"
           },
           "cursor": {
             "value": "pointer"
           },
           "fill": {
             "signal": "themeStateColors[datum.StateColor] || datum.StateColor"
+          },
+          "fontWeight": {
+            "value": 600
           }
         }
       }
@@ -4965,31 +5157,34 @@
       "encode": {
         "update": {
           "fontSize": {
-            "value": 12
+            "signal": "bodyFont"
           },
           "baseline": {
             "value": "middle"
           },
           "x": {
-            "signal": "43+(changeMode ? 24 : eventMode ? 12 : 0)"
+            "field": "labelX"
           },
           "y": {
-            "signal": "datum.y+32"
+            "signal": "datum.y+14+2*rowLineH"
           },
           "text": {
-            "signal": "datum.RegistrationCount>0 ? datum.RegistrationCount+(datum.RegistrationCount===1 ? ' registration' : ' registrations') : datum.SubmissionType"
+            "field": "HierarchyMeta"
           },
           "fill": {
             "signal": "datum.issues>0 ? themePalette.issueText : themePalette.mutedText"
           },
           "limit": {
-            "signal": "hierarchyW-48-(changeMode ? 24 : eventMode ? 12 : 0)"
+            "signal": "max(16,hierarchyW-datum.labelX-8)"
           },
           "tooltip": {
-            "field": "shortTip"
+            "signal": "{'ID':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Action':'Select record details. Use + or − to expand or collapse.'}"
           },
           "cursor": {
             "value": "pointer"
+          },
+          "lineHeight": {
+            "signal": "rowLineH"
           }
         }
       },
@@ -5004,7 +5199,7 @@
       "encode": {
         "update": {
           "fontSize": {
-            "value": 12
+            "signal": "bodyFont"
           },
           "baseline": {
             "value": "middle"
@@ -5013,22 +5208,22 @@
             "signal": "hierarchyW+6"
           },
           "y": {
-            "signal": "datum.y+19"
+            "signal": "datum.y+14"
           },
           "text": {
-            "signal": "mode==='Compare' && compareLevel===2 ? (isValid(datum.DispatchDays) ? format(datum.DispatchDays,'.0f')+' days' : indexof(datum.OpenAge,'Open submission ')===0 ? ['Awaiting submission',format(floor((nowDate-datum.ActualDispatch)/86400000),'.0f')+' days waiting'] : '—') : datum.ManufacturerInfo.count===1 ? datum.ManufacturerInfo.detail : datum.ManufacturerInfo.count+' sites'+(datum.ManufacturerInfo.missing ? ' *' : '')"
+            "signal": "mode==='Compare' && compareLevel===2 ? (isValid(datum.DispatchDays) ? format(datum.DispatchDays,'.0f')+' days' : indexof(datum.OpenAge,'Open submission ')===0 ? ['Awaiting submission',format(floor((nowDate-datum.ActualDispatch)/86400000),'.0f')+' days waiting'] : '—') : isValid(datum.SiteLabels) ? slice(datum.SiteLabels,0,4) : datum.ManufacturerInfo.count===1 ? datum.ManufacturerInfo.detail : datum.ManufacturerInfo.count+' sites'+(datum.ManufacturerInfo.missing ? ' *' : '')"
           },
           "limit": {
             "signal": "siteW-12"
           },
           "tooltip": {
-            "signal": "mode==='Compare' && compareLevel===2 ? 'Actual dispatch to actual submission, in days. Waiting is measured since dispatch. Missing, invalid or conflicting endpoints are withheld. Select for dates in Details.' : 'Click for full legal manufacturer list. * includes missing values.'"
+            "signal": "mode==='Compare' && compareLevel===2 ? 'Actual dispatch to actual submission, in days. Waiting is measured since dispatch. Missing, invalid or conflicting endpoints are withheld. Select for dates in Details.' : 'Manufacturing sites are labelled by source: Legal manufacturer and Registration site. Select for full lists in Details.'"
           },
           "cursor": {
             "value": "pointer"
           },
           "lineHeight": {
-            "value": 16
+            "signal": "rowLineH"
           },
           "fill": {
             "signal": "themePalette.text"
@@ -5045,7 +5240,7 @@
       "encode": {
         "update": {
           "fontSize": {
-            "signal": "isValid(datum.MembershipLabels) && !(mode==='Compare' && compareLevel===2) ? 11 : 12"
+            "signal": "bodyFont"
           },
           "baseline": {
             "value": "middle"
@@ -5054,7 +5249,7 @@
             "signal": "hierarchyW+siteW+6"
           },
           "y": {
-            "signal": "mode==='Compare' && compareLevel===2 ? datum.y+19 : datum.y+(isValid(datum.MembershipLabels) ? 9 : 12)"
+            "signal": "datum.y+14"
           },
           "text": {
             "signal": "mode==='Compare' && compareLevel===2 ? (isValid(datum.ApprovalDays) ? format(datum.ApprovalDays,'.0f')+' days' : indexof(datum.OpenAge,'Open approval ')===0 ? ['Awaiting approval',format(floor((nowDate-datum.ActualSubmission)/86400000),'.0f')+' days waiting'] : '—') : isValid(datum.MembershipLabels) ? datum.MembershipLabels : isValid(datum.ProductCompactLabels) ? datum.ProductCompactLabels : datum.ProductCountLabel"
@@ -5069,7 +5264,7 @@
             "value": "pointer"
           },
           "lineHeight": {
-            "signal": "isValid(datum.MembershipLabels) && !(mode==='Compare' && compareLevel===2) ? 11 : 16"
+            "signal": "rowLineH"
           },
           "fill": {
             "signal": "themePalette.text"
@@ -5244,7 +5439,7 @@
             "signal": "'LM prep · '+datum.LMPrepLabel"
           },
           "fontSize": {
-            "value": 11
+            "signal": "bodyFont"
           },
           "fill": {
             "signal": "themePalette.preparation"
@@ -5813,7 +6008,7 @@
             "signal": "viewBottom+15"
           },
           "text": {
-            "signal": "(rowCount ? scrollTop+1 : 0)+'–'+min(rowCount,scrollTop+pageSize)+' / '+rowCount"
+            "signal": "(rowCount ? scrollTop+1 : 0)+'–'+min(rowCount,scrollTop+pageRowCount)+' / '+rowCount"
           },
           "align": {
             "value": "center"
@@ -5861,7 +6056,7 @@
       "encode": {
         "update": {
           "fontSize": {
-            "value": 12
+            "signal": "bodyFont"
           },
           "baseline": {
             "value": "middle"
@@ -5870,7 +6065,7 @@
             "signal": "hierarchyW+siteW+6"
           },
           "y": {
-            "signal": "datum.y+(isValid(datum.MembershipLabels) ? min(77,20+length(datum.MembershipLabels)*11) : 33+(isValid(datum.ProductCompactLabels) ? (length(datum.ProductCompactLabels)-1)*16 : 0))"
+            "signal": "datum.y+14+(isValid(datum.MembershipLabels) ? length(datum.MembershipLabels) : isValid(datum.ProductCompactLabels) ? length(datum.ProductCompactLabels) : 1)*rowLineH"
           },
           "text": {
             "signal": "mode==='Compare' && compareLevel===2 ? '' : datum.CountryCountLabel"
@@ -6014,7 +6209,7 @@
       "encode": {
         "update": {
           "fontSize": {
-            "value": 12
+            "signal": "bodyFont"
           },
           "fill": {
             "signal": "themeStateColors[datum.StateColor] || datum.StateColor"
@@ -6023,16 +6218,16 @@
             "value": "middle"
           },
           "x": {
-            "signal": "datum.level>=2 ? 43+(changeMode ? 24 : eventMode ? 12 : 0)+(datum.level===3 ? 12 : 0) : datum.registrationContainer ? 31 : 31+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
+            "field": "labelX"
           },
           "y": {
-            "signal": "datum.y+50"
+            "signal": "datum.y+14+rowLineH"
           },
           "text": {
             "field": "State"
           },
           "limit": {
-            "signal": "max(12,hierarchyW-48-(changeMode ? 24 : eventMode ? 12 : 0)-(datum.level===3 ? 12 : 0))"
+            "signal": "max(16,hierarchyW-datum.labelX-8)"
           },
           "tooltip": {
             "field": "shortTip"
@@ -6049,7 +6244,7 @@
       "encode": {
         "update": {
           "fontSize": {
-            "value": 12
+            "signal": "bodyFont"
           },
           "fill": {
             "signal": "themePalette.comparisonText"
@@ -6081,7 +6276,7 @@
       "encode": {
         "update": {
           "fontSize": {
-            "value": 17
+            "signal": "bodyFont"
           },
           "fill": {
             "signal": "themePalette.pinText"
@@ -6224,31 +6419,34 @@
       "encode": {
         "update": {
           "fontSize": {
-            "value": 13
+            "signal": "bodyFont"
           },
           "baseline": {
             "value": "middle"
           },
           "x": {
-            "signal": "55+(datum.registrationUnlinked ? 0 : changeMode ? 24 : eventMode ? 12 : 0)"
+            "field": "labelX"
           },
           "y": {
-            "signal": "datum.y+13"
+            "signal": "datum.y+14"
           },
           "text": {
             "field": "RegistrationID"
           },
           "limit": {
-            "signal": "max(12,hierarchyW-60-(datum.registrationUnlinked ? 0 : changeMode ? 24 : eventMode ? 12 : 0))"
+            "field": "labelLimit"
           },
           "tooltip": {
-            "signal": "{'ID':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Action':datum.level===3 ? 'Open registration Details' : datum.level<2 || datum.RegistrationCount>0 ? 'Click name to expand; Details opens record information' : 'Open submission Details'}"
+            "signal": "{'ID':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Action':'Select record details. Use + or − to expand or collapse.'}"
           },
           "cursor": {
             "value": "pointer"
           },
           "fill": {
             "signal": "themeStateColors[datum.StateColor] || datum.StateColor"
+          },
+          "fontWeight": {
+            "value": 600
           }
         }
       }
@@ -6261,31 +6459,34 @@
       "encode": {
         "update": {
           "fontSize": {
-            "value": 12
+            "signal": "bodyFont"
           },
           "baseline": {
             "value": "middle"
           },
           "x": {
-            "signal": "55+(datum.registrationUnlinked ? 0 : changeMode ? 24 : eventMode ? 12 : 0)"
+            "field": "labelX"
           },
           "y": {
-            "signal": "datum.y+32"
+            "signal": "datum.y+14+2*rowLineH"
           },
           "text": {
-            "signal": "datum.registrationUnlinked ? 'Link needs review' : 'Registration'"
+            "field": "HierarchyMeta"
           },
           "fill": {
             "signal": "datum.registrationUnlinked ? themePalette.issueText : themePalette.mutedText"
           },
           "limit": {
-            "signal": "max(12,hierarchyW-60-(datum.registrationUnlinked ? 0 : changeMode ? 24 : eventMode ? 12 : 0))"
+            "signal": "max(16,hierarchyW-datum.labelX-8)"
           },
           "tooltip": {
-            "field": "shortTip"
+            "signal": "{'ID':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Action':'Select record details. Use + or − to expand or collapse.'}"
           },
           "cursor": {
             "value": "pointer"
+          },
+          "lineHeight": {
+            "signal": "rowLineH"
           }
         }
       },
@@ -6368,67 +6569,27 @@
       }
     },
     {
-      "type": "rect",
-      "name": "rowDetailsButton",
-      "from": {
-        "data": "pageRows"
-      },
-      "encode": {
-        "update": {
-          "x": {
-            "signal": "datum.registrationContainer ? 31 : datum.level>=2 ? 43+(changeMode ? 24 : eventMode ? 12 : 0)+(datum.level===3 ? 12 : 0) : 31+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
-          },
-          "y": {
-            "signal": "datum.y+62"
-          },
-          "width": {
-            "value": 56
-          },
-          "height": {
-            "value": 18
-          },
-          "cornerRadius": {
-            "value": 3
-          },
-          "fill": {
-            "signal": "themePalette.control"
-          },
-          "stroke": {
-            "signal": "themePalette.controlBorder"
-          },
-          "cursor": {
-            "value": "pointer"
-          },
-          "tooltip": {
-            "signal": "'Open Details for '+(datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'))"
-          }
-        },
-        "hover": {
-          "fill": {
-            "signal": "themePalette.controlHover"
-          }
-        }
-      }
-    },
-    {
       "type": "text",
-      "name": "rowDetailsText",
+      "name": "externalLink",
       "from": {
-        "data": "pageRows"
+        "data": "externalLinkRows"
       },
       "encode": {
         "update": {
           "x": {
-            "signal": "(datum.registrationContainer ? 31 : datum.level>=2 ? 43+(changeMode ? 24 : eventMode ? 12 : 0)+(datum.level===3 ? 12 : 0) : 31+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12)+28"
+            "signal": "hierarchyW-17"
           },
           "y": {
-            "signal": "datum.y+71"
+            "signal": "datum.y+14"
           },
           "text": {
-            "value": "Details"
+            "value": "↗"
           },
           "fontSize": {
-            "value": 11
+            "signal": "bodyFont"
+          },
+          "fontWeight": {
+            "value": 600
           },
           "align": {
             "value": "center"
@@ -6437,13 +6598,13 @@
             "value": "middle"
           },
           "fill": {
-            "signal": "themePalette.text"
+            "signal": "themePalette.headerText"
           },
           "cursor": {
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "'Open Details for '+(datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'))"
+            "signal": "{'Action':'Open record in platform','Record':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'URL':datum.RecordURL}"
           }
         }
       }

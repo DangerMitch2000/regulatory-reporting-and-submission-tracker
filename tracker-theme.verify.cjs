@@ -52,7 +52,7 @@ module.exports=async function verifyTrackerThemes(page,{outputDir}){
  await page.locator('#host #selected-details').evaluate(node=>node.open=true);
  await page.locator('#host .prediction-date').waitFor();
  await page.locator('#host svg .pin text').first().click();
- await page.locator('#host .state-filter[data-field=SubStatus] summary').click();await page.locator('#host .state-filter[data-field=SubStatus] input[value=rejected]').uncheck();await page.locator('#host .state-filter[data-field=SubStatus] summary').click();
+ await require('./tracker-browser-helpers.cjs').toggleFilter(page,page.locator('#host .state-filter[data-field=SubStatus]'));await page.locator('#host .state-filter[data-field=SubStatus] input[value=rejected]').uncheck();await require('./tracker-browser-helpers.cjs').toggleFilter(page,page.locator('#host .state-filter[data-field=SubStatus]'));
  await page.waitForFunction(()=>!document.querySelector('#host .state-filter[data-field=SubStatus] input[value=rejected]').checked);
  await page.locator('#host svg .timeText text').filter({hasText:/^Year$/}).click();
  const before=await viewState();
@@ -80,8 +80,8 @@ module.exports=async function verifyTrackerThemes(page,{outputDir}){
  await page.mouse.move(1,1);
  await page.locator('#host .prediction-grid').screenshot({path:path.join(outputDir,'light-details.png')});
  const product=page.locator('#host .filter[data-kind=product]');
- await product.locator('summary').click();await readable('#host .filter[data-kind=product] .panel');await readable('#host .filter[data-kind=product] input');await product.locator('summary').click();
- await page.locator('#host #submission-date-filter summary').click();await readable('#host #submission-period');await page.locator('#host #submission-date-filter summary').click();
+ await require('./tracker-browser-helpers.cjs').toggleFilter(page,product);await readable('#host .filter[data-kind=product] .panel');await readable('#host .filter[data-kind=product] input');await require('./tracker-browser-helpers.cjs').toggleFilter(page,product);
+ await require('./tracker-browser-helpers.cjs').toggleFilter(page,page.locator('#host #submission-date-filter'));await readable('#host #submission-period');await require('./tracker-browser-helpers.cjs').toggleFilter(page,page.locator('#host #submission-date-filter'));
 
  const lightState=await viewState();await theme('dark');assert.deepEqual(await viewState(),lightState,'Switching back to Dark preserves data and controls');
  assert.equal((await colours('#host .regulatory-timeline')).background,darkBackground);
@@ -91,7 +91,7 @@ module.exports=async function verifyTrackerThemes(page,{outputDir}){
  assert.equal(await page.evaluate(()=>window.__themeVisual.app.view.signal('themeMode')),'light');
 
  // Data quality, its inspector, dropdowns and export fallback share the theme.
- await page.locator('#host #reset-filters').click();await page.locator('#host #quality-tab').click();
+ await require('./tracker-browser-helpers.cjs').resetFilters(page);await page.locator('#host #quality-tab').click();
  await send('Quality fixtures');await page.locator('#host #quality-table').filter({hasText:'QUALITY-ERROR'}).waitFor();
  await readable('#host #quality-table');await readable('#host #quality-detail');await readable('#host #quality-category');
  await page.locator('#host #quality-search').fill('QUALITY-CONFLICT');
@@ -107,7 +107,7 @@ module.exports=async function verifyTrackerThemes(page,{outputDir}){
  await page.waitForFunction(()=>document.querySelector('#host #filter-status')?.textContent.includes('0 submissions'));assert.equal(await root.getAttribute('data-theme'),'light');
  await page.locator('#host #timeline-tab').click();assert.equal(await page.locator('#host #theme-select').inputValue(),'light');
  await theme('dark');await theme('light');
- await send('Refresh host data');await page.locator('#host #reset-filters').click();
+ await send('Refresh host data');await require('./tracker-browser-helpers.cjs').resetFilters(page);
  await page.locator('#host select[name=mode]').selectOption('Hierarchy');await page.locator('#host #selected-details').evaluate(node=>node.open=false);
  await page.locator('#host svg .timeText text').filter({hasText:/^Fit all$/}).click();
  await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();

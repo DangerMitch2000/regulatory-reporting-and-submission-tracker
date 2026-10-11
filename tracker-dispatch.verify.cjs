@@ -2,14 +2,14 @@ const assert=require('node:assert/strict'),path=require('node:path');
 module.exports=async function verifyDispatch(page,{outputDir}){
  await page.goto('http://127.0.0.1:8771/index.html');
  await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
- const pick=async value=>{await page.locator('#host #dispatch-required').selectOption(value);};
+ const pick=async value=>{await require('./tracker-browser-helpers.cjs').setFilterDrawer(page,true);await page.locator('#host #dispatch-required').selectOption(value);await require('./tracker-browser-helpers.cjs').setFilterDrawer(page,false);};
  const waitCount=n=>page.waitForFunction(n=>document.querySelector('#host #filter-status').textContent.includes(n+' submissions'),n);
  assert.equal(await page.locator('#host #dispatch-required').inputValue(),'all');
  await page.locator('#host select[name=mode]').selectOption('Compare');await page.locator('#host input[name=query]').fill('SUB-00003');
  await page.locator('#host svg .predictionApproval path').first().click();await page.locator('#host #selected-details').evaluate(e=>e.open=true);await page.locator('#host .prediction-date').waitFor();
  const history=await page.locator('#host .prediction-card').last().innerText(),estimate=await page.locator('#host .prediction-date').innerText();
  await pick('false');await waitCount(1);assert.match(await page.locator('#host .dispatch-required-detail').innerText(),/False/);assert.equal(await page.locator('#host .prediction-date').innerText(),estimate);assert.equal(await page.locator('#host .prediction-card').last().innerText(),history,'Requirement filter keeps full delivered approval history');
- await page.locator('#host #reset-filters').click();await waitCount(60);
+ await require('./tracker-browser-helpers.cjs').resetFilters(page);await waitCount(60);
  const send=async(mapped=true,empty=false)=>{const previous=await page.evaluate(()=>window.__qualityRevision);await page.evaluate(({mapped,empty})=>{
   const base={...window.__dispatchRows[0],AppID:'DISPATCH-APP',ROID:'DISPATCH-RO',Country:'France',SubStatus:'Planned',OriginalDispatch:'2026-01-01',LatestDispatch:'2026-01-02',ActualDispatch:null,LatestSubmission:'2026-02-01',ActualSubmission:null,LatestApproval:'2026-03-01',ActualApproval:null};
   const records=[{...base,SubID:'DISP-TRUE',DispatchRequired:true},{...base,SubID:'DISP-FALSE',DispatchRequired:false},{...base,SubID:'DISP-FALSE',DispatchRequired:' false '},{...base,SubID:'DISP-BLANK',DispatchRequired:null},{...base,SubID:'DISP-CONFLICT',DispatchRequired:false,Product:'Unique alpha'},{...base,SubID:'DISP-CONFLICT',DispatchRequired:true,Product:'Unique beta'},{...base,SubID:'DISP-INVALID',DispatchRequired:'no'}];
@@ -24,9 +24,9 @@ module.exports=async function verifyDispatch(page,{outputDir}){
  await page.locator('#host #theme-select').selectOption('light');await page.waitForFunction(()=>document.querySelector('#host .regulatory-timeline').dataset.theme==='light');await page.locator('#host').screenshot({path:path.join(outputDir,'dispatch-required.png')});
  await pick('blank');await waitCount(1);await page.locator('#host #quality-table').filter({hasText:'DISP-BLANK'}).waitFor();assert.match(await page.locator('#host #quality-table').innerText(),/Latest dispatch plan/);
  await pick('review');await waitCount(2);await page.locator('#host #quality-table').filter({hasText:'Dispatch required'}).waitFor();
- const product=page.locator('#host .filter[data-kind=product]');await product.locator('summary').click();await product.locator('input[type=search]').fill('Unique alpha');await product.getByLabel('Unique alpha',{exact:true}).check();await product.locator('summary').click();await waitCount(1);await pick('false');await waitCount(0);
- await page.locator('#host #reset-filters').click();await waitCount(5);assert.equal(await page.locator('#host #dispatch-required').inputValue(),'all');
+ const product=page.locator('#host .filter[data-kind=product]');await require('./tracker-browser-helpers.cjs').toggleFilter(page,product);await product.locator('input[type=search]').fill('Unique alpha');await product.getByLabel('Unique alpha',{exact:true}).check();await require('./tracker-browser-helpers.cjs').toggleFilter(page,product);await waitCount(1);await pick('false');await waitCount(0);
+ await require('./tracker-browser-helpers.cjs').resetFilters(page);await waitCount(5);assert.equal(await page.locator('#host #dispatch-required').inputValue(),'all');
  await send(false);await pick('blank');await waitCount(0);await pick('unmapped');await waitCount(5);await pick('false');await waitCount(0);
- await send(true,true);await waitCount(0);await page.locator('#host #reset-filters').click();assert.equal(await page.locator('#host #dispatch-required').inputValue(),'all');
+ await send(true,true);await waitCount(0);await require('./tracker-browser-helpers.cjs').resetFilters(page);assert.equal(await page.locator('#host #dispatch-required').inputValue(),'all');
  console.log('PASS: Dispatch required mapping/filter/Details/CSV, False dispatch prompts only, full history retained, blank versus unmapped, conflicting memberships and refresh/resize/empty data.');
 };

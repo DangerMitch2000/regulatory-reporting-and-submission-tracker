@@ -17,7 +17,7 @@ module.exports=async(page,{outputDir})=>{
  await page.locator('#host #detail-body h2').filter({hasText:'S-H1'}).waitFor();assert.match(await page.locator('#host .change-details').innerText(),/HU certificate/);assert.doesNotMatch(await page.locator('#host .change-details').innerText(),/MX letter/);
  let estimates=await page.evaluate(()=>window.__themeVisual.app.view.data('surveyRows').filter(r=>r.country==='Hungary'&&r.start!==null));assert.ok(estimates.some(e=>e.anchorLabel==='Actual submission'&&e.start===Date.UTC(2026,9,10)));
  // Local membership filtering must not discard parent-only assessment evidence.
- const country=page.locator('#host details[data-kind=country]');await country.locator('summary').click();await country.locator('label').filter({hasText:/^Hungary$/}).locator('input').check();
+ const country=page.locator('#host details[data-kind=country]');await require('./tracker-browser-helpers.cjs').toggleFilter(page,country);await country.locator('label').filter({hasText:/^Hungary$/}).locator('input').check();await require('./tracker-browser-helpers.cjs').toggleFilter(page,country);
  await page.locator('#host #filter-status').filter({hasText:'2 submissions'}).waitFor();estimates=await page.evaluate(()=>window.__themeVisual.app.view.data('surveyRows').filter(r=>r.start!==null));assert.ok(estimates.some(e=>e.country==='Hungary'&&e.anchorLabel==='Actual submission'));assert.match(await page.locator('#host .change-details').innerText(),/HU certificate/);
  console.log('PASS: expected-response identifiers, country list and awaiting responses, actual-dispatch counts, source documents, sorting/search/selection, both themes, parent-only evidence under country filters and submission-to-approval anchors.');
 };

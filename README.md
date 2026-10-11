@@ -1,8 +1,32 @@
-# Regulatory Tracker 1.16.0
+# Regulatory Tracker 1.17.0
 
-[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.16.0 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.16.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.16.0/regulatory-tracker-1.16.0.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.17.0 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.17.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.17.0/regulatory-tracker-1.17.0.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
+
+## Compact layout, manufacturing sites and source links — version 1.17.0
+
+The header combines the title and distinct record totals, with search, grouping and view controls together below it. Open **Filters** to use the existing membership, date, dispatch and lifecycle-state filters; the closed control summarizes active filtering. Larger responsive text, wrapped record labels and row heights that follow their content make the chart easier to read. The chart uses the available visual height, and Details has its own scrollable area.
+
+Click a **record name or bar** to open Details. Use the **plus/minus control** to expand or collapse the hierarchy. Parent summaries include the number of distinct registrations actually nested beneath them. Catalog duplicates do not increase those totals, and registrations with ambiguous links remain counted in their review container.
+
+**All milestone dates and timeline calculations are retained.** Original, latest and actual dispatch, submission and approval markers, preparation and approval estimates, surveyed ranges and registration bars remain available. Registration validity dates still do not expand Fit all; continuation arrows preserve visibility of intervals outside the window.
+
+### Five optional field mappings
+
+| Source information | Visual role |
+| --- | --- |
+| Manufacturing site recorded on the registration | RegistrationManufacturingSite |
+| Full source URL for the application record | ApplicationURL |
+| Full source URL for the regulatory objective record | RegulatoryObjectiveURL |
+| Full source URL for the submission record | SubmissionURL |
+| Full source URL for the registration record | RegistrationURL |
+
+Keep the existing **Manufacturer** mapping for the legal-manufacturer site. The chart labels site previews separately as **Legal** and **Registration**; Details contains both complete lists. Site values stay within their actual record and hierarchy context. The five new roles are optional, bringing the complete mapping list to 69 fields. Existing mappings continue to work.
+
+Map URLs as text from the corresponding records; the visual does not construct links from IDs. A valid, unambiguous link exposes **Open in platform** in Details and a source-link icon beside the row. Power BI uses its supported `host.launchUrl` API. The public demo opens a separate browser tab only after a click. Only absolute HTTP/HTTPS URLs without embedded credentials are accepted. Missing, invalid or conflicting links remain explained in Details, and ambiguity is checked against all delivered rows before local filters.
+
+The package uses the supported `suppressDefaultTitle` capability to remove Power BI's default field-name heading. A custom title already saved in the report remains controlled by Power BI. The visual GUID is unchanged, and the other visuals in this repository are unaffected.
 
 
 ## Registrations, catalog numbers and row Details — version 1.16.0

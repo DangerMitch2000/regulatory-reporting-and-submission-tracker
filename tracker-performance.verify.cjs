@@ -8,7 +8,7 @@ module.exports=async(page)=>{
  const times=[];
  for(let i=0;i<18;i++){const group=['Application','Regulatory event','Change initiation'][i%3],t=Date.now();await page.locator('#host select[name=groupBy]').selectOption(group);await page.waitForFunction(g=>{const v=window.__themeVisual.app.view,rows=v.data('visible');return rows.length&&rows.every(r=>g==='Application'?r.level===0:g==='Regulatory event'?r.level===-1:r.level===-2);},group);times.push(Date.now()-t);const state=await page.evaluate(()=>{const v=window.__themeVisual.app.view;return {keys:v.data('displayRows').map(r=>r.key),scroll:v.signal('scrollTop'),selected:v.signal('selectedKey')};});assert.equal(new Set(state.keys).size,state.keys.length);assert.equal(state.scroll,0);assert.equal(state.selected,'');}
  // Expanded hierarchies and selection must not leak into another grouping.
- await page.locator('#host .parentLabel text').first().click();
+ await page.locator('#host .toggle path').first().click();
  await page.waitForFunction(()=>window.__themeVisual.app.view.data('visible').some(r=>r.level===-1));
  await page.locator('#host select[name=groupBy]').selectOption('Application');
  assert.equal(await page.evaluate(()=>window.__themeVisual.app.view.signal('selectedKey')),'');

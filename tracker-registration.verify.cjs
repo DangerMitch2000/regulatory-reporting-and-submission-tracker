@@ -1,5 +1,6 @@
 /* Registration and catalog behaviour through the actual packaged Visual. */
 const assert=require('node:assert/strict'),path=require('node:path');
+const {rowLocator,setFilterDrawer}=require('./tracker-browser-helpers.cjs');
 
 function fixtures(){
  const base={AppID:'REG-A1',ROID:'REG-R1',SubID:'REG-S1',EventName:'REG-E1',EventState:'In Progress State',ChangeID:'REG-C1',ChangeQMS:'CR-1',EventQMS:'CR-1',ChangeStatus:'In Progress',AppStatus:'Active',ROStatus:'In Progress',SubStatus:'Planned',BusinessUnit:'ID',Manufacturer:'ABO',Product:'Alpha device',Country:'France',OriginalDispatch:'2026-08-01',LatestDispatch:'2026-08-15',OriginalSubmission:'2026-09-01',LatestSubmission:'2026-09-15',OriginalApproval:'2027-03-01',LatestApproval:'2027-03-15'};
@@ -19,12 +20,9 @@ async function verify(page,{outputDir=__dirname,url='http://127.0.0.1:8771/index
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  const send=async rows=>{const revision=await page.evaluate(()=>window.__qualityRevision);await page.evaluate(rows=>window.__dispatchSend(rows),rows);await page.waitForFunction(r=>window.__qualityRevision>r,revision,{timeout:120000});};
  const state=()=>page.evaluate(()=>{const v=window.__themeVisual.app.view;return {range:[v.signal('xlo'),v.signal('xhi')],visible:v.data('visible').map(r=>({key:r.key,level:r.level,RegistrationID:r.RegistrationID,SubID:r.SubID,AppID:r.AppID,ROID:r.ROID,ChangeID:r.ChangeID,EventName:r.EventName,subKey:r.subKey,registrationContainer:r.registrationContainer})),all:v.data('displayRows').map(r=>({key:r.key,level:r.level,RegistrationID:r.RegistrationID,SubID:r.SubID,subKey:r.subKey,registrationContainer:r.registrationContainer})),selected:v.signal('selectedKey')};});
- const clickMark=async(selector,key)=>{
-  const position=await page.evaluate(({selector,key})=>{const node=[...document.querySelectorAll(selector)].find(n=>n.__data__?.datum?.key===key);if(!node)return null;const b=node.getBoundingClientRect();return {x:b.x+b.width/2,y:b.y+b.height/2};},{selector,key});
-  assert.ok(position,selector+' exists for '+key);await page.mouse.click(position.x,position.y);
- };
+ const clickMark=async(selector,key)=>(await rowLocator(page,selector,key)).click();
  const reveal=async key=>{await page.evaluate(async key=>{const v=window.__themeVisual.app.view,index=v.data('visible').findIndex(r=>r.key===key);if(index<0)throw Error('Row is not expanded: '+key);v.signal('rowRequest',{pos:index});await v.runAsync();},key);};
- const details=async key=>{await reveal(key);await clickMark('#host .rowDetailsText text',key);await page.waitForFunction(key=>window.__themeVisual.app.view.signal('selectedKey')===key,key);await page.locator('#host #selected-details').evaluate(e=>e.open=true);};
+ const details=async key=>{await reveal(key);await clickMark('#host .parentLabel text,#host .subLabel text,#host .registrationLabel text',key);await page.waitForFunction(key=>window.__themeVisual.app.view.signal('selectedKey')===key,key);await page.locator('#host #selected-details').evaluate(e=>e.open=true);};
  const fit=async()=>{await page.locator('#host .timeText text').filter({hasText:/^Fit all$/}).click();return (await state()).range;};
  await page.goto(url);await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
  const rows=fixtures();await send(rows);await page.locator('#host #filter-status').filter({hasText:'5 submissions'}).waitFor();
@@ -53,7 +51,7 @@ async function verify(page,{outputDir=__dirname,url='http://127.0.0.1:8771/index
   snapshot=await state();const reg=snapshot.visible.find(r=>r.RegistrationID==='REG-LONG'&&r.level===3);assert.ok(reg,'Registration expands under submission in '+group);
   const parent=snapshot.all.find(r=>r.key===reg.subKey);assert.equal(parent?.SubID,'REG-S1');
   await details(reg.key);await page.locator('#host #detail-body').filter({hasText:'AUTH-0007'}).waitFor();
-  for(const text of ['REG-LONG','France','2010-01-01','2050-12-31','Example holder','Example authority','First line','Second line','000100','000105','000900'])assert.ok((await page.locator('#host #detail-body').innerText()).includes(text),'Registration Details includes '+text);
+  for(const text of ['REG-LONG','France','2010-01-01','2050-12-31','Example holder','Example authority','First line','Second line','000100','000105','000900'])assert.ok((await page.locator('#host #detail-body').textContent()).includes(text),'Registration Details includes '+text);
   const expanded=await page.evaluate(()=>window.__themeVisual.app.view.data('expanded').map(r=>r.key));await page.locator('#host select[name=groupBy]').selectOption(group==='Application'?'Regulatory event':'Application');assert.equal((await state()).selected,'');await page.locator('#host select[name=groupBy]').selectOption(group);assert.ok((await state()).visible.some(r=>r.RegistrationID==='REG-LONG'));
   assert.ok(expanded.length,'Expansion state remains available when switching groups');
  }
@@ -81,9 +79,11 @@ async function verify(page,{outputDir=__dirname,url='http://127.0.0.1:8771/index
   const arrows=await page.evaluate(key=>[...document.querySelectorAll('#host .registrationBarContinuation path')].filter(n=>n.__data__?.datum?.key===key).length,reg.key);assert.equal(arrows,2,'Long registration has both continuation arrows');
   await page.mouse.move(5,5);await page.locator('#host').screenshot({path:path.join(outputDir,'registrations-'+theme+'.png')});
  }
+ await setFilterDrawer(page,true);
  assert.ok((await page.locator('#host .state-filter[data-field="RegistrationState"]').innerText()).includes('Registration state'));
  for(const label of ['Approved','Canceled','Conditionally Approved','Expired','Planned','Rejected','Withdrawn','Not recorded'])assert.ok(await page.locator('#host .state-filter[data-field="RegistrationState"] label').filter({hasText:new RegExp('^'+label+'$')}).count(),'Registration filter includes '+label);
  const registrationFilter=page.locator('#host .state-filter[data-field="RegistrationState"]');await registrationFilter.locator('summary').click();await registrationFilter.getByRole('button',{name:'Clear',exact:true}).click();await registrationFilter.locator('label').filter({hasText:/^Approved$/}).locator('input').check();await page.locator('#host #filter-status').filter({hasText:'1 registrations'}).waitFor().catch(async e=>{console.error(await page.locator('#host #filter-status').innerText());console.error(await page.evaluate(()=>window.__themeVisual.app.view.data('displayRows').filter(r=>r.level===3).map(r=>[r.RegistrationID,r.State])));throw e;});assert.deepEqual([...new Set((await state()).all.filter(r=>r.level===3).map(r=>r.RegistrationID))],['REG-LONG'],'Registration state filtering uses the registration own state');await page.locator('#host #reset-filters').click();await page.locator('#host #filter-status').filter({hasText:'7 registrations'}).waitFor();
+ await setFilterDrawer(page,false);
  assert.deepEqual(errors,[],'No browser errors during registration interaction');
 
  if(stress){
@@ -100,5 +100,5 @@ module.exports=verify;
 module.exports.fixtures=fixtures;
 if(require.main===module){
  const fs=require('node:fs'),http=require('node:http'),{chromium}=require('./powerbi-visual/node_modules/@playwright/test');
- (async()=>{const dir=path.join(__dirname,'powerbi-visual','verify'),server=http.createServer((req,res)=>{const target=path.join(dir,new URL(req.url,'http://localhost').pathname);if(!target.startsWith(dir+path.sep)){res.writeHead(403).end();return;}fs.readFile(target,(error,data)=>{if(error){res.writeHead(404).end();return;}res.setHeader('Content-Type',target.endsWith('.js')?'text/javascript':target.endsWith('.css')?'text/css':'text/html');res.end(data);});});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const browser=await chromium.launch({headless:true,channel:process.env.TRACKER_BROWSER_CHANNEL||'msedge'}),page=await browser.newPage({viewport:{width:1280,height:950}});try{await verify(page,{outputDir:dir,url:'http://127.0.0.1:'+server.address().port+'/index.html',stress:!process.argv.includes('--no-stress')});}finally{await browser.close();server.close();}})().catch(error=>{console.error(error);process.exitCode=1;});
+ (async()=>{await require('./tracker-browser-helpers.cjs').registerRowSelector();const dir=path.join(__dirname,'powerbi-visual','verify'),server=http.createServer((req,res)=>{const target=path.join(dir,new URL(req.url,'http://localhost').pathname);if(!target.startsWith(dir+path.sep)){res.writeHead(403).end();return;}fs.readFile(target,(error,data)=>{if(error){res.writeHead(404).end();return;}res.setHeader('Content-Type',target.endsWith('.js')?'text/javascript':target.endsWith('.css')?'text/css':'text/html');res.end(data);});});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const browser=await chromium.launch({headless:true,channel:process.env.TRACKER_BROWSER_CHANNEL||'msedge'}),page=await browser.newPage({viewport:{width:1280,height:950}});try{await verify(page,{outputDir:dir,url:'http://127.0.0.1:'+server.address().port+'/index.html',stress:!process.argv.includes('--no-stress')});}finally{await browser.close();server.close();}})().catch(error=>{console.error(error);process.exitCode=1;});
 }

@@ -25,6 +25,6 @@ module.exports=async(page,{outputDir})=>{
   await page.locator('#host select[name=groupBy]').selectOption(id[0]==='C'?'Change initiation':'Regulatory event');
   await page.locator('#host input[name=query]').fill(id);await page.waitForFunction(id=>{const v=window.__themeVisual.app.view;return v.data('displayRows').length===1&&(v.data('displayRows')[0].ChangeID===id||v.data('displayRows')[0].EventName===id);},id);
  }
- await page.locator('#host #reset-filters').click();await page.locator('#host #filter-status').filter({hasText:'3 change IDs · 4 events'}).waitFor();
+ await require('./tracker-browser-helpers.cjs').resetFilters(page);await page.locator('#host #filter-status').filter({hasText:'3 change IDs · 4 events'}).waitFor();
  console.log('PASS: retained parents and missing-parent submissions in all groupings, both themes, selection/Details, independent search and reset.');
 };

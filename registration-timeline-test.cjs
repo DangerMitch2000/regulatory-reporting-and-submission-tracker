@@ -42,7 +42,8 @@ async function create(source=rows){
    }
    assert.deepEqual(regs.filter(r=>r.SubID==='SUB-1').map(r=>r.RegistrationID),['REG-10','REG-2'],'Natural numeric descending registration sort');
    assert.equal(JSON.stringify(view.signal('fitRange')),expectedFit,'Grouping cannot pull registration validity into Fit all');
-   assert.equal(marks(view,'rowDetailsButton').length,view.data('pageRows').length,'Every selectable row exposes an explicit Details button');
+   assert.equal(marks(view,'rowDetailsButton').length,0,'Names open Details without repeating a button on every row');
+   assert.equal(['parentLabel','subLabel','registrationLabel'].flatMap(n=>marks(view,n)).length,view.data('pageRows').length,'Every selectable row exposes its clickable record name');
    assert.equal(marks(view,'registrationBar').length,4,'Registration bars retain rows for approved/expired/planned/withdrawn');
    assert.ok(marks(view,'registrationBar').find(n=>n.datum.RegistrationID==='REG-10').tooltip.State==='Expired','Stored registration state controls display despite far-future source end');
    const sub=view.data('displayRows').find(r=>r.level===2&&r.SubID==='SUB-1');
@@ -67,7 +68,8 @@ async function create(source=rows){
   const p=marks(view,'productText').find(n=>n.datum.key===sub.key),c=marks(view,'countryText').find(n=>n.datum.key===sub.key);
   assert.deepEqual([...p.text],labels,'Three products keep associated catalog previews');
   assert.ok(p.bounds.y2<c.bounds.y1,'Catalog preview does not overlap country text');
-  assert.ok(c.bounds.y2<view.data('pageRows').find(r=>r.key===sub.key).y+84,'Catalogs and country fit inside existing row height');
+  const pageRow=view.data('pageRows').find(r=>r.key===sub.key);
+  assert.ok(c.bounds.y2<pageRow.y+pageRow.rowHeight,'Catalogs and country fit inside their adaptive row height');
   view.signal('selectedKey',view.data('visible').find(r=>r.level===3).key);await view.runAsync();
   assert.equal(view.data('selectedRow')[0].level,3,'Registration selects its own Details context');
   view.signal('showRegistrationEnd',true).signal('range',null);await view.runAsync();
@@ -89,5 +91,5 @@ async function create(source=rows){
   assert.deepEqual(view.data('raw').map(r=>r.RegistrationID),['REG-OTHER'],'Catalog search retains leading zeros and isolates orphan source identity');
  }finally{view.finalize();}
  assert.deepEqual(errors,[],'No Vega evaluation errors');
- console.log('PASS: registration nesting in all groups, numeric sibling sorting, explicit Details, catalog/country layout, continuation clipping, far-future/missing ends, no Fit all distortion, orphan retention and submission comparisons.');
+ console.log('PASS: registration nesting in all groups, numeric sibling sorting, direct-name Details, adaptive catalog/country layout, continuation clipping, far-future/missing ends, no Fit all distortion, orphan retention and submission comparisons.');
 })().catch(e=>{console.error(e);process.exit(1)});

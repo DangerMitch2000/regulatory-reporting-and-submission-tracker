@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.17.0 — 2026-10-11
+
+- Compact the header and move existing filters into a labelled drawer, retaining active-filter feedback and all filter behavior.
+- Increase readable text, wrap hierarchy labels and size rows to their content. Adapt chart height to the host viewport and keep Details independently scrollable.
+- Open Details from record names and bars; reserve plus/minus controls for hierarchy expansion. Show distinct nested registration counts on parent rows.
+- Add five optional mappings: registration manufacturing site and source-record URLs for applications, ROs, submissions and registrations. Label legal-manufacturer and registration sites separately, with full values in Details.
+- Open only valid, unambiguous mapped HTTP/HTTPS URLs after an explicit click, using Power BI's host launch API. Preserve global URL-conflict evidence when local filters change.
+- Suppress the default Power BI field-name title using its supported capability, without altering saved custom report titles.
+- Retain every original/latest/actual milestone, timeline calculation, estimate, survey range and registration validity value; keep registration dates outside Fit all.
+- Extend model and browser coverage for responsive layouts, source-site associations, distinct counts, safe links and the existing 10,000-submission scenarios.
+
 ## 1.16.0 — 2026-10-11
 
 - Add Registration below Submission in all three grouping modes, with independent state filtering, distinct counts, complete recorded metadata and link-review containers.

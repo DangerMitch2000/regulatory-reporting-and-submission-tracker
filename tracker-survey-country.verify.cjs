@@ -27,13 +27,13 @@ module.exports=async(page,{outputDir})=>{
   await page.locator('#host .change-details').filter({hasText:'MX certificate'}).waitFor();assert.match(await page.locator('#host .change-details').innerText(),/HU certificate/);
   // Render the matched range in the actual chart, not just in its data table.
   await page.locator('#host select[name=mode]').selectOption('Compare');
-  await page.locator('#host .subLabel text').filter({hasText:/^S-Hungary$/}).click();
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));await page.evaluate(async()=>{const v=window.__themeVisual.app.view;v.signal('rowRequest',{pos:v.data('visible').findIndex(r=>r.SubID==='S-Hungary')});await v.runAsync();});await page.locator('#host .subLabel text').filter({hasText:/^S-Hungary$/}).click();
   assert.equal(await page.locator('#host .surveyRange path').count(),2,'Only Hungary and Mexico have usable ranges');
   await page.locator('#host').screenshot({path:path.join(outputDir,'survey-country-'+theme+'.png')});
   await page.locator('#host select[name=mode]').selectOption('Hierarchy');
  }
- await page.evaluate(()=>window.__dispatchSend(window.__countrySurveyRows.map(r=>r.AssessmentCountry==='Hungary'?{...r,AssessmentTimeline:''}:r)));
- await page.locator('#host select[name=mode]').selectOption('Compare');await page.locator('#host .subLabel text').filter({hasText:/^S-Hungary$/}).click();
+ const revision=await page.evaluate(()=>window.__qualityRevision);await page.evaluate(()=>window.__dispatchSend(window.__countrySurveyRows.map(r=>r.AssessmentCountry==='Hungary'?{...r,AssessmentTimeline:''}:r)));await page.waitForFunction(n=>window.__qualityRevision>n,revision);
+ await page.locator('#host select[name=mode]').selectOption('Compare');await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));await page.evaluate(async()=>{const v=window.__themeVisual.app.view;v.signal('rowRequest',{pos:v.data('visible').findIndex(r=>r.SubID==='S-Hungary')});await v.runAsync();});await page.locator('#host .subLabel text').filter({hasText:/^S-Hungary$/}).click();
  await page.locator('#host .change-details').filter({hasText:'No surveyed duration recorded.'}).waitFor();assert.match(await page.locator('#host .change-details').innerText(),/HU certificate/);
  console.log('PASS: multi-country responses match each submission in all three groupings and both themes; parent Details retain all countries; blank/N/A durations retain documentation without a bar.');
 };

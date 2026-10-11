@@ -87,19 +87,14 @@ async function verify(page, {url,outputDir}) {
     await page.mouse.move(box.x+box.width/2+20,box.y+box.height/2,{steps:4});await page.mouse.up();
     assert.deepEqual((await windowState()).range,before.range,category.mark+' pointer drag does not pan');
     await page.mouse.move(1,1);
-    if(category.parent){
-      const expandedBefore=await page.evaluate(key=>window.__themeVisual.app.view.data('expanded').some(d=>d.key===key),datum.key);
-      await arrow.click();
-      await page.waitForFunction(({key,before})=>window.__themeVisual.app.view.data('expanded').some(d=>d.key===key)!==before,{key:datum.key,before:expandedBefore});
-    } else {
-      await page.evaluate(async()=>{const v=window.__themeVisual.app.view;v.signal('selectedKey',null);await v.runAsync();});
-      await arrow.click();
-      await page.waitForFunction(key=>window.__themeVisual.app.view.signal('selectedKey')===key,datum.key);
-      await page.locator('#host #selected-details').evaluate(node=>node.open=true);
-      await page.locator('#host #detail-body h2').filter({hasText:'SUB-00003'}).waitFor();
-      assert.match(await page.locator('#host #detail-body').innerText(),/SUB-00003/);
-      await page.locator('#host #selected-details').evaluate(node=>node.open=false);
-    }
+    const expandedBefore=await page.evaluate(()=>window.__themeVisual.app.view.data('expanded').map(d=>d.key));
+    await page.evaluate(async()=>{const v=window.__themeVisual.app.view;v.signal('selectedKey',null);await v.runAsync();});
+    await arrow.click();
+    await page.waitForFunction(key=>window.__themeVisual.app.view.signal('selectedKey')===key,datum.key);
+    assert.equal(await page.locator('#host #selected-details').evaluate(node=>node.open),true,category.mark+' opens Details');
+    assert.deepEqual(await page.evaluate(()=>window.__themeVisual.app.view.data('expanded').map(d=>d.key)),expandedBefore,category.mark+' never expands on a bar click');
+    if(!category.parent)assert.match(await page.locator('#host #detail-body').innerText(),/SUB-00003/);
+    await page.locator('#host #selected-details').evaluate(node=>node.open=false);
     assert.deepEqual((await windowState()).range,before.range,category.mark+' click keeps dates fixed');
     // Exact endpoints and fully off-screen bars should not create misleading arrows.
     await setRange([record.start,record.end]);await assertArrows();
@@ -137,7 +132,7 @@ async function verify(page, {url,outputDir}) {
   await page.waitForFunction(()=>window.__themeVisual.app.view.signal('width')<1000);
   await assertArrows();await root.screenshot({path:path.join(outputDir,'continuations-compact.png')});
   assert.deepEqual(errors,[],'Actual Visual has no browser errors');
-  console.log('PASS: all five bar continuation categories, viewport edges and offscreen handling, parent expansion, child/range selection and Details, no arrow pan, Ctrl+wheel and Shift+wheel with stable rows/page, dynamic ranges, both themes and compact rendering.');
+  console.log('PASS: all five bar continuation categories, viewport edges and offscreen handling, parent/child/range Details without expansion, no arrow pan, Ctrl+wheel and Shift+wheel with stable rows/page, dynamic ranges, both themes and compact rendering.');
 }
 
 async function main(){
