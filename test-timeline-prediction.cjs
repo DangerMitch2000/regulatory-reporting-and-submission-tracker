@@ -251,12 +251,12 @@ async function create(rows, signals = {}) {
   assert.equal(view.data('predictionPoints').length, 0);
   view.finalize();
 
-  // Registration expiry continues to affect fit only when explicitly enabled.
+  // Registration validity is independent of workflow Fit all, including the legacy toggle.
   view = await create([{ ...base, RegistrationEnd: date('2035-01-01') }], { mode: 'Compare' });
   assert.equal(view.data('extent')[0].hi, base.PredictionHigh);
   view.signal('showRegistrationEnd', true);
   await view.runAsync();
-  assert.equal(view.data('extent')[0].hi, date('2035-01-01'));
+  assert.equal(view.data('extent')[0].hi, base.PredictionHigh);
   view.finalize();
 
   // Registration expiry has a separate sanity bound: all of 2100 is allowed.
@@ -269,7 +269,10 @@ async function create(rows, signals = {}) {
     const expected = typeof expiry === 'number' ? expiry : new Date(expiry).getTime();
     assert.equal(view.data('sub')[0].RegistrationEnd, expected);
     assert.equal(view.data('sub')[0].RegistrationEndBad, 0);
-    assert.equal(view.data('extent')[0].hi, expected);
+    assert.equal(view.data('extent')[0].hi, base.PredictionHigh);
+    assert.equal(view.data('milestones').filter(row => row.milestone === 'RegistrationEnd').length, 0, 'Offscreen validity marker does not extend Fit all');
+    view.signal('range', [expected-day, expected+day]);
+    await view.runAsync();
     assert.equal(view.data('milestones').filter(row => row.milestone === 'RegistrationEnd').length, 1);
     view.finalize();
   }
@@ -310,7 +313,7 @@ async function create(rows, signals = {}) {
     assert.equal(view.data('sub').length, 1);
     assert.equal(view.data('sub')[0].RegistrationEndBad, badCount);
     assert.equal(view.data('sub')[0].RegistrationEnd, expected);
-    assert.equal(view.data('extent')[0].hi, expected === null ? base.PredictionHigh : expected);
+    assert.equal(view.data('extent')[0].hi, base.PredictionHigh);
     view.finalize();
   }
 

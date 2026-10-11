@@ -1,9 +1,47 @@
-# Regulatory Tracker 1.15.0
+# Regulatory Tracker 1.16.0
 
-[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.15.0 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.15.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.15.0/regulatory-tracker-1.15.0.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.16.0 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.16.0) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.16.0/regulatory-tracker-1.16.0.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
 
+
+## Registrations, catalog numbers and row Details — version 1.16.0
+
+The hierarchy is now **Change ID → Event → Application → RO → Submission → Registration**. Expand a submission to see its registrations. Every record has a separate **Details** button, so expanding and inspecting a record are distinct actions.
+
+**Fit all uses workflow dates only.** Registration start/end dates never enlarge that window. All interval bars show continuation arrows when crossing a visible edge. A missing end date or an end year beyond 2100 is drawn as a continuing interval; Details preserves the original value. This is a display rule, not a claim that the registration has no expiry. Recorded state controls colour, including Expired records with far-future dates.
+
+### Optional registration and catalog mappings
+
+Existing mappings continue to work. Add only the fields available in your model. Use raw columns, not Date hierarchies.
+
+| Source information | Visual role |
+| --- | --- |
+| Registration record name or stable ID (for example, name__v) | RegistrationID |
+| Registration number issued by the authority | RegistrationNumber |
+| Registration country (for example, country__vr.name__v) | RegistrationCountry |
+| Registration state (for example, state__v) | RegistrationState |
+| Registration start and end | Existing RegistrationStart, RegistrationEnd |
+| Holder and health authority | RegistrationHolder, RegistrationAuthority |
+| Region, division, product family, application type | RegistrationRegion, RegistrationDivision, RegistrationProductFamily, RegistrationApplicationType |
+| Marketing status and renewal requirement | RegistrationMarketingStatus, RegistrationRenewalRequired |
+| Upcoming renewal start and target dates | RegistrationRenewalStart, RegistrationRenewalTarget |
+| Comments and SKU | RegistrationComments, RegistrationSKU |
+| One catalog number per linked source record | CatalogNumber |
+
+These are **17 new optional roles**, reusing the existing two registration date roles. Registration record ID and authority registration number are separate. Keep catalog numbers as **Text** in Power BI to preserve leading zeros. Each linked catalog row should carry its actual Product, RegistrationID and SubID associations; leave absent IDs blank. Do not concatenate or split catalog codes. The visual cannot create model relationships or recover records that Power BI has not delivered.
+
+A registration with missing or conflicting links remains in **Registrations without linked submission**, with a link-review reason. It is counted as a registration and never creates an invented submission. Repeated catalog rows do not multiply distinct submission or registration totals. A registration can appear beneath multiple hierarchy occurrences of the same submission; the top count stays distinct.
+
+The **Registration state** filter contains Approved, Canceled, Conditionally Approved, Expired, Planned, Rejected, Withdrawn and Not recorded. It combines with other filters. Conflicting states remain explicit. Existing submission/RO states and completion calculations are unchanged.
+
+### Products, countries and copying
+
+The **Products & countries** column retains country information. One to three products appear by name with short catalog previews beneath each; larger product lists keep a count. Details contains searchable, paged source associations with Product, Catalog number, Registration ID, Registration country and Submission country. Independent membership lists never imply additional product–country pairs.
+
+**Copy catalog numbers** includes every distinct matching code across all pages, one per line. A selectable text box remains available when the host blocks clipboard access. **Copy details** includes full catalog associations. Chart search also finds catalog numbers and registration IDs, numbers and countries.
+
+Registration metadata never invents actual dispatch, submission or approval dates.
 ## Site Submission Outlook — Related record IDs in 1.5.0
 
 [Download Site Submission Outlook 1.5.0](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.5.0/site-submission-outlook-1.5.0.0.pbiviz) · [Live preview](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Field mappings and instructions](site-submission-outlook/README.md)

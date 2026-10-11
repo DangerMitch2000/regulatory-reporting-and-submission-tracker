@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - 'app.js'
+      - 'registrations*'
+      - 'registration-timeline-test.cjs'
+      - 'tracker-registration.verify.cjs'
+      - 'continuation*'
       - 'assessment-responses*'
       - 'tracker-assessment-progress.verify.cjs'
       - 'states*'
@@ -52,6 +56,9 @@ jobs:
       - name: Generate project from demo sources
         run: |
           node open-end-test.cjs
+          node registrations-test.cjs
+          node registration-timeline-test.cjs
+          node continuation-test.cjs
           node dispatch-details-test.cjs
           node states-test.cjs
           node events-test.cjs
@@ -83,6 +90,8 @@ jobs:
           npx esbuild verify/harness.ts --bundle --outfile=verify/harness.js --loader:.less=css
           npx playwright install --with-deps chromium
           node verify/run.cjs
+          cd ..
+          TRACKER_BROWSER_CHANNEL=chromium node continuation-browser-test.cjs
       - name: Preserve verified interface previews
         uses: actions/upload-artifact@v4
         with:
@@ -94,7 +103,7 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.15.0.0.pbiviz
+          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.16.0.0.pbiviz
           cp powerbi-visual/README.md release/POWER-BI-INSTALL.md
           cp powerbi-visual/verify/preparation-light.png release/preparation-light.png
           cp powerbi-visual/verify/changes-dark.png release/changes-dark.png
@@ -105,6 +114,8 @@ jobs:
           cp powerbi-visual/verify/dispatch-details.png release/dispatch-details.png
           cp powerbi-visual/verify/calendar-day-quality.png release/calendar-day-quality.png
           cp powerbi-visual/verify/dispatch-required.png release/dispatch-required.png
+          cp powerbi-visual/verify/registrations-dark.png release/registrations-dark.png
+          cp powerbi-visual/verify/registrations-light.png release/registrations-light.png
           cp powerbi-visual/verify/overview.png release/powerbi-overview.png
           cp powerbi-visual/verify/light-theme.png release/powerbi-light-theme.png
           cp powerbi-visual/verify/light-details.png release/powerbi-light-details.png
@@ -117,7 +128,7 @@ jobs:
           cp powerbi-visual/verify/approval-benchmark.png release/approval-benchmark.png
           cp powerbi-visual/verify/planned-submission-forecast.png release/planned-submission-forecast.png
           cp powerbi-visual/verify/submission-date-filter.png release/submission-date-filter.png
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz retained-records-test.cjs tracker-retained-records.verify.cjs tracker-performance.verify.cjs performance-test.cjs assessment-responses.js assessment-responses-test.cjs tracker-assessment-progress.verify.cjs changes.js changes-test.cjs tracker-changes.verify.cjs tracker-survey-country.verify.cjs states.js states-test.cjs tracker-states.verify.cjs events.js events-test.cjs tracker-events.verify.cjs powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs dispatch-required.js dispatch-required-test.cjs dispatch-details.js dispatch-details-test.cjs preparation.js preparation-test.cjs tracker-preparation.verify.cjs tracker-dispatch-details.verify.cjs tracker-dispatch.verify.cjs tracker-calendar-day.verify.cjs tracker-theme.verify.cjs test-timeline-theme.cjs predictions.js prediction-test.cjs submission-period.js submission-period-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs open-end-test.cjs
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz registrations.js registrations-test.cjs registration-timeline-test.cjs tracker-registration.verify.cjs continuation-test.cjs continuation-browser-test.cjs retained-records-test.cjs tracker-retained-records.verify.cjs tracker-performance.verify.cjs performance-test.cjs assessment-responses.js assessment-responses-test.cjs tracker-assessment-progress.verify.cjs changes.js changes-test.cjs tracker-changes.verify.cjs tracker-survey-country.verify.cjs states.js states-test.cjs tracker-states.verify.cjs events.js events-test.cjs tracker-events.verify.cjs powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs dispatch-required.js dispatch-required-test.cjs dispatch-details.js dispatch-details-test.cjs preparation.js preparation-test.cjs tracker-preparation.verify.cjs tracker-dispatch-details.verify.cjs tracker-dispatch.verify.cjs tracker-calendar-day.verify.cjs tracker-theme.verify.cjs test-timeline-theme.cjs predictions.js prediction-test.cjs submission-period.js submission-period-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs open-end-test.cjs
           cd release && sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
@@ -127,11 +138,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view v1.15.0 >/dev/null 2>&1; then
-            gh release create v1.15.0 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.15.0" --notes "Adds three optional expected/received response ID mappings and a searchable Country progress list in Change ID Details. Expected countries remain listed without responses. Progress counts distinct submissions with actual dispatch dates; required documentation stays as supplied. Surveyed approval ranges now run from actual submission, or labelled planned submission, to approval. Includes key mismatch, absent response, parent-only evidence, both-theme and 10,000-submission tests. README includes all new mappings. Built from commit $GITHUB_SHA."
+          if ! gh release view v1.16.0 >/dev/null 2>&1; then
+            gh release create v1.16.0 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.16.0" --notes "Adds registration rows beneath submissions, an independent registration state filter and distinct registration totals. Adds 17 optional mappings, paired catalog previews and searchable/copyable full catalogs, explicit row Details buttons and missing-link review. Registration dates are excluded from Fit all; all clipped interval bars have continuation arrows. Includes both-theme, filtering, duplicate membership and 10,000-submission browser checks. Source fields and mapping guidance are in README. Built from commit $GITHUB_SHA."
           else
-            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.15.0" -f sha="$GITHUB_SHA" -F force=false
-            gh release edit v1.15.0 --target "$GITHUB_SHA" --notes "Adds three optional expected/received response ID mappings and a searchable Country progress list in Change ID Details. Expected countries remain listed without responses. Progress counts distinct submissions with actual dispatch dates; required documentation stays as supplied. Surveyed approval ranges now run from actual submission, or labelled planned submission, to approval. Includes key mismatch, absent response, parent-only evidence, both-theme and 10,000-submission tests. README includes all new mappings. Built from commit $GITHUB_SHA."
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.16.0" -f sha="$GITHUB_SHA" -F force=false
+            gh release edit v1.16.0 --target "$GITHUB_SHA" --notes "Adds registration rows beneath submissions, an independent registration state filter and distinct registration totals. Adds 17 optional mappings, paired catalog previews and searchable/copyable full catalogs, explicit row Details buttons and missing-link review. Registration dates are excluded from Fit all; all clipped interval bars have continuation arrows. Includes both-theme, filtering, duplicate membership and 10,000-submission browser checks. Source fields and mapping guidance are in README. Built from commit $GITHUB_SHA."
           fi
-          gh release upload v1.15.0 release/* --clobber
+          gh release upload v1.16.0 release/* --clobber
 

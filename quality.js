@@ -144,7 +144,15 @@
         addRaw(group.rawMembers[field], row[field]);
         if ((field === 'AppID' || field === 'ROID') && members(row[field]).length === 0) group.blankParents[field] = true;
       }
-      for (const field of dateFields) addDate(group.dates[field], row[field], field);
+      for (const field of dateFields) {
+        // Named registrations have their own validity intervals. Two legitimate
+        // registrations beneath one submission must not become conflicting
+        // submission dates. RegistrationInfo audits each named record and keeps
+        // its raw values/issues in registration Details; legacy unkeyed dates
+        // still use the original submission-level checks below.
+        if ((field === 'RegistrationStart' || field === 'RegistrationEnd') && mapped.has('RegistrationID') && text(row.RegistrationID)) continue;
+        addDate(group.dates[field], row[field], field);
+      }
     }
 
     const issues = [], affected = new Set();

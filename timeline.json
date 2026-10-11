@@ -1,6 +1,6 @@
 {
   "$schema": "https://vega.github.io/schema/vega/v5.json",
-  "description": "Regulatory Tracker 1.7.0: own-state colours, anchored hierarchy, comparison and separately labelled historical approval estimates. Registration end dates after 31 December 2100 are withheld from markers and axis extents and flagged as invalid, without changing source values. Generic aliases only.",
+  "description": "Regulatory Tracker 1.16.0: registration records nested beneath submissions, catalog memberships, explicit row Details and clipped lifecycle bars. Registration validity never controls Fit all; missing and far-future ends retain their source values in Details.",
   "padding": 0,
   "autosize": "none",
   "background": {
@@ -19,6 +19,10 @@
     }
   },
   "signals": [
+    {
+      "name": "registrationLayerEnabled",
+      "value": false
+    },
     {
       "name": "themeMode",
       "value": "dark"
@@ -75,8 +79,12 @@
       "value": null,
       "on": [
         {
-          "events": "@toggle:click, @parentLabel:click, @parentBar:click, @parentCell:click",
+          "events": "@toggle:click, @parentLabel:click, @parentBar:click, @parentCell:click, @parentBarContinuation:click",
           "update": "{key:datum.key,rel:datum.idx-1-scrollTop,fallback:scrollTop,opening:!indata('expanded','key',datum.key)}"
+        },
+        {
+          "events": "@subLabel:click",
+          "update": "mode==='Hierarchy' && datum.RegistrationCount>0 ? {key:datum.key,rel:datum.idx-1-scrollTop,fallback:scrollTop,opening:!indata('expanded','key',datum.key)} : clicked"
         }
       ]
     },
@@ -137,12 +145,6 @@
         },
         {
           "events": {
-            "signal": "showRegistrationEnd"
-          },
-          "update": "null"
-        },
-        {
-          "events": {
             "type": "wheel",
             "source": "view",
             "filter": [
@@ -195,7 +197,7 @@
       "value": "",
       "on": [
         {
-          "events": "@rowBg:mouseover, @parentCell:mouseover, @parentLabel:mouseover, @toggle:mouseover, @parentBar:mouseover, @subLabel:mouseover, @siteText:mouseover, @productText:mouseover, @milestone:mouseover, @connector:mouseover, @predictionRange:mouseover, @predictionApproval:mouseover, @preparationRange:mouseover, @preparationLabel:mouseover",
+          "events": "@rowBg:mouseover, @parentCell:mouseover, @parentLabel:mouseover, @toggle:mouseover, @parentBar:mouseover, @subLabel:mouseover, @siteText:mouseover, @productText:mouseover, @milestone:mouseover, @connector:mouseover, @predictionRange:mouseover, @predictionApproval:mouseover, @preparationRange:mouseover, @preparationLabel:mouseover, @parentBarContinuation:mouseover, @preparationRangeContinuation:mouseover, @predictionRangeContinuation:mouseover, @connectorContinuation:mouseover, @surveyRange:mouseover, @surveyRangeContinuation:mouseover, @registrationLabel:mouseover, @registrationMeta:mouseover, @registrationBar:mouseover, @registrationBarContinuation:mouseover, @rowDetailsButton:mouseover, @rowDetailsText:mouseover",
           "update": "datum.key"
         },
         {
@@ -307,7 +309,7 @@
       "value": false,
       "on": [
         {
-          "events": "@toggle:click, @parentLabel:click, @parentBar:click, @parentCell:click, @rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @next:click, @nextText:click, @prev:click, @prevText:click, @scrollTrack:pointerdown, @scrollThumb:pointerdown, @predictionRange:click, @predictionApproval:click, @preparationRange:click, @preparationLabel:click, @surveyRange:click",
+          "events": "@toggle:click, @parentLabel:click, @parentBar:click, @parentCell:click, @rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @next:click, @nextText:click, @prev:click, @prevText:click, @scrollTrack:pointerdown, @scrollThumb:pointerdown, @predictionRange:click, @predictionApproval:click, @preparationRange:click, @preparationLabel:click, @surveyRange:click, @registrationLabel:click, @registrationBar:click, @registrationBarContinuation:click, @rowDetailsButton:click, @rowDetailsText:click",
           "update": "true"
         },
         {
@@ -405,8 +407,12 @@
       "value": "",
       "on": [
         {
-          "events": "@rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @predictionRange:click, @predictionApproval:click, @preparationRange:click, @preparationLabel:click, @surveyRange:click",
+          "events": "@rowBg:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @predictionRange:click, @predictionApproval:click, @preparationRange:click, @preparationLabel:click, @surveyRange:click, @preparationRangeContinuation:click, @predictionRangeContinuation:click, @connectorContinuation:click, @surveyRangeContinuation:click, @registrationLabel:click, @registrationMeta:click, @registrationBar:click, @registrationBarContinuation:click, @rowDetailsButton:click, @rowDetailsText:click",
           "update": "datum.key"
+        },
+        {
+          "events": "@subLabel:click",
+          "update": "mode==='Hierarchy' && datum.RegistrationCount>0 ? selectedKey : datum.key"
         },
         {
           "events": {
@@ -593,7 +599,7 @@
       "on": [
         {
           "events": "@pin:click",
-          "update": "datum.level===-1 ? pinClick : {pinKey:datum.baseKey || datum.key}"
+          "update": "datum.level<0 || datum.level===3 || datum.registrationContainer ? pinClick : {pinKey:datum.baseKey || datum.key}"
         }
       ]
     },
@@ -658,9 +664,25 @@
     {
       "name": "changeMode",
       "update": "groupBy==='Change initiation' && mode==='Hierarchy'"
+    },
+    {
+      "name": "detailsRequest",
+      "value": 0,
+      "on": [
+        {
+          "events": "@rowDetailsButton:click, @rowDetailsText:click",
+          "update": "detailsRequest+1"
+        }
+      ]
     }
   ],
   "data": [
+    {
+      "name": "registrationRows"
+    },
+    {
+      "name": "membershipRows"
+    },
     {
       "name": "changeRows"
     },
@@ -999,7 +1021,7 @@
         {
           "type": "formula",
           "as": "searchKey",
-          "expr": "datum.hasRecord ? datum.subKey : datum.subKey+'|'+datum.EventName+'|'+datum.ChangeID"
+          "expr": "datum.hasRecord ? datum.subKey : datum.subKey+'|'+datum.EventName+'|'+datum.ChangeID+'|'+datum.RegistrationID"
         }
       ]
     },
@@ -1009,7 +1031,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "query==='' || indexof(lower(datum.ChangeID+' '+datum.EventName+' '+datum.AppID+' '+datum.ROID+' '+datum.SubID+' '+datum._Product+' '+datum._Country+' '+datum.SubmissionType),lower(query))>=0"
+          "expr": "query==='' || indexof(lower(datum.ChangeID+' '+datum.EventName+' '+datum.AppID+' '+datum.ROID+' '+datum.SubID+' '+datum._Product+' '+datum._Country+' '+datum.SubmissionType+' '+datum.RegistrationID+' '+datum.RegistrationNumber+' '+datum.RegistrationCountry+' '+datum.CatalogNumber),lower(query))>=0"
         },
         {
           "type": "aggregate",
@@ -2217,17 +2239,17 @@
         {
           "type": "formula",
           "as": "issues",
-          "expr": "(datum.OriginalDispatchBad>0 || datum.OriginalDispatchMin!==datum.OriginalDispatchMax ? 1 : 0)+(datum.LatestDispatchBad>0 || datum.LatestDispatchMin!==datum.LatestDispatchMax ? 1 : 0)+(datum.ActualDispatchBad>0 || datum.ActualDispatchMin!==datum.ActualDispatchMax ? 1 : 0)+(datum.OriginalSubmissionBad>0 || datum.OriginalSubmissionMin!==datum.OriginalSubmissionMax ? 1 : 0)+(datum.LatestSubmissionBad>0 || datum.LatestSubmissionMin!==datum.LatestSubmissionMax ? 1 : 0)+(datum.ActualSubmissionBad>0 || datum.ActualSubmissionMin!==datum.ActualSubmissionMax ? 1 : 0)+(datum.OriginalApprovalBad>0 || datum.OriginalApprovalMin!==datum.OriginalApprovalMax ? 1 : 0)+(datum.LatestApprovalBad>0 || datum.LatestApprovalMin!==datum.LatestApprovalMax ? 1 : 0)+(datum.ActualApprovalBad>0 || datum.ActualApprovalMin!==datum.ActualApprovalMax ? 1 : 0)+(datum.RegistrationStartBad>0 || datum.RegistrationStartMin!==datum.RegistrationStartMax ? 1 : 0)+(datum.RegistrationEndBad>0 || datum.RegistrationEndMin!==datum.RegistrationEndMax ? 1 : 0)"
+          "expr": "(datum.OriginalDispatchBad>0 || datum.OriginalDispatchMin!==datum.OriginalDispatchMax ? 1 : 0)+(datum.LatestDispatchBad>0 || datum.LatestDispatchMin!==datum.LatestDispatchMax ? 1 : 0)+(datum.ActualDispatchBad>0 || datum.ActualDispatchMin!==datum.ActualDispatchMax ? 1 : 0)+(datum.OriginalSubmissionBad>0 || datum.OriginalSubmissionMin!==datum.OriginalSubmissionMax ? 1 : 0)+(datum.LatestSubmissionBad>0 || datum.LatestSubmissionMin!==datum.LatestSubmissionMax ? 1 : 0)+(datum.ActualSubmissionBad>0 || datum.ActualSubmissionMin!==datum.ActualSubmissionMax ? 1 : 0)+(datum.OriginalApprovalBad>0 || datum.OriginalApprovalMin!==datum.OriginalApprovalMax ? 1 : 0)+(datum.LatestApprovalBad>0 || datum.LatestApprovalMin!==datum.LatestApprovalMax ? 1 : 0)+(datum.ActualApprovalBad>0 || datum.ActualApprovalMin!==datum.ActualApprovalMax ? 1 : 0)+(!registrationLayerEnabled ? (datum.RegistrationStartBad>0 || datum.RegistrationStartMin!==datum.RegistrationStartMax ? 1 : 0)+(datum.RegistrationEndBad>0 || datum.RegistrationEndMin!==datum.RegistrationEndMax ? 1 : 0) : 0)"
         },
         {
           "type": "formula",
           "as": "missing",
-          "expr": "(!isValid(datum.OriginalDispatch) ? 1 : 0)+(!isValid(datum.LatestDispatch) ? 1 : 0)+(!isValid(datum.ActualDispatch) ? 1 : 0)+(!isValid(datum.OriginalSubmission) ? 1 : 0)+(!isValid(datum.LatestSubmission) ? 1 : 0)+(!isValid(datum.ActualSubmission) ? 1 : 0)+(!isValid(datum.OriginalApproval) ? 1 : 0)+(!isValid(datum.LatestApproval) ? 1 : 0)+(!isValid(datum.ActualApproval) ? 1 : 0)+(!isValid(datum.RegistrationStart) ? 1 : 0)"
+          "expr": "(!isValid(datum.OriginalDispatch) ? 1 : 0)+(!isValid(datum.LatestDispatch) ? 1 : 0)+(!isValid(datum.ActualDispatch) ? 1 : 0)+(!isValid(datum.OriginalSubmission) ? 1 : 0)+(!isValid(datum.LatestSubmission) ? 1 : 0)+(!isValid(datum.ActualSubmission) ? 1 : 0)+(!isValid(datum.OriginalApproval) ? 1 : 0)+(!isValid(datum.LatestApproval) ? 1 : 0)+(!isValid(datum.ActualApproval) ? 1 : 0)+(!registrationLayerEnabled && !isValid(datum.RegistrationStart) ? 1 : 0)"
         },
         {
           "type": "formula",
           "as": "partial",
-          "expr": "(datum.OriginalDispatchValid>0 && datum.OriginalDispatchValid<datum.sourceRows ? 1 : 0)+(datum.LatestDispatchValid>0 && datum.LatestDispatchValid<datum.sourceRows ? 1 : 0)+(datum.ActualDispatchValid>0 && datum.ActualDispatchValid<datum.sourceRows ? 1 : 0)+(datum.OriginalSubmissionValid>0 && datum.OriginalSubmissionValid<datum.sourceRows ? 1 : 0)+(datum.LatestSubmissionValid>0 && datum.LatestSubmissionValid<datum.sourceRows ? 1 : 0)+(datum.ActualSubmissionValid>0 && datum.ActualSubmissionValid<datum.sourceRows ? 1 : 0)+(datum.OriginalApprovalValid>0 && datum.OriginalApprovalValid<datum.sourceRows ? 1 : 0)+(datum.LatestApprovalValid>0 && datum.LatestApprovalValid<datum.sourceRows ? 1 : 0)+(datum.ActualApprovalValid>0 && datum.ActualApprovalValid<datum.sourceRows ? 1 : 0)+(datum.RegistrationStartValid>0 && datum.RegistrationStartValid<datum.sourceRows ? 1 : 0)"
+          "expr": "(datum.OriginalDispatchValid>0 && datum.OriginalDispatchValid<datum.sourceRows ? 1 : 0)+(datum.LatestDispatchValid>0 && datum.LatestDispatchValid<datum.sourceRows ? 1 : 0)+(datum.ActualDispatchValid>0 && datum.ActualDispatchValid<datum.sourceRows ? 1 : 0)+(datum.OriginalSubmissionValid>0 && datum.OriginalSubmissionValid<datum.sourceRows ? 1 : 0)+(datum.LatestSubmissionValid>0 && datum.LatestSubmissionValid<datum.sourceRows ? 1 : 0)+(datum.ActualSubmissionValid>0 && datum.ActualSubmissionValid<datum.sourceRows ? 1 : 0)+(datum.OriginalApprovalValid>0 && datum.OriginalApprovalValid<datum.sourceRows ? 1 : 0)+(datum.LatestApprovalValid>0 && datum.LatestApprovalValid<datum.sourceRows ? 1 : 0)+(datum.ActualApprovalValid>0 && datum.ActualApprovalValid<datum.sourceRows ? 1 : 0)+(!registrationLayerEnabled && datum.RegistrationStartValid>0 && datum.RegistrationStartValid<datum.sourceRows ? 1 : 0)"
         },
         {
           "type": "formula",
@@ -2262,12 +2284,12 @@
         {
           "type": "formula",
           "as": "start",
-          "expr": "min(isValid(datum.OriginalDispatch) ? datum.OriginalDispatch : (1/0),isValid(datum.LatestDispatch) ? datum.LatestDispatch : (1/0),isValid(datum.ActualDispatch) ? datum.ActualDispatch : (1/0),isValid(datum.OriginalSubmission) ? datum.OriginalSubmission : (1/0),isValid(datum.LatestSubmission) ? datum.LatestSubmission : (1/0),isValid(datum.ActualSubmission) ? datum.ActualSubmission : (1/0),isValid(datum.OriginalApproval) ? datum.OriginalApproval : (1/0),isValid(datum.LatestApproval) ? datum.LatestApproval : (1/0),isValid(datum.ActualApproval) ? datum.ActualApproval : (1/0),isValid(datum.RegistrationStart) ? datum.RegistrationStart : (1/0))"
+          "expr": "min(isValid(datum.OriginalDispatch) ? datum.OriginalDispatch : (1/0),isValid(datum.LatestDispatch) ? datum.LatestDispatch : (1/0),isValid(datum.ActualDispatch) ? datum.ActualDispatch : (1/0),isValid(datum.OriginalSubmission) ? datum.OriginalSubmission : (1/0),isValid(datum.LatestSubmission) ? datum.LatestSubmission : (1/0),isValid(datum.ActualSubmission) ? datum.ActualSubmission : (1/0),isValid(datum.OriginalApproval) ? datum.OriginalApproval : (1/0),isValid(datum.LatestApproval) ? datum.LatestApproval : (1/0),isValid(datum.ActualApproval) ? datum.ActualApproval : (1/0))"
         },
         {
           "type": "formula",
           "as": "end",
-          "expr": "max(isValid(datum.OriginalDispatch) ? datum.OriginalDispatch : -(1/0),isValid(datum.LatestDispatch) ? datum.LatestDispatch : -(1/0),isValid(datum.ActualDispatch) ? datum.ActualDispatch : -(1/0),isValid(datum.OriginalSubmission) ? datum.OriginalSubmission : -(1/0),isValid(datum.LatestSubmission) ? datum.LatestSubmission : -(1/0),isValid(datum.ActualSubmission) ? datum.ActualSubmission : -(1/0),isValid(datum.OriginalApproval) ? datum.OriginalApproval : -(1/0),isValid(datum.LatestApproval) ? datum.LatestApproval : -(1/0),isValid(datum.ActualApproval) ? datum.ActualApproval : -(1/0),isValid(datum.RegistrationStart) ? datum.RegistrationStart : -(1/0))"
+          "expr": "max(isValid(datum.OriginalDispatch) ? datum.OriginalDispatch : -(1/0),isValid(datum.LatestDispatch) ? datum.LatestDispatch : -(1/0),isValid(datum.ActualDispatch) ? datum.ActualDispatch : -(1/0),isValid(datum.OriginalSubmission) ? datum.OriginalSubmission : -(1/0),isValid(datum.LatestSubmission) ? datum.LatestSubmission : -(1/0),isValid(datum.ActualSubmission) ? datum.ActualSubmission : -(1/0),isValid(datum.OriginalApproval) ? datum.OriginalApproval : -(1/0),isValid(datum.LatestApproval) ? datum.LatestApproval : -(1/0),isValid(datum.ActualApproval) ? datum.ActualApproval : -(1/0))"
         },
         {
           "type": "formula",
@@ -3005,25 +3027,56 @@
       "name": "eventRows"
     },
     {
+      "name": "registrationCounts",
+      "source": "registrationRows",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.level===3 && isValid(datum.subKey)"
+        },
+        {
+          "type": "aggregate",
+          "groupby": [
+            "subKey"
+          ],
+          "fields": [
+            "RegistrationID"
+          ],
+          "ops": [
+            "distinct"
+          ],
+          "as": [
+            "count"
+          ]
+        }
+      ]
+    },
+    {
       "name": "displayRows",
       "source": [
         "apps",
         "ros",
         "sub",
         "eventRows",
-        "changeRows"
+        "changeRows",
+        "registrationRows"
       ],
       "transform": [
         {
           "type": "filter",
-          "expr": "changeMode ? isValid(datum.changeKey) : eventMode ? isValid(datum.eventKey) && !isValid(datum.changeKey) : !isValid(datum.eventKey) && !isValid(datum.changeKey)"
+          "expr": "isValid(datum.registrationGroup) ? datum.registrationGroup===(mode==='Hierarchy' ? groupBy : 'Application') : changeMode ? isValid(datum.changeKey) : eventMode ? isValid(datum.eventKey) && !isValid(datum.changeKey) : !isValid(datum.eventKey) && !isValid(datum.changeKey)"
+        },
+        {
+          "type": "formula",
+          "as": "orderKey",
+          "expr": "datum.level===3 && isValid(datum.subKey) ? datum.subKey : datum.key"
         },
         {
           "type": "lookup",
           "from": "orderedRows",
           "key": "key",
           "fields": [
-            "key"
+            "orderKey"
           ],
           "as": [
             "orderInfo"
@@ -3043,6 +3096,22 @@
           "type": "formula",
           "as": "rankSub",
           "expr": "isValid(datum.orderInfo) ? datum.orderInfo.rankSub : 0"
+        },
+        {
+          "type": "lookup",
+          "from": "registrationCounts",
+          "key": "subKey",
+          "fields": [
+            "key"
+          ],
+          "as": [
+            "registrationCountInfo"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "RegistrationCount",
+          "expr": "isValid(datum.registrationCountInfo) ? datum.registrationCountInfo.count : 0"
         }
       ]
     },
@@ -3106,7 +3175,7 @@
         {
           "type": "formula",
           "as": "_hi",
-          "expr": "elapsed ? (isValid(datum.ActualDispatch) && isValid(datum.end) ? max(datum.end,showRegistrationEnd && isValid(datum.RegistrationEnd) ? datum.RegistrationEnd : datum.end)-datum.ActualDispatch : null) : max(isValid(datum.end) ? datum.end : -1/0,showRegistrationEnd && isValid(datum.RegistrationEnd) ? datum.RegistrationEnd : -1/0,datum.level===2 && datum.PredictionReady ? datum.PredictionHigh : -1/0,datum.level===2 && datum.LMPrepReady ? datum.LMPrepEnd : -1/0)"
+          "expr": "elapsed ? (isValid(datum.ActualDispatch) && isValid(datum.end) ? datum.end-datum.ActualDispatch : null) : max(isValid(datum.end) ? datum.end : -1/0,datum.level===2 && datum.PredictionReady ? datum.PredictionHigh : -1/0,datum.level===2 && datum.LMPrepReady ? datum.LMPrepEnd : -1/0)"
         },
         {
           "type": "aggregate",
@@ -3134,11 +3203,11 @@
         },
         {
           "type": "filter",
-          "expr": "indexof(stateColours,datum.StateColor)>=0 || (mode==='Hierarchy' && (datum.level===-1 && indata('stateMatches','eventKey',datum.key) || datum.level===0 && indata('stateMatches','appKey',datum.key) || datum.level===1 && indata('stateMatches','roKey',datum.key)))"
+          "expr": "datum.registrationContainer || indexof(stateColours,datum.StateColor)>=0 || (mode==='Hierarchy' && (datum.level===-2 && indata('stateMatches','changeKey',datum.key) || datum.level===-1 && indata('stateMatches','eventKey',datum.key) || datum.level===0 && indata('stateMatches','appKey',datum.key) || datum.level===1 && indata('stateMatches','roKey',datum.key) || datum.level===2 && indata('stateMatches','subKey',datum.key)))"
         },
         {
           "type": "filter",
-          "expr": "mode==='Hierarchy' ? (datum.level===-2 || ((!changeMode || indata('expanded','key',datum.changeKey)) && (datum.level===-1 || ((!eventMode || indata('expanded','key',datum.eventKey)) && (datum.level===0 || (indata('expanded','key',datum.appKey) && (datum.level===1 || indata('expanded','key',datum.roKey)))))))) : datum.level===compareLevel && (!pinsOnly || indata('pinned','pinKey',datum.key))"
+          "expr": "mode==='Hierarchy' ? (datum.registrationContainer || (datum.registrationUnlinked ? indata('expanded','key',datum.appKey) : datum.level===-2 || ((!changeMode || indata('expanded','key',datum.changeKey)) && (datum.level===-1 || ((!eventMode || indata('expanded','key',datum.eventKey)) && (datum.level===0 || (indata('expanded','key',datum.appKey) && (datum.level===1 || (indata('expanded','key',datum.roKey) && (datum.level===2 || indata('expanded','key',datum.subKey))))))))))) : !datum.registrationContainer && datum.level===compareLevel && (!pinsOnly || indata('pinned','pinKey',datum.key))"
         },
         {
           "type": "formula",
@@ -3178,7 +3247,7 @@
         {
           "type": "formula",
           "as": "sortL",
-          "expr": "mode==='Hierarchy' ? datum.level : 0"
+          "expr": "mode==='Hierarchy' ? min(datum.level,2) : 0"
         },
         {
           "type": "formula",
@@ -3186,9 +3255,25 @@
           "expr": "mode==='Hierarchy' ? datum.rankSub : sortBy==='Latest target approval' ? datum.LatestSort : sortBy==='Dispatch to submission' ? (isValid(datum.DispatchDays) ? datum.DispatchDays : 8640000000000000) : sortBy==='Submission to approval' ? (isValid(datum.ApprovalDays) ? datum.ApprovalDays : 8640000000000000) : datum.CreatedSort"
         },
         {
+          "type": "formula",
+          "as": "sortRegistrationContainer",
+          "expr": "datum.registrationContainer || datum.registrationUnlinked ? 1 : 0"
+        },
+        {
+          "type": "formula",
+          "as": "sortRegistrationLevel",
+          "expr": "datum.level===3 ? 1 : 0"
+        },
+        {
+          "type": "formula",
+          "as": "sortRegistration",
+          "expr": "datum.level===3 ? datum.registrationRank*(eventDescending ? -1 : 1) : 0"
+        },
+        {
           "type": "collect",
           "sort": {
             "field": [
+              "sortRegistrationContainer",
               "sortChangeOther",
               "sortChange",
               "sortChangeLevel",
@@ -3198,6 +3283,8 @@
               "sortR",
               "sortL",
               "sortValue",
+              "sortRegistrationLevel",
+              "sortRegistration",
               "key"
             ]
           }
@@ -3206,6 +3293,7 @@
           "type": "window",
           "sort": {
             "field": [
+              "sortRegistrationContainer",
               "sortChangeOther",
               "sortChange",
               "sortChangeLevel",
@@ -3215,6 +3303,8 @@
               "sortR",
               "sortL",
               "sortValue",
+              "sortRegistrationLevel",
+              "sortRegistration",
               "key"
             ]
           },
@@ -3239,6 +3329,42 @@
           "type": "formula",
           "as": "y",
           "expr": "top+(datum.idx-scrollTop-1)*rowH"
+        },
+        {
+          "type": "formula",
+          "as": "ProductMissingIndex",
+          "expr": "isValid(datum.ProductInfo) ? indexof(pluck(datum.ProductInfo.members,'hasMissing'),1) : -1"
+        },
+        {
+          "type": "formula",
+          "as": "ProductCompactLabels",
+          "expr": "!isValid(datum.ProductInfo) || datum.ProductInfo.count<1 || datum.ProductInfo.count>3 ? null : datum.ProductInfo.count===1 ? [datum.ProductInfo.members[0+(datum.ProductMissingIndex>=0 && datum.ProductMissingIndex<=0 ? 1 : 0)].label+(datum.ProductInfo.missing ? ' *' : '')] : datum.ProductInfo.count===2 ? [datum.ProductInfo.members[0+(datum.ProductMissingIndex>=0 && datum.ProductMissingIndex<=0 ? 1 : 0)].label,datum.ProductInfo.members[1+(datum.ProductMissingIndex>=0 && datum.ProductMissingIndex<=1 ? 1 : 0)].label+(datum.ProductInfo.missing ? ' *' : '')] : [datum.ProductInfo.members[0+(datum.ProductMissingIndex>=0 && datum.ProductMissingIndex<=0 ? 1 : 0)].label,datum.ProductInfo.members[1+(datum.ProductMissingIndex>=0 && datum.ProductMissingIndex<=1 ? 1 : 0)].label,datum.ProductInfo.members[2+(datum.ProductMissingIndex>=0 && datum.ProductMissingIndex<=2 ? 1 : 0)].label+(datum.ProductInfo.missing ? ' *' : '')]"
+        },
+        {
+          "type": "lookup",
+          "from": "membershipRows",
+          "key": "key",
+          "fields": [
+            "key"
+          ],
+          "as": [
+            "membershipInfo"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "MembershipLabels",
+          "expr": "isValid(datum.membershipInfo) && isValid(datum.membershipInfo.MembershipLabels) && length(datum.membershipInfo.MembershipLabels)>0 ? slice(datum.membershipInfo.MembershipLabels,0,6) : null"
+        }
+      ]
+    },
+    {
+      "name": "expandableRows",
+      "source": "pageRows",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.level<2 || (mode==='Hierarchy' && datum.level===2 && datum.RegistrationCount>0)"
         }
       ]
     },
@@ -3326,6 +3452,10 @@
         },
         {
           "type": "filter",
+          "expr": "(!registrationLayerEnabled && datum.RegistrationCount===0) || (datum.milestone!=='RegistrationStart' && datum.milestone!=='RegistrationEnd')"
+        },
+        {
+          "type": "filter",
           "expr": "datum.milestone!=='RegistrationEnd' || showRegistrationEnd"
         },
         {
@@ -3389,7 +3519,7 @@
         },
         {
           "type": "filter",
-          "expr": "datum.d2>=datum.d1"
+          "expr": "isValid(datum.d1) && isValid(datum.d2) && datum.d2>=datum.d1"
         },
         {
           "type": "formula",
@@ -3816,6 +3946,179 @@
           "expr": "datum.row.key"
         }
       ]
+    },
+    {
+      "name": "spansContinuations",
+      "source": "spans",
+      "transform": [
+        {
+          "type": "formula",
+          "as": "_continuationSides",
+          "expr": "['left','right']"
+        },
+        {
+          "type": "flatten",
+          "fields": [
+            "_continuationSides"
+          ],
+          "as": [
+            "continuationSide"
+          ]
+        },
+        {
+          "type": "filter",
+          "expr": "isValid(datum.start) && isValid(datum.end) && datum.end>=datum.start && datum.end>=xlo && datum.start<=xhi && (datum.continuationSide==='left' ? datum.start<xlo : datum.end>xhi)"
+        }
+      ]
+    },
+    {
+      "name": "preparationWindowsContinuations",
+      "source": "preparationWindows",
+      "transform": [
+        {
+          "type": "formula",
+          "as": "_continuationSides",
+          "expr": "['left','right']"
+        },
+        {
+          "type": "flatten",
+          "fields": [
+            "_continuationSides"
+          ],
+          "as": [
+            "continuationSide"
+          ]
+        },
+        {
+          "type": "filter",
+          "expr": "isValid(datum.LMPrepStart) && isValid(datum.LMPrepEnd) && datum.LMPrepEnd>=datum.LMPrepStart && datum.LMPrepEnd>=xlo && datum.LMPrepStart<=xhi && (datum.continuationSide==='left' ? datum.LMPrepStart<xlo : datum.LMPrepEnd>xhi)"
+        }
+      ]
+    },
+    {
+      "name": "predictionsContinuations",
+      "source": "predictions",
+      "transform": [
+        {
+          "type": "formula",
+          "as": "_continuationSides",
+          "expr": "['left','right']"
+        },
+        {
+          "type": "flatten",
+          "fields": [
+            "_continuationSides"
+          ],
+          "as": [
+            "continuationSide"
+          ]
+        },
+        {
+          "type": "filter",
+          "expr": "isValid(datum.PredictionLow) && isValid(datum.PredictionHigh) && datum.PredictionHigh>=datum.PredictionLow && datum.PredictionHigh>=xlo && datum.PredictionLow<=xhi && (datum.continuationSide==='left' ? datum.PredictionLow<xlo : datum.PredictionHigh>xhi)"
+        }
+      ]
+    },
+    {
+      "name": "segmentsContinuations",
+      "source": "segments",
+      "transform": [
+        {
+          "type": "formula",
+          "as": "_continuationSides",
+          "expr": "['left','right']"
+        },
+        {
+          "type": "flatten",
+          "fields": [
+            "_continuationSides"
+          ],
+          "as": [
+            "continuationSide"
+          ]
+        },
+        {
+          "type": "filter",
+          "expr": "isValid(datum.d1) && isValid(datum.d2) && datum.d2>=datum.d1 && datum.d2>=xlo && datum.d1<=xhi && (datum.continuationSide==='left' ? datum.d1<xlo : datum.d2>xhi)"
+        }
+      ]
+    },
+    {
+      "name": "surveyWindowsContinuations",
+      "source": "surveyWindows",
+      "transform": [
+        {
+          "type": "formula",
+          "as": "_continuationSides",
+          "expr": "['left','right']"
+        },
+        {
+          "type": "flatten",
+          "fields": [
+            "_continuationSides"
+          ],
+          "as": [
+            "continuationSide"
+          ]
+        },
+        {
+          "type": "filter",
+          "expr": "isValid(datum.start) && isValid(datum.end) && datum.end>=datum.start && datum.end>=xlo && datum.start<=xhi && (datum.continuationSide==='left' ? datum.start<xlo : datum.end>xhi)"
+        }
+      ]
+    },
+    {
+      "name": "registrationPageRows",
+      "source": "pageRows",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.level===3"
+        }
+      ]
+    },
+    {
+      "name": "registrationBars",
+      "source": "registrationPageRows",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "!elapsed && isValid(datum.start) && isFinite(datum.start) && (datum.RegistrationOpenEnd || (isValid(datum.end) && isFinite(datum.end) && datum.end>=datum.start))"
+        },
+        {
+          "type": "formula",
+          "as": "drawEnd",
+          "expr": "datum.RegistrationOpenEnd ? xhi : datum.end"
+        },
+        {
+          "type": "filter",
+          "expr": "datum.drawEnd>=xlo && datum.start<=xhi"
+        }
+      ]
+    },
+    {
+      "name": "registrationBarsContinuations",
+      "source": "registrationBars",
+      "transform": [
+        {
+          "type": "formula",
+          "as": "_continuationSides",
+          "expr": "['left','right']"
+        },
+        {
+          "type": "flatten",
+          "fields": [
+            "_continuationSides"
+          ],
+          "as": [
+            "continuationSide"
+          ]
+        },
+        {
+          "type": "filter",
+          "expr": "datum.continuationSide==='left' ? datum.start<xlo : datum.RegistrationOpenEnd || datum.end>xhi"
+        }
+      ]
     }
   ],
   "scales": [
@@ -4148,7 +4451,7 @@
       "encode": {
         "update": {
           "fontSize": {
-            "signal": "mode==='Compare' && compareLevel===2 ? 12 : 13"
+            "value": 12
           },
           "baseline": {
             "value": "middle"
@@ -4157,10 +4460,10 @@
             "signal": "hierarchyW+siteW+7"
           },
           "y": {
-            "signal": "mode==='Compare' && compareLevel===2 ? 87 : 94"
+            "value": 87
           },
           "text": {
-            "signal": "mode==='Compare' && compareLevel===2 ? [\"Submission to\",\"approval (days)\"] : 'Memberships'"
+            "signal": "mode==='Compare' && compareLevel===2 ? [\"Submission to\",\"approval (days)\"] : ['Products &','countries']"
           },
           "fontWeight": {
             "value": 600
@@ -4172,7 +4475,7 @@
             "signal": "mode==='Compare' && compareLevel===2 ? \"Completed time from actual submission to actual approval. Pending rows show time waiting for approval.\" : \"Products and countries\""
           },
           "lineHeight": {
-            "value": 14
+            "value": 13
           },
           "limit": {
             "signal": "left-hierarchyW-siteW-12"
@@ -4466,12 +4769,12 @@
       "type": "rect",
       "name": "toggle",
       "from": {
-        "data": "parents"
+        "data": "expandableRows"
       },
       "encode": {
         "update": {
           "x": {
-            "signal": "8+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
+            "signal": "8+(datum.registrationContainer ? 0 : datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
           },
           "y": {
             "signal": "datum.y+11"
@@ -4495,7 +4798,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "{'Action':indata('expanded','key',datum.key) ? 'Collapse' : 'Expand','Identifier':datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded')}"
+            "signal": "{'Action':indata('expanded','key',datum.key) ? 'Collapse' : 'Expand','Identifier':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded')}"
           }
         },
         "hover": {
@@ -4509,12 +4812,12 @@
       "type": "text",
       "interactive": false,
       "from": {
-        "data": "parents"
+        "data": "expandableRows"
       },
       "encode": {
         "update": {
           "x": {
-            "signal": "16.5+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
+            "signal": "16.5+(datum.registrationContainer ? 0 : datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
           },
           "y": {
             "signal": "datum.y+19.5"
@@ -4552,25 +4855,25 @@
             "value": "middle"
           },
           "x": {
-            "signal": "31+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
+            "signal": "datum.registrationContainer ? 31 : 31+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
           },
           "y": {
             "signal": "datum.y+14"
           },
           "text": {
-            "signal": "datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded')"
+            "signal": "datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded')"
           },
           "fontWeight": {
             "value": 600
           },
           "limit": {
-            "signal": "hierarchyW-37-(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
+            "signal": "hierarchyW-37-(datum.registrationContainer ? 0 : datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
           },
           "cursor": {
             "value": "pointer"
           },
           "tooltip": {
-            "field": "shortTip"
+            "signal": "{'ID':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Action':datum.level===3 ? 'Open registration Details' : datum.level<2 || datum.RegistrationCount>0 ? 'Click name to expand; Details opens record information' : 'Open submission Details'}"
           },
           "fill": {
             "signal": "themeStateColors[datum.StateColor] || datum.StateColor"
@@ -4592,13 +4895,13 @@
             "value": "middle"
           },
           "x": {
-            "signal": "31+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
+            "signal": "datum.registrationContainer ? 31 : 31+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
           },
           "y": {
             "signal": "datum.y+32"
           },
           "text": {
-            "signal": "(datum.level===-1 ? datum.AppCount+' applications · ' : datum.level===0 ? datum.ROCount+' ROs · ' : '')+datum.n+' submissions'"
+            "signal": "datum.registrationContainer ? 'Missing or conflicting submission link' : (datum.level===-1 ? datum.AppCount+' applications · ' : datum.level===0 ? datum.ROCount+' ROs · ' : '')+datum.n+' submissions'"
           },
           "fill": {
             "signal": "themePalette.subText"
@@ -4631,7 +4934,7 @@
             "value": "middle"
           },
           "x": {
-            "signal": "43+(changeMode ? 24 : eventMode ? 12 : 0)"
+            "signal": "datum.RegistrationCount>0 && mode==='Hierarchy' ? 55+(changeMode ? 24 : eventMode ? 12 : 0) : 43+(changeMode ? 24 : eventMode ? 12 : 0)"
           },
           "y": {
             "signal": "datum.y+13"
@@ -4640,10 +4943,10 @@
             "field": "SubID"
           },
           "limit": {
-            "signal": "hierarchyW-48"
+            "signal": "max(12,hierarchyW-61-(changeMode ? 24 : eventMode ? 12 : 0))"
           },
           "tooltip": {
-            "field": "shortTip"
+            "signal": "{'ID':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Action':datum.level===3 ? 'Open registration Details' : datum.level<2 || datum.RegistrationCount>0 ? 'Click name to expand; Details opens record information' : 'Open submission Details'}"
           },
           "cursor": {
             "value": "pointer"
@@ -4668,19 +4971,19 @@
             "value": "middle"
           },
           "x": {
-            "value": 43
+            "signal": "43+(changeMode ? 24 : eventMode ? 12 : 0)"
           },
           "y": {
             "signal": "datum.y+32"
           },
           "text": {
-            "signal": "datum.SubmissionType"
+            "signal": "datum.RegistrationCount>0 ? datum.RegistrationCount+(datum.RegistrationCount===1 ? ' registration' : ' registrations') : datum.SubmissionType"
           },
           "fill": {
             "signal": "datum.issues>0 ? themePalette.issueText : themePalette.mutedText"
           },
           "limit": {
-            "signal": "hierarchyW-47"
+            "signal": "hierarchyW-48-(changeMode ? 24 : eventMode ? 12 : 0)"
           },
           "tooltip": {
             "field": "shortTip"
@@ -4742,7 +5045,7 @@
       "encode": {
         "update": {
           "fontSize": {
-            "value": 12
+            "signal": "isValid(datum.MembershipLabels) && !(mode==='Compare' && compareLevel===2) ? 11 : 12"
           },
           "baseline": {
             "value": "middle"
@@ -4751,22 +5054,22 @@
             "signal": "hierarchyW+siteW+6"
           },
           "y": {
-            "signal": "mode==='Compare' && compareLevel===2 ? datum.y+19 : datum.y+12"
+            "signal": "mode==='Compare' && compareLevel===2 ? datum.y+19 : datum.y+(isValid(datum.MembershipLabels) ? 9 : 12)"
           },
           "text": {
-            "signal": "mode==='Compare' && compareLevel===2 ? (isValid(datum.ApprovalDays) ? format(datum.ApprovalDays,'.0f')+' days' : indexof(datum.OpenAge,'Open approval ')===0 ? ['Awaiting approval',format(floor((nowDate-datum.ActualSubmission)/86400000),'.0f')+' days waiting'] : '—') : datum.ProductCountLabel"
+            "signal": "mode==='Compare' && compareLevel===2 ? (isValid(datum.ApprovalDays) ? format(datum.ApprovalDays,'.0f')+' days' : indexof(datum.OpenAge,'Open approval ')===0 ? ['Awaiting approval',format(floor((nowDate-datum.ActualSubmission)/86400000),'.0f')+' days waiting'] : '—') : isValid(datum.MembershipLabels) ? datum.MembershipLabels : isValid(datum.ProductCompactLabels) ? datum.ProductCompactLabels : datum.ProductCountLabel"
           },
           "limit": {
             "signal": "left-hierarchyW-siteW-12"
           },
           "tooltip": {
-            "signal": "mode==='Compare' && compareLevel===2 ? 'Actual submission to actual approval, in days. Waiting is measured since submission. Missing, invalid or conflicting endpoints are withheld. Select for dates in Details.' : 'Click for full product list. * includes missing values.'"
+            "signal": "mode==='Compare' && compareLevel===2 ? 'Actual submission to actual approval, in days. Waiting is measured since submission. Missing, invalid or conflicting endpoints are withheld. Select for dates in Details.' : (isValid(datum.ProductCompactLabels) ? datum.ProductInfo.detail : datum.ProductCountLabel)+(datum.ProductInfo.missing ? ' · * Some product values are missing.' : '')+' · Click for the full product and catalog lists in Details.'"
           },
           "cursor": {
             "value": "pointer"
           },
           "lineHeight": {
-            "value": 16
+            "signal": "isValid(datum.MembershipLabels) && !(mode==='Compare' && compareLevel===2) ? 11 : 16"
           },
           "fill": {
             "signal": "themePalette.text"
@@ -4783,10 +5086,10 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "max(left+3,scale(\"x\",datum.start))"
+            "signal": "min((min(width-22,max(max(left+3,scale(\"x\",datum.start))+5,scale(\"x\",datum.end)))),(max(left+3,scale(\"x\",datum.start)))+(datum.start<xlo ? 7 : 0))"
           },
           "x2": {
-            "signal": "min(width-22,max(max(left+3,scale(\"x\",datum.start))+5,scale(\"x\",datum.end)))"
+            "signal": "max(min((min(width-22,max(max(left+3,scale(\"x\",datum.start))+5,scale(\"x\",datum.end)))),(max(left+3,scale(\"x\",datum.start)))+(datum.start<xlo ? 7 : 0)),(min(width-22,max(max(left+3,scale(\"x\",datum.start))+5,scale(\"x\",datum.end))))-((datum.end>xhi) ? 7 : 0))"
           },
           "y": {
             "signal": "datum.y+12"
@@ -4816,6 +5119,38 @@
       }
     },
     {
+      "type": "path",
+      "name": "parentBarContinuation",
+      "from": {
+        "data": "spansContinuations"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "datum.continuationSide==='left' ? left+3 : width-22"
+          },
+          "y": {
+            "signal": "datum.y+21"
+          },
+          "path": {
+            "signal": "datum.continuationSide==='left' ? 'M0,0L7,-5L7,5Z' : 'M0,0L-7,-5L-7,5Z'"
+          },
+          "fill": {
+            "signal": "themeStateColors[datum.StateColor] || datum.StateColor"
+          },
+          "fillOpacity": {
+            "value": 1
+          },
+          "cursor": {
+            "value": "pointer"
+          },
+          "tooltip": {
+            "signal": "{'Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Record':datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Start':isValid(datum.start) ? utcFormat(datum.start,'%d %b %Y') : 'Not recorded','End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'Not recorded','Submissions':datum.n,'Summary':'All children in membership/search filters; state checkboxes control row visibility'}"
+          }
+        }
+      }
+    },
+    {
       "type": "rect",
       "name": "preparationRange",
       "from": {
@@ -4824,10 +5159,10 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "clamp(scale(\"x\",datum.LMPrepStart),left+3,width-22)"
+            "signal": "min((clamp(scale(\"x\",datum.LMPrepEnd),left+3,width-22)),(clamp(scale(\"x\",datum.LMPrepStart),left+3,width-22))+(datum.LMPrepStart<xlo ? 7 : 0))"
           },
           "x2": {
-            "signal": "clamp(scale(\"x\",datum.LMPrepEnd),left+3,width-22)"
+            "signal": "max(min((clamp(scale(\"x\",datum.LMPrepEnd),left+3,width-22)),(clamp(scale(\"x\",datum.LMPrepStart),left+3,width-22))+(datum.LMPrepStart<xlo ? 7 : 0)),(clamp(scale(\"x\",datum.LMPrepEnd),left+3,width-22))-((datum.LMPrepEnd>xhi) ? 7 : 0))"
           },
           "y": {
             "signal": "datum.y+32"
@@ -4855,6 +5190,38 @@
           },
           "cursor": {
             "value": "pointer"
+          }
+        }
+      }
+    },
+    {
+      "type": "path",
+      "name": "preparationRangeContinuation",
+      "from": {
+        "data": "preparationWindowsContinuations"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "datum.continuationSide==='left' ? left+3 : width-22"
+          },
+          "y": {
+            "signal": "datum.y+39"
+          },
+          "path": {
+            "signal": "datum.continuationSide==='left' ? 'M0,0L7,-5L7,5Z' : 'M0,0L-7,-5L-7,5Z'"
+          },
+          "fill": {
+            "signal": "themePalette.preparation"
+          },
+          "fillOpacity": {
+            "value": 0.65
+          },
+          "cursor": {
+            "value": "pointer"
+          },
+          "tooltip": {
+            "signal": "{'Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Estimated LM dossier preparation':datum.LMPrepLabel,'Start':utcFormat(datum.LMPrepStart,'%d %b %Y'),'Target dispatch':utcFormat(datum.LMPrepEnd,'%d %b %Y'),'Basis':datum.LMPrepAnchor,'Application':datum.AppID,'Meaning':'Country standard via application lead market; not actual preparation activity'}"
           }
         }
       }
@@ -4906,10 +5273,10 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "clamp(scale(\"x\",datum.PredictionLow),left+3,width-22)"
+            "signal": "min((clamp(scale(\"x\",datum.PredictionHigh),left+3,width-22)),(clamp(scale(\"x\",datum.PredictionLow),left+3,width-22))+(datum.PredictionLow<xlo ? 7 : 0))"
           },
           "x2": {
-            "signal": "clamp(scale(\"x\",datum.PredictionHigh),left+3,width-22)"
+            "signal": "max(min((clamp(scale(\"x\",datum.PredictionHigh),left+3,width-22)),(clamp(scale(\"x\",datum.PredictionLow),left+3,width-22))+(datum.PredictionLow<xlo ? 7 : 0)),(clamp(scale(\"x\",datum.PredictionHigh),left+3,width-22))-((datum.PredictionHigh>xhi) ? 7 : 0))"
           },
           "y": {
             "signal": "datum.y+32"
@@ -4937,6 +5304,38 @@
           },
           "cursor": {
             "value": "pointer"
+          }
+        }
+      }
+    },
+    {
+      "type": "path",
+      "name": "predictionRangeContinuation",
+      "from": {
+        "data": "predictionsContinuations"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "datum.continuationSide==='left' ? left+3 : width-22"
+          },
+          "y": {
+            "signal": "datum.y+38"
+          },
+          "path": {
+            "signal": "datum.continuationSide==='left' ? 'M0,0L7,-5L7,5Z' : 'M0,0L-7,-5L-7,5Z'"
+          },
+          "fill": {
+            "signal": "themePalette.prediction"
+          },
+          "fillOpacity": {
+            "value": 0.5
+          },
+          "cursor": {
+            "value": "pointer"
+          },
+          "tooltip": {
+            "signal": "datum.PredictionStatus==='benchmark' ? {'Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Historical approval benchmark':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Anchor':isValid(datum.PredictionAnchorLabel) && datum.PredictionAnchorLabel!=='' ? datum.PredictionAnchorLabel : 'Actual submission','Anchor date':isNumber(datum.PredictionAnchorDate) && isFinite(datum.PredictionAnchorDate) ? utcFormat(datum.PredictionAnchorDate,'%d %b %Y') : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y') : 'Not recorded','Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Actual approval':utcFormat(datum.ActualApproval,'%d %b %Y'),'Meaning':'Historical comparison with other completed submissions, not a future forecast','Timing':'Completed submission; recorded dates remain unchanged'} : {'Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Predicted approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Anchor':isValid(datum.PredictionAnchorLabel) && datum.PredictionAnchorLabel!=='' ? datum.PredictionAnchorLabel : 'Actual submission','Anchor date':isNumber(datum.PredictionAnchorDate) && isFinite(datum.PredictionAnchorDate) ? utcFormat(datum.PredictionAnchorDate,'%d %b %Y') : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y') : 'Not recorded','Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Basis':datum.PredictionFromPlan ? 'Forecast based on planned submission' : 'Estimate from actual submission date','Meaning':datum.PredictionFromPlan ? 'Conditional on the planned submission date; not a planned approval date or guarantee' : 'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionFromPlan ? 'Forecast assumes the planned submission date is met' : datum.PredictionDate<utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate)) ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
           }
         }
       }
@@ -4975,6 +5374,38 @@
           },
           "cursor": {
             "value": "pointer"
+          }
+        }
+      }
+    },
+    {
+      "type": "path",
+      "name": "connectorContinuation",
+      "from": {
+        "data": "segmentsContinuations"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "datum.continuationSide==='left' ? left+3 : width-22"
+          },
+          "y": {
+            "signal": "datum.y+10+datum.track*14"
+          },
+          "path": {
+            "signal": "datum.continuationSide==='left' ? 'M0,0L7,-3.5L7,3.5Z' : 'M0,0L-7,-3.5L-7,3.5Z'"
+          },
+          "fill": {
+            "signal": "themeStateColors[datum.StateColor] || datum.StateColor"
+          },
+          "fillOpacity": {
+            "signal": "datum.track===0 ? 0.5 : 1"
+          },
+          "cursor": {
+            "value": "pointer"
+          },
+          "tooltip": {
+            "signal": "{'Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Submission':datum.SubID,'State':datum.State,'From':datum.a,'Start date':isValid(datum[datum.a]) ? utcFormat(datum[datum.a],'%d %b %Y') : 'Not recorded','To':datum.b,'End date':isValid(datum[datum.b]) ? utcFormat(datum[datum.b],'%d %b %Y') : 'Not recorded'}"
           }
         }
       }
@@ -5439,7 +5870,7 @@
             "signal": "hierarchyW+siteW+6"
           },
           "y": {
-            "signal": "datum.y+33"
+            "signal": "datum.y+(isValid(datum.MembershipLabels) ? min(77,20+length(datum.MembershipLabels)*11) : 33+(isValid(datum.ProductCompactLabels) ? (length(datum.ProductCompactLabels)-1)*16 : 0))"
           },
           "text": {
             "signal": "mode==='Compare' && compareLevel===2 ? '' : datum.CountryCountLabel"
@@ -5569,7 +6000,7 @@
             "value": 49
           },
           "text": {
-            "value": "O ··· Original    L – – Latest    A ━ Actual     ▼ Reg start  △ Reg end"
+            "signal": "length(data('registrationRows')) ? 'O ··· Original    L – – Latest    A ━ Actual     ━ Registration validity' : 'O ··· Original    L – – Latest    A ━ Actual     ▼ Reg start  △ Reg end'"
           }
         }
       }
@@ -5592,7 +6023,7 @@
             "value": "middle"
           },
           "x": {
-            "signal": "datum.level===2 ? 43 : 31+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
+            "signal": "datum.level>=2 ? 43+(changeMode ? 24 : eventMode ? 12 : 0)+(datum.level===3 ? 12 : 0) : datum.registrationContainer ? 31 : 31+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
           },
           "y": {
             "signal": "datum.y+50"
@@ -5601,7 +6032,7 @@
             "field": "State"
           },
           "limit": {
-            "signal": "hierarchyW-48"
+            "signal": "max(12,hierarchyW-48-(changeMode ? 24 : eventMode ? 12 : 0)-(datum.level===3 ? 12 : 0))"
           },
           "tooltip": {
             "field": "shortTip"
@@ -5668,13 +6099,13 @@
             "signal": "indata('pinned','pinKey',datum.baseKey || datum.key) ? '◆' : '◇'"
           },
           "cursor": {
-            "signal": "datum.level<0 ? 'default' : 'pointer'"
+            "signal": "datum.level<0 || datum.level===3 || datum.registrationContainer ? 'default' : 'pointer'"
           },
           "tooltip": {
             "value": "Pin/unpin this row for comparison"
           },
           "opacity": {
-            "signal": "datum.level<0 ? 0 : 1"
+            "signal": "datum.level<0 || datum.level===3 || datum.registrationContainer ? 0 : 1"
           }
         }
       }
@@ -5717,10 +6148,10 @@
       "encode": {
         "update": {
           "x": {
-            "signal": "clamp(scale(\"x\",datum.start),left+3,width-22)"
+            "signal": "min((min(width-22,max(clamp(scale(\"x\",datum.start),left+3,width-22)+3,clamp(scale(\"x\",datum.end),left+3,width-22)))),(clamp(scale(\"x\",datum.start),left+3,width-22))+(datum.start<xlo ? 7 : 0))"
           },
           "x2": {
-            "signal": "max(clamp(scale(\"x\",datum.start),left+3,width-22)+3,clamp(scale(\"x\",datum.end),left+3,width-22))"
+            "signal": "max(min((min(width-22,max(clamp(scale(\"x\",datum.start),left+3,width-22)+3,clamp(scale(\"x\",datum.end),left+3,width-22)))),(clamp(scale(\"x\",datum.start),left+3,width-22))+(datum.start<xlo ? 7 : 0)),(min(width-22,max(clamp(scale(\"x\",datum.start),left+3,width-22)+3,clamp(scale(\"x\",datum.end),left+3,width-22))))-((datum.end>xhi) ? 7 : 0))"
           },
           "y": {
             "signal": "datum.y+4"
@@ -5748,6 +6179,271 @@
           },
           "cursor": {
             "value": "pointer"
+          }
+        }
+      }
+    },
+    {
+      "type": "path",
+      "name": "surveyRangeContinuation",
+      "from": {
+        "data": "surveyWindowsContinuations"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "datum.continuationSide==='left' ? left+3 : width-22"
+          },
+          "y": {
+            "signal": "datum.y+8.5"
+          },
+          "path": {
+            "signal": "datum.continuationSide==='left' ? 'M0,0L7,-4L7,4Z' : 'M0,0L-7,-4L-7,4Z'"
+          },
+          "fill": {
+            "signal": "themePalette.survey"
+          },
+          "fillOpacity": {
+            "value": 0.65
+          },
+          "cursor": {
+            "value": "pointer"
+          },
+          "tooltip": {
+            "signal": "{'Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Surveyed approval estimate':datum.duration,'Change ID':datum.change,'Assessment country':datum.country,'Earliest':utcFormat(datum.start,'%d %b %Y'),'Latest':utcFormat(datum.end,'%d %b %Y'),'Anchor':datum.anchorLabel,'Source':datum.source,'Basis':'Submission to approval; month = 30 days'}"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "name": "registrationLabel",
+      "from": {
+        "data": "registrationPageRows"
+      },
+      "encode": {
+        "update": {
+          "fontSize": {
+            "value": 13
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "x": {
+            "signal": "55+(datum.registrationUnlinked ? 0 : changeMode ? 24 : eventMode ? 12 : 0)"
+          },
+          "y": {
+            "signal": "datum.y+13"
+          },
+          "text": {
+            "field": "RegistrationID"
+          },
+          "limit": {
+            "signal": "max(12,hierarchyW-60-(datum.registrationUnlinked ? 0 : changeMode ? 24 : eventMode ? 12 : 0))"
+          },
+          "tooltip": {
+            "signal": "{'ID':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Action':datum.level===3 ? 'Open registration Details' : datum.level<2 || datum.RegistrationCount>0 ? 'Click name to expand; Details opens record information' : 'Open submission Details'}"
+          },
+          "cursor": {
+            "value": "pointer"
+          },
+          "fill": {
+            "signal": "themeStateColors[datum.StateColor] || datum.StateColor"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {
+        "data": "registrationPageRows"
+      },
+      "encode": {
+        "update": {
+          "fontSize": {
+            "value": 12
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "x": {
+            "signal": "55+(datum.registrationUnlinked ? 0 : changeMode ? 24 : eventMode ? 12 : 0)"
+          },
+          "y": {
+            "signal": "datum.y+32"
+          },
+          "text": {
+            "signal": "datum.registrationUnlinked ? 'Link needs review' : 'Registration'"
+          },
+          "fill": {
+            "signal": "datum.registrationUnlinked ? themePalette.issueText : themePalette.mutedText"
+          },
+          "limit": {
+            "signal": "max(12,hierarchyW-60-(datum.registrationUnlinked ? 0 : changeMode ? 24 : eventMode ? 12 : 0))"
+          },
+          "tooltip": {
+            "field": "shortTip"
+          },
+          "cursor": {
+            "value": "pointer"
+          }
+        }
+      },
+      "name": "registrationMeta"
+    },
+    {
+      "type": "rect",
+      "name": "registrationBar",
+      "from": {
+        "data": "registrationBars"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "min((min(width-22,max(clamp(scale('x',datum.start),left+3,width-22)+3,clamp(scale('x',datum.drawEnd),left+3,width-22)))),(clamp(scale('x',datum.start),left+3,width-22))+(datum.start<xlo ? 7 : 0))"
+          },
+          "x2": {
+            "signal": "max(min((min(width-22,max(clamp(scale('x',datum.start),left+3,width-22)+3,clamp(scale('x',datum.drawEnd),left+3,width-22)))),(clamp(scale('x',datum.start),left+3,width-22))+(datum.start<xlo ? 7 : 0)),(min(width-22,max(clamp(scale('x',datum.start),left+3,width-22)+3,clamp(scale('x',datum.drawEnd),left+3,width-22))))-((datum.drawEnd>xhi || datum.RegistrationOpenEnd) ? 7 : 0))"
+          },
+          "y": {
+            "signal": "datum.y+20"
+          },
+          "height": {
+            "value": 14
+          },
+          "cornerRadius": {
+            "value": 3
+          },
+          "fill": {
+            "signal": "themeStateColors[datum.StateColor] || datum.StateColor"
+          },
+          "stroke": {
+            "signal": "themeStateColors[datum.StateColor] || datum.StateColor"
+          },
+          "cursor": {
+            "value": "pointer"
+          },
+          "tooltip": {
+            "signal": "{'Registration':datum.RegistrationID,'Country':datum.CountryCountLabel,'State':datum.State,'Start':utcFormat(datum.start,'%d %b %Y'),'End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'Not plotted; see recorded value in Details','Link':datum.registrationUnlinked ? 'Missing or conflicting submission link' : datum.SubID,'Display':'Validity clipped to current window; excluded from Fit all'}"
+          },
+          "strokeDash": {
+            "value": [
+              1,
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "path",
+      "name": "registrationBarContinuation",
+      "from": {
+        "data": "registrationBarsContinuations"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "datum.continuationSide==='left' ? left+3 : width-22"
+          },
+          "y": {
+            "signal": "datum.y+27"
+          },
+          "path": {
+            "signal": "datum.continuationSide==='left' ? 'M0,0L7,-5L7,5Z' : 'M0,0L-7,-5L-7,5Z'"
+          },
+          "fill": {
+            "signal": "themeStateColors[datum.StateColor] || datum.StateColor"
+          },
+          "fillOpacity": {
+            "value": 1
+          },
+          "cursor": {
+            "value": "pointer"
+          },
+          "tooltip": {
+            "signal": "{'Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : datum.RegistrationOpenEnd ? 'End not plotted; see recorded value in Details' : 'Continues after visible window','Registration':datum.RegistrationID,'Country':datum.CountryCountLabel,'State':datum.State,'Start':utcFormat(datum.start,'%d %b %Y'),'End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'Not plotted; see recorded value in Details','Link':datum.registrationUnlinked ? 'Missing or conflicting submission link' : datum.SubID,'Display':'Validity clipped to current window; excluded from Fit all'}"
+          }
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "name": "rowDetailsButton",
+      "from": {
+        "data": "pageRows"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "datum.registrationContainer ? 31 : datum.level>=2 ? 43+(changeMode ? 24 : eventMode ? 12 : 0)+(datum.level===3 ? 12 : 0) : 31+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12"
+          },
+          "y": {
+            "signal": "datum.y+62"
+          },
+          "width": {
+            "value": 56
+          },
+          "height": {
+            "value": 18
+          },
+          "cornerRadius": {
+            "value": 3
+          },
+          "fill": {
+            "signal": "themePalette.control"
+          },
+          "stroke": {
+            "signal": "themePalette.controlBorder"
+          },
+          "cursor": {
+            "value": "pointer"
+          },
+          "tooltip": {
+            "signal": "'Open Details for '+(datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'))"
+          }
+        },
+        "hover": {
+          "fill": {
+            "signal": "themePalette.controlHover"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "name": "rowDetailsText",
+      "from": {
+        "data": "pageRows"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "(datum.registrationContainer ? 31 : datum.level>=2 ? 43+(changeMode ? 24 : eventMode ? 12 : 0)+(datum.level===3 ? 12 : 0) : 31+(datum.level+(changeMode ? 2 : eventMode ? 1 : 0))*12)+28"
+          },
+          "y": {
+            "signal": "datum.y+71"
+          },
+          "text": {
+            "value": "Details"
+          },
+          "fontSize": {
+            "value": 11
+          },
+          "align": {
+            "value": "center"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "fill": {
+            "signal": "themePalette.text"
+          },
+          "cursor": {
+            "value": "pointer"
+          },
+          "tooltip": {
+            "signal": "'Open Details for '+(datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'))"
           }
         }
       }

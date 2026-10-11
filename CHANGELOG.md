@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.16.0 — 2026-10-11
+
+- Add Registration below Submission in all three grouping modes, with independent state filtering, distinct counts, complete recorded metadata and link-review containers.
+- Add 17 optional registration/catalog mappings while preserving existing roles and visual upgrade identity. Keep repeated catalogs and registration memberships from inflating submission counts.
+- Preserve product, catalog and country source associations. Show compact product/catalog previews, full searchable lists and copyable catalog numbers.
+- Add a Details action on every row. Retain names for hierarchy expansion and all existing selection interactions.
+- Keep registration validity dates out of Fit all. Preserve raw far-future and missing end values in Details without asserting no expiry.
+- Show visible continuation arrowheads on all clipped interval bars; withhold invalid/reversed intervals and fix missing-date coercion in elapsed mode.
+- Keep named-registration date checks at registration level so valid different registrations cannot create false submission date conflicts.
+- Validate all grouping modes, numeric ordering, record retention, both themes, filter refreshes, large catalog lists and 10,000 distinct submissions.
+
 ## 1.10.3 — 2026-09-29
 
 - Add dispatch plans, actual dispatch, submission status and calendar-day target timing to submission Details.

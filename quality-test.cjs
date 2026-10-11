@@ -18,6 +18,29 @@ assert.equal(run([{ ...base, RegistrationEnd: '2100-12-31T23:59:59-12:00' }]).is
 assert.equal(run([{ ...base, RegistrationEnd: '2100-12-31T23:30:00-02:00' }]).issues.length, 0);
 assert.equal(run([{ ...base, RegistrationEnd: '2101-01-01T00:00:00+14:00' }]).issues.length, 0);
 
+// Validity belongs to each named registration, not to its shared submission.
+// Named-registration checks remain available in registration Details.
+{
+ const registration = require('./registrations.js');
+ const named = [
+  {...base,RegistrationID:'REG-A',RegistrationStart:'2020-01-01',RegistrationEnd:'2030-01-01',ActualSubmission:'2026-01-01'},
+  {...base,RegistrationID:'REG-B',RegistrationStart:'2021-01-01',RegistrationEnd:'2031-01-01',ActualSubmission:'2026-01-01'}
+ ], snapshot = JSON.stringify(named);
+ assert.equal(run(named).issues.length,0,'Different named registrations have independent valid intervals');
+ assert.equal(registration.prepare(named).records.length,2);
+ assert.equal(JSON.stringify(named),snapshot,'Quality checks preserve source values');
+ const workflowConflict = run([named[0],{...named[1],ActualSubmission:'2026-01-02'}]);
+ assert.equal(byRule(workflowConflict,'conflicting_dates').length,1);assert.equal(workflowConflict.issues[0].field,'ActualSubmission');
+ const legacy = named.map(({RegistrationID,...row})=>row);
+ assert.equal(byRule(run(legacy),'conflicting_dates').length,2,'Legacy unkeyed registration date checks remain active');
+ assert.equal(run([legacy[0],named[1]]).issues.length,0,'Named dates do not contaminate a legacy interval');
+ const bad = [{...named[0],RegistrationStart:'invalid'}];
+ assert.equal(run(bad).issues.length,0,'Named registration validity is audited at registration grain');
+ assert(registration.prepare(bad).records[0].RegistrationInfo.issues.some(s=>/Invalid date/.test(s)),'Invalid named registration date remains visible in registration Details');
+ const reversed = [{...named[0],RegistrationEnd:'2019-01-01'}];
+ assert(registration.prepare(reversed).records[0].RegistrationInfo.issues.some(s=>/end precedes start/.test(s)));
+}
+
 // Explicit mapping differentiates an absent role from a mapped blank value.
 result = run([{ SubID: 'SUB-A', AppID: null, ROID: null, Country: null, Manufacturer: null }]);
 assert.equal(result.issues.length, 4);
