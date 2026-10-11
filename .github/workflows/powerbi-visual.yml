@@ -8,6 +8,7 @@ on:
       - 'presentation*'
       - 'compact-timeline-test.cjs'
       - 'tracker-layout.verify.cjs'
+      - 'tracker-host-loading.verify.cjs'
       - 'tracker-browser-helpers.cjs'
       - 'registrations*'
       - 'registration-timeline-test.cjs'
@@ -110,7 +111,7 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.17.2.0.pbiviz
+          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.17.3.0.pbiviz
           cp powerbi-visual/README.md release/POWER-BI-INSTALL.md
           cp powerbi-visual/verify/preparation-light.png release/preparation-light.png
           cp powerbi-visual/verify/changes-dark.png release/changes-dark.png
@@ -139,7 +140,7 @@ jobs:
           cp powerbi-visual/verify/approval-benchmark.png release/approval-benchmark.png
           cp powerbi-visual/verify/planned-submission-forecast.png release/planned-submission-forecast.png
           cp powerbi-visual/verify/submission-date-filter.png release/submission-date-filter.png
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz registrations.js registrations-test.cjs presentation.js presentation-test.cjs compact-timeline-test.cjs tracker-layout.verify.cjs tracker-browser-helpers.cjs registration-timeline-test.cjs tracker-registration.verify.cjs continuation-test.cjs continuation-browser-test.cjs retained-records-test.cjs tracker-retained-records.verify.cjs tracker-performance.verify.cjs performance-test.cjs assessment-responses.js assessment-responses-test.cjs tracker-assessment-progress.verify.cjs changes.js changes-test.cjs tracker-changes.verify.cjs tracker-survey-country.verify.cjs states.js states-test.cjs tracker-states.verify.cjs events.js events-test.cjs tracker-events.verify.cjs powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs powerbi-visual-host-test.cjs dispatch-required.js dispatch-required-test.cjs dispatch-details.js dispatch-details-test.cjs preparation.js preparation-test.cjs tracker-preparation.verify.cjs tracker-dispatch-details.verify.cjs tracker-dispatch.verify.cjs tracker-calendar-day.verify.cjs tracker-theme.verify.cjs test-timeline-theme.cjs predictions.js prediction-test.cjs submission-period.js submission-period-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs open-end-test.cjs
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz registrations.js registrations-test.cjs presentation.js presentation-test.cjs compact-timeline-test.cjs tracker-layout.verify.cjs tracker-host-loading.verify.cjs tracker-browser-helpers.cjs registration-timeline-test.cjs tracker-registration.verify.cjs continuation-test.cjs continuation-browser-test.cjs retained-records-test.cjs tracker-retained-records.verify.cjs tracker-performance.verify.cjs performance-test.cjs assessment-responses.js assessment-responses-test.cjs tracker-assessment-progress.verify.cjs changes.js changes-test.cjs tracker-changes.verify.cjs tracker-survey-country.verify.cjs states.js states-test.cjs tracker-states.verify.cjs events.js events-test.cjs tracker-events.verify.cjs powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs powerbi-visual-host-test.cjs dispatch-required.js dispatch-required-test.cjs dispatch-details.js dispatch-details-test.cjs preparation.js preparation-test.cjs tracker-preparation.verify.cjs tracker-dispatch-details.verify.cjs tracker-dispatch.verify.cjs tracker-calendar-day.verify.cjs tracker-theme.verify.cjs test-timeline-theme.cjs predictions.js prediction-test.cjs submission-period.js submission-period-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs open-end-test.cjs
           cd release && sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
@@ -149,11 +150,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view v1.17.2 >/dev/null 2>&1; then
-            gh release create v1.17.2 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.17.2" --notes "Speeds up loading and interactions by filtering hierarchy records before copying, deferring catalog and formatted-date details until selected, and avoiding duplicate record cloning. Accumulated Power BI data batches render once when complete, with progress and a clear partial-data notice when more rows cannot be fetched. Retains field mappings, IDs, memberships, filters and every milestone. Includes model isolation, host batching and full browser regression checks. Built from commit $GITHUB_SHA."
+          if ! gh release view v1.17.3 >/dev/null 2>&1; then
+            gh release create v1.17.3 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.17.3" --notes "Restores rendering of each accumulated Power BI batch before requesting more data, retaining the model and chart performance improvements. Partial counts are clearly labelled during loading. Includes asynchronous fetch-order checks and actual browser visual paging tests. Same field mappings, IDs, dates and layout. Compatibility rollback following a reported Service DAX query failure; resolution in the affected Service report remains unconfirmed. Built from commit $GITHUB_SHA."
           else
-            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.17.2" -f sha="$GITHUB_SHA" -F force=false
-            gh release edit v1.17.2 --target "$GITHUB_SHA" --notes "Speeds up loading and interactions by filtering hierarchy records before copying, deferring catalog and formatted-date details until selected, and avoiding duplicate record cloning. Accumulated Power BI data batches render once when complete, with progress and a clear partial-data notice when more rows cannot be fetched. Retains field mappings, IDs, memberships, filters and every milestone. Includes model isolation, host batching and full browser regression checks. Built from commit $GITHUB_SHA."
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.17.3" -f sha="$GITHUB_SHA" -F force=false
+            gh release edit v1.17.3 --target "$GITHUB_SHA" --notes "Restores rendering of each accumulated Power BI batch before requesting more data, retaining the model and chart performance improvements. Partial counts are clearly labelled during loading. Includes asynchronous fetch-order checks and actual browser visual paging tests. Same field mappings, IDs, dates and layout. Compatibility rollback following a reported Service DAX query failure; resolution in the affected Service report remains unconfirmed. Built from commit $GITHUB_SHA."
           fi
-          gh release upload v1.17.2 release/* --clobber
+          gh release upload v1.17.3 release/* --clobber
 

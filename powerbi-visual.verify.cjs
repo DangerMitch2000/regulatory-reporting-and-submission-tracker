@@ -1,7 +1,7 @@
 /* Browser harness runs the actual Visual class with a synthetic Power BI table. */
 const fs=require('fs'),path=require('path');const out=process.argv[2]||'powerbi-visual';
 fs.mkdirSync(path.join(out,'verify'),{recursive:true});
-for(const file of ['tracker-browser-helpers.cjs','tracker-layout.verify.cjs'])fs.copyFileSync(path.join(__dirname,file),path.join(out,'verify',file));
+for(const file of ['tracker-browser-helpers.cjs','tracker-layout.verify.cjs','tracker-host-loading.verify.cjs'])fs.copyFileSync(path.join(__dirname,file),path.join(out,'verify',file));
 for(const file of ['assessment-responses-test.cjs','tracker-assessment-progress.verify.cjs','assessment-responses.js','changes.js','events.js','states.js','dispatch-details.js','quality.js','dispatch-required.js'])fs.copyFileSync(path.join(__dirname,file),path.join(out,'verify',file));
 fs.copyFileSync(path.join(__dirname,'tracker-survey-country.verify.cjs'),path.join(out,'verify/tracker-survey-country.verify.cjs'));
 for(const file of ['retained-records-test.cjs','tracker-retained-records.verify.cjs'])fs.copyFileSync(path.join(__dirname,file),path.join(out,'verify',file));
@@ -151,6 +151,7 @@ await require('./tracker-retained-records.verify.cjs')(page,{outputDir:__dirname
 await require('./tracker-states.verify.cjs')(page,{outputDir:__dirname});
 await require('./tracker-registration.verify.cjs')(page,{outputDir:__dirname});
 await require('./tracker-layout.verify.cjs')(page,{outputDir:__dirname});
+await require('./tracker-host-loading.verify.cjs')(page,{navigate:false});
 assert.deepEqual(errors,[]);console.log('PASS: actual Visual class, CSP interpreter, 60 submissions, five filters, search, comparison, details, list search/paging, refresh/resize, empty data, isolated instances, quality filters/conflicts, distinct counts, 30,000-row deduplication, full CSV and rejected-export fallback; no page errors.');
 }finally{await browser.close();server.close();}})().catch(e=>{console.error(e);process.exit(1)});
 `);

@@ -1,8 +1,14 @@
-# Regulatory Tracker 1.17.2
+# Regulatory Tracker 1.17.3
 
-[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.17.2 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.17.2) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.17.2/regulatory-tracker-1.17.2.0.pbiviz)
+[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.17.3 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.17.3) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.17.3/regulatory-tracker-1.17.3.0.pbiviz)
 
 Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
+
+## Power BI data-loading compatibility — version 1.17.3
+
+Restore the earlier data-fetch order: process and render each accumulated batch before requesting the next batch from Power BI. While more data is being requested, the visible notice makes clear that counts reflect loaded rows only. A final batch clears the loading notice; a refused request retains a partial-data warning. Resize updates do not fetch data again, and superseded updates cannot request old query pages.
+
+This is a targeted rollback of the batch-request timing introduced in 1.17.2, following a reported query failure in Power BI Service. The reported Service query cannot be reproduced by the local browser host, so this release is a compatibility change rather than a confirmed fix for that report. All model and chart-processing optimizations remain, along with the same fields, IDs, dates and layout. No new field mappings are required. Import the package in Desktop, then republish the report to update its Service visual.
 
 ## Faster loading and interactions — version 1.17.2
 

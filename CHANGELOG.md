@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.17.3 — 2026-10-11
+
+- Restore rendering of each accumulated Power BI data batch before requesting the next batch, as a compatibility rollback of the request timing introduced in 1.17.2.
+- Show an explicit partial-count loading notice during paging and a limitation notice when more rows cannot be fetched. Preserve accumulated-row replacement, stale-update guards and resize handling.
+- Keep the model and chart-processing performance improvements, unchanged field mappings, all milestone dates and existing compact layout.
+- Verify fetch order against asynchronous rendering, request refusal, filter refresh and destruction, and exercise accumulated batches with the actual browser visual.
+- The reported Power BI Service DAX query failure remains unconfirmed in a real Service environment; this release does not claim a verified fix for that report.
+
 ## 1.17.2 — 2026-10-11
 
 - Reduce loading and interaction work by filtering inactive hierarchies and collapsed rows before copying full records, narrowing date-domain tuples, and preparing formatted Details only for the selected record.
