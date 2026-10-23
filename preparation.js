@@ -20,6 +20,7 @@
  function analyze(rows,options={}){
   const mapped=new Set(options.mappedFields||rows.flatMap(r=>Object.keys(r))),applications=new Map(),submissions=new Map(),result=new Map();
   const dispatch=options.dispatchSummaries||dispatchDetails.analyze(rows,options);
+  const now=new Date(options.now||Date.now()),today=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
   // Read all delivered rows before local filters. A child cannot pick a different
   // country duration merely because its destination/product was filtered.
   for(const row of rows){
@@ -28,7 +29,7 @@
    if(sub){if(!submissions.has(sub))submissions.set(sub,new Set());submissions.get(sub).add(app);}
   }
   for(const [id,apps]of submissions){
-   const record={status:'unavailable',reason:'',start:null,end:null,duration:'',application:'',anchor:'',calendarDays:null};
+   const record={status:'unavailable',reason:'',start:null,end:null,duration:'',application:'',anchor:'',anchorField:'',calendarDays:null};
    const fail=reason=>{record.reason=reason;result.set(id,record);};
    if(!mapped.has('LMPrepDuration')){fail('Map LM Dossier Preparation Timeline to enable the estimate.');continue;}
    if(apps.size!==1||apps.has('')){fail('Application is missing or conflicting; preparation estimate withheld.');continue;}
@@ -39,10 +40,20 @@
    const summary=dispatch.get(id);
    if(summary?.required.key==='false'){record.status='not-required';fail('Dispatch is not required; no pre-dispatch preparation window is drawn.');continue;}
    if(summary?.required.key==='review'){fail('Dispatch requirement is invalid or conflicting; preparation estimate withheld.');continue;}
-   if(summary?.target.state!=='valid'){fail('No usable dispatch plan. Map the latest or original dispatch plan and check missing, invalid or conflicting values.');continue;}
-   const end=summary.target.day,start=subtract(end,duration);
+   const actual=summary?.dates?.ActualDispatch;let endpoint,anchor,anchorField;
+   // Recorded dispatch takes precedence over plans. Unusable populated actual
+   // evidence must not turn completed activity back into a planned estimate.
+   if(actual&&!['blank','unmapped'].includes(actual.state)){
+    if(actual.state!=='valid'){fail('Actual dispatch date is invalid or conflicting; preparation estimate withheld.');continue;}
+    if(actual.day>today){fail('Actual dispatch date is in the future; preparation estimate withheld.');continue;}
+    endpoint=actual;anchor='Actual dispatch';anchorField='ActualDispatch';
+   }else{
+    if(summary?.target.state!=='valid'){fail('No usable dispatch plan. Map the latest or original dispatch plan and check missing, invalid or conflicting values.');continue;}
+    endpoint=summary.target;anchor=summary.targetLabel;anchorField=summary.dates.LatestDispatch.state==='valid'?'LatestDispatch':'OriginalDispatch';
+   }
+   const end=endpoint.day,start=subtract(end,duration);
    if(!Number.isFinite(start)||start<Date.UTC(1900,0,1)||start>=end){fail('Estimated preparation start is outside the supported date range.');continue;}
-   Object.assign(record,{status:'estimated',reason:'Country standard supplied through the application relationship; not actual preparation activity.',start,end,anchor:summary.targetLabel,calendarDays:Math.round((end-start)/DAY)});result.set(id,record);
+   Object.assign(record,{status:'estimated',reason:'Country standard supplied through the application relationship; not actual preparation activity.',start,end,anchor,anchorField,calendarDays:Math.round((end-start)/DAY)});result.set(id,record);
   }
   return result;
  }

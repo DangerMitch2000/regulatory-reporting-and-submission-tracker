@@ -1,16 +1,17 @@
-# Regulatory Tracker 1.18.0
+# Regulatory Tracker 1.18.1
 
-The tracker now opens centred on today in a 90-day window. Use **Today** to return after panning, or **Fit all** to fit the workflow dates. Data refresh and resizing keep your chosen window, and registration validity dates remain excluded from Fit all.
+The estimated LM dossier preparation window now ends at a valid **actual dispatch date**. Its start is calculated backwards using the existing application standard duration. This is an estimated window, not a recorded preparation start or measured time spent.
 
-- **Compact, adjustable columns:** product names use up to two lines, countries one, and manufacturing sites two lines total. Drag a column boundary to resize it; double-click a boundary to reset the widths. Full values remain in hover and Details.
-- **Clickable hierarchy counts:** click RO, Sub or Reg counts to reveal the matching children in that branch. A single result opens Details; multiple results are shown as a list.
-- **Consistent dates:** full dates display as `DD MMM YYYY`, such as `23 Oct 2026`, in Details, tooltips, copied text, date filters and data-quality views. Axis labels stay compact and raw diagnostic values remain available.
-- **Parent-bar navigation:** clicking a parent bar, including its continuation arrow, expands or collapses its children and opens Details. Record names and childless bars open Details.
+- If actual dispatch is blank or unmapped, use latest planned dispatch, then original planned dispatch only when latest is also blank or unmapped.
+- Invalid or conflicting higher-priority dates withhold the estimate. A future actual dispatch date also withholds it without plan fallback; future planned dates remain eligible. A valid actual dispatch date can still anchor it when dispatch plans are missing, invalid or conflicting; source-plan diagnostics remain available.
+- Keep one month equal to 30 calendar days and one week equal to 7 days. Invalid or conflicting preparation durations still withhold estimates. Dispatch required=False still suppresses the preparation bar.
+- Restore milestone dates correctly when switching Calendar → Elapsed days → Calendar, including repeated switches. Elapsed positions are recalculated from preserved source dates.
+- Keep all navigation and layout improvements from 1.18.0, with no new fields or field remapping.
 
-Verification covers compact layouts, browser scaling, drag/pan separation, filtered count navigation, data refresh, all workflow dates, and synthetic scenarios with 10,000 submissions and 10,000 registrations. These checks run in a local/browser Power BI visual host; they do not measure your report's model or network queries.
+The release workflow includes the preparation source tests and actual-visual browser checks before packaging. Power BI Desktop/Service import remains subject to the report's model and tenant settings.
 
 ## Install the update
 
-Download **regulatory-tracker-1.18.0.0.pbiviz** from this release. In Power BI Desktop, use the Visualizations menu to import the visual from the downloaded file and accept the update to the existing visual. Save the report and republish it to update the browser report.
+Download **regulatory-tracker-1.18.1.0.pbiviz** from this release. In Power BI Desktop, import the file through the Visualizations menu and accept replacement of the existing visual. Save the report and republish it to update the browser report.
 
-The visual keeps its existing identity and field mappings. No additional fields or relationship changes are required for this update. This remains an uncertified preview release.
+The visual keeps its existing GUID and field roles. This remains an uncertified preview release.

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.18.1 — 2026-10-23
+
+Power BI package: **1.18.1.0**. The visual GUID and field roles are unchanged; no field remapping is required.
+
+- End the estimated LM dossier preparation window at a valid actual dispatch date. Calculate its start backwards from the existing application standard duration; do not claim a recorded preparation start or actual time spent.
+- Fall back to latest planned dispatch only when actual dispatch is blank or unmapped, and to original planned dispatch only when latest is also blank or unmapped. Withhold estimates for invalid or conflicting higher-priority dates, and for future actual dispatch without plan fallback. Future planned dates remain valid planning anchors. Allow valid actual dispatch to anchor the window even when plans are missing or invalid.
+- Keep fixed-duration conversion (one month = 30 calendar days; one week = 7 days), preparation-duration validation and Dispatch required=False suppression unchanged. Preserve independent dispatch-plan diagnostics and existing milestone dates.
+- Restore milestone dates correctly after switching Calendar → Elapsed days → Calendar. Recalculate elapsed positions from preserved source dates so repeated view changes do not overwrite them.
+- Retain the 1.18.0 navigation, date formatting, compact wrapping and adjustable-column behavior.
+
 ## 1.18.0 — 2026-10-23
 
 Power BI package: **1.18.0.0**. The visual GUID and field roles are unchanged; existing reports require no field remapping.

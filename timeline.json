@@ -3811,7 +3811,7 @@
           ],
           "as": [
             "milestone",
-            "date"
+            "actualDate"
           ]
         },
         {
@@ -3824,13 +3824,8 @@
         },
         {
           "type": "formula",
-          "as": "actualDate",
-          "expr": "datum.date"
-        },
-        {
-          "type": "formula",
           "as": "date",
-          "expr": "elapsed ? (isValid(datum.date) && isValid(datum.ActualDispatch) ? datum.date-datum.ActualDispatch : null) : datum.date"
+          "expr": "elapsed ? (isValid(datum.actualDate) && isValid(datum.ActualDispatch) ? datum.actualDate-datum.ActualDispatch : null) : datum.actualDate"
         },
         {
           "type": "filter",
@@ -3868,7 +3863,7 @@
           ],
           "as": [
             "a",
-            "d1"
+            "sourceDate1"
           ]
         },
         {
@@ -3878,22 +3873,22 @@
         },
         {
           "type": "formula",
-          "as": "d2",
+          "as": "sourceDate2",
           "expr": "datum[datum.b]"
         },
         {
           "type": "filter",
-          "expr": "isValid(datum.d1) && isValid(datum.d2) && datum.d2>=datum.d1"
+          "expr": "isValid(datum.sourceDate1) && isValid(datum.sourceDate2) && datum.sourceDate2>=datum.sourceDate1"
         },
         {
           "type": "formula",
           "as": "d1",
-          "expr": "elapsed ? (isValid(datum.ActualDispatch) ? datum.d1-datum.ActualDispatch : null) : datum.d1"
+          "expr": "elapsed ? (isValid(datum.ActualDispatch) ? datum.sourceDate1-datum.ActualDispatch : null) : datum.sourceDate1"
         },
         {
           "type": "formula",
           "as": "d2",
-          "expr": "elapsed ? (isValid(datum.ActualDispatch) ? datum.d2-datum.ActualDispatch : null) : datum.d2"
+          "expr": "elapsed ? (isValid(datum.ActualDispatch) ? datum.sourceDate2-datum.ActualDispatch : null) : datum.sourceDate2"
         },
         {
           "type": "filter",
@@ -5712,7 +5707,7 @@
             "value": 3
           },
           "tooltip": {
-            "signal": "{'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Estimated LM dossier preparation':datum.LMPrepLabel,'Start':utcFormat(datum.LMPrepStart,'%d %b %Y'),'Target dispatch':utcFormat(datum.LMPrepEnd,'%d %b %Y'),'Basis':datum.LMPrepAnchor,'Application':datum.AppID,'Meaning':'Country standard via application lead market; not actual preparation activity'}"
+            "signal": "{'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Estimated LM dossier preparation':datum.LMPrepLabel,'Start':utcFormat(datum.LMPrepStart,'%d %b %Y'),'Finish / dispatch':utcFormat(datum.LMPrepEnd,'%d %b %Y'),'Basis':datum.LMPrepAnchor,'Application':datum.AppID,'Meaning':'Country standard via application lead market; not actual preparation activity'}"
           },
           "cursor": {
             "value": "pointer"
@@ -5747,7 +5742,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "{'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Estimated LM dossier preparation':datum.LMPrepLabel,'Start':utcFormat(datum.LMPrepStart,'%d %b %Y'),'Target dispatch':utcFormat(datum.LMPrepEnd,'%d %b %Y'),'Basis':datum.LMPrepAnchor,'Application':datum.AppID,'Meaning':'Country standard via application lead market; not actual preparation activity'}"
+            "signal": "{'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Estimated LM dossier preparation':datum.LMPrepLabel,'Start':utcFormat(datum.LMPrepStart,'%d %b %Y'),'Finish / dispatch':utcFormat(datum.LMPrepEnd,'%d %b %Y'),'Basis':datum.LMPrepAnchor,'Application':datum.AppID,'Meaning':'Country standard via application lead market; not actual preparation activity'}"
           }
         }
       }
@@ -5782,7 +5777,7 @@
             "signal": "clamp(scale(\"x\",datum.LMPrepEnd),left+3,width-22)-(clamp(scale(\"x\",datum.LMPrepStart),left+3,width-22))>=75 ? 1 : 0"
           },
           "tooltip": {
-            "signal": "{'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Estimated LM dossier preparation':datum.LMPrepLabel,'Start':utcFormat(datum.LMPrepStart,'%d %b %Y'),'Target dispatch':utcFormat(datum.LMPrepEnd,'%d %b %Y'),'Basis':datum.LMPrepAnchor,'Application':datum.AppID,'Meaning':'Country standard via application lead market; not actual preparation activity'}"
+            "signal": "{'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Estimated LM dossier preparation':datum.LMPrepLabel,'Start':utcFormat(datum.LMPrepStart,'%d %b %Y'),'Finish / dispatch':utcFormat(datum.LMPrepEnd,'%d %b %Y'),'Basis':datum.LMPrepAnchor,'Application':datum.AppID,'Meaning':'Country standard via application lead market; not actual preparation activity'}"
           },
           "cursor": {
             "value": "pointer"

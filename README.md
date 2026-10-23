@@ -1,8 +1,18 @@
-# Regulatory Tracker 1.18.0
+# Regulatory Tracker 1.18.1
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.18.0/regulatory-tracker-1.18.0.0.pbiviz) · [Version 1.18.0 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.18.0) · [Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.18.1/regulatory-tracker-1.18.1.0.pbiviz) · [Version 1.18.1 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.18.1) · [Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/)
 
-Released **23 Oct 2026** · Power BI package **1.18.0.0**. This is an uncertified preview; public demo records are fictional.
+Released **23 Oct 2026** · Power BI package **1.18.1.0**. This is an uncertified preview; public demo records are fictional.
+
+## What's new in 1.18.1
+
+The **estimated LM dossier preparation window** now ends at a valid actual dispatch date. The start is calculated backwards using the existing application standard duration; it does not represent a recorded preparation start or actual time spent preparing.
+
+When actual dispatch is blank or unmapped, the estimate uses latest planned dispatch, then original planned dispatch only when latest is also blank or unmapped. An invalid, conflicting or future actual dispatch date withholds the estimate instead of silently falling back to a plan. Future planned dates remain valid planning anchors. A valid actual date can still anchor the estimate when dispatch plans are missing, invalid or conflicting; those source-plan issues remain available for review.
+
+One month still means **30 calendar days** and one week **7 days**. Missing, invalid or conflicting preparation durations still withhold the estimate, and **Dispatch required = False** still suppresses the preparation bar. No new fields or field remapping are required. The navigation and layout changes from 1.18.0 remain in place.
+
+Switching from Calendar to Elapsed days and back now restores milestone dates correctly. Elapsed positions are recalculated from preserved source dates, so repeated view changes do not overwrite those dates.
 
 ## What's new in 1.18.0
 
@@ -15,7 +25,7 @@ Released **23 Oct 2026** · Power BI package **1.18.0.0**. This is an uncertifie
 
 ## Upgrade or import in Power BI
 
-1. Download **regulatory-tracker-1.18.0.0.pbiviz** from the release link above.
+1. Download **regulatory-tracker-1.18.1.0.pbiviz** from the release link above.
 2. In Power BI Desktop, choose **Visualizations (…) → Import a visual from a file**, select the package, and confirm replacement if prompted. Keep the existing visual instance: the visual GUID and field roles are unchanged, so **no field remapping or new mappings are required** for this update.
 3. Check the upgraded tracker, save the report, and republish it to update the visual in Power BI Service. Reload the report in the browser after publication.
 
@@ -261,9 +271,12 @@ Event dates are optional. Both valid, consistent dates are needed for the event'
 After replacing the Power BI visual, map the four fields. If an existing visual instance does not pick up the updated layout, insert a fresh instance and remap its fields. Public demo examples are fictional.
 
 ## LM dossier preparation — version 1.11.0
+
+Historical introduction: the planned-only dispatch anchor described below was superseded in **1.18.1** by actual dispatch first, then latest/original plans when the higher-priority field is blank or unmapped. See the current preparation rules above.
+
 Map just one new optional field: **LM Dossier Preparation Timeline** (`LMPrepDuration`) from the country survey, related through the application lead-market country. Each child inherits its application standard. Values such as `1 month`, `2 months`, `3 weeks` or `45 days` are accepted; months use **30 calendar days**, weeks use 7 days. These are planning allowances, not actual preparation time or statistical confidence ranges. Purple bars end at latest planned dispatch, falling back to original only when latest is blank or unmapped. Existing source milestones, parent lifecycle bars and approval estimates are unchanged. Missing, invalid or conflicting durations/dispatch targets withhold the estimate; explicit Dispatch required=False draws no preparation bar. Details explains unavailable estimates. No new country or start/end date role is required.
 
-If both dispatch plans are missing, Details retains the preparation duration but no dated bar is drawn. Import the new package and map this one additional field; no other new mappings are required.
+In the original 1.11.0 behavior, missing dispatch plans withheld the dated bar. From 1.18.1, a valid actual dispatch date can anchor it even when both plans are missing. The existing optional preparation-duration mapping is still used; no additional mapping is required for the correction.
 
 ## New in 1.10.3: Dispatch details
 
@@ -287,7 +300,7 @@ For the Tracker, Roadmap, IVDR, Key Submissions and Site Regulatory Plan, map yo
 
 | Visual | Download | Demo |
 | --- | --- | --- |
-| Regulatory Tracker 1.18.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.18.0/regulatory-tracker-1.18.0.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
+| Regulatory Tracker 1.18.1 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.18.1/regulatory-tracker-1.18.1.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
 | Registration Overview / Roadmap 1.5.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.5.0/roadmap-2026-1.5.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap-preview.html) |
 | IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |
 | Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/key-preview.html) |

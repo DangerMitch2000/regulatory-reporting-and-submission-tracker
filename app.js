@@ -18,7 +18,7 @@
  const duration=x=>x==null?'Not recorded / withheld':Math.round(x)+' days';
  document.body.dataset.theme='dark';
  try{
-  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.18.0');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();prepareQuality();qualityPanel=qualityUI.mount($('quality-view'),{exportWorklist});
+  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.18.1');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();prepareQuality();qualityPanel=qualityUI.mount($('quality-view'),{exportWorklist});
   for(const {key,label} of dispatchRequired.options){const option=el('option',label);option.value=key;$('dispatch-required').append(option);}$('dispatch-required').value='all';$('dispatch-required').onchange=()=>filter();
   const showQuality=enabled=>{$('quality-view').hidden=!enabled;$('timeline-view').hidden=enabled;$('bindings').hidden=enabled;requestLayout();$('timeline-tab').setAttribute('aria-pressed',String(!enabled));$('quality-tab').setAttribute('aria-pressed',String(enabled));$('tooltip').hidden=true;};
   $('quality-tab').onclick=()=>showQuality(true);$('timeline-tab').onclick=()=>showQuality(false);
@@ -238,10 +238,10 @@
   function renderPreparation(body,p){
    const section=el('section',undefined,'preparation-card');section.append(el('h3','Estimated LM dossier preparation'));
    if(p?.status==='estimated'){
-    const list=el('dl');for(const [label,value]of [['Application standard',p.duration],['Preparation allowance',p.calendarDays+' calendar days (1 month = 30 days)'],['Estimated preparation start',date(p.start)],['Target finish / planned dispatch',date(p.end)],['Basis',p.anchor]])list.append(el('dt',label),el('dd',value));section.append(list);
-    section.append(el('p','Standard supplied through the application’s lead-market country relationship. Child submissions use their own dispatch targets.','muted'));
+    const list=el('dl');for(const [label,value]of [['Application standard',p.duration],['Preparation allowance',p.calendarDays+' calendar days (1 month = 30 days)'],['Estimated preparation start',date(p.start)],[p.anchorField==='ActualDispatch'?'Preparation finish / actual dispatch':'Target finish / planned dispatch',date(p.end)],['Basis',p.anchor]])list.append(el('dt',label),el('dd',value));section.append(list);
+    section.append(el('p','Standard supplied through the application’s lead-market country relationship. Each submission uses its actual dispatch date when available, otherwise its latest or original dispatch plan.','muted'));
    }else {if(p?.duration)section.append(el('p','Application standard: '+p.duration+' (1 month = 30 calendar days).'));section.append(el('p',p?.reason||'Preparation estimate unavailable.'));}
-   section.append(el('p','Planning estimate only. Actual preparation start and time spent preparing are not recorded.','muted'));body.append(section);
+   section.append(el('p','Estimated duration window only. Actual preparation start and time spent preparing are not recorded.','muted'));body.append(section);
   }
   function renderDispatchDetails(body,summary){
    if(!summary)return;
