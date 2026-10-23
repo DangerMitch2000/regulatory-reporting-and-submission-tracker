@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const assert = require('node:assert/strict');
 const path = require('node:path');
-const vega = require('./vega.js');
+const vega = require('./vega-test-setup.cjs');
 const spec = JSON.parse(fs.readFileSync(path.join(__dirname, 'timeline.json'), 'utf8'));
 const day = 86400000;
 const date = value => Date.parse(value + 'T00:00:00Z');
@@ -22,6 +22,7 @@ async function create(rows, signals = {}) {
   view.change('dataset', vega.changeset().insert(rows.map(row => ({ ...row }))));
   for (const [key, value] of Object.entries(signals)) view.signal(key, value);
   await view.runAsync();
+  if (!Object.hasOwn(signals, 'range')) { view.signal('range', null); await view.runAsync(); }
   return view;
 }
 

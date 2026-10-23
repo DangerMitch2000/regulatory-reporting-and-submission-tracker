@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');
-const vega=require('./vega'),spec=require('./timeline.json'),registrations=require('./registrations'),events=require('./events'),changes=require('./changes');
+const vega=require('./vega-test-setup.cjs'),spec=require('./timeline.json'),registrations=require('./registrations'),events=require('./events'),changes=require('./changes');
 const DAY=86400000,at=n=>Date.UTC(2026,0,1)+n*DAY;
 const base={AppID:'APP-1',ROID:'RO-1',SubID:'SUB-1',AppStatus:'Active',ROStatus:'In Progress',SubStatus:'Planned',EventName:'EVENT-1',EventState:'Planned State',ChangeID:'CHANGE-1',ChangeQMS:'QMS-1',EventQMS:'QMS-1',ChangeStatus:'In Progress',Manufacturer:'Site A',Product:'Product A',Country:'Country A',OriginalDispatch:at(0),LatestSubmission:at(30),LatestApproval:at(60)};
 const rows=[

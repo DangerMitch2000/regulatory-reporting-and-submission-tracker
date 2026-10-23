@@ -83,18 +83,22 @@ async function verify(page, {url,outputDir}) {
     assert.match(await page.locator('#host #tooltip').innerText(),/Continues (before|after) visible window/,category.mark+' explains its continuation');
     // A small pointer movement begun on an arrow must never initiate background pan.
     const box=await arrow.boundingBox();
+    const expandedBeforeDrag=await page.evaluate(()=>window.__themeVisual.app.view.data('expanded').map(d=>d.key));
     await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();
     await page.mouse.move(box.x+box.width/2+20,box.y+box.height/2,{steps:4});await page.mouse.up();
     assert.deepEqual((await windowState()).range,before.range,category.mark+' pointer drag does not pan');
+    assert.deepEqual(await page.evaluate(()=>window.__themeVisual.app.view.data('expanded').map(d=>d.key)),expandedBeforeDrag,category.mark+' pointer drag does not toggle hierarchy');
     await page.mouse.move(1,1);
     const expandedBefore=await page.evaluate(()=>window.__themeVisual.app.view.data('expanded').map(d=>d.key));
     await page.evaluate(async()=>{const v=window.__themeVisual.app.view;v.signal('selectedKey',null);await v.runAsync();});
     await arrow.click();
     await page.waitForFunction(key=>window.__themeVisual.app.view.signal('selectedKey')===key,datum.key);
     assert.equal(await page.locator('#host #selected-details').evaluate(node=>node.open),true,category.mark+' opens Details');
-    assert.deepEqual(await page.evaluate(()=>window.__themeVisual.app.view.data('expanded').map(d=>d.key)),expandedBefore,category.mark+' never expands on a bar click');
+    const expectedExpansion=category.parent?(expandedBefore.includes(datum.key)?expandedBefore.filter(key=>key!==datum.key):[...expandedBefore,datum.key]):expandedBefore;
+    assert.deepEqual((await page.evaluate(()=>window.__themeVisual.app.view.data('expanded').map(d=>d.key))).sort(),expectedExpansion.slice().sort(),category.parent?'Parent continuation toggles its children':'Comparison continuation only opens Details');
     if(!category.parent)assert.match(await page.locator('#host #detail-body').innerText(),/SUB-00003/);
     await page.locator('#host #selected-details').evaluate(node=>node.open=false);
+    if(category.parent){await arrow.click();await page.waitForFunction(({key,expanded})=>window.__themeVisual.app.view.data('expanded').some(d=>d.key===key)===expanded,{key:datum.key,expanded:expandedBefore.includes(datum.key)});assert.deepEqual((await page.evaluate(()=>window.__themeVisual.app.view.data('expanded').map(d=>d.key))).sort(),expandedBefore.slice().sort(),'Second continuation click restores child expansion');await page.locator('#host #selected-details').evaluate(node=>node.open=false);}
     assert.deepEqual((await windowState()).range,before.range,category.mark+' click keeps dates fixed');
     // Exact endpoints and fully off-screen bars should not create misleading arrows.
     await setRange([record.start,record.end]);await assertArrows();
@@ -132,7 +136,7 @@ async function verify(page, {url,outputDir}) {
   await page.waitForFunction(()=>window.__themeVisual.app.view.signal('width')<1000);
   await assertArrows();await root.screenshot({path:path.join(outputDir,'continuations-compact.png')});
   assert.deepEqual(errors,[],'Actual Visual has no browser errors');
-  console.log('PASS: all five bar continuation categories, viewport edges and offscreen handling, parent/child/range Details without expansion, no arrow pan, Ctrl+wheel and Shift+wheel with stable rows/page, dynamic ranges, both themes and compact rendering.');
+  console.log('PASS: all five bar continuation categories, viewport edges and offscreen handling, parent hierarchy expansion, comparison Details, no arrow drag expansion/pan, Ctrl+wheel and Shift+wheel with stable rows/page, dynamic ranges, both themes and compact rendering.');
 }
 
 async function main(){

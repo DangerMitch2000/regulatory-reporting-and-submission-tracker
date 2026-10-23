@@ -12,7 +12,7 @@ const rows=[
 ];
 module.exports=rows;
 if(require.main===module)(async()=>{
- const vega=require('./vega'),spec=require('./timeline.json'),events=require('./events'),changes=require('./changes');
+ const vega=require('./vega-test-setup.cjs'),spec=require('./timeline.json'),events=require('./events'),changes=require('./changes');
  const errors=[],view=new vega.View(vega.parse(spec),{renderer:'none'}).logger({level:()=>0,error:e=>errors.push(String(e)),warn(){},info(){},debug(){}}).initialize();
  try{
   view.change('dataset',vega.changeset().remove(()=>true).insert([...rows,...rows]));await view.runAsync();assert.deepEqual(errors,[]);

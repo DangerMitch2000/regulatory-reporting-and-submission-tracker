@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
-const vega = require('./vega.js');
+const vega = require('./vega-test-setup.cjs');
 const spec = JSON.parse(fs.readFileSync(path.join(__dirname, 'timeline.json'), 'utf8'));
 const date = value => Date.parse(value + 'T00:00:00Z');
 const canonicalColors = spec.signals.find(signal => signal.name === 'stateColours').value;

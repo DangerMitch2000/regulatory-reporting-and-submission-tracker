@@ -3,7 +3,7 @@ module.exports=async(page,{outputDir})=>{
  await page.goto('http://127.0.0.1:8771/index.html');await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
  await page.evaluate(rows=>window.__dispatchSend([...rows,...rows]),rows);
  await page.locator('#host #filter-status').filter({hasText:'1 change IDs · 1 events · 1 applications · 1 ROs · 3 submissions'}).waitFor();
- await page.locator('#host select[name=groupBy]').selectOption('Change initiation');await page.locator('#host .selectGroup text').first().click();await page.locator('#host #selected-details').evaluate(e=>e.open=true);
+ await page.locator('#host select[name=groupBy]').selectOption('Change initiation');await page.locator('#host .parentLabel text').first().click();await page.locator('#host #selected-details').evaluate(e=>e.open=true);
  for(const theme of ['dark','light']){
   await page.locator('#host #theme-select').selectOption(theme);
   await page.locator('#host .country-progress').waitFor();assert.equal(await page.locator('#host .country-progress tbody tr').count(),4);

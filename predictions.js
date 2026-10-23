@@ -113,7 +113,7 @@
       if (value.state === 'unmapped') return { date: null, field, label, state: 'unmapped', reason: label + ' is not mapped; lower-priority dates are withheld.' };
       if (!value.present) continue;
       if (value.state !== 'valid') return { date: null, field, label, state: value.state, reason: label + (value.state === 'conflicting' ? ' has conflicting dates across membership rows.' : ' contains an invalid date.') };
-      if (value.day >= SUBMISSION_LIMIT) return { date: null, field, label, state: 'invalid', reason: label + ' is after 31 December 2100 and is withheld.' };
+      if (value.day >= SUBMISSION_LIMIT) return { date: null, field, label, state: 'invalid', reason: label + ' is after 31 Dec 2100 and is withheld.' };
       return { date: value.day, field, label, state: 'valid', reason: 'Using ' + label.toLowerCase() + '.' };
     }
     return { date: null, field: null, label: 'Submission date', state: 'missing', reason: 'No actual or planned submission date was supplied.' };

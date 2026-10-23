@@ -13,15 +13,18 @@
  const dispatchDetails=window.regulatoryDispatchDetails;let dispatchSummaries=new Map();
  const preparation=window.regulatoryPreparation;let preparationEstimates=new Map();
  const run=fn=>queue=queue.then(fn).catch(error=>{status.textContent='Could not update the chart: '+error.message;console.error(error);});
- const date=x=>x==null||!Number.isFinite(x)?'Not recorded':new Date(x).toISOString().slice(0,10);
+ const dateFormat=window.regulatoryDateFormat,date=x=>dateFormat.format(x);
+ const textWrap=window.regulatoryTextWrap,navigation=window.regulatoryHierarchyNavigation;
  const duration=x=>x==null?'Not recorded / withheld':Math.round(x)+' days';
  document.body.dataset.theme='dark';
  try{
-  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.17.3');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();prepareQuality();qualityPanel=qualityUI.mount($('quality-view'),{exportWorklist});
+  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.18.0');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();prepareQuality();qualityPanel=qualityUI.mount($('quality-view'),{exportWorklist});
   for(const {key,label} of dispatchRequired.options){const option=el('option',label);option.value=key;$('dispatch-required').append(option);}$('dispatch-required').value='all';$('dispatch-required').onchange=()=>filter();
   const showQuality=enabled=>{$('quality-view').hidden=!enabled;$('timeline-view').hidden=enabled;$('bindings').hidden=enabled;requestLayout();$('timeline-tab').setAttribute('aria-pressed',String(!enabled));$('quality-tab').setAttribute('aria-pressed',String(enabled));$('tooltip').hidden=true;};
   $('quality-tab').onclick=()=>showQuality(true);$('timeline-tab').onclick=()=>showQuality(false);
   // These are genuine Vega HTML input bindings, also included in the Deneb deliverable.
+  textWrap.register(vega);
+  vega.expressionFunction('trackerHierarchyCounts',navigation.counts);
   view=new vega.View(vega.parse(spec),{renderer:'svg',hover:true}).initialize(chart,$('bindings')).tooltip((h,event,item,value)=>{
    const tip=$('tooltip');if(value==null){tip.hidden=true;return;}tip.replaceChildren();for(const [k,v]of Object.entries(typeof value==='object'?value:{Details:value})){tip.append(el('strong',k+': '),el('span',String(v)),el('br'));}tip.hidden=false;tip.style.left=Math.max(6,Math.min(event.clientX+12,innerWidth-330))+'px';tip.style.top=Math.max(6,Math.min(event.clientY+12,innerHeight-160))+'px';
   });
@@ -58,12 +61,12 @@
   }
   const dateBox=$('submission-date-filter');dateBox.reset=()=>{$('submission-period').value='all';$('submission-from').value='';$('submission-to').value='';updateDateControl();};
   dateBox.ontoggle=()=>{if(dateBox.open)for(const other of $('filters').querySelectorAll('details'))if(other!==dateBox)other.open=false;};
-  $('submission-period').onchange=()=>{updateDateControl();filter();};for(const id of ['submission-from','submission-to'])$(id).onchange=()=>{updateDateControl();filter();};
+  $('submission-period').onchange=()=>{updateDateControl();filter();};for(const id of ['submission-from','submission-to'])$(id).onchange=()=>{const input=$(id),parsed=dateFormat.parse(input.value);if(parsed!==null&&Number.isFinite(parsed))input.value=date(parsed);updateDateControl();filter();};
   $('clear-submission-period').onclick=()=>{dateBox.reset();filter();};
   $('reset-filters').onclick=()=>{qualityPanel.reset();$('dispatch-required').value='all';for(const set of Object.values(stateExcluded))set.clear();stateSignature='';for(const box of $('filters').querySelectorAll('details'))box.reset();filterBoxes.forEach(f=>f.refresh());run(async()=>{view.signal('query','');await view.runAsync();});filter();};
   const resize=new ResizeObserver(entries=>{const {width,height}=entries[0].contentRect;run(()=>{const next={width:Math.max(720,width),height:Math.max(280,height)},previous=view.signal('denebContainer');if(previous.width!==next.width||previous.height!==next.height)return view.signal('denebContainer',next).runAsync();});});resize.observe(chart);
   let pan=null,panFrame=null,panTarget=null,ignorePanClick=false;
-  const panDown=e=>{const rect=chart.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;if(e.button!==0||x<=view.signal('left')||x>=view.signal('width')-22||y<view.signal('top')||y>=view.signal('viewBottom')||e.target.closest('.parentBar,.milestone,.connector,.predictionRange,.predictionApproval,.preparationRange,.preparationLabel,.surveyRange,.pin,.parentBarContinuation,.preparationRangeContinuation,.predictionRangeContinuation,.connectorContinuation,.surveyRangeContinuation,.registrationBar,.registrationBarContinuation,.registrationLabel,.registrationMeta,.externalLink'))return;pan={x:e.clientX,lo:view.signal('xlo'),hi:view.signal('xhi'),width:Math.max(1,view.signal('width')-view.signal('left')),moved:false};chart.setPointerCapture(e.pointerId);};
+  const panDown=e=>{const rect=chart.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;if(e.button!==0||x<=view.signal('left')||x>=view.signal('width')-22||y<view.signal('top')||y>=view.signal('viewBottom')||e.target.closest('.parentBar,.milestone,.connector,.predictionRange,.predictionApproval,.preparationRange,.preparationLabel,.surveyRange,.pin,.parentBarContinuation,.preparationRangeContinuation,.predictionRangeContinuation,.connectorContinuation,.surveyRangeContinuation,.registrationBar,.registrationBarContinuation,.registrationLabel,.registrationMeta,.externalLink,.columnHandle'))return;pan={x:e.clientX,lo:view.signal('xlo'),hi:view.signal('xhi'),width:Math.max(1,view.signal('width')-view.signal('left')),moved:false};chart.setPointerCapture(e.pointerId);};
   const panMove=e=>{if(!pan)return;const dx=e.clientX-pan.x;if(Math.abs(dx)<3&&!pan.moved)return;pan.moved=true;chart.style.cursor='grabbing';panTarget=[pan.lo-dx*(pan.hi-pan.lo)/pan.width,pan.hi-dx*(pan.hi-pan.lo)/pan.width];if(panFrame===null)panFrame=requestAnimationFrame(()=>{panFrame=null;const next=panTarget;run(()=>view.signal('range',next).runAsync());});};
   const panUp=e=>{if(!pan)return;ignorePanClick=pan.moved;pan=null;chart.style.cursor='';if(chart.hasPointerCapture(e.pointerId))chart.releasePointerCapture(e.pointerId);};
   const panClick=e=>{if(ignorePanClick){e.preventDefault();e.stopImmediatePropagation();ignorePanClick=false;}};
@@ -75,6 +78,7 @@
   for(const name of ['groupBy','eventDescending','selectedKey','query','mode','compareLevel','pinsOnly','pinClick','showRegistrationEnd','sortBy','axisMode'])view.addSignalListener(name,()=>{clearTimeout(timer);timer=setTimeout(()=>{updateStatus();renderDetails();updateControls();},0);});
   view.addSignalListener('detailsRequest',(name,value)=>{if(value>0)run(async()=>{detail.open=true;renderDetails();});});
   view.addSignalListener('externalLinkRequest',(name,value)=>{if(value?.url)openRecordURL(value.url);});
+  view.addSignalListener('countNavigateRequest',(name,value)=>{if(value?.key&&Number.isInteger(value.level))run(()=>showCountChildren(value));});
   $('open-record').onclick=()=>{const row=view.data('selectedRow')[0];if(row)openRecordURL(presentationIndex.get(row.key)?.RecordURL);};
   // The separate browser details list has full native caret, paste and selection behaviour.
   $('list-search').oninput=e=>{detailQuery=e.target.value;detailPage=0;renderDetails();};
@@ -92,6 +96,24 @@
   await filter();$('bindings').append($('clear-pins'));updateControls();
   // POWERBI_MOUNT_READY
   function openRecordURL(url){const result=presentation.launchURL(url,window.regulatoryLaunchUrl);Promise.resolve(result).then(outcome=>{if(!outcome.opened)$('copy-status').textContent=outcome.reason;});}
+  async function showCountChildren(request){
+   if(view.signal('mode')!=='Hierarchy')return;
+   const allowed=new Set();for(const row of view.data('stateMatches'))for(const field of ['key','changeKey','eventKey','appKey','roKey','subKey'])if(row[field])allowed.add(row[field]);
+   const available=view.data('displayRows').filter(row=>row.registrationContainer||allowed.has(row.key)),plan=navigation.plan(available,request.key,request.level);
+   if(!plan.targetKeys.length)return;
+   const expanded=new Set(view.data('expanded').map(row=>row.key)),add=plan.expandKeys.filter(key=>!expanded.has(key)).map(key=>({key}));
+   if(add.length)view.change('expanded',vega.changeset().insert(add));
+   await view.runAsync();
+   const targets=new Set(plan.targetKeys),target=view.data('visible').filter(row=>targets.has(row.key)).sort((a,b)=>a.idx-b.idx)[0];
+   if(!target)return;const index=target.idx-1;
+   if(plan.targetKeys.length===1){
+    view.signal('selectedKey',target.key);await view.runAsync();
+    detail.open=true;document.body.classList.add('details-expanded');renderDetails();updateLayout();
+    // Resolve the smaller chart viewport before clamping the target row.
+    await view.signal('denebContainer',{width:Math.max(720,chart.clientWidth),height:Math.max(280,chart.clientHeight)}).runAsync();
+   }
+   await view.signal('rowRequest',{pos:index}).runAsync();updateStatus();renderDetails();
+  }
   function copyBodyText(node){const clone=node.cloneNode(true);for(const fold of clone.querySelectorAll('details'))fold.open=true;clone.style.position='absolute';clone.style.left='-100000px';clone.style.width='900px';document.body.append(clone);const value=clone.innerText;clone.remove();return value;}
   function preparePredictions(){const opts={now:new Date(),...(qualityMappedFields?{mappedFields:qualityMappedFields}:{})};submissionDates=predictions.resolveSubmissionDates(rows,opts);unidentifiedDates=new Map(rows.filter(row=>!norm(row.SubID)).map(row=>[row,predictions.resolveSubmissionDates([{...row,SubID:'_unidentified_'}],opts).get('_unidentified_')]));predictionAnalysis=predictionFieldsMissing.length?{bySubID:new Map()}:predictions.analyze(rows,opts);refreshDateChoices();}
   function chosenPeriod(){return submissionPeriod.compile({mode:$('submission-period').value,from:$('submission-from').value,to:$('submission-to').value});}
@@ -139,11 +161,11 @@
   function renderRegistrationDetails(body,row){
    const section=el('section',undefined,'registration-details');
    if(row.registrationContainer){section.append(el('p','These registrations have a missing or conflicting submission link, or their linked submission is not delivered in this hierarchy. They remain listed and counted as registrations, without creating submission records.'));body.append(section);return;}
-   const info=row.RegistrationInfo,grid=el('div',undefined,'registration-grid'),read=field=>info?.values[field]?.join('\n')||'Not recorded',readDate=key=>{const d=info?.dates[key];return Number.isFinite(d?.value)?new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}).format(new Date(d.value)):d?.label||'Not recorded';};
+   const info=row.RegistrationInfo,grid=el('div',undefined,'registration-grid'),read=field=>info?.values[field]?.join('\n')||'Not recorded',readDate=key=>{const d=info?.dates[key];return Number.isFinite(d?.value)?date(d.value):d?.label||'Not recorded';};
    const columns=[['Registration',[['Registration ID / name',read('RegistrationID')],['Registration number',read('RegistrationNumber')],['Country',read('RegistrationCountry')],['State',read('RegistrationState')],['Start date',readDate('start')],['End date',readDate('end')],['SKU',read('RegistrationSKU')]]],['Manufacturing & scope',[['Registration manufacturing site',read('RegistrationManufacturingSite')],['Legal manufacturer',row.ManufacturerInfo?.detail||'Not recorded'],['Holder',read('RegistrationHolder')],['Health authority',read('RegistrationAuthority')],['Region',read('RegistrationRegion')],['Division',read('RegistrationDivision')],['Product family',read('RegistrationProductFamily')],['Application type',read('RegistrationApplicationType')]]],['Marketing & renewal',[['Marketing status',read('RegistrationMarketingStatus')],['Renewal required',read('RegistrationRenewalRequired')],['Renewal start',readDate('renewalStart')],['Renewal target',readDate('renewalTarget')]]]];
    for(const [title,fields]of columns){const box=el('section'),dl=el('dl');box.append(el('h3',title));for(const [label,value]of fields)dl.append(el('dt',label),el('dd',value));box.append(dl);grid.append(box);}section.append(grid);
    section.append(el('h3','Comments'),el('p',read('RegistrationComments'),'assessment-documentation'));
-   const raw=el('details',undefined,'source-values');raw.append(el('summary','Recorded date values'),el('pre',Object.entries({Start:info?.dates.start,End:info?.dates.end,'Renewal start':info?.dates.renewalStart,'Renewal target':info?.dates.renewalTarget}).map(([label,d])=>label+': '+(d?.rawValues.join(' / ')||'Not recorded')).join('\n')));section.append(raw);
+   const raw=el('details',undefined,'source-values');raw.append(el('summary','Recorded date values'),el('pre',Object.entries({Start:info?.dates.start,End:info?.dates.end,'Renewal start':info?.dates.renewalStart,'Renewal target':info?.dates.renewalTarget}).map(([label,d])=>label+': '+(d?.rawValues.map(value=>dateFormat.recorded(value)).join(' / ')||'Not recorded')).join('\n')));section.append(raw);
    if(row.registrationUnlinked)section.append(el('strong',info?.link.issue||'Linked submission unavailable in this hierarchy','registration-link-warning'));
    const help=el('details',undefined,'source-values');help.append(el('summary','How registration dates are shown'),el('p','Colour follows the recorded registration state. Missing end dates and dates beyond 2100 are shown as continuing intervals, without asserting that the registration has no expiry. Registration dates do not change Fit all or submission processing times.','muted'));section.append(help);body.append(section);
   }
@@ -152,7 +174,7 @@
    const row=view.data('selectedRow')[0],body=$('detail-body'),lists=$('member-lists');body.replaceChildren();lists.replaceChildren();
    if(selectedKey!==view.signal('selectedKey')){selectedKey=view.signal('selectedKey');detailQuery='';$('list-search').value='';detailPage=0;detail.querySelector('.detail-content').scrollTop=0;}
    $('open-record').hidden=true;$('record-link-message').hidden=true;$('copy-id').disabled=!row;$('copy-details').disabled=!row;
-   if(!row){$('detail-title').textContent=selectedKey?'Details · selection outside current filters':'Details · select a record name or bar';body.append(el('p','Select a record name or bar for details. Use plus or minus to expand or collapse children.'));$('detail-tools').hidden=true;return;}
+   if(!row){$('detail-title').textContent=selectedKey?'Details · selection outside current filters':'Details · select a record name or bar';body.append(el('p','Select a record name or bar for Details. Click a parent bar or use plus/minus to expand or collapse children.'));$('detail-tools').hidden=true;return;}
    $('detail-tools').hidden=false;const id=recordID(row),extra=presentationIndex.get(row.key);$('open-record').hidden=!extra?.RecordURL;if(extra?.RecordURLIssue&&extra.RecordURLIssue!=='Source URL not recorded.'){$('record-link-message').textContent=extra.RecordURLIssue;$('record-link-message').hidden=false;}
    $('detail-title').textContent='Details · '+id+' · '+row.State;
    const heading=el('h2',id),badge=el('span',row.State,'state-badge');badge.style.color=view.signal('themeStateColors')[row.StateColor]||row.StateColor;heading.style.color=view.signal('themeStateColors')[row.StateColor]||row.StateColor;heading.append(badge);body.append(heading);
@@ -182,10 +204,11 @@
   function renderChangeDetails(body,row){
  const rs=relatedRecords(row),section=el('section',undefined,'change-details');section.append(el('h3','Change initiation & linked records'));
  const unique=f=>[...new Set(rs.filter(r=>row.level!==-2||!row.ChangeID||!['EventName','AppID','ROID','SubID'].includes(f)||changes.linked(r)).map(r=>norm(r[f])).filter(Boolean))];
+ const dateValues=(records,f)=>[...new Set(records.map(r=>r[f]).filter(value=>value!==null&&value!==undefined&&String(value).trim()!=='').map(value=>dateFormat.recorded(value)))];
  const links=el('div',undefined,'change-links');for(const [label,f]of [['Change IDs','ChangeID'],['Events','EventName'],['Applications','AppID'],['ROs','ROID'],['Submissions','SubID'],['Registrations','RegistrationID']])links.append(el('p',label+': '+(unique(f).join(' · ')||'Not recorded')));section.append(links);
- if(row.level===0||row.level===1){section.append(el('p','Created: '+(unique(row.level===0?'AppCreated':'ROCreated').join(' / ')||'Not recorded')),el('p','Child timeline span: '+date(row.start)+' – '+date(row.end)));}
+ if(row.level===0||row.level===1){section.append(el('p','Created: '+(dateValues(rs,row.level===0?'AppCreated':'ROCreated').join(' / ')||'Not recorded')),el('p','Child timeline span: '+date(row.start)+' – '+date(row.end)));}
  const ids=unique('ChangeID');
- for(const id of ids){const evidence=rs.filter(r=>norm(r.ChangeID)===id),dl=el('dl');dl.append(el('dt','Change ID'),el('dd',id));for(const [label,f]of [['Project ID','ChangeProjectID'],['QMS reference','ChangeQMS'],['Status','ChangeStatus'],['Created','ChangeCreated'],['Planned implementation','ChangePlannedImplementation'],['Response due','ChangeResponseDue'],['Response count','ChangeResponseCount']]){const values=[...new Set(evidence.map(r=>norm(r[f])).filter(Boolean))];dl.append(el('dt',label),el('dd',values.join(' / ')||'Not recorded'));}section.append(dl);}
+ for(const id of ids){const evidence=rs.filter(r=>norm(r.ChangeID)===id),dl=el('dl');dl.append(el('dt','Change ID'),el('dd',id));for(const [label,f]of [['Project ID','ChangeProjectID'],['QMS reference','ChangeQMS'],['Status','ChangeStatus'],['Created','ChangeCreated'],['Planned implementation','ChangePlannedImplementation'],['Response due','ChangeResponseDue'],['Response count','ChangeResponseCount']]){const display=['ChangeCreated','ChangePlannedImplementation','ChangeResponseDue'].includes(f)?dateValues(evidence,f):[...new Set(evidence.map(r=>norm(r[f])).filter(Boolean))];dl.append(el('dt',label),el('dd',display.join(' / ')||'Not recorded'));}section.append(dl);}
  if(row.level===-2){section.append(el('p','Planned implementation: '+(row.ChangePlanLabel||'Not recorded')));}
  if(row.level===-2&&row.ChangeID)renderCountryProgress(section,rs,relatedIndex?.assessments.get(row.ChangeID));
  const responseRecords=row.level===2?changes.countryResponses(rs,relatedIndex):rs;

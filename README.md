@@ -1,8 +1,27 @@
-# Regulatory Tracker 1.17.3
+# Regulatory Tracker 1.18.0
 
-[Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [Version 1.17.3 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.17.3) · [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.17.3/regulatory-tracker-1.17.3.0.pbiviz)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.18.0/regulatory-tracker-1.18.0.0.pbiviz) · [Version 1.18.0 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.18.0) · [Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/)
 
-Import the updated package into Power BI. The stable visual GUID preserves upgrade identity. This is an uncertified preview; verify the import in your report. Public demo records are fictional.
+Released **23 Oct 2026** · Power BI package **1.18.0.0**. This is an uncertified preview; public demo records are fictional.
+
+## What's new in 1.18.0
+
+- **Today and navigation:** the calendar starts in a 90-day window centred on today, with 45 days on each side. **Today** returns to that window. Data refresh and resizing preserve your chosen pan/zoom window. **Fit all** fits workflow dates and excludes registration validity dates.
+- **Compact labels:** products use up to two lines, countries one, and manufacturing sites two lines total, keeping the existing compact row height. Full names remain available on hover; complete product, country and catalog associations stay in Details.
+- **Resizable columns:** drag a column divider to adjust its width. Double-click any divider to reset all column widths. A minimum timeline width remains available, and resizing a column does not pan the dates.
+- **Clickable counts:** click an Event, App, RO, Sub or Reg count to reveal the matching children in that branch. One matching record opens its Details; multiple records are revealed without changing the current selection or filters. Counts and source associations remain unchanged.
+- **Consistent dates:** full dates use **DD MMM YYYY**, for example **09 Sep 2026**, in Details, tooltips, copied text, date filters and data-quality views. Short axis labels stay compact. Diagnostics retain explicitly labelled raw source evidence; underlying dates and calculations are unchanged.
+- **Parent-bar expansion:** clicking a parent bar expands or collapses its children and opens Details. Names and childless bars open Details; plus/minus still controls expansion. Continuation arrows follow their bar's behaviour. Dragging and comparison mode do not toggle the hierarchy.
+
+## Upgrade or import in Power BI
+
+1. Download **regulatory-tracker-1.18.0.0.pbiviz** from the release link above.
+2. In Power BI Desktop, choose **Visualizations (…) → Import a visual from a file**, select the package, and confirm replacement if prompted. Keep the existing visual instance: the visual GUID and field roles are unchanged, so **no field remapping or new mappings are required** for this update.
+3. Check the upgraded tracker, save the report, and republish it to update the visual in Power BI Service. Reload the report in the browser after publication.
+
+For a new report, add the imported visual and map your existing source identifiers and dates to its named field wells. Use raw Date/DateTime columns rather than Date hierarchies. Existing optional registration, catalog, site and URL mappings remain supported.
+
+The versioned sections below document earlier releases and their field mappings. Where older interaction or layout descriptions differ, use the current controls described above. See [CHANGELOG.md](CHANGELOG.md) for the release history.
 
 ## Power BI data-loading compatibility — version 1.17.3
 
@@ -268,7 +287,7 @@ For the Tracker, Roadmap, IVDR, Key Submissions and Site Regulatory Plan, map yo
 
 | Visual | Download | Demo |
 | --- | --- | --- |
-| Regulatory Tracker 1.15.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.15.0/regulatory-tracker-1.15.0.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
+| Regulatory Tracker 1.18.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.18.0/regulatory-tracker-1.18.0.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
 | Registration Overview / Roadmap 1.5.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.5.0/roadmap-2026-1.5.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap-preview.html) |
 | IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |
 | Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/key-preview.html) |

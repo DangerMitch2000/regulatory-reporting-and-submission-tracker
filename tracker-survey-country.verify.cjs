@@ -27,6 +27,7 @@ module.exports=async(page,{outputDir})=>{
   await page.locator('#host .change-details').filter({hasText:'MX certificate'}).waitFor();assert.match(await page.locator('#host .change-details').innerText(),/HU certificate/);
   // Render the matched range in the actual chart, not just in its data table.
   await page.locator('#host select[name=mode]').selectOption('Compare');
+  await page.locator('#host .timeText text').filter({hasText:/^Fit all$/}).click();
   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));await page.evaluate(async()=>{const v=window.__themeVisual.app.view;v.signal('rowRequest',{pos:v.data('visible').findIndex(r=>r.SubID==='S-Hungary')});await v.runAsync();});await page.locator('#host .subLabel text').filter({hasText:/^S-Hungary$/}).click();
   assert.equal(await page.locator('#host .surveyRange path').count(),2,'Only Hungary and Mexico have usable ranges');
   await page.locator('#host').screenshot({path:path.join(outputDir,'survey-country-'+theme+'.png')});

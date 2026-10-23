@@ -8,6 +8,7 @@ const named=r=>r.filter(x=>x.level===3);
  const prepared=registration.prepare(source),p=parent(),result=registration.attach(prepared,[p]);
  assert.equal(prepared.records.length,2);assert.equal(result.count,2);assert.equal(named(result.registrationRows).length,2);assert.equal(result.rows.filter(r=>r.level===2).length,1);assert.equal(p.RegistrationID,undefined,'Never mutate original hierarchy rows');
  const r=result.registrationRows[0];assert.equal(r.subKey,p.key);assert.equal(r.level,3);assert.equal(r.State,'Approved');assert.equal(r.RegistrationInfo.values.RegistrationCountry[0],'France');assert.equal(r.start,Date.UTC(2021,8,28));assert.equal(r.end,Date.UTC(2031,8,27));
+ assert.equal(r.RegistrationInfo.dates.start.label,'28 Sep 2021');assert.equal(r.shortTip['Registration end'],'27 Sep 2031');assert.deepEqual(r.RegistrationInfo.dates.start.rawValues,['2021-09-28'],'Display formatting preserves exact date evidence');
  assert.deepEqual(r.CatalogGroups.map(g=>[g.product,g.country,g.codes]),[['Product A','France',['0001','0002']],['Product B','Germany',['0007']]]);
  const repeated=registration.attach(prepared,[parent(),parent({key:'event-sub:S1',eventKey:'event:1',EventName:'Event 1'})],'Regulatory event');assert.equal(repeated.count,2);assert.equal(named(repeated.registrationRows).length,4);assert.equal(new Set(repeated.registrationRows.map(r=>r.key)).size,4);assert.equal(repeated.registrationRows[0].registrationGroup,'Regulatory event');
 }
@@ -33,7 +34,7 @@ const named=r=>r.filter(x=>x.level===3);
  const source=[sample({Product:'',CatalogNumber:'001,002'}),sample({CatalogNumber:'0001',RegistrationID:'R1'}),sample({CatalogNumber:'0001',RegistrationID:'R2'}),sample({CatalogNumber:0,RegistrationID:'R2'})];const groups=registration.catalogGroups(source);assert(groups.some(g=>g.product===''&&g.codes[0]==='001,002'),'Opaque catalog code remains intact with missing product');assert.equal(groups.filter(g=>g.codes.includes('0001')).length,2,'Keep each registration association');assert(groups.some(g=>g.codes.includes('0')));assert.equal(registration.prepare([sample({RegistrationID:null})]).records.length,0,'No fabricated registration ID');
 }
 {
- const vega=require('./vega.js'),liveParent=vega.ingest(parent()),source=[sample(),sample({RegistrationID:'REG-2',RegistrationState:'Expired'})],prepared=registration.prepare(source),first=registration.attach(prepared,[liveParent]);
+ const vega=require('./vega-test-setup.cjs'),liveParent=vega.ingest(parent()),source=[sample(),sample({RegistrationID:'REG-2',RegistrationState:'Expired'})],prepared=registration.prepare(source),first=registration.attach(prepared,[liveParent]);
  assert(Object.getOwnPropertySymbols(liveParent).length>0,'Fixture uses actual Vega tuple metadata');
  assert.equal(first.rows[0],liveParent,'Normal hierarchy tuples retain their existing identity');
  for(const row of first.registrationRows)assert.equal(Object.getOwnPropertySymbols(row).length,0,'New children must not inherit submission tuple IDs');

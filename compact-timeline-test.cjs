@@ -1,13 +1,16 @@
-const assert=require('node:assert/strict'),vega=require('./vega'),spec=require('./timeline.json'),registrations=require('./registrations'),changes=require('./changes');
+const assert=require('node:assert/strict'),vega=require('./vega-test-setup.cjs'),spec=require('./timeline.json'),registrations=require('./registrations'),changes=require('./changes');
 const DAY=86400000,at=d=>Date.UTC(2026,0,1)+d*DAY;
 const source=Array.from({length:12},(_,i)=>({AppID:'APP-'+Math.floor(i/4),ROID:'RO-'+Math.floor(i/2),SubID:'SUB-'+i,AppStatus:'Active',ROStatus:'In Progress',SubStatus:'Planned',Manufacturer:'ABO',Product:'Product A',Country:'Ireland',OriginalDispatch:at(i),OriginalSubmission:at(i+10),ActualDispatch:at(i+1),ActualSubmission:at(i+12),LatestApproval:at(i+45),RegistrationID:'REG-'+i,RegistrationState:'Approved',RegistrationCountry:'Ireland',RegistrationStart:'2020-01-01',RegistrationEnd:'2030-01-01'}));
 source.push(...['Product B','Product C'].map((Product,i)=>({...source[0],Product,Country:'France',CatalogNumber:'CAT-'+i})),...['Product B','Product C','Product D'].map(Product=>({...source[1],Product})),{...source[2],Product:''});
+source[3].Product='Extended laboratory diagnostic product name with several important words';
 const flatten=n=>[n,...(n.items||[]).flatMap(flatten)],marks=(view,name)=>flatten(view.scenegraph().root).filter(n=>n.mark?.name===name);
 const errors=[];
+const previousWindow=global.window,windowEvents=new Map();
+global.window={addEventListener(type,listener){if(!windowEvents.has(type))windowEvents.set(type,new Set());windowEvents.get(type).add(listener);},removeEventListener(type,listener){windowEvents.get(type)?.delete(listener);}};
 (async()=>{
  const view=new vega.View(vega.parse(spec),{renderer:'none'}).logger({level:()=>0,error:e=>errors.push(String(e)),warn(){},info(){},debug(){}});
  try{
-  view.signal('registrationLayerEnabled',true).signal('nowDate',at(20));view.change('dataset',vega.changeset().insert(source));await view.runAsync();
+  view.signal('registrationLayerEnabled',true).signal('nowDate',at(20)).signal('range',null);view.change('dataset',vega.changeset().insert(source));await view.runAsync();
   const base=[...view.data('apps'),...view.data('ros'),...view.data('sub')],reg=registrations.attach(registrations.prepare(source),base).registrationRows,all=[...base,...reg];
   const presentation=all.map(r=>({key:r.key,RegistrationCount:r.level===0?4:r.level===1?2:1,SiteLabels:['Legal: ABO','Registration: Galway'],LegalSites:['ABO'],RegistrationSites:['Galway'],RecordURL:r.level===0?'https://example.com/record/'+r.AppID:r.SubID==='SUB-1'?'javascript:alert(1)':null,RecordURLIssue:''}));
   // A valid-looking destination with conflicting source evidence remains hidden.
@@ -16,19 +19,45 @@ const errors=[];
   presentation.find(r=>r.key===reg[3].key).RecordURL='https://example.com/bad url';
   const sub=base.find(r=>r.level===2&&r.SubID==='SUB-0');
   view.change('registrationRows',vega.changeset().insert(reg)).change('orderedRows',vega.changeset().insert(changes.order(all,false))).change('presentationRows',vega.changeset().insert(presentation)).change('membershipRows',vega.changeset().insert({key:sub.key,MembershipLabels:['Product A','001, 002 +4 more','Product B','010, 011','Product C','020']})).change('expanded',vega.changeset().insert(base.map(r=>({key:r.key}))));
-  view.signal('eventDescending',false);await view.runAsync();
+  view.signal('eventDescending',false).signal('range',null);await view.runAsync();
   const products=view.data('visible').find(r=>r.key===sub.key);
   assert.equal(products.ProductInfo.count,3,'All product memberships remain available for Details');
   assert.equal(products.ProductPreview,'3 products · Product A','Multiple products have a count-first compact preview');
   assert.equal(view.data('visible').find(r=>r.level===2&&r.SubID==='SUB-1').ProductPreview,'4 products · Product A','More than three products use the same compact preview');
   assert.equal(view.data('visible').find(r=>r.level===2&&r.SubID==='SUB-2').ProductPreview,'Product A *','Missing-product indicator remains available');
   const workflowFit=[...view.signal('fitRange')],allKeys=new Set(view.data('visible').map(r=>r.key));
-  assert.deepEqual(spec.signals.find(s=>s.name==='clicked').on.map(e=>e.events),['@toggle:click'],'Only expansion toggles change hierarchy state');
+  const expandEvents=spec.signals.find(s=>s.name==='clicked').on.map(e=>e.events).join(', ');
+  for(const name of ['toggle','parentBar','parentBarContinuation','connector','connectorContinuation','milestone','surveyRange','surveyRangeContinuation','preparationRange','preparationRangeContinuation','predictionRange','predictionRangeContinuation'])assert.ok(expandEvents.includes('@'+name+':click'),name+' can expand hierarchy children');
+  for(const name of ['parentLabel','subLabel','registrationLabel','registrationBar'])assert.ok(!expandEvents.includes('@'+name+':click'),name+' remains Details-only');
   const detailsEvents=spec.signals.find(s=>s.name==='detailsRequest').on[0].events;
   for(const name of ['parentLabel','subLabel','registrationLabel','parentBar','registrationBar','connector','milestone','surveyRange','preparationRange','predictionRange'])assert.ok(detailsEvents.includes('@'+name+':click'),name+' opens Details');
-  assert.ok(!detailsEvents.includes('@toggle:click'),'Expansion never opens Details');
+  assert.ok(!detailsEvents.includes('@toggle:click'),'Plus/minus expansion never opens Details');
   assert.equal(spec.signals.find(s=>s.name==='showRegistrationEnd').bind,undefined,'No registration-end control is exposed');
   assert.equal(view.signal('showRegistrationEnd'),true,'Legacy expiry remains visible when inside the chosen window');
+  // Exercise production event streams, including real pointer movement, rather than
+  // directly editing expansion data to simulate the newly restored bar behavior.
+  const expansion=()=>view.data('expanded').map(r=>r.key).sort();
+  const fire=async(type,item,extra={})=>{view._handler._active=item;view._handler.fire(type,{type,clientX:700,clientY:150,buttons:type==='pointerdown'?1:0,target:{tagName:'svg'},preventDefault(){},stopPropagation(){},...extra});await view.runAsync();};
+  const pointerClick=async item=>{assert.ok(item,'The interaction target is rendered');await fire('pointerdown',item);await fire('click',item);};
+  const reveal=async key=>{view.signal('rowRequest',{pos:view.data('visible').findIndex(r=>r.key===key)});await view.runAsync();};
+  const firstApp=base.find(r=>r.level===0&&r.AppID==='APP-0'),firstRO=base.find(r=>r.level===1&&r.ROID==='RO-0');
+  for(const [key,name]of [[firstApp.key,'parentBar'],[firstRO.key,'parentBar'],[sub.key,'connector']]){
+   await reveal(key);const before=expansion(),detailsBefore=view.signal('detailsRequest');
+   await pointerClick(marks(view,name).find(n=>n.datum.key===key));
+   assert.deepEqual(expansion(),before.filter(k=>k!==key),'A hierarchy bar collapses its own children');assert.equal(view.signal('selectedKey'),key);assert.equal(view.signal('detailsRequest'),detailsBefore+1,'Bar expansion still opens the selected record Details');
+   await reveal(key);await pointerClick(marks(view,name).find(n=>n.datum.key===key));assert.deepEqual(expansion(),before,'A second bar click restores the children');
+  }
+  await reveal(firstApp.key);const unchanged=expansion();
+  await pointerClick(marks(view,'parentLabel').find(n=>n.datum.key===firstApp.key));assert.deepEqual(expansion(),unchanged,'Record names remain Details-only');
+  for(const modifier of ['ctrlKey','shiftKey','altKey','metaKey']){const target=marks(view,'parentBar').find(n=>n.datum.key===firstApp.key);await fire('pointerdown',target);await fire('click',target,{[modifier]:true});assert.deepEqual(expansion(),unchanged,modifier+' interaction does not toggle hierarchy');}
+  const dragBar=marks(view,'parentBar').find(n=>n.datum.key===firstApp.key);await fire('pointerdown',dragBar);
+  for(const listener of windowEvents.get('pointermove')||[])listener({type:'pointermove',clientX:730,clientY:150,buttons:1,preventDefault(){},stopPropagation(){}});await view.runAsync();assert.equal(view.signal('barPointerMoved'),true,'Dragging is detected by the actual pointer event stream');
+  await fire('click',dragBar,{clientX:730});assert.deepEqual(expansion(),unchanged,'A click following a drag does not expand or collapse');
+  view.signal('range',[at(5),at(30)]);await view.runAsync();await reveal(firstApp.key);
+  await pointerClick(marks(view,'parentBarContinuation').find(n=>n.datum.key===firstApp.key));assert.ok(!expansion().includes(firstApp.key),'Continuation arrow collapses its parent');await reveal(firstApp.key);await pointerClick(marks(view,'parentBarContinuation').find(n=>n.datum.key===firstApp.key));assert.deepEqual(expansion(),unchanged,'Continuation arrow also expands its parent');
+  view.signal('range',null);await view.runAsync();const firstReg=reg.find(r=>r.SubID==='SUB-0');await reveal(firstReg.key);await pointerClick(marks(view,'registrationBar').find(n=>n.datum.key===firstReg.key));assert.deepEqual(expansion(),unchanged,'Registration leaf bars only open Details');
+  view.signal('mode','Compare').signal('compareLevel',0);await view.runAsync();await pointerClick(marks(view,'parentBar')[0]);assert.deepEqual(expansion(),unchanged,'Comparison bars do not change hierarchy expansion');view.signal('mode','Hierarchy');await view.runAsync();
+  let wrappedProductSeen=false;
   for(const width of [720,1280,1500,1920])for(const height of [280,600,960]){
    view.signal('denebContainer',{width,height}).signal('viewportAnchor',{key:'',rel:0,fallback:0});await view.runAsync();
    assert.ok(view.signal('bodyFont')>=13&&view.signal('bodyFont')<=16,'Readable bounded body font at '+width+'x'+height);
@@ -58,12 +87,18 @@ const errors=[];
      assert.equal(icon.datum.level,0,'Only mapped, valid and unambiguous HTTP(S) destinations get icons');
      assert.ok(icon.bounds.x1>icon.datum.labelX,'Link icon stays beside the record label');
     }
-    for(const item of marks(view,'siteText'))assert.deepEqual([...item.text],['Legal: ABO','Registration: Galway'],'Both manufacturing-site sources remain labelled');
+    for(const item of marks(view,'siteText')){
+     assert.ok(Array.isArray(item.text)&&item.text.length<=2,'Manufacturing sites occupy at most two lines in total');
+     assert.match(item.text[0],/^Legal:/,'Legal manufacturer retains its source label');assert.match(item.text[1],/^Reg:/,'Registration manufacturing site retains its compact source label');
+     assert.equal(item.tooltip['Legal manufacturer'],'ABO');assert.equal(item.tooltip['Registration manufacturing sites'],'Galway','Complete site names remain in the tooltip');
+    }
     for(const item of marks(view,'productText')){
-     assert.equal(typeof item.text,'string','Product preview is one text line, including legacy multi-line catalog labels');
-     assert.doesNotMatch(item.text,/[\r\n]|001|010|020|CAT-/,'Catalog codes stay out of the compact product preview');
+     const lines=Array.isArray(item.text)?item.text:[item.text];assert.ok(lines.length>=1&&lines.length<=2,'Products occupy at most two lines, including legacy multi-line catalog labels');
+     wrappedProductSeen||=lines.length===2;assert.ok(lines.slice(0,-1).every(line=>!line.endsWith('…')),'Ellipsis appears only on a clipped final product line');
+     assert.doesNotMatch(lines.join(' '),/[\r\n]|001|010|020|CAT-/,'Catalog codes stay out of the compact product preview');
      const country=marks(view,'countryText').find(n=>n.datum.key===item.datum.key);
-     assert.equal(country.y-item.y,view.signal('rowLineH'),'Countries remain on the fixed second line');
+     assert.equal(typeof country.text,'string','Countries occupy one line');assert.doesNotMatch(country.text,/[\r\n]/);
+     assert.equal(country.y-item.y,lines.length*view.signal('rowLineH'),'The single country line follows the wrapped product lines');
      assert.ok(country.bounds.y2<item.datum.y+item.datum.rowHeight,'Country line fits inside the compact row');
     }
     const visible=view.data('visible'),multiple=visible.find(r=>r.key===sub.key),single=visible.find(r=>r.level===2&&r.SubID==='SUB-3');
@@ -75,14 +110,15 @@ const errors=[];
    view.signal('rowRequest',{pos:view.signal('maxScroll')});await view.runAsync();
    assert.equal(view.data('pageRows').at(-1).key,view.data('visible').at(-1).key,'End of scrolling includes the last record');
   }
+  assert.ok(wrappedProductSeen,'A long real product name exercises the two-line layout');
   view.signal('denebContainer',{width:1280,height:960}).signal('rowRequest',{pos:0});await view.runAsync();
-  const app=marks(view,'selectGroup').find(n=>n.datum.level===0);assert.deepEqual([...app.text],['2 ROs · 4 Subs · 4 Regs'],'Application counts use one concise subtitle');
+  const app=marks(view,'selectGroup').find(n=>n.datum.level===0),appCounts=marks(view,'countChip').filter(n=>n.datum.key===app.datum.key);assert.deepEqual(appCounts.map(n=>n.text),['2 ROs','4 Subs','4 Regs'],'Application counts use concise independent count links');assert.ok(appCounts.every(n=>n.y===appCounts[0].y),'Count links remain on a single subtitle line');
   assert.equal(app.tooltip.Counts,'2 regulatory objectives · 4 submissions · 4 registrations','Count tooltip retains unabbreviated full values');
   assert.equal(marks(view,'parentLabel').find(n=>n.datum.key===app.datum.key).text,app.datum.AppID,'Record identifiers are not abbreviated');
   assert.equal(marks(view,'rowDetailsButton').length,0,'Repeated per-row Details buttons are removed');
   view.signal('mode','Compare').signal('compareLevel',2);await view.runAsync();
   const comparison=marks(view,'siteText')[0];assert.ok(String(comparison.text).includes('days'),'Submission comparison duration columns remain unchanged');
   assert.deepEqual(errors,[],'No Vega runtime errors');
-  console.log('PASS: compact single-line product previews at twelve sizes, expanded timeline width, unchanged full memberships, fixed country line, complete scrolling, labelled site sources, registration subtitles, readable text, isolated expand/select/link interactions and preserved workflow fitting/comparison.');
- }finally{view.finalize();}
+  console.log('PASS: compact two-line product previews at twelve sizes, single country line, two total site lines, unchanged row heights and full memberships, complete scrolling, registration subtitles, readable text, isolated expand/select/link interactions and preserved workflow fitting/comparison.');
+ }finally{view.finalize();if(previousWindow===undefined)delete global.window;else global.window=previousWindow;}
 })().catch(e=>{console.error(e);process.exit(1)});

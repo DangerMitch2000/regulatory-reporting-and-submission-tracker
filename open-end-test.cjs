@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict');
 const fs=require('fs');
-const vega=require('./vega.js');
+const vega=require('./vega-test-setup.cjs');
 const {analyze}=require('./quality.js');
 const base={AppID:'A',ROID:'R',SubID:'S',RegistrationStart:'2026-01-01'};
 async function check(ends, expected, bad=0){

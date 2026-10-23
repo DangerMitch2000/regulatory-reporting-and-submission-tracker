@@ -1,14 +1,16 @@
 (function(root,factory){
-  'use strict';const api=factory();
+  'use strict';const api=factory(typeof module==='object'&&module.exports?require('./date-format.js'):root.regulatoryDateFormat);
   if(typeof module==='object'&&module.exports)module.exports=api;
   if(root)root.regulatorySubmissionPeriod=api;
-})(typeof globalThis==='object'?globalThis:this,function(){
+})(typeof globalThis==='object'?globalThis:this,function(dateFormat){
   'use strict';
   function boundary(value){
     if(!value)return null;
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return NaN;
-    const n=Date.parse(value+'T00:00:00Z');
-    return Number.isFinite(n)&&new Date(n).toISOString().slice(0,10)===value&&new Date(n).getUTCFullYear()<=2100?n:NaN;
+    const text=String(value).trim();
+    if(!text)return null;
+    if(!/^(?:\d{4}-\d{2}-\d{2}|\d{1,2} [A-Za-z]{3} \d{4})$/.test(text))return NaN;
+    const n=dateFormat.parse(text);
+    return Number.isFinite(n)&&new Date(n).getUTCFullYear()>=100&&new Date(n).getUTCFullYear()<=2100?n:NaN;
   }
   function compile(selection={}){
     const mode=selection.mode||'all';
@@ -19,7 +21,7 @@
     }
     if(mode==='custom'){
       const start=boundary(selection.from),end=boundary(selection.to);
-      if(Number.isNaN(start)||Number.isNaN(end))return {mode:'invalid',label:'Check range',error:'Enter valid dates no later than 2100.'};
+      if(Number.isNaN(start)||Number.isNaN(end))return {mode:'invalid',label:'Check range',error:'Use DD MMM YYYY, for example 23 Oct 2026, no later than 2100.'};
       if(start!==null&&end!==null&&start>end)return {mode:'invalid',label:'Check range',error:'From must be on or before To.'};
       return {mode:'range',label:'Custom range',start,end,error:''};
     }

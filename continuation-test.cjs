@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const vega = require('./vega.js');
+const vega = require('./vega-test-setup.cjs');
 
 const spec = JSON.parse(fs.readFileSync(path.join(__dirname, 'timeline.json'), 'utf8'));
 const day = 86400000;

@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.18.0 — 2026-10-23
+
+Power BI package: **1.18.0.0**. The visual GUID and field roles are unchanged; existing reports require no field remapping.
+
+- Start the calendar timeline centred on today in a 90-day window, 45 days on either side, and add a Today shortcut. Preserve panning and zoom choices on data refresh and resize. Fit all still fits workflow dates and excludes registration validity dates.
+- Make hierarchy counts reveal their matching children within the selected branch. Open Details for a single result; reveal multiple results while preserving selection and filters. Keep distinct counts and actual source relationships intact.
+- Keep product previews to two lines, countries to one and manufacturing sites to two lines total without increasing the compact row height. Allow column boundaries to be dragged, with minimum timeline space and double-click reset; full values remain in hover and Details. Prevent divider drags within record rows from also panning dates.
+- Display full dates consistently as DD MMM YYYY (for example, 09 Sep 2026) in Details, tooltips, copied text, date filters and data-quality views. Keep short axis labels, underlying dates and calculations unchanged, and retain explicitly labelled raw values for date diagnostics.
+- Restore expand/collapse when clicking a parent bar, including continuation arrows. Bar clicks also select the record for Details; names and childless bars open Details. Preserve drag/pan gestures and comparison-mode behavior.
+- Add regression coverage for measured wrapping, compact rows, scaled column dragging, count navigation, Today/refresh behaviour and consistent date displays, alongside the existing source and browser suites.
+
 ## 1.17.3 — 2026-10-11
 
 - Restore rendering of each accumulated Power BI data batch before requesting the next batch, as a compatibility rollback of the request timing introduced in 1.17.2.

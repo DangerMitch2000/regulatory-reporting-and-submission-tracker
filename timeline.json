@@ -51,16 +51,80 @@
       "update": "max(280,denebContainer.height)"
     },
     {
+      "name": "columnDrag",
+      "value": null,
+      "on": [
+        {
+          "events": "@columnHandle:pointerdown",
+          "update": "{id:datum.id,x:event.clientX,h:hierarchyW,s:siteW,p:productW,scale:trackerPointerScale(event)}"
+        },
+        {
+          "events": "window:pointerup, window:pointercancel, window:blur",
+          "update": "null"
+        }
+      ]
+    },
+    {
+      "name": "columnWidths",
+      "value": {
+        "hierarchy": null,
+        "site": null,
+        "products": null
+      },
+      "on": [
+        {
+          "events": {
+            "source": "window",
+            "type": "pointermove",
+            "consume": true
+          },
+          "update": "columnDrag===null ? columnWidths : columnDrag.id==='hierarchy' ? {hierarchy:clamp(columnDrag.h+(event.clientX-columnDrag.x)/columnDrag.scale,160,max(160,columnMax-columnDrag.s-columnDrag.p)),site:columnDrag.s,products:columnDrag.p} : columnDrag.id==='site' ? {hierarchy:columnDrag.h,site:clamp(columnDrag.s+(event.clientX-columnDrag.x)/columnDrag.scale,100,max(100,columnMax-columnDrag.h-columnDrag.p)),products:columnDrag.p} : {hierarchy:columnDrag.h,site:columnDrag.s,products:clamp(columnDrag.p+(event.clientX-columnDrag.x)/columnDrag.scale,120,max(120,columnMax-columnDrag.h-columnDrag.s))}"
+        },
+        {
+          "events": "@columnHandle:dblclick",
+          "update": "{hierarchy:null,site:null,products:null}"
+        }
+      ]
+    },
+    {
+      "name": "columnMax",
+      "update": "max(380,min(1000,width-320))"
+    },
+    {
+      "name": "columnDefault",
+      "update": "min(columnMax,mode==='Compare' && compareLevel===2 ? clamp(width*0.46,400,660) : clamp(width*0.38,400,600))"
+    },
+    {
+      "name": "desiredHierarchyW",
+      "update": "max(160,isValid(columnWidths.hierarchy) ? columnWidths.hierarchy : columnDefault*(mode==='Compare' && compareLevel===2 ? 0.42 : 0.44))"
+    },
+    {
+      "name": "desiredSiteW",
+      "update": "max(100,isValid(columnWidths.site) ? columnWidths.site : columnDefault*(mode==='Compare' && compareLevel===2 ? 0.29 : 0.27))"
+    },
+    {
+      "name": "desiredProductW",
+      "update": "max(120,isValid(columnWidths.products) ? columnWidths.products : columnDefault*0.29)"
+    },
+    {
+      "name": "columnFactor",
+      "update": "min(1,(columnMax-380)/max(1,desiredHierarchyW+desiredSiteW+desiredProductW-380))"
+    },
+    {
+      "name": "productW",
+      "update": "120+(desiredProductW-120)*columnFactor"
+    },
+    {
       "name": "left",
-      "update": "mode==='Compare' && compareLevel===2 ? clamp(width*0.46,400,660) : clamp(width*0.38,400,600)"
+      "update": "hierarchyW+siteW+productW"
     },
     {
       "name": "hierarchyW",
-      "update": "left*(mode==='Compare' && compareLevel===2 ? 0.42 : 0.44)"
+      "update": "160+(desiredHierarchyW-160)*columnFactor"
     },
     {
       "name": "siteW",
-      "update": "left*(mode==='Compare' && compareLevel===2 ? 0.29 : 0.27)"
+      "update": "100+(desiredSiteW-100)*columnFactor"
     },
     {
       "name": "top",
@@ -75,12 +139,44 @@
       "update": "max(1,min(60,floor((viewBottom-top)/rowH)))"
     },
     {
+      "name": "barPointerDown",
+      "value": null,
+      "on": [
+        {
+          "events": "view:pointerdown",
+          "update": "{x:event.clientX,y:event.clientY}"
+        }
+      ]
+    },
+    {
+      "name": "barPointerMoved",
+      "value": false,
+      "on": [
+        {
+          "events": "view:pointerdown",
+          "update": "false"
+        },
+        {
+          "events": "window:pointermove[event.buttons!==0]",
+          "update": "barPointerMoved || (barPointerDown!==null && (abs(event.clientX-barPointerDown.x)>4 || abs(event.clientY-barPointerDown.y)>4))"
+        },
+        {
+          "events": "view:wheel",
+          "update": "true"
+        }
+      ]
+    },
+    {
       "name": "clicked",
       "value": null,
       "on": [
         {
           "events": "@toggle:click",
           "update": "{key:datum.key,rel:datum.idx-1-scrollTop,fallback:scrollTop,opening:!indata('expanded','key',datum.key)}"
+        },
+        {
+          "events": "@parentBar:click, @parentBarContinuation:click, @connector:click, @connectorContinuation:click, @milestone:click, @preparationRange:click, @preparationRangeContinuation:click, @preparationLabel:click, @predictionRange:click, @predictionRangeContinuation:click, @predictionApproval:click, @surveyRange:click, @surveyRangeContinuation:click",
+          "update": "mode==='Hierarchy' && !barPointerMoved && !event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey && indata('expandableRows','key',datum.key) ? {key:datum.key,rel:datum.idx-1-scrollTop,fallback:scrollTop,opening:!indata('expanded','key',datum.key)} : clicked"
         }
       ]
     },
@@ -115,12 +211,15 @@
       "update": "[lo-pad,hi+pad]"
     },
     {
+      "name": "todayRange",
+      "update": "[utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate))-45*86400000,utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate))+45*86400000]"
+    },
+    {
       "name": "range",
-      "value": null,
       "on": [
         {
           "events": "@timeButton:click, @timeText:click",
-          "update": "elapsed ? (datum.id==='fit' ? null : datum.id==='earlier' ? [xlo-span*0.8,xhi-span*0.8] : datum.id==='later' ? [xlo+span*0.8,xhi+span*0.8] : [xlo,xlo+(datum.id==='month' ? 30 : datum.id==='quarter' ? 90 : 365)*86400000]) : datum.id==='fit' ? null : datum.id==='year' ? [utc(utcyear(center),0,1),utc(utcyear(center)+1,0,1)] : datum.id==='quarter' ? [utc(utcyear(center),floor(utcmonth(center)/3)*3,1),utc(utcyear(center),floor(utcmonth(center)/3)*3+3,1)] : datum.id==='month' ? [utc(utcyear(center),utcmonth(center),1),utc(utcyear(center),utcmonth(center)+1,1)] : datum.id==='earlier' ? [xlo-span*0.8,xhi-span*0.8] : [xlo+span*0.8,xhi+span*0.8]"
+          "update": "elapsed ? (datum.id==='today' ? range : datum.id==='fit' ? null : datum.id==='earlier' ? [xlo-span*0.8,xhi-span*0.8] : datum.id==='later' ? [xlo+span*0.8,xhi+span*0.8] : [xlo,xlo+(datum.id==='month' ? 30 : datum.id==='quarter' ? 90 : 365)*86400000]) : datum.id==='today' ? todayRange : datum.id==='fit' ? null : datum.id==='year' ? [utc(utcyear(center),0,1),utc(utcyear(center)+1,0,1)] : datum.id==='quarter' ? [utc(utcyear(center),floor(utcmonth(center)/3)*3,1),utc(utcyear(center),floor(utcmonth(center)/3)*3+3,1)] : datum.id==='month' ? [utc(utcyear(center),utcmonth(center),1),utc(utcyear(center),utcmonth(center)+1,1)] : datum.id==='earlier' ? [xlo-span*0.8,xhi-span*0.8] : [xlo+span*0.8,xhi+span*0.8]"
         },
         {
           "events": {
@@ -137,7 +236,7 @@
           "events": {
             "signal": "elapsed"
           },
-          "update": "null"
+          "update": "elapsed ? null : todayRange"
         },
         {
           "events": {
@@ -150,7 +249,8 @@
           },
           "update": "x()>left && y()>top-34 && y()<viewBottom ? [(xlo+span*clamp((x()-left)/max(1,width-left),0,1))-clamp(span*pow(1.0008,clamp((event.deltaY || event.deltaX)*(event.deltaMode===1 ? 16 : event.deltaMode===2 ? height : 1),-100,100)),86400000,3155760000000)*clamp((x()-left)/max(1,width-left),0,1),(xlo+span*clamp((x()-left)/max(1,width-left),0,1))+clamp(span*pow(1.0008,clamp((event.deltaY || event.deltaX)*(event.deltaMode===1 ? 16 : event.deltaMode===2 ? height : 1),-100,100)),86400000,3155760000000)*(1-clamp((x()-left)/max(1,width-left),0,1))] : range"
         }
-      ]
+      ],
+      "init": "todayRange"
     },
     {
       "name": "xlo",
@@ -305,7 +405,7 @@
       "value": false,
       "on": [
         {
-          "events": "@toggle:click, @parentLabel:click, @parentBar:click, @parentCell:click, @rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @next:click, @nextText:click, @prev:click, @prevText:click, @scrollTrack:pointerdown, @scrollThumb:pointerdown, @predictionRange:click, @predictionApproval:click, @preparationRange:click, @preparationLabel:click, @surveyRange:click, @registrationLabel:click, @registrationBar:click, @registrationBarContinuation:click, @externalLink:click",
+          "events": "@toggle:click, @parentLabel:click, @parentBar:click, @parentCell:click, @rowBg:click, @subLabel:click, @subMeta:click, @siteText:click, @productText:click, @countryText:click, @milestone:click, @connector:click, @selectGroup:click, @next:click, @nextText:click, @prev:click, @prevText:click, @scrollTrack:pointerdown, @scrollThumb:pointerdown, @predictionRange:click, @predictionApproval:click, @preparationRange:click, @preparationLabel:click, @surveyRange:click, @registrationLabel:click, @registrationBar:click, @registrationBarContinuation:click, @externalLink:click, @parentBarContinuation:click, @connectorContinuation:click, @preparationRangeContinuation:click, @predictionRangeContinuation:click, @surveyRangeContinuation:click",
           "update": "true"
         },
         {
@@ -696,6 +796,16 @@
     {
       "name": "pageRowCount",
       "update": "length(data('pageRows'))"
+    },
+    {
+      "name": "countNavigateRequest",
+      "value": null,
+      "on": [
+        {
+          "events": "@countChip:click, @countChipHit:click",
+          "update": "mode==='Hierarchy' && datum.countChip.count>0 ? {key:datum.key,level:datum.countChip.level,stamp:now()} : countNavigateRequest"
+        }
+      ]
     }
   ],
   "data": [
@@ -2415,7 +2525,7 @@
         {
           "type": "formula",
           "as": "shortTip",
-          "expr": "{'Row':substring(datum.level===2 ? datum.SubID : datum.level===1 ? datum.ROID : datum.AppID,0,70),'Products':datum.ProductInfo.count,'Countries':datum.CountryInfo.count,'Action':datum.level<2 ? 'Click label/bar to expand; counts for details' : 'Click for details below'}"
+          "expr": "{'Row':substring(datum.level===2 ? datum.SubID : datum.level===1 ? datum.ROID : datum.AppID,0,70),'Products':datum.ProductInfo.count,'Countries':datum.CountryInfo.count,'Action':datum.level<2 ? 'Click bar to expand or collapse; name for Details' : 'Click for details below'}"
         },
         {
           "type": "lookup",
@@ -2467,7 +2577,7 @@
         {
           "type": "formula",
           "as": "shortTip",
-          "expr": "{'ID':datum.level===2 ? datum.SubID : datum.level===1 ? datum.ROID : datum.AppID,'Own state':datum.State,'Action':datum.level<2 ? 'Label/bar expands. Subtitle opens selection.' : 'Select for details; pin to compare'}"
+          "expr": "{'ID':datum.level===2 ? datum.SubID : datum.level===1 ? datum.ROID : datum.AppID,'Own state':datum.State,'Action':datum.level<2 ? 'Bar expands or collapses; name opens Details.' : 'Select for details; pin to compare'}"
         },
         {
           "type": "formula",
@@ -2741,7 +2851,7 @@
         {
           "type": "formula",
           "as": "shortTip",
-          "expr": "{'Row':substring(datum.level===2 ? datum.SubID : datum.level===1 ? datum.ROID : datum.AppID,0,70),'Products':datum.ProductInfo.count,'Countries':datum.CountryInfo.count,'Action':datum.level<2 ? 'Click label/bar to expand; counts for details' : 'Click for details below'}"
+          "expr": "{'Row':substring(datum.level===2 ? datum.SubID : datum.level===1 ? datum.ROID : datum.AppID,0,70),'Products':datum.ProductInfo.count,'Countries':datum.CountryInfo.count,'Action':datum.level<2 ? 'Click bar to expand or collapse; name for Details' : 'Click for details below'}"
         },
         {
           "type": "lookup",
@@ -2777,7 +2887,7 @@
         {
           "type": "formula",
           "as": "shortTip",
-          "expr": "{'ID':datum.level===2 ? datum.SubID : datum.level===1 ? datum.ROID : datum.AppID,'Own state':datum.State,'Action':datum.level<2 ? 'Label/bar expands. Subtitle opens selection.' : 'Select for details; pin to compare'}"
+          "expr": "{'ID':datum.level===2 ? datum.SubID : datum.level===1 ? datum.ROID : datum.AppID,'Own state':datum.State,'Action':datum.level<2 ? 'Bar expands or collapses; name opens Details.' : 'Select for details; pin to compare'}"
         },
         {
           "type": "formula",
@@ -2990,7 +3100,7 @@
         {
           "type": "formula",
           "as": "shortTip",
-          "expr": "{'Row':substring(datum.level===2 ? datum.SubID : datum.level===1 ? datum.ROID : datum.AppID,0,70),'Products':datum.ProductInfo.count,'Countries':datum.CountryInfo.count,'Action':datum.level<2 ? 'Click label/bar to expand; counts for details' : 'Click for details below'}"
+          "expr": "{'Row':substring(datum.level===2 ? datum.SubID : datum.level===1 ? datum.ROID : datum.AppID,0,70),'Products':datum.ProductInfo.count,'Countries':datum.CountryInfo.count,'Action':datum.level<2 ? 'Click bar to expand or collapse; name for Details' : 'Click for details below'}"
         },
         {
           "type": "lookup",
@@ -3026,7 +3136,7 @@
         {
           "type": "formula",
           "as": "shortTip",
-          "expr": "{'ID':datum.level===2 ? datum.SubID : datum.level===1 ? datum.ROID : datum.AppID,'Own state':datum.State,'Action':datum.level<2 ? 'Label/bar expands. Subtitle opens selection.' : 'Select for details; pin to compare'}"
+          "expr": "{'ID':datum.level===2 ? datum.SubID : datum.level===1 ? datum.ROID : datum.AppID,'Own state':datum.State,'Action':datum.level<2 ? 'Bar expands or collapses; name opens Details.' : 'Select for details; pin to compare'}"
         },
         {
           "type": "formula",
@@ -3246,7 +3356,7 @@
         {
           "type": "formula",
           "as": "shortTip",
-          "expr": "{'ID':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===1 ? (datum.ROID || 'RO not recorded') : datum.level===0 ? (datum.AppID || 'Application not recorded') : datum.level===-1 ? datum.EventName : (datum.ChangeID || 'Other regulatory events'),'State':datum.State,'Action':'Select the name or bar for Details. Use + or − to expand or collapse.'}"
+          "expr": "{'ID':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===1 ? (datum.ROID || 'RO not recorded') : datum.level===0 ? (datum.AppID || 'Application not recorded') : datum.level===-1 ? datum.EventName : (datum.ChangeID || 'Other regulatory events'),'State':datum.State,'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Name: Details. Bar: expand or collapse children and open Details. + or −: expand or collapse.' : 'Select the name or bar for Details.'}"
         }
       ]
     },
@@ -3548,7 +3658,7 @@
         {
           "type": "formula",
           "as": "rowHeight",
-          "expr": "max(rowH,(length(datum.HierarchyMeta)+2)*rowLineH+14,(isValid(datum.SiteLabels) ? min(4,length(datum.SiteLabels)) : 1)*rowLineH+14)"
+          "expr": "max(rowH,(length(datum.HierarchyMeta)+2)*rowLineH+14)"
         },
         {
           "type": "window",
@@ -3594,6 +3704,21 @@
         {
           "type": "filter",
           "expr": "datum.y+datum.rowHeight<=viewBottom+0.5"
+        },
+        {
+          "type": "formula",
+          "as": "ProductLines",
+          "expr": "trackerWrapText(datum.ProductPreview,productW-12,bodyFont,2)"
+        },
+        {
+          "type": "formula",
+          "as": "CountryLines",
+          "expr": "trackerWrapText(datum.CountryCountLabel,productW-12,bodyFont,1)"
+        },
+        {
+          "type": "formula",
+          "as": "SiteLines",
+          "expr": "isValid(datum.SiteLabels) && length(datum.SiteLabels)>1 ? [trackerWrapText(replace(datum.SiteLabels[0],regexp('^Registration:'),'Reg:'),siteW-12,bodyFont,1)[0],trackerWrapText(replace(datum.SiteLabels[1],regexp('^Registration:'),'Reg:'),siteW-12,bodyFont,1)[0]] : trackerWrapText(isValid(datum.SiteLabels) && length(datum.SiteLabels) ? replace(datum.SiteLabels[0],regexp('^Registration:'),'Reg:') : datum.ManufacturerInfo.count===1 ? datum.ManufacturerInfo.detail : datum.ManufacturerInfo.count+' sites'+(datum.ManufacturerInfo.missing ? ' *' : ''),siteW-12,bodyFont,2)"
         }
       ]
     },
@@ -3823,6 +3948,18 @@
           "label": "→",
           "x": 277,
           "w": 32
+        },
+        {
+          "id": "today",
+          "label": "Today",
+          "x": 313,
+          "w": 58
+        }
+      ],
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.id!=='today' || !elapsed"
         }
       ]
     },
@@ -3913,7 +4050,7 @@
         {
           "type": "formula",
           "as": "tip",
-          "expr": "datum.level===2 ? ({'Submission':datum.SubID,'Regulatory objective':datum.ROID,'Application':datum.AppID,'Status':datum.SubStatusDistinct===1 ? datum.SubStatusMin : 'Multiple statuses ('+datum.SubStatusDistinct+')','RO status':datum.ROStatusDistinct===1 ? datum.ROStatusMin : 'Multiple statuses','Site (legal manufacturer)':datum.ManufacturerInfo.detail,'Products':datum.ProductInfo.detail,'Submission created':isValid(datum.SubCreated) ? utcFormat(datum.SubCreated,'%d/%m/%Y') : 'Missing / conflicting / invalid; sorted last','RO created':isValid(datum.ROCreated) ? utcFormat(datum.ROCreated,'%d/%m/%Y') : 'Missing / conflicting / invalid','Application created':isValid(datum.AppCreated) ? utcFormat(datum.AppCreated,'%d/%m/%Y') : 'Missing / conflicting / invalid','Export rows received':datum.sourceRows,'Partly blank date fields':datum.partial,'Original dispatch':datum.OriginalDispatchBad>0 ? 'INVALID INPUT — withheld' : datum.OriginalDispatchMin!==datum.OriginalDispatchMax ? 'CONFLICT — '+utcFormat(datum.OriginalDispatchMin,'%d/%m/%Y')+' to '+utcFormat(datum.OriginalDispatchMax,'%d/%m/%Y')+'; withheld' : isValid(datum.OriginalDispatch) ? utcFormat(datum.OriginalDispatch,'%d/%m/%Y')+(datum.OriginalDispatchValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing','Latest dispatch':datum.LatestDispatchBad>0 ? 'INVALID INPUT — withheld' : datum.LatestDispatchMin!==datum.LatestDispatchMax ? 'CONFLICT — '+utcFormat(datum.LatestDispatchMin,'%d/%m/%Y')+' to '+utcFormat(datum.LatestDispatchMax,'%d/%m/%Y')+'; withheld' : isValid(datum.LatestDispatch) ? utcFormat(datum.LatestDispatch,'%d/%m/%Y')+(datum.LatestDispatchValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing','Actual dispatch':datum.ActualDispatchBad>0 ? 'INVALID INPUT — withheld' : datum.ActualDispatchMin!==datum.ActualDispatchMax ? 'CONFLICT — '+utcFormat(datum.ActualDispatchMin,'%d/%m/%Y')+' to '+utcFormat(datum.ActualDispatchMax,'%d/%m/%Y')+'; withheld' : isValid(datum.ActualDispatch) ? utcFormat(datum.ActualDispatch,'%d/%m/%Y')+(datum.ActualDispatchValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing','Original submission':datum.OriginalSubmissionBad>0 ? 'INVALID INPUT — withheld' : datum.OriginalSubmissionMin!==datum.OriginalSubmissionMax ? 'CONFLICT — '+utcFormat(datum.OriginalSubmissionMin,'%d/%m/%Y')+' to '+utcFormat(datum.OriginalSubmissionMax,'%d/%m/%Y')+'; withheld' : isValid(datum.OriginalSubmission) ? utcFormat(datum.OriginalSubmission,'%d/%m/%Y')+(datum.OriginalSubmissionValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing','Latest submission':datum.LatestSubmissionBad>0 ? 'INVALID INPUT — withheld' : datum.LatestSubmissionMin!==datum.LatestSubmissionMax ? 'CONFLICT — '+utcFormat(datum.LatestSubmissionMin,'%d/%m/%Y')+' to '+utcFormat(datum.LatestSubmissionMax,'%d/%m/%Y')+'; withheld' : isValid(datum.LatestSubmission) ? utcFormat(datum.LatestSubmission,'%d/%m/%Y')+(datum.LatestSubmissionValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing','Actual submission':datum.ActualSubmissionBad>0 ? 'INVALID INPUT — withheld' : datum.ActualSubmissionMin!==datum.ActualSubmissionMax ? 'CONFLICT — '+utcFormat(datum.ActualSubmissionMin,'%d/%m/%Y')+' to '+utcFormat(datum.ActualSubmissionMax,'%d/%m/%Y')+'; withheld' : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d/%m/%Y')+(datum.ActualSubmissionValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing','Original approval':datum.OriginalApprovalBad>0 ? 'INVALID INPUT — withheld' : datum.OriginalApprovalMin!==datum.OriginalApprovalMax ? 'CONFLICT — '+utcFormat(datum.OriginalApprovalMin,'%d/%m/%Y')+' to '+utcFormat(datum.OriginalApprovalMax,'%d/%m/%Y')+'; withheld' : isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d/%m/%Y')+(datum.OriginalApprovalValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing','Latest approval':datum.LatestApprovalBad>0 ? 'INVALID INPUT — withheld' : datum.LatestApprovalMin!==datum.LatestApprovalMax ? 'CONFLICT — '+utcFormat(datum.LatestApprovalMin,'%d/%m/%Y')+' to '+utcFormat(datum.LatestApprovalMax,'%d/%m/%Y')+'; withheld' : isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d/%m/%Y')+(datum.LatestApprovalValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing','Actual approval':datum.ActualApprovalBad>0 ? 'INVALID INPUT — withheld' : datum.ActualApprovalMin!==datum.ActualApprovalMax ? 'CONFLICT — '+utcFormat(datum.ActualApprovalMin,'%d/%m/%Y')+' to '+utcFormat(datum.ActualApprovalMax,'%d/%m/%Y')+'; withheld' : isValid(datum.ActualApproval) ? utcFormat(datum.ActualApproval,'%d/%m/%Y')+(datum.ActualApprovalValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing','Registration start':datum.RegistrationStartBad>0 ? 'INVALID INPUT — withheld' : datum.RegistrationStartMin!==datum.RegistrationStartMax ? 'CONFLICT — '+utcFormat(datum.RegistrationStartMin,'%d/%m/%Y')+' to '+utcFormat(datum.RegistrationStartMax,'%d/%m/%Y')+'; withheld' : isValid(datum.RegistrationStart) ? utcFormat(datum.RegistrationStart,'%d/%m/%Y')+(datum.RegistrationStartValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing'}) : datum.level===1 ? ({'Level':'Regulatory objective','Application':datum.AppID,'Regulatory objective':datum.ROID,'Sites (legal manufacturers)':datum.ManufacturerInfo.detail,'Products':datum.ProductInfo.detail,'Filtered submissions':datum.n,'Span':'Available, non-conflicting lifecycle dates','Start':isValid(datum.start) ? utcFormat(datum.start,'%d/%m/%Y') : 'No dates','End':isValid(datum.end) ? utcFormat(datum.end,'%d/%m/%Y') : 'No dates','Withheld milestone fields':datum.issues,'Missing or withheld fields':datum.missing}) : datum.level===0 && !datum.registrationContainer ? ({'Level':'Application','Application':datum.AppID,'Sites (legal manufacturers)':datum.ManufacturerInfo.detail,'Products':datum.ProductInfo.detail,'Filtered submissions':datum.n,'Span':'Available, non-conflicting lifecycle dates','Start':isValid(datum.start) ? utcFormat(datum.start,'%d/%m/%Y') : 'No dates','End':isValid(datum.end) ? utcFormat(datum.end,'%d/%m/%Y') : 'No dates','Withheld milestone fields':datum.issues,'Missing or withheld fields':datum.missing}) : isValid(datum.tip) ? datum.tip : {'Application':datum.AppID,'Regulatory objective':datum.ROID,'Submission':datum.SubID}"
+          "expr": "datum.level===2 ? ({'Submission':datum.SubID,'Regulatory objective':datum.ROID,'Application':datum.AppID,'Status':datum.SubStatusDistinct===1 ? datum.SubStatusMin : 'Multiple statuses ('+datum.SubStatusDistinct+')','RO status':datum.ROStatusDistinct===1 ? datum.ROStatusMin : 'Multiple statuses','Site (legal manufacturer)':datum.ManufacturerInfo.detail,'Products':datum.ProductInfo.detail,'Submission created':isValid(datum.SubCreated) ? utcFormat(datum.SubCreated,'%d %b %Y') : 'Missing / conflicting / invalid; sorted last','RO created':isValid(datum.ROCreated) ? utcFormat(datum.ROCreated,'%d %b %Y') : 'Missing / conflicting / invalid','Application created':isValid(datum.AppCreated) ? utcFormat(datum.AppCreated,'%d %b %Y') : 'Missing / conflicting / invalid','Export rows received':datum.sourceRows,'Partly blank date fields':datum.partial,'Original dispatch':datum.OriginalDispatchBad>0 ? 'INVALID INPUT — withheld' : datum.OriginalDispatchMin!==datum.OriginalDispatchMax ? 'CONFLICT — '+utcFormat(datum.OriginalDispatchMin,'%d %b %Y')+' to '+utcFormat(datum.OriginalDispatchMax,'%d %b %Y')+'; withheld' : isValid(datum.OriginalDispatch) ? utcFormat(datum.OriginalDispatch,'%d %b %Y')+(datum.OriginalDispatchValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing','Latest dispatch':datum.LatestDispatchBad>0 ? 'INVALID INPUT — withheld' : datum.LatestDispatchMin!==datum.LatestDispatchMax ? 'CONFLICT — '+utcFormat(datum.LatestDispatchMin,'%d %b %Y')+' to '+utcFormat(datum.LatestDispatchMax,'%d %b %Y')+'; withheld' : isValid(datum.LatestDispatch) ? utcFormat(datum.LatestDispatch,'%d %b %Y')+(datum.LatestDispatchValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing','Actual dispatch':datum.ActualDispatchBad>0 ? 'INVALID INPUT — withheld' : datum.ActualDispatchMin!==datum.ActualDispatchMax ? 'CONFLICT — '+utcFormat(datum.ActualDispatchMin,'%d %b %Y')+' to '+utcFormat(datum.ActualDispatchMax,'%d %b %Y')+'; withheld' : isValid(datum.ActualDispatch) ? utcFormat(datum.ActualDispatch,'%d %b %Y')+(datum.ActualDispatchValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing','Original submission':datum.OriginalSubmissionBad>0 ? 'INVALID INPUT — withheld' : datum.OriginalSubmissionMin!==datum.OriginalSubmissionMax ? 'CONFLICT — '+utcFormat(datum.OriginalSubmissionMin,'%d %b %Y')+' to '+utcFormat(datum.OriginalSubmissionMax,'%d %b %Y')+'; withheld' : isValid(datum.OriginalSubmission) ? utcFormat(datum.OriginalSubmission,'%d %b %Y')+(datum.OriginalSubmissionValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing','Latest submission':datum.LatestSubmissionBad>0 ? 'INVALID INPUT — withheld' : datum.LatestSubmissionMin!==datum.LatestSubmissionMax ? 'CONFLICT — '+utcFormat(datum.LatestSubmissionMin,'%d %b %Y')+' to '+utcFormat(datum.LatestSubmissionMax,'%d %b %Y')+'; withheld' : isValid(datum.LatestSubmission) ? utcFormat(datum.LatestSubmission,'%d %b %Y')+(datum.LatestSubmissionValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing','Actual submission':datum.ActualSubmissionBad>0 ? 'INVALID INPUT — withheld' : datum.ActualSubmissionMin!==datum.ActualSubmissionMax ? 'CONFLICT — '+utcFormat(datum.ActualSubmissionMin,'%d %b %Y')+' to '+utcFormat(datum.ActualSubmissionMax,'%d %b %Y')+'; withheld' : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y')+(datum.ActualSubmissionValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing','Original approval':datum.OriginalApprovalBad>0 ? 'INVALID INPUT — withheld' : datum.OriginalApprovalMin!==datum.OriginalApprovalMax ? 'CONFLICT — '+utcFormat(datum.OriginalApprovalMin,'%d %b %Y')+' to '+utcFormat(datum.OriginalApprovalMax,'%d %b %Y')+'; withheld' : isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y')+(datum.OriginalApprovalValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing','Latest approval':datum.LatestApprovalBad>0 ? 'INVALID INPUT — withheld' : datum.LatestApprovalMin!==datum.LatestApprovalMax ? 'CONFLICT — '+utcFormat(datum.LatestApprovalMin,'%d %b %Y')+' to '+utcFormat(datum.LatestApprovalMax,'%d %b %Y')+'; withheld' : isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y')+(datum.LatestApprovalValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing','Actual approval':datum.ActualApprovalBad>0 ? 'INVALID INPUT — withheld' : datum.ActualApprovalMin!==datum.ActualApprovalMax ? 'CONFLICT — '+utcFormat(datum.ActualApprovalMin,'%d %b %Y')+' to '+utcFormat(datum.ActualApprovalMax,'%d %b %Y')+'; withheld' : isValid(datum.ActualApproval) ? utcFormat(datum.ActualApproval,'%d %b %Y')+(datum.ActualApprovalValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing','Registration start':datum.RegistrationStartBad>0 ? 'INVALID INPUT — withheld' : datum.RegistrationStartMin!==datum.RegistrationStartMax ? 'CONFLICT — '+utcFormat(datum.RegistrationStartMin,'%d %b %Y')+' to '+utcFormat(datum.RegistrationStartMax,'%d %b %Y')+'; withheld' : isValid(datum.RegistrationStart) ? utcFormat(datum.RegistrationStart,'%d %b %Y')+(datum.RegistrationStartValid<datum.sourceRows ? ' (some duplicate rows blank)' : '') : 'Missing'}) : datum.level===1 ? ({'Level':'Regulatory objective','Application':datum.AppID,'Regulatory objective':datum.ROID,'Sites (legal manufacturers)':datum.ManufacturerInfo.detail,'Products':datum.ProductInfo.detail,'Filtered submissions':datum.n,'Span':'Available, non-conflicting lifecycle dates','Start':isValid(datum.start) ? utcFormat(datum.start,'%d %b %Y') : 'No dates','End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'No dates','Withheld milestone fields':datum.issues,'Missing or withheld fields':datum.missing}) : datum.level===0 && !datum.registrationContainer ? ({'Level':'Application','Application':datum.AppID,'Sites (legal manufacturers)':datum.ManufacturerInfo.detail,'Products':datum.ProductInfo.detail,'Filtered submissions':datum.n,'Span':'Available, non-conflicting lifecycle dates','Start':isValid(datum.start) ? utcFormat(datum.start,'%d %b %Y') : 'No dates','End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'No dates','Withheld milestone fields':datum.issues,'Missing or withheld fields':datum.missing}) : isValid(datum.tip) ? datum.tip : {'Application':datum.AppID,'Regulatory objective':datum.ROID,'Submission':datum.SubID}"
         }
       ]
     },
@@ -4416,6 +4553,89 @@
           "expr": "datum.validRecordURL"
         }
       ]
+    },
+    {
+      "name": "columnHandles",
+      "values": [
+        {
+          "id": "hierarchy",
+          "label": "Hierarchy"
+        },
+        {
+          "id": "site",
+          "label": "Manufacturing sites"
+        },
+        {
+          "id": "products",
+          "label": "Products and countries"
+        }
+      ],
+      "transform": [
+        {
+          "type": "formula",
+          "as": "edge",
+          "expr": "datum.id==='hierarchy' ? hierarchyW : datum.id==='site' ? hierarchyW+siteW : left"
+        }
+      ]
+    },
+    {
+      "name": "countChips",
+      "source": "pageRows",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "mode==='Hierarchy'"
+        },
+        {
+          "type": "formula",
+          "as": "rowCounts",
+          "expr": "trackerHierarchyCounts({level:datum.level,n:datum.n,ROCount:datum.ROCount,AppCount:datum.AppCount,EventCount:datum.EventCount,RegistrationCount:datum.RegistrationCount,registrationContainer:datum.registrationContainer})"
+        },
+        {
+          "type": "filter",
+          "expr": "length(datum.rowCounts)>0"
+        },
+        {
+          "type": "formula",
+          "as": "countWidth0",
+          "expr": "trackerTextWidth(datum.rowCounts[0].label,bodyFont-1)+8"
+        },
+        {
+          "type": "formula",
+          "as": "countWidth1",
+          "expr": "length(datum.rowCounts)>1 ? trackerTextWidth(datum.rowCounts[1].label,bodyFont-1)+8 : 0"
+        },
+        {
+          "type": "formula",
+          "as": "countWidth2",
+          "expr": "length(datum.rowCounts)>2 ? trackerTextWidth(datum.rowCounts[2].label,bodyFont-1)+8 : 0"
+        },
+        {
+          "type": "formula",
+          "as": "countFit",
+          "expr": "min(1,max(24,hierarchyW-datum.labelX-4)/(datum.countWidth0+datum.countWidth1+datum.countWidth2))"
+        },
+        {
+          "type": "flatten",
+          "fields": [
+            "rowCounts"
+          ],
+          "as": [
+            "countChip"
+          ],
+          "index": "countIndex"
+        },
+        {
+          "type": "formula",
+          "as": "chipX",
+          "expr": "datum.labelX+(datum.countIndex===0 ? 0 : datum.countIndex===1 ? datum.countWidth0 : datum.countWidth0+datum.countWidth1)*datum.countFit"
+        },
+        {
+          "type": "formula",
+          "as": "chipWidth",
+          "expr": "(datum.countIndex===0 ? datum.countWidth0 : datum.countIndex===1 ? datum.countWidth1 : datum.countWidth2)*datum.countFit"
+        }
+      ]
     }
   ],
   "scales": [
@@ -4489,7 +4709,7 @@
             "value": 25
           },
           "fill": {
-            "signal": "datum.id==='fit' && !range ? themePalette.controlSelected : themePalette.control"
+            "signal": "(datum.id==='fit' && !range) || (datum.id==='today' && range && range[0]===todayRange[0] && range[1]===todayRange[1]) ? themePalette.controlSelected : themePalette.control"
           },
           "stroke": {
             "signal": "themePalette.controlBorder"
@@ -4501,7 +4721,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "datum.id==='fit' ? 'Fit all filtered lifecycle dates' : datum.id==='earlier' ? 'Move to earlier dates' : datum.id==='later' ? 'Move to later dates' : 'Show one '+datum.label+' around the current midpoint'"
+            "signal": "datum.id==='today' ? 'Center a 90-day window on today' : datum.id==='fit' ? 'Fit all filtered workflow dates; registration dates are excluded' : datum.id==='earlier' ? 'Move to earlier dates' : datum.id==='later' ? 'Move to later dates' : 'Show one '+datum.label+' around the current midpoint'"
           }
         },
         "hover": {
@@ -5052,7 +5272,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "value": "Select record details; use the + or − control to expand or collapse."
+            "value": "Select record Details; use the bar or + or − to expand or collapse children."
           }
         },
         "hover": {
@@ -5198,7 +5418,7 @@
             "signal": "datum.y+14+2*rowLineH"
           },
           "text": {
-            "field": "HierarchyMeta"
+            "signal": "mode==='Hierarchy' && length(trackerHierarchyCounts({level:datum.level,n:datum.n,ROCount:datum.ROCount,AppCount:datum.AppCount,EventCount:datum.EventCount,RegistrationCount:datum.RegistrationCount,registrationContainer:datum.registrationContainer}))>0 ? '' : datum.HierarchyMeta"
           },
           "fill": {
             "signal": "themePalette.subText"
@@ -5280,7 +5500,7 @@
             "signal": "datum.y+14+2*rowLineH"
           },
           "text": {
-            "field": "HierarchyMeta"
+            "signal": "mode==='Hierarchy' && length(trackerHierarchyCounts({level:datum.level,n:datum.n,ROCount:datum.ROCount,AppCount:datum.AppCount,EventCount:datum.EventCount,RegistrationCount:datum.RegistrationCount,registrationContainer:datum.registrationContainer}))>0 ? '' : datum.HierarchyMeta"
           },
           "fill": {
             "signal": "datum.issues>0 ? themePalette.issueText : themePalette.mutedText"
@@ -5322,13 +5542,13 @@
             "signal": "datum.y+14"
           },
           "text": {
-            "signal": "mode==='Compare' && compareLevel===2 ? (isValid(datum.DispatchDays) ? format(datum.DispatchDays,'.0f')+' days' : indexof(datum.OpenAge,'Open submission ')===0 ? ['Awaiting submission',format(floor((nowDate-datum.ActualDispatch)/86400000),'.0f')+' days waiting'] : '—') : isValid(datum.SiteLabels) ? slice(datum.SiteLabels,0,4) : datum.ManufacturerInfo.count===1 ? datum.ManufacturerInfo.detail : datum.ManufacturerInfo.count+' sites'+(datum.ManufacturerInfo.missing ? ' *' : '')"
+            "signal": "mode==='Compare' && compareLevel===2 ? (isValid(datum.DispatchDays) ? format(datum.DispatchDays,'.0f')+' days' : indexof(datum.OpenAge,'Open submission ')===0 ? ['Awaiting submission',format(floor((nowDate-datum.ActualDispatch)/86400000),'.0f')+' days waiting'] : '—') : datum.SiteLines"
           },
           "limit": {
             "signal": "siteW-12"
           },
           "tooltip": {
-            "signal": "mode==='Compare' && compareLevel===2 ? 'Actual dispatch to actual submission, in days. Waiting is measured since dispatch. Missing, invalid or conflicting endpoints are withheld. Select for dates in Details.' : 'Manufacturing sites are labelled by source: Legal manufacturer and Registration site. Select for full lists in Details.'"
+            "signal": "mode==='Compare' && compareLevel===2 ? 'Actual dispatch to actual submission, in days. Waiting is measured since dispatch. Missing, invalid or conflicting endpoints are withheld. Select for dates in Details.' : {'Legal manufacturer':isValid(datum.LegalSites) && length(datum.LegalSites) ? join(datum.LegalSites,', ') : datum.ManufacturerInfo.detail,'Registration manufacturing sites':isValid(datum.RegistrationSites) && length(datum.RegistrationSites) ? join(datum.RegistrationSites,', ') : 'Not recorded','Action':'Select for complete site lists in Details. Reg means registration manufacturing site.'}"
           },
           "cursor": {
             "value": "pointer"
@@ -5363,13 +5583,13 @@
             "signal": "datum.y+14"
           },
           "text": {
-            "signal": "mode==='Compare' && compareLevel===2 ? (isValid(datum.ApprovalDays) ? format(datum.ApprovalDays,'.0f')+' days' : indexof(datum.OpenAge,'Open approval ')===0 ? ['Awaiting approval',format(floor((nowDate-datum.ActualSubmission)/86400000),'.0f')+' days waiting'] : '—') : datum.ProductPreview"
+            "signal": "mode==='Compare' && compareLevel===2 ? (isValid(datum.ApprovalDays) ? format(datum.ApprovalDays,'.0f')+' days' : indexof(datum.OpenAge,'Open approval ')===0 ? ['Awaiting approval',format(floor((nowDate-datum.ActualSubmission)/86400000),'.0f')+' days waiting'] : '—') : length(datum.ProductLines)>1 ? datum.ProductLines : length(datum.ProductLines) ? datum.ProductLines[0] : ''"
           },
           "limit": {
-            "signal": "left-hierarchyW-siteW-12"
+            "signal": "productW-12"
           },
           "tooltip": {
-            "signal": "mode==='Compare' && compareLevel===2 ? 'Actual submission to actual approval, in days. Waiting is measured since submission. Missing, invalid or conflicting endpoints are withheld. Select for dates in Details.' : (isValid(datum.ProductCompactLabels) ? datum.ProductInfo.detail : datum.ProductCountLabel)+(datum.ProductInfo.missing ? ' · * Some product values are missing.' : '')+' · Click for the full product and catalog lists in Details.'"
+            "signal": "mode==='Compare' && compareLevel===2 ? 'Actual submission to actual approval, in days. Waiting is measured since submission. Missing, invalid or conflicting endpoints are withheld. Select for dates in Details.' : datum.ProductInfo.detail+(datum.ProductInfo.missing ? ' · * Some product values are missing.' : '')+' · Click for the full product and catalog lists in Details.'"
           },
           "cursor": {
             "value": "pointer"
@@ -5416,7 +5636,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "{'Record':datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Start':isValid(datum.start) ? utcFormat(datum.start,'%d %b %Y') : 'Not recorded','End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'Not recorded','Submissions':datum.n,'Summary':'All children in membership/search filters; state checkboxes control row visibility'}"
+            "signal": "{'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Record':datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Start':isValid(datum.start) ? utcFormat(datum.start,'%d %b %Y') : 'Not recorded','End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'Not recorded','Submissions':datum.n,'Summary':'All children in membership/search filters; state checkboxes control row visibility'}"
           },
           "strokeDash": {
             "signal": "datum.level===-1 ? [5,3] : [1,0]"
@@ -5451,7 +5671,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "{'Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Record':datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Start':isValid(datum.start) ? utcFormat(datum.start,'%d %b %Y') : 'Not recorded','End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'Not recorded','Submissions':datum.n,'Summary':'All children in membership/search filters; state checkboxes control row visibility'}"
+            "signal": "{'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Record':datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'State':datum.State,'Start':isValid(datum.start) ? utcFormat(datum.start,'%d %b %Y') : 'Not recorded','End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'Not recorded','Submissions':datum.n,'Summary':'All children in membership/search filters; state checkboxes control row visibility'}"
           }
         }
       }
@@ -5492,7 +5712,7 @@
             "value": 3
           },
           "tooltip": {
-            "signal": "{'Estimated LM dossier preparation':datum.LMPrepLabel,'Start':utcFormat(datum.LMPrepStart,'%d %b %Y'),'Target dispatch':utcFormat(datum.LMPrepEnd,'%d %b %Y'),'Basis':datum.LMPrepAnchor,'Application':datum.AppID,'Meaning':'Country standard via application lead market; not actual preparation activity'}"
+            "signal": "{'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Estimated LM dossier preparation':datum.LMPrepLabel,'Start':utcFormat(datum.LMPrepStart,'%d %b %Y'),'Target dispatch':utcFormat(datum.LMPrepEnd,'%d %b %Y'),'Basis':datum.LMPrepAnchor,'Application':datum.AppID,'Meaning':'Country standard via application lead market; not actual preparation activity'}"
           },
           "cursor": {
             "value": "pointer"
@@ -5527,7 +5747,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "{'Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Estimated LM dossier preparation':datum.LMPrepLabel,'Start':utcFormat(datum.LMPrepStart,'%d %b %Y'),'Target dispatch':utcFormat(datum.LMPrepEnd,'%d %b %Y'),'Basis':datum.LMPrepAnchor,'Application':datum.AppID,'Meaning':'Country standard via application lead market; not actual preparation activity'}"
+            "signal": "{'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Estimated LM dossier preparation':datum.LMPrepLabel,'Start':utcFormat(datum.LMPrepStart,'%d %b %Y'),'Target dispatch':utcFormat(datum.LMPrepEnd,'%d %b %Y'),'Basis':datum.LMPrepAnchor,'Application':datum.AppID,'Meaning':'Country standard via application lead market; not actual preparation activity'}"
           }
         }
       }
@@ -5562,7 +5782,7 @@
             "signal": "clamp(scale(\"x\",datum.LMPrepEnd),left+3,width-22)-(clamp(scale(\"x\",datum.LMPrepStart),left+3,width-22))>=75 ? 1 : 0"
           },
           "tooltip": {
-            "signal": "{'Estimated LM dossier preparation':datum.LMPrepLabel,'Start':utcFormat(datum.LMPrepStart,'%d %b %Y'),'Target dispatch':utcFormat(datum.LMPrepEnd,'%d %b %Y'),'Basis':datum.LMPrepAnchor,'Application':datum.AppID,'Meaning':'Country standard via application lead market; not actual preparation activity'}"
+            "signal": "{'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Estimated LM dossier preparation':datum.LMPrepLabel,'Start':utcFormat(datum.LMPrepStart,'%d %b %Y'),'Target dispatch':utcFormat(datum.LMPrepEnd,'%d %b %Y'),'Basis':datum.LMPrepAnchor,'Application':datum.AppID,'Meaning':'Country standard via application lead market; not actual preparation activity'}"
           },
           "cursor": {
             "value": "pointer"
@@ -5606,7 +5826,7 @@
             "value": 3
           },
           "tooltip": {
-            "signal": "datum.PredictionStatus==='benchmark' ? {'Historical approval benchmark':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Anchor':isValid(datum.PredictionAnchorLabel) && datum.PredictionAnchorLabel!=='' ? datum.PredictionAnchorLabel : 'Actual submission','Anchor date':isNumber(datum.PredictionAnchorDate) && isFinite(datum.PredictionAnchorDate) ? utcFormat(datum.PredictionAnchorDate,'%d %b %Y') : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y') : 'Not recorded','Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Actual approval':utcFormat(datum.ActualApproval,'%d %b %Y'),'Meaning':'Historical comparison with other completed submissions, not a future forecast','Timing':'Completed submission; recorded dates remain unchanged'} : {'Predicted approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Anchor':isValid(datum.PredictionAnchorLabel) && datum.PredictionAnchorLabel!=='' ? datum.PredictionAnchorLabel : 'Actual submission','Anchor date':isNumber(datum.PredictionAnchorDate) && isFinite(datum.PredictionAnchorDate) ? utcFormat(datum.PredictionAnchorDate,'%d %b %Y') : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y') : 'Not recorded','Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Basis':datum.PredictionFromPlan ? 'Forecast based on planned submission' : 'Estimate from actual submission date','Meaning':datum.PredictionFromPlan ? 'Conditional on the planned submission date; not a planned approval date or guarantee' : 'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionFromPlan ? 'Forecast assumes the planned submission date is met' : datum.PredictionDate<utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate)) ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
+            "signal": "datum.PredictionStatus==='benchmark' ? {'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Historical approval benchmark':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Anchor':isValid(datum.PredictionAnchorLabel) && datum.PredictionAnchorLabel!=='' ? datum.PredictionAnchorLabel : 'Actual submission','Anchor date':isNumber(datum.PredictionAnchorDate) && isFinite(datum.PredictionAnchorDate) ? utcFormat(datum.PredictionAnchorDate,'%d %b %Y') : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y') : 'Not recorded','Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Actual approval':utcFormat(datum.ActualApproval,'%d %b %Y'),'Meaning':'Historical comparison with other completed submissions, not a future forecast','Timing':'Completed submission; recorded dates remain unchanged'} : {'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Predicted approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Anchor':isValid(datum.PredictionAnchorLabel) && datum.PredictionAnchorLabel!=='' ? datum.PredictionAnchorLabel : 'Actual submission','Anchor date':isNumber(datum.PredictionAnchorDate) && isFinite(datum.PredictionAnchorDate) ? utcFormat(datum.PredictionAnchorDate,'%d %b %Y') : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y') : 'Not recorded','Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Basis':datum.PredictionFromPlan ? 'Forecast based on planned submission' : 'Estimate from actual submission date','Meaning':datum.PredictionFromPlan ? 'Conditional on the planned submission date; not a planned approval date or guarantee' : 'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionFromPlan ? 'Forecast assumes the planned submission date is met' : datum.PredictionDate<utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate)) ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
           },
           "cursor": {
             "value": "pointer"
@@ -5641,7 +5861,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "datum.PredictionStatus==='benchmark' ? {'Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Historical approval benchmark':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Anchor':isValid(datum.PredictionAnchorLabel) && datum.PredictionAnchorLabel!=='' ? datum.PredictionAnchorLabel : 'Actual submission','Anchor date':isNumber(datum.PredictionAnchorDate) && isFinite(datum.PredictionAnchorDate) ? utcFormat(datum.PredictionAnchorDate,'%d %b %Y') : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y') : 'Not recorded','Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Actual approval':utcFormat(datum.ActualApproval,'%d %b %Y'),'Meaning':'Historical comparison with other completed submissions, not a future forecast','Timing':'Completed submission; recorded dates remain unchanged'} : {'Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Predicted approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Anchor':isValid(datum.PredictionAnchorLabel) && datum.PredictionAnchorLabel!=='' ? datum.PredictionAnchorLabel : 'Actual submission','Anchor date':isNumber(datum.PredictionAnchorDate) && isFinite(datum.PredictionAnchorDate) ? utcFormat(datum.PredictionAnchorDate,'%d %b %Y') : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y') : 'Not recorded','Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Basis':datum.PredictionFromPlan ? 'Forecast based on planned submission' : 'Estimate from actual submission date','Meaning':datum.PredictionFromPlan ? 'Conditional on the planned submission date; not a planned approval date or guarantee' : 'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionFromPlan ? 'Forecast assumes the planned submission date is met' : datum.PredictionDate<utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate)) ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
+            "signal": "datum.PredictionStatus==='benchmark' ? {'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Historical approval benchmark':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Anchor':isValid(datum.PredictionAnchorLabel) && datum.PredictionAnchorLabel!=='' ? datum.PredictionAnchorLabel : 'Actual submission','Anchor date':isNumber(datum.PredictionAnchorDate) && isFinite(datum.PredictionAnchorDate) ? utcFormat(datum.PredictionAnchorDate,'%d %b %Y') : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y') : 'Not recorded','Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Actual approval':utcFormat(datum.ActualApproval,'%d %b %Y'),'Meaning':'Historical comparison with other completed submissions, not a future forecast','Timing':'Completed submission; recorded dates remain unchanged'} : {'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Predicted approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Anchor':isValid(datum.PredictionAnchorLabel) && datum.PredictionAnchorLabel!=='' ? datum.PredictionAnchorLabel : 'Actual submission','Anchor date':isNumber(datum.PredictionAnchorDate) && isFinite(datum.PredictionAnchorDate) ? utcFormat(datum.PredictionAnchorDate,'%d %b %Y') : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y') : 'Not recorded','Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Basis':datum.PredictionFromPlan ? 'Forecast based on planned submission' : 'Estimate from actual submission date','Meaning':datum.PredictionFromPlan ? 'Conditional on the planned submission date; not a planned approval date or guarantee' : 'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionFromPlan ? 'Forecast assumes the planned submission date is met' : datum.PredictionDate<utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate)) ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
           }
         }
       }
@@ -5676,7 +5896,7 @@
             "signal": "datum.track===0 ? [1,4] : datum.track===1 ? [6,3] : [1,0]"
           },
           "tooltip": {
-            "signal": "{'Submission':datum.SubID,'State':datum.State,'From':datum.a,'Start date':isValid(datum[datum.a]) ? utcFormat(datum[datum.a],'%d %b %Y') : 'Not recorded','To':datum.b,'End date':isValid(datum[datum.b]) ? utcFormat(datum[datum.b],'%d %b %Y') : 'Not recorded'}"
+            "signal": "{'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Submission':datum.SubID,'State':datum.State,'From':datum.a,'Start date':isValid(datum[datum.a]) ? utcFormat(datum[datum.a],'%d %b %Y') : 'Not recorded','To':datum.b,'End date':isValid(datum[datum.b]) ? utcFormat(datum[datum.b],'%d %b %Y') : 'Not recorded'}"
           },
           "cursor": {
             "value": "pointer"
@@ -5711,7 +5931,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "{'Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Submission':datum.SubID,'State':datum.State,'From':datum.a,'Start date':isValid(datum[datum.a]) ? utcFormat(datum[datum.a],'%d %b %Y') : 'Not recorded','To':datum.b,'End date':isValid(datum[datum.b]) ? utcFormat(datum[datum.b],'%d %b %Y') : 'Not recorded'}"
+            "signal": "{'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Submission':datum.SubID,'State':datum.State,'From':datum.a,'Start date':isValid(datum[datum.a]) ? utcFormat(datum[datum.a],'%d %b %Y') : 'Not recorded','To':datum.b,'End date':isValid(datum[datum.b]) ? utcFormat(datum[datum.b],'%d %b %Y') : 'Not recorded'}"
           }
         }
       }
@@ -5747,7 +5967,7 @@
             "value": 1.6
           },
           "tooltip": {
-            "signal": "{'Submission':datum.SubID,'State':datum.State,'Milestone':datum.milestone,'Date':isValid(datum.actualDate) ? utcFormat(datum.actualDate,'%d %b %Y') : 'Not recorded'}"
+            "signal": "{'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Submission':datum.SubID,'State':datum.State,'Milestone':datum.milestone,'Date':isValid(datum.actualDate) ? utcFormat(datum.actualDate,'%d %b %Y') : 'Not recorded'}"
           },
           "cursor": {
             "value": "pointer"
@@ -5794,7 +6014,7 @@
             "value": 2.5
           },
           "tooltip": {
-            "signal": "datum.PredictionStatus==='benchmark' ? {'Historical approval benchmark':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Anchor':isValid(datum.PredictionAnchorLabel) && datum.PredictionAnchorLabel!=='' ? datum.PredictionAnchorLabel : 'Actual submission','Anchor date':isNumber(datum.PredictionAnchorDate) && isFinite(datum.PredictionAnchorDate) ? utcFormat(datum.PredictionAnchorDate,'%d %b %Y') : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y') : 'Not recorded','Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Actual approval':utcFormat(datum.ActualApproval,'%d %b %Y'),'Meaning':'Historical comparison with other completed submissions, not a future forecast','Timing':'Completed submission; recorded dates remain unchanged'} : {'Predicted approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Anchor':isValid(datum.PredictionAnchorLabel) && datum.PredictionAnchorLabel!=='' ? datum.PredictionAnchorLabel : 'Actual submission','Anchor date':isNumber(datum.PredictionAnchorDate) && isFinite(datum.PredictionAnchorDate) ? utcFormat(datum.PredictionAnchorDate,'%d %b %Y') : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y') : 'Not recorded','Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Basis':datum.PredictionFromPlan ? 'Forecast based on planned submission' : 'Estimate from actual submission date','Meaning':datum.PredictionFromPlan ? 'Conditional on the planned submission date; not a planned approval date or guarantee' : 'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionFromPlan ? 'Forecast assumes the planned submission date is met' : datum.PredictionDate<utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate)) ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
+            "signal": "datum.PredictionStatus==='benchmark' ? {'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Historical approval benchmark':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Anchor':isValid(datum.PredictionAnchorLabel) && datum.PredictionAnchorLabel!=='' ? datum.PredictionAnchorLabel : 'Actual submission','Anchor date':isNumber(datum.PredictionAnchorDate) && isFinite(datum.PredictionAnchorDate) ? utcFormat(datum.PredictionAnchorDate,'%d %b %Y') : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y') : 'Not recorded','Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Actual approval':utcFormat(datum.ActualApproval,'%d %b %Y'),'Meaning':'Historical comparison with other completed submissions, not a future forecast','Timing':'Completed submission; recorded dates remain unchanged'} : {'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Predicted approval':utcFormat(datum.PredictionDate,'%d %b %Y'),'Submission':datum.SubID,'Historical range':utcFormat(datum.PredictionLow,'%d %b %Y')+' – '+utcFormat(datum.PredictionHigh,'%d %b %Y'),'Country':datum.PredictionCountry,'Anchor':isValid(datum.PredictionAnchorLabel) && datum.PredictionAnchorLabel!=='' ? datum.PredictionAnchorLabel : 'Actual submission','Anchor date':isNumber(datum.PredictionAnchorDate) && isFinite(datum.PredictionAnchorDate) ? utcFormat(datum.PredictionAnchorDate,'%d %b %Y') : isValid(datum.ActualSubmission) ? utcFormat(datum.ActualSubmission,'%d %b %Y') : 'Not recorded','Qualifying completed submissions':datum.PredictionN,'Median submission-to-approval':format(datum.PredictionMedian,'.0f')+' days','Original planned approval':isValid(datum.OriginalApproval) ? utcFormat(datum.OriginalApproval,'%d %b %Y') : 'Not recorded / withheld','Latest planned approval':isValid(datum.LatestApproval) ? utcFormat(datum.LatestApproval,'%d %b %Y') : 'Not recorded / withheld','Basis':datum.PredictionFromPlan ? 'Forecast based on planned submission' : 'Estimate from actual submission date','Meaning':datum.PredictionFromPlan ? 'Conditional on the planned submission date; not a planned approval date or guarantee' : 'Historical estimate, not a planned date or guarantee','Timing':datum.PredictionFromPlan ? 'Forecast assumes the planned submission date is met' : datum.PredictionDate<utc(utcyear(nowDate),utcmonth(nowDate),utcdate(nowDate)) ? 'Estimate has passed; approval remains unrecorded' : 'Estimate from actual submission date'}"
           },
           "cursor": {
             "value": "pointer"
@@ -6176,13 +6396,13 @@
             "signal": "hierarchyW+siteW+6"
           },
           "y": {
-            "signal": "datum.y+14+rowLineH"
+            "signal": "datum.y+14+max(1,length(datum.ProductLines))*rowLineH"
           },
           "text": {
-            "signal": "mode==='Compare' && compareLevel===2 ? '' : datum.CountryCountLabel"
+            "signal": "mode==='Compare' && compareLevel===2 ? '' : length(datum.CountryLines) ? datum.CountryLines[0] : ''"
           },
           "limit": {
-            "signal": "left-hierarchyW-siteW-12"
+            "signal": "productW-12"
           },
           "fill": {
             "signal": "themePalette.countText"
@@ -6191,7 +6411,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "value": "Click for countries below. * includes missing or unavailable Country values."
+            "signal": "{'Countries':datum.CountryInfo.detail,'Action':'Select for full country list in Details. * includes missing or unavailable country values.'}"
           }
         }
       }
@@ -6481,7 +6701,7 @@
             "value": 3
           },
           "tooltip": {
-            "signal": "{'Surveyed approval estimate':datum.duration,'Change ID':datum.change,'Assessment country':datum.country,'Earliest':utcFormat(datum.start,'%d %b %Y'),'Latest':utcFormat(datum.end,'%d %b %Y'),'Anchor':datum.anchorLabel,'Source':datum.source,'Basis':'Submission to approval; month = 30 days'}"
+            "signal": "{'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Surveyed approval estimate':datum.duration,'Change ID':datum.change,'Assessment country':datum.country,'Earliest':utcFormat(datum.start,'%d %b %Y'),'Latest':utcFormat(datum.end,'%d %b %Y'),'Anchor':datum.anchorLabel,'Source':datum.source,'Basis':'Submission to approval; month = 30 days'}"
           },
           "cursor": {
             "value": "pointer"
@@ -6516,7 +6736,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "{'Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Surveyed approval estimate':datum.duration,'Change ID':datum.change,'Assessment country':datum.country,'Earliest':utcFormat(datum.start,'%d %b %Y'),'Latest':utcFormat(datum.end,'%d %b %Y'),'Anchor':datum.anchorLabel,'Source':datum.source,'Basis':'Submission to approval; month = 30 days'}"
+            "signal": "{'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : 'Continues after visible window','Surveyed approval estimate':datum.duration,'Change ID':datum.change,'Assessment country':datum.country,'Earliest':utcFormat(datum.start,'%d %b %Y'),'Latest':utcFormat(datum.end,'%d %b %Y'),'Anchor':datum.anchorLabel,'Source':datum.source,'Basis':'Submission to approval; month = 30 days'}"
           }
         }
       }
@@ -6636,7 +6856,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "{'Registration':datum.RegistrationID,'Country':datum.CountryCountLabel,'State':datum.State,'Start':utcFormat(datum.start,'%d %b %Y'),'End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'Not plotted; see recorded value in Details','Link':datum.registrationUnlinked ? 'Missing or conflicting submission link' : datum.SubID,'Display':'Validity clipped to current window; excluded from Fit all'}"
+            "signal": "{'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Registration':datum.RegistrationID,'Country':datum.CountryCountLabel,'State':datum.State,'Start':utcFormat(datum.start,'%d %b %Y'),'End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'Not plotted; see recorded value in Details','Link':datum.registrationUnlinked ? 'Missing or conflicting submission link' : datum.SubID,'Display':'Validity clipped to current window; excluded from Fit all'}"
           },
           "strokeDash": {
             "value": [
@@ -6674,7 +6894,7 @@
             "value": "pointer"
           },
           "tooltip": {
-            "signal": "{'Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : datum.RegistrationOpenEnd ? 'End not plotted; see recorded value in Details' : 'Continues after visible window','Registration':datum.RegistrationID,'Country':datum.CountryCountLabel,'State':datum.State,'Start':utcFormat(datum.start,'%d %b %Y'),'End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'Not plotted; see recorded value in Details','Link':datum.registrationUnlinked ? 'Missing or conflicting submission link' : datum.SubID,'Display':'Validity clipped to current window; excluded from Fit all'}"
+            "signal": "{'Action':mode==='Hierarchy' && (datum.level<2 || (datum.level===2 && datum.RegistrationCount>0)) ? 'Click to expand or collapse children and open Details' : 'Click for Details','Continuation':datum.continuationSide==='left' ? 'Continues before visible window' : datum.RegistrationOpenEnd ? 'End not plotted; see recorded value in Details' : 'Continues after visible window','Registration':datum.RegistrationID,'Country':datum.CountryCountLabel,'State':datum.State,'Start':utcFormat(datum.start,'%d %b %Y'),'End':isValid(datum.end) ? utcFormat(datum.end,'%d %b %Y') : 'Not plotted; see recorded value in Details','Link':datum.registrationUnlinked ? 'Missing or conflicting submission link' : datum.SubID,'Display':'Validity clipped to current window; excluded from Fit all'}"
           }
         }
       }
@@ -6716,6 +6936,155 @@
           },
           "tooltip": {
             "signal": "{'Action':'Open record in platform','Record':datum.registrationContainer ? 'Registrations without linked submission' : datum.level===3 ? datum.RegistrationID : datum.level===2 ? datum.SubID : datum.level===-2 ? (datum.ChangeID || 'Other regulatory events') : datum.level===-1 ? datum.EventName : datum.level===0 ? (datum.AppID || 'Application not recorded') : (datum.ROID || 'RO not recorded'),'URL':datum.RecordURL}"
+          }
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "name": "columnGrip",
+      "interactive": false,
+      "from": {
+        "data": "columnHandles"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "datum.edge-1.5"
+          },
+          "y": {
+            "value": 85
+          },
+          "width": {
+            "value": 3
+          },
+          "height": {
+            "value": 24
+          },
+          "cornerRadius": {
+            "value": 1.5
+          },
+          "fill": {
+            "signal": "themePalette.headerText"
+          },
+          "fillOpacity": {
+            "value": 0.6
+          }
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "name": "columnHandle",
+      "from": {
+        "data": "columnHandles"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "datum.edge-4"
+          },
+          "y": {
+            "value": 78
+          },
+          "width": {
+            "value": 8
+          },
+          "height": {
+            "signal": "max(0,viewBottom-78)"
+          },
+          "fill": {
+            "signal": "themePalette.headerText"
+          },
+          "fillOpacity": {
+            "value": 0
+          },
+          "cursor": {
+            "value": "col-resize"
+          },
+          "tooltip": {
+            "signal": "datum.label+': drag this divider to resize the column. Double-click to reset all column widths. Full text is available in Details.'"
+          }
+        },
+        "hover": {
+          "fillOpacity": {
+            "value": 0.2
+          }
+        }
+      }
+    },
+    {
+      "name": "countChipHit",
+      "type": "rect",
+      "from": {
+        "data": "countChips"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "field": "chipX"
+          },
+          "y": {
+            "signal": "datum.y+14+2*rowLineH-rowLineH/2"
+          },
+          "width": {
+            "field": "chipWidth"
+          },
+          "height": {
+            "signal": "rowLineH"
+          },
+          "fill": {
+            "signal": "themePalette.subText"
+          },
+          "cursor": {
+            "signal": "datum.countChip.count>0 ? 'pointer' : 'default'"
+          },
+          "tooltip": {
+            "signal": "{'Count':datum.countChip.label,'Action':datum.countChip.count>0 ? 'Show matching children in this branch' : 'No matching children'}"
+          },
+          "fillOpacity": {
+            "value": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "countChip",
+      "type": "text",
+      "from": {
+        "data": "countChips"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "field": "chipX"
+          },
+          "y": {
+            "signal": "datum.y+14+2*rowLineH"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "fontSize": {
+            "signal": "bodyFont-1"
+          },
+          "fontWeight": {
+            "signal": "datum.countChip.count>0 ? 600 : 400"
+          },
+          "fill": {
+            "signal": "datum.countChip.count>0 ? themePalette.subText : themePalette.mutedText"
+          },
+          "text": {
+            "field": "countChip.label"
+          },
+          "limit": {
+            "signal": "max(8,datum.chipWidth-6)"
+          },
+          "cursor": {
+            "signal": "datum.countChip.count>0 ? 'pointer' : 'default'"
+          },
+          "tooltip": {
+            "signal": "{'Count':datum.countChip.label,'Action':datum.countChip.count>0 ? 'Show matching children in this branch' : 'No matching children'}"
           }
         }
       }

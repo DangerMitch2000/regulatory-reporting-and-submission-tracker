@@ -2,6 +2,9 @@ const assert=require('node:assert/strict'),{analyze}=require('./dispatch-details
 const base={SubID:'S',SubStatus:'In Progress',DispatchRequired:true,OriginalDispatch:'2026-09-20',LatestDispatch:'2026-09-25',ActualDispatch:null,ActualSubmission:null,ActualApproval:null};
 const get=(patch={},extra=[],opts={})=>analyze([{...base,...patch},...extra],{now:new Date(2026,8,29,12),...opts}).get('S');
 assert.equal(get().timing,'4 calendar days past dispatch target');
+assert.equal(get().asOf,'29 Sep 2026');
+assert.equal(get().dates.LatestDispatch.label,'25 Sep 2026');
+assert.equal(get({ActualDispatch:'2026-09-05'}).timing,'Dispatched · 05 Sep 2026');
 assert.equal(get({LatestDispatch:'2026-10-02'}).timing,'3 calendar days until dispatch target');
 assert.equal(get({LatestDispatch:'2026-09-29T23:59:00-12:00'}).timing,'Dispatch target is today');
 assert.equal(get({LatestDispatch:null}).days,-9);

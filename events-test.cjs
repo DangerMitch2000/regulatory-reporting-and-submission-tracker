@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict'),events=require('./events');
-assert.equal(events.dateField([{d:'2026-04-01T23:00:00Z'},{d:'2026-04-01T00:00:00Z'}],'d').label,'2026-04-01');
+assert.equal(events.dateField([{d:'2026-04-01T23:00:00Z'},{d:'2026-04-01T00:00:00Z'}],'d').label,'01 Apr 2026');
 assert.equal(events.dateField([{d:'2026-02-30'}],'d').value,null);
 assert.match(events.dateField([{d:'2026-04-01'},{d:'2026-04-02'}],'d').label,/Conflicting/);
 assert.equal(events.dateField([{d:'9999-01-01'}],'d').value,null);
@@ -7,7 +7,7 @@ assert.equal(events.dateField([{d:null}],'d').label,'Not recorded');
 console.log('PASS: optional event date validation and calendar-day conflicts.');
 
 {
- const vega=require('./vega'),changes=require('./changes');
+ const vega=require('./vega-test-setup.cjs'),changes=require('./changes');
  const live=row=>vega.ingest(row),app=live({AppID:'A1',key:'a1',appKey:'a1',level:0,State:'Active'}),ro1=live({AppID:'A1',ROID:'R1',key:'r1',appKey:'a1',roKey:'r1',level:1}),ro2=live({AppID:'A1',ROID:'R2',key:'r2',appKey:'a1',roKey:'r2',level:1});
  const milestone={raw:'2026-02-30',reason:'Invalid source date retained'},sub1=live({AppID:'A1',ROID:'R1',SubID:'S1',key:'s1',appKey:'a1',roKey:'r1',level:2,start:10,end:20,State:'Planned',milestone}),sub2=live({...sub1,ROID:'R2',SubID:'S2',key:'s2',roKey:'r2'});
  const parents=[app,ro1,ro2,sub1,sub2],original=JSON.stringify(parents),base={AppID:'A1',ROID:'R1',SubID:'S1',EventName:'E2',ChangeID:'C2',EventQMS:'Q2',ChangeQMS:'Q2',Country:'France',Product:'Product A',Manufacturer:'ABO',CatalogNumber:'0001'},source=[base,{...base,CatalogNumber:'0002'},{...base,ChangeID:'C10',EventQMS:'Q10',ChangeQMS:'Q10',Country:'Hungary',Product:'Product B'},{...base,ROID:'R2',SubID:'S2',EventName:'E10',ChangeID:'C99',ChangeQMS:'different'},{EventName:'E30',EventState:'Planned'},{ChangeID:'C30',Country:'Ireland'}];

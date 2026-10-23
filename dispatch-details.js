@@ -1,13 +1,13 @@
 (function(root,factory){
- const api=factory(typeof module==='object'&&module.exports?require('./quality.js'):root.regulatoryQuality,typeof module==='object'&&module.exports?require('./dispatch-required.js'):root.regulatoryDispatchRequired);
+ const api=factory(typeof module==='object'&&module.exports?require('./quality.js'):root.regulatoryQuality,typeof module==='object'&&module.exports?require('./dispatch-required.js'):root.regulatoryDispatchRequired,typeof module==='object'&&module.exports?require('./date-format.js'):root.regulatoryDateFormat);
  if(typeof module==='object'&&module.exports)module.exports=api;
  if(root)root.regulatoryDispatchDetails=api;
-})(typeof globalThis==='object'?globalThis:this,function(quality,dispatchRequired){
+})(typeof globalThis==='object'?globalThis:this,function(quality,dispatchRequired,dates){
  'use strict';
  const DAY=86400000,FIELDS=['OriginalDispatch','LatestDispatch','ActualDispatch','ActualSubmission','ActualApproval'];
  const blank=v=>v==null||typeof v==='string'&&!v.trim();
  const text=v=>v==null?'':String(v).trim();
- const format=day=>new Date(day).toISOString().slice(0,10);
+ const format=day=>dates.format(day);
  function resolve(rows,field,mapped){
   if(!mapped.has(field))return {state:'unmapped',day:null,label:'Not mapped'};
   const values=rows.map(r=>r[field]).filter(v=>!blank(v)),parsed=values.map(v=>quality.parseDate(v));

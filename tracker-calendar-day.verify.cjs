@@ -60,6 +60,8 @@ module.exports=async function verifyCalendarDays(page,{outputDir}={}){
  await page.locator('#host .quality-record').filter({hasText:/^DAY-EARLIER-SUBMISSION$/}).click();
  const detail=await page.locator('#host #quality-detail').innerText();
  assert.match(detail,/Actual submission is before actual dispatch/);
+ assert.match(detail,/Recorded value\s+Actual submission: 15 Apr 2024; Actual dispatch: 16 Apr 2024/,'The primary issue date uses the common display format');
+ assert.match(detail,/Raw source value/,'Unformatted timestamp evidence is explicitly labelled');
  assert.ok(detail.includes('2024-04-15T23:45:00-12:00'));
  assert.ok(detail.includes('2024-04-16T00:15:00+14:00'));
 
@@ -68,13 +70,16 @@ module.exports=async function verifyCalendarDays(page,{outputDir}={}){
  await page.waitForFunction(previous=>window.__qualityExports.length>previous,exportCount);
  const exported=await page.evaluate(()=>window.__qualityExports.at(-1));
  assert.equal(exported.fileType,'csv');
- const [headers,...entries]=parseCsv(exported.content),idColumn=headers.indexOf('Submission ID'),reasonColumn=headers.indexOf('Reason'),fieldColumn=headers.indexOf('Field'),valueColumn=headers.indexOf('Recorded value');
- assert.ok(idColumn>=0&&reasonColumn>=0&&fieldColumn>=0&&valueColumn>=0);
+ const [headers,...entries]=parseCsv(exported.content),idColumn=headers.indexOf('Submission ID'),reasonColumn=headers.indexOf('Reason'),fieldColumn=headers.indexOf('Field'),valueColumn=headers.indexOf('Recorded value'),rawColumn=headers.indexOf('Raw source value');
+ assert.ok(idColumn>=0&&reasonColumn>=0&&fieldColumn>=0&&valueColumn>=0&&rawColumn>=0);
  assert.deepEqual(entries.map(row=>row[idColumn]).sort(),expectedIDs,'CSV excludes the same false positives as the worklist');
  assert.ok(entries.every(row=>row.length===headers.length));
  assert.match(entries.find(row=>row[idColumn]==='DAY-DUPLICATE-DIFFERENT')[reasonColumn],/Different nonblank latest submission plan dates/);
  assert.equal(entries.find(row=>row[idColumn]==='DAY-DUPLICATE-DIFFERENT')[fieldColumn],'Latest submission plan');
- assert.ok(entries.find(row=>row[idColumn]==='DAY-DATE-UTC-EARLIER')[valueColumn].includes('2024-04-15T22:15:00.000Z'),'Date objects retain the adapter-normalized UTC day in exported evidence');
+ assert.equal(entries.find(row=>row[idColumn]==='DAY-DUPLICATE-DIFFERENT')[valueColumn],'15 Apr 2024 | 16 Apr 2024','Conflicting date displays retain both calendar days');
+ const dateObjectEntry=entries.find(row=>row[idColumn]==='DAY-DATE-UTC-EARLIER');
+ assert.equal(dateObjectEntry[valueColumn],'Actual submission: 15 Apr 2024; Actual dispatch: 16 Apr 2024');
+ assert.ok(dateObjectEntry[rawColumn].includes('2024-04-15T22:15:00.000Z'),'Date objects retain the adapter-normalized UTC day in the raw exported evidence');
  assert.ok(!/DAY-SAME-Z|DAY-SAME-OFFSETS|DAY-DUPLICATE-SAME|DAY-DATE-UTC-SAME/.test(exported.content));
  if(outputDir){await page.locator('#host #theme-select').selectOption('light');await page.waitForFunction(()=>document.querySelector('#host .regulatory-timeline').dataset.theme==='light');await page.locator('#host').screenshot({path:path.join(outputDir,'calendar-day-quality.png')});}
  console.log('PASS: Data Quality compares written dispatch/submission/approval ISO calendar days, normalizes Date objects through the host adapter, ignores same-day milestone time/offset differences, preserves genuine reversals/conflicts and the existing registration check, and exports only genuine errors.');

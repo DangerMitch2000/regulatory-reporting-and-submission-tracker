@@ -5,6 +5,12 @@ on:
     branches: [main]
     paths:
       - 'app.js'
+      - 'date-format*'
+      - 'text-wrap*'
+      - 'hierarchy-navigation*'
+      - 'vega-test-setup.cjs'
+      - 'tracker-column-layout.verify.cjs'
+      - 'tracker-count-navigation.verify.cjs'
       - 'presentation*'
       - 'compact-timeline-test.cjs'
       - 'tracker-layout.verify.cjs'
@@ -47,6 +53,7 @@ on:
       - 'prediction-test.cjs'
       - 'submission-period*'
       - 'powerbi-visual*'
+      - 'RELEASE-NOTES.md'
       - '.github/workflows/powerbi-visual.yml'
 permissions:
   contents: write
@@ -60,6 +67,9 @@ jobs:
           node-version: '22'
       - name: Generate project from demo sources
         run: |
+          node date-format-test.cjs
+          node text-wrap-test.cjs
+          node hierarchy-navigation-test.cjs
           node open-end-test.cjs
           node registrations-test.cjs
           node presentation-test.cjs
@@ -100,6 +110,7 @@ jobs:
           node verify/run.cjs
           cd ..
           TRACKER_BROWSER_CHANNEL=chromium node continuation-browser-test.cjs
+          TRACKER_BROWSER_CHANNEL=chromium node tracker-column-layout.verify.cjs
       - name: Preserve verified interface previews
         uses: actions/upload-artifact@v4
         with:
@@ -111,8 +122,9 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.17.3.0.pbiviz
+          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.18.0.0.pbiviz
           cp powerbi-visual/README.md release/POWER-BI-INSTALL.md
+          cp RELEASE-NOTES.md release/RELEASE-NOTES.md
           cp powerbi-visual/verify/preparation-light.png release/preparation-light.png
           cp powerbi-visual/verify/changes-dark.png release/changes-dark.png
           cp powerbi-visual/verify/changes-light.png release/changes-light.png
@@ -140,7 +152,7 @@ jobs:
           cp powerbi-visual/verify/approval-benchmark.png release/approval-benchmark.png
           cp powerbi-visual/verify/planned-submission-forecast.png release/planned-submission-forecast.png
           cp powerbi-visual/verify/submission-date-filter.png release/submission-date-filter.png
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz registrations.js registrations-test.cjs presentation.js presentation-test.cjs compact-timeline-test.cjs tracker-layout.verify.cjs tracker-host-loading.verify.cjs tracker-browser-helpers.cjs registration-timeline-test.cjs tracker-registration.verify.cjs continuation-test.cjs continuation-browser-test.cjs retained-records-test.cjs tracker-retained-records.verify.cjs tracker-performance.verify.cjs performance-test.cjs assessment-responses.js assessment-responses-test.cjs tracker-assessment-progress.verify.cjs changes.js changes-test.cjs tracker-changes.verify.cjs tracker-survey-country.verify.cjs states.js states-test.cjs tracker-states.verify.cjs events.js events-test.cjs tracker-events.verify.cjs powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs powerbi-visual-host-test.cjs dispatch-required.js dispatch-required-test.cjs dispatch-details.js dispatch-details-test.cjs preparation.js preparation-test.cjs tracker-preparation.verify.cjs tracker-dispatch-details.verify.cjs tracker-dispatch.verify.cjs tracker-calendar-day.verify.cjs tracker-theme.verify.cjs test-timeline-theme.cjs predictions.js prediction-test.cjs submission-period.js submission-period-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs open-end-test.cjs
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude=verify -czf release/regulatory-timeline-powerbi-source.tar.gz app.js index.html style.css timeline.json sample.json vega.js VEGA-LICENSE.txt README.md RELEASE-NOTES.md .github/workflows/powerbi-visual.yml test-timeline-prediction.cjs date-format.js date-format-test.cjs text-wrap.js text-wrap-test.cjs hierarchy-navigation.js hierarchy-navigation-test.cjs vega-test-setup.cjs tracker-column-layout.verify.cjs tracker-count-navigation.verify.cjs registrations.js registrations-test.cjs presentation.js presentation-test.cjs compact-timeline-test.cjs tracker-layout.verify.cjs tracker-host-loading.verify.cjs tracker-browser-helpers.cjs registration-timeline-test.cjs tracker-registration.verify.cjs continuation-test.cjs continuation-browser-test.cjs retained-records-test.cjs tracker-retained-records.verify.cjs tracker-performance.verify.cjs performance-test.cjs assessment-responses.js assessment-responses-test.cjs tracker-assessment-progress.verify.cjs changes.js changes-test.cjs tracker-changes.verify.cjs tracker-survey-country.verify.cjs states.js states-test.cjs tracker-states.verify.cjs events.js events-test.cjs tracker-events.verify.cjs powerbi-visual powerbi-visual.build.cjs powerbi-visual.verify.cjs powerbi-visual-host-test.cjs dispatch-required.js dispatch-required-test.cjs dispatch-details.js dispatch-details-test.cjs preparation.js preparation-test.cjs tracker-preparation.verify.cjs tracker-dispatch-details.verify.cjs tracker-dispatch.verify.cjs tracker-calendar-day.verify.cjs tracker-theme.verify.cjs test-timeline-theme.cjs predictions.js prediction-test.cjs submission-period.js submission-period-test.cjs quality.js quality-ui.js quality-test.cjs quality-ui-test.cjs open-end-test.cjs
           cd release && sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
@@ -150,11 +162,36 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view v1.17.3 >/dev/null 2>&1; then
-            gh release create v1.17.3 --target "$GITHUB_SHA" --prerelease --title "Regulatory Tracker 1.17.3" --notes "Restores rendering of each accumulated Power BI batch before requesting more data, retaining the model and chart performance improvements. Partial counts are clearly labelled during loading. Includes asynchronous fetch-order checks and actual browser visual paging tests. Same field mappings, IDs, dates and layout. Compatibility rollback following a reported Service DAX query failure; resolution in the affected Service report remains unconfirmed. Built from commit $GITHUB_SHA."
+          set -euo pipefail
+          tag=v1.18.0
+          remote_tag=$(git ls-remote origin "refs/tags/$tag" "refs/tags/$tag^{}")
+          if [ -n "$remote_tag" ]; then
+            git fetch --no-tags origin "refs/tags/$tag"
+            tag_commit=$(git rev-parse 'FETCH_HEAD^{commit}')
+            if [ "$tag_commit" != "$GITHUB_SHA" ]; then
+              echo "Refusing to move $tag: it points to $tag_commit, not $GITHUB_SHA." >&2
+              exit 1
+            fi
           else
-            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.17.3" -f sha="$GITHUB_SHA" -F force=false
-            gh release edit v1.17.3 --target "$GITHUB_SHA" --notes "Restores rendering of each accumulated Power BI batch before requesting more data, retaining the model and chart performance improvements. Partial counts are clearly labelled during loading. Includes asynchronous fetch-order checks and actual browser visual paging tests. Same field mappings, IDs, dates and layout. Compatibility rollback following a reported Service DAX query failure; resolution in the affected Service report remains unconfirmed. Built from commit $GITHUB_SHA."
+            git tag "$tag" "$GITHUB_SHA"
+            git push origin "refs/tags/$tag"
           fi
-          gh release upload v1.17.3 release/* --clobber
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" --verify-tag --prerelease --title "Regulatory Tracker 1.18.0" --notes-file RELEASE-NOTES.md
+          fi
+          existing_assets=$(gh release view "$tag" --json assets --jq '.assets[].name')
+          asset_check=$(mktemp -d)
+          trap 'rm -rf "$asset_check"' EXIT
+          for file in release/*; do
+            asset=$(basename "$file")
+            if printf '%s\n' "$existing_assets" | grep -Fxq "$asset"; then
+              gh release download "$tag" --pattern "$asset" --dir "$asset_check"
+              if ! cmp -s "$file" "$asset_check/$asset"; then
+                echo "Refusing to replace published asset $asset. Use a new version for changed files." >&2
+                exit 1
+              fi
+            else
+              gh release upload "$tag" "$file"
+            fi
+          done
 
