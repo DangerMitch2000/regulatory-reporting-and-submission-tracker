@@ -14,9 +14,9 @@
   return context;
  }
  function fallbackWidth(text,fontSize){return Array.from(text).length*fontSize*.8;}
- function measureText(text,fontSize){
+ function measureText(text,fontSize,fontWeight=400){
   const ctx=canvasContext();if(!ctx)return fallbackWidth(text,fontSize);
-  const font=fontSize+'px "'+FONT+'"';if(font!==currentFont){ctx.font=font;currentFont=font;}
+  const font=fontWeight+' '+fontSize+'px "'+FONT+'"';if(font!==currentFont){ctx.font=font;currentFont=font;}
   return ctx.measureText(text).width;
  }
  function bounded(value,fallback,maximum){const n=Number(value);return Number.isFinite(n)?Math.max(0,Math.min(maximum,Math.floor(n))):fallback;}
@@ -26,9 +26,9 @@
   if(typeof measure!=='function')throw new TypeError('Text measurement must be a function.');
   const layoutLimit=bounded(options.cacheSize,512,4096),measurementLimit=bounded(options.measurementCacheSize,2048,8192),cacheTextLimit=bounded(options.maxCacheTextLength,512,4096);
   const layouts=new Map(),measurements=new Map();
-  function measured(text,size){
-   const key=text.length<=cacheTextLimit?size+'\n'+text:null,cached=key===null?undefined:cacheRead(measurements,key);if(cached!==undefined)return cached;
-   let width;try{width=measure(text,size);}catch{width=NaN;}
+  function measured(text,size,weight=400){
+   const key=text.length<=cacheTextLimit?size+'\n'+weight+'\n'+text:null,cached=key===null?undefined:cacheRead(measurements,key);if(cached!==undefined)return cached;
+   let width;try{width=measure(text,size,weight);}catch{width=NaN;}
    if(!Number.isFinite(width)||width<0)width=fallbackWidth(text,size);
    if(key!==null)cacheWrite(measurements,key,width,measurementLimit);return width;
   }
@@ -54,7 +54,7 @@
   }
   // Retained text is bounded by both entry count and string length. Expose a
   // reset for font-loading changes without exposing mutable cache contents.
-  wrap.measure=(value,fontSize=14)=>{const text=value==null?'':String(value),size=Number(fontSize);return text&&Number.isFinite(size)&&size>0?measured(text,size):0;};
+  wrap.measure=(value,fontSize=14,fontWeight=400)=>{const text=value==null?'':String(value),size=Number(fontSize),weight=Number(fontWeight);return text&&Number.isFinite(size)&&size>0?measured(text,size,Number.isFinite(weight)&&weight>=1&&weight<=1000?weight:400):0;};
   wrap.clearCache=()=>{layouts.clear();measurements.clear();};
   return wrap;
  }
@@ -75,7 +75,7 @@
  }
  function register(vega){
   if(!vega||typeof vega.expressionFunction!=='function')throw new TypeError('A Vega expression registry is required.');
-  const fn=canvasContext()||!vega.textMetrics||typeof vega.textMetrics.width!=='function'?wrap:createWrapper((text,fontSize)=>vega.textMetrics.width({font:FONT,fontSize},text));
+  const fn=canvasContext()||!vega.textMetrics||typeof vega.textMetrics.width!=='function'?wrap:createWrapper((text,fontSize,fontWeight)=>vega.textMetrics.width({font:FONT,fontSize,fontWeight},text));
   vega.expressionFunction('trackerWrapText',fn);
   vega.expressionFunction('trackerTextWidth',fn.measure);
   vega.expressionFunction('trackerPointerScale',pointerScale);return fn;

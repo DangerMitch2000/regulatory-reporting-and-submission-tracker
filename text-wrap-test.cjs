@@ -18,6 +18,13 @@ assert.equal(wrap.measure('Alpha beta',14),10,'Width and wrapping share the same
 assert.equal(wrap.measure('  A ',14),4,'Standalone measurement preserves meaningful spacing');
 for(const value of [null,undefined,''])assert.equal(wrap.measure(value,14),0);
 for(const size of [0,-1,NaN,Infinity])assert.equal(wrap.measure('Text',size),0);
+{
+ const weights=[],weighted=api.createWrapper((text,size,weight)=>{weights.push(weight);return unit(text)*(weight===600?2:1);});
+ assert.equal(weighted.measure('2 Events',14),8);assert.equal(weighted.measure('2 Events',14,600),16,'Semibold counts use their actual wider font');assert.deepEqual(weights,[400,600]);
+ assert.equal(weighted.measure('2 Events',14,'600'),16);assert.equal(weighted.measure('2 Events',14,400),8);assert.equal(weighted.measure('2 Events',14),8);assert.deepEqual(weights,[400,600],'Weight-specific cache entries never reuse another font weight');
+ for(const invalid of [0,-1,Infinity,NaN,1001,'invalid'])assert.equal(weighted.measure('2 Events',14,invalid),8,'Invalid weights safely use regular400');
+ assert.deepEqual(weighted('2 Events',8,14,1),['2 Events'],'Wrapping keeps its regular400 default');assert.deepEqual(weights,[400,600]);
+}
 const proportional=api.createWrapper((text,size)=>Array.from(text).reduce((sum,ch)=>sum+(ch==='W'?1.1:ch==='i'?.2:ch===' '? .25:.6)*size,0));
 assert.equal(proportional('WWWWWWWW',32,10,2).length,2);assert.deepEqual(proportional('iiiiiiii',32,10,2),['iiiiiiii'],'Measured glyph widths determine wrapping, not character count');
 for(const text of ['Alpha beta gamma delta','ABCDEFGHIJKLMNO','😀Wide words 😀 emoji','汉字产品名称另一个产品'])for(const width of [2,4,7,10,15])for(const count of [1,2,3]){
@@ -34,12 +41,13 @@ for(const text of ['Alpha beta gamma delta','ABCDEFGHIJKLMNO','😀Wide words �
 {
  // Execute the browser UMD path with a real measurement API contract. The root
  // browser suite additionally checks actual Canvas and SVG at chart widths.
- let created=0,calls=0;const ctx={font:'',measureText(text){calls++;return {width:unit(text)*2};}},sandbox={document:{createElement(tag){assert.equal(tag,'canvas');created++;return {getContext(type){assert.equal(type,'2d');return ctx;}};}}};
- vm.runInNewContext(fs.readFileSync(require.resolve('./text-wrap'),'utf8'),sandbox);const browser=sandbox.regulatoryTextWrap;assert.equal(created,0,'Canvas setup is lazy');assert.deepEqual(Array.from(browser.wrap('One two three',14,12,2)),['One two','three']);assert.equal(created,1);assert.equal(ctx.font,'12px "Segoe UI"');const before=calls;browser.wrap('One two three',14,12,2);assert.equal(calls,before);browser.wrap('Other',14,16,1);assert.equal(ctx.font,'16px "Segoe UI"');
+ let created=0,calls=0;const ctx={font:'',measureText(text){calls++;return {width:unit(text)*(this.font.startsWith('600 ')?2.4:2)};}},sandbox={document:{createElement(tag){assert.equal(tag,'canvas');created++;return {getContext(type){assert.equal(type,'2d');return ctx;}};}}};
+ vm.runInNewContext(fs.readFileSync(require.resolve('./text-wrap'),'utf8'),sandbox);const browser=sandbox.regulatoryTextWrap;assert.equal(created,0,'Canvas setup is lazy');assert.deepEqual(Array.from(browser.wrap('One two three',14,12,2)),['One two','three']);assert.equal(created,1);assert.equal(ctx.font,'400 12px "Segoe UI"');const before=calls;browser.wrap('One two three',14,12,2);assert.equal(calls,before);browser.wrap('Other',14,16,1);assert.equal(ctx.font,'400 16px "Segoe UI"');
  const registered={};browser.register({expressionFunction(name,fn){registered[name]=fn;}});assert.equal(registered.trackerWrapText,browser.wrap);assert.equal(registered.trackerTextWidth,browser.measure);assert.equal(registered.trackerTextWidth('Wide',16),8);assert.equal(registered.trackerPointerScale,browser.pointerScale);
+ assert.equal(registered.trackerTextWidth('Count',16,600),12);assert.equal(ctx.font,'600 16px "Segoe UI"','Canvas measures count labels with the rendered font weight');assert.equal(registered.trackerTextWidth('Count',16),10);assert.equal(ctx.font,'400 16px "Segoe UI"');const weightedCalls=calls;assert.equal(registered.trackerTextWidth('Count',16,600),12);assert.equal(calls,weightedCalls,'Canvas weights have separate stable cache entries');
 }
 {
- const registered={};let metrics=0;const fn=api.register({textMetrics:{width(item,text){metrics++;assert.equal(item.font,'Segoe UI');assert.equal(item.fontSize,14);return unit(text);}},expressionFunction(name,callback){registered[name]=callback;}});assert.equal(fn,registered.trackerWrapText);assert.deepEqual(fn('One two three',7,14,2),['One two','three']);assert.ok(metrics>0,'Headless callers can use their own Vega text metrics');const before=metrics;assert.equal(registered.trackerTextWidth('One two three',14),13);assert.equal(metrics,before,'Width expression reuses wrapping measurements');assert.equal(registered.trackerPointerScale,api.pointerScale);
+ const registered={},weights=[];let metrics=0;const fn=api.register({textMetrics:{width(item,text){metrics++;weights.push(item.fontWeight);assert.equal(item.font,'Segoe UI');assert.equal(item.fontSize,14);return unit(text)*(item.fontWeight===600?2:1);}},expressionFunction(name,callback){registered[name]=callback;}});assert.equal(fn,registered.trackerWrapText);assert.deepEqual(fn('One two three',7,14,2),['One two','three']);assert.ok(metrics>0,'Headless callers can use their own Vega text metrics');assert.ok(weights.every(weight=>weight===400));const before=metrics;assert.equal(registered.trackerTextWidth('One two three',14),13);assert.equal(metrics,before,'Width expression reuses wrapping measurements');assert.equal(registered.trackerTextWidth('One two three',14,600),26);assert.equal(weights.at(-1),600,'Headless Vega receives the same weight as Canvas');assert.equal(registered.trackerPointerScale,api.pointerScale);
 }
 {
  const svg=(scale=1)=>({localName:'svg',getScreenCTM(){return {a:scale,b:0};}});
@@ -54,4 +62,4 @@ for(const text of ['Alpha beta gamma delta','ABCDEFGHIJKLMNO','😀Wide words �
  assert.equal(api.pointerScale({target:{...bounds,getScreenCTM(){return {a:NaN,b:0};}}}),.6);
  for(const event of [null,undefined,{}, {target:{}},{target:{localName:'div',getScreenCTM(){return {a:2,b:0};}}},{target:{localName:'svg'}},{target:{...bounds,width:{baseVal:{value:0}}}},{target:{...bounds,getBoundingClientRect(){throw new Error('Detached');}}}])assert.equal(api.pointerScale(event),1,'Missing or unusable SVG geometry defaults to unscaled');
 }
-console.log('PASS: measured compact wrapping, word boundaries, Unicode identifiers, final-line clipping, bounded caches, lazy browser Canvas, SVG pointer scales and Vega registration.');
+console.log('PASS: measured compact wrapping, font-weight-aware widths and caches, Unicode identifiers, final-line clipping, bounded caches, lazy browser Canvas, SVG pointer scales and Vega registration.');

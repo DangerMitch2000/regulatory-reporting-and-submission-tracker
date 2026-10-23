@@ -24,7 +24,23 @@ async function verify(page,{url='http://127.0.0.1:8771/index.html',outputDir=__d
  });
  const settle=()=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
  const labelFor=(row,level)=>{const field=level===-1?'EventCount':level===0?'AppCount':level===1?'ROCount':level===2?'n':'RegistrationCount',count=Number(row[field])||0,name=level===-1?'Event':level===0?'App':level===1?'RO':level===2?'Sub':'Reg';return count+' '+name+(count===1?'':'s');};
- const chip=async(row,level)=>(await rowLocator(page,'#host .countChip text',row.key)).filter({hasText:new RegExp('^'+labelFor(row,level)+'$')});
+ let compactLabels=0;
+ const chip=async(row,level)=>{
+  const labels=await rowLocator(page,'#host .countChip text',row.key);
+  const rendered=await labels.evaluateAll(nodes=>nodes.map((node,index)=>{const item=node.__data__,datum=item.datum,style=getComputedStyle(node),context=document.createElement('canvas').getContext('2d'),size=item.fontSize||parseFloat(style.fontSize),weight=item.fontWeight||style.fontWeight,font=item.font||style.fontFamily,box=node.getBoundingClientRect();context.font=weight+' '+size+'px '+font;return {index,key:datum.key,level:datum.countChip.level,count:datum.countChip.count,label:datum.countChip.label,text:node.textContent,naturalWidth:context.measureText(datum.countChip.label).width,chipWidth:datum.chipWidth,limit:item.limit,countFit:datum.countFit,availableWidth:window.__themeVisual.app.view.signal('hierarchyW')-datum.labelX-4,font:context.font,width:box.width,height:box.height};}));
+  const matching=rendered.filter(label=>label.level===level),diagnostic=JSON.stringify({key:row.key,targetLevel:level,expected:labelFor(row,level),rendered});
+  assert.equal(matching.length,1,'One distinct semantic count hit target: '+diagnostic);
+  const match=matching[0],expected=labelFor(row,level);
+  assert.equal(match.label,expected,'Full count metadata is correct: '+diagnostic);
+  assert.equal(match.count,Number(expected.split(' ')[0]),'Numeric count metadata is correct: '+diagnostic);
+  assert(match.width>0&&match.height>0,'Count label has a real pointer target: '+diagnostic);
+  const naturalTotal=rendered.reduce((sum,label)=>sum+label.naturalWidth+8,0),fullLabelsFit=naturalTotal<=match.availableWidth+.5;
+  if(fullLabelsFit)assert.equal(match.text,expected,'Count labels must remain complete when their actual font weight fits: '+diagnostic);
+  else if(match.text!==expected){assert(match.text.endsWith('…')&&expected.startsWith(match.text.slice(0,-1)),'Compact labels may only abbreviate the correct label with an ellipsis: '+diagnostic);compactLabels++;}
+  // Identity comes from the original row key and target level, not typography.
+  // The assertions above still catch stale/wrong counts and premature clipping.
+  return labels.nth(match.index);
+ };
  const descendants=(rows,parent,level)=>rows.filter(row=>row.level===level&&(parent.registrationContainer?row.registrationUnlinked&&row.appKey===parent.key:row[ancestorFields.find(([n])=>n===parent.level)[1]]===parent.key));
  const prepare=async(parent,{detailsOpen=false}={})=>{
   const state=await snapshot(),existing=new Set(state.rows.map(r=>r.key));
@@ -52,7 +68,7 @@ async function verify(page,{url='http://127.0.0.1:8771/index.html',outputDir=__d
   const needed=[parent.key];
   if(!parent.registrationContainer)for(const target of targets)for(const [ancestorLevel,field]of ancestorFields)if(ancestorLevel>=parent.level&&ancestorLevel<level&&target[field])needed.push(target[field]);
   const expectedExpansion=sorted([...before.expanded,...needed]),targetKeys=targets.map(row=>row.key);
-  const target=await chip(parent,level);assert.equal(await target.count(),1,'One distinct '+labelFor(parent,level)+' hit target for '+parent.key);
+  const target=await chip(parent,level);
   await target.click();
   await page.waitForFunction(({targetKeys,expectedExpansion,selected,multiple,detailsOpen})=>{const view=window.__themeVisual.app.view,expanded=view.data('expanded').map(r=>r.key).sort(),first=view.data('visible').filter(r=>targetKeys.includes(r.key)).sort((a,b)=>a.idx-b.idx)[0];return JSON.stringify(expanded)===JSON.stringify(expectedExpansion)&&first&&view.signal('rowRequest')?.pos===first.idx-1&&view.signal('selectedKey')===(multiple?selected:first.key)&&document.querySelector('#host #selected-details').open===(multiple?detailsOpen:true);},{targetKeys,expectedExpansion,selected:before.selected,multiple:targets.length>1,detailsOpen:before.detailsOpen});
   await settle();const after=await snapshot(),first=after.visible.find(key=>targetKeys.includes(key));
@@ -93,6 +109,9 @@ async function verify(page,{url='http://127.0.0.1:8771/index.html',outputDir=__d
    }
    if(mode==='Change initiation'){
     const change=state.rows.find(row=>row.level===-2&&row.ChangeID==='COUNT-C1');await navigate(change,-1);const result=await navigate(change,3);assert(result.targets.every(row=>row.changeKey===change.key),'Repeated registration IDs stay scoped to the clicked change');
+    const widths=await page.evaluate(async()=>{const view=window.__themeVisual.app.view,previous=view.signal('columnWidths');await view.signal('columnWidths',{...previous,hierarchy:160}).runAsync();return previous;}),beforeCompact=compactLabels;
+    await navigate(change,-1);assert(compactLabels>beforeCompact,'A deliberately narrow hierarchy still navigates through an abbreviated count label');
+    await page.evaluate(async widths=>{await window.__themeVisual.app.view.signal('columnWidths',widths).runAsync();},widths);
    }
    const zero=scoped.find(row=>row.level===0&&row.AppID==='COUNT-ZERO');assert(zero,'Retained empty application is present');
    const before=await prepare(zero),zeroChip=await chip(zero,2);assert.equal(await zeroChip.textContent(),'0 Subs');await zeroChip.click();await settle();const after=await snapshot();

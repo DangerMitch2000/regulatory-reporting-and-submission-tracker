@@ -4598,17 +4598,17 @@
         {
           "type": "formula",
           "as": "countWidth0",
-          "expr": "trackerTextWidth(datum.rowCounts[0].label,bodyFont-1)+8"
+          "expr": "trackerTextWidth(datum.rowCounts[0].label,bodyFont-1,datum.rowCounts[0].count>0 ? 600 : 400)+8"
         },
         {
           "type": "formula",
           "as": "countWidth1",
-          "expr": "length(datum.rowCounts)>1 ? trackerTextWidth(datum.rowCounts[1].label,bodyFont-1)+8 : 0"
+          "expr": "length(datum.rowCounts)>1 ? trackerTextWidth(datum.rowCounts[1].label,bodyFont-1,datum.rowCounts[1].count>0 ? 600 : 400)+8 : 0"
         },
         {
           "type": "formula",
           "as": "countWidth2",
-          "expr": "length(datum.rowCounts)>2 ? trackerTextWidth(datum.rowCounts[2].label,bodyFont-1)+8 : 0"
+          "expr": "length(datum.rowCounts)>2 ? trackerTextWidth(datum.rowCounts[2].label,bodyFont-1,datum.rowCounts[2].count>0 ? 600 : 400)+8 : 0"
         },
         {
           "type": "formula",
