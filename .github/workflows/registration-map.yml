@@ -20,6 +20,8 @@ jobs:
         working-directory: registration-map
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -77,14 +79,15 @@ jobs:
           name: registration-coverage-map-browser-checks
           path: registration-map/.test-artifacts/
           if-no-files-found: ignore
+          include-hidden-files: true
       - name: Stage all assets in a draft, then publish the preview
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: registration-map-v1.0.0
         run: |
           set -euo pipefail
-          # Retry transient GitHub failures. A failed lookup is never treated as
-          # an absent release unless GitHub explicitly returned HTTP 404.
+          # Retry transient GitHub failures. Draft discovery uses the complete
+          # releases list: the release-by-tag REST endpoint excludes drafts.
           retry_gh() {
             local attempt status output errors
             output=$(mktemp)
@@ -115,34 +118,63 @@ jobs:
             git fetch --no-tags origin "refs/tags/$tag"
             tag_commit=$(git rev-parse 'FETCH_HEAD^{commit}')
             if [ "$tag_commit" != "$GITHUB_SHA" ]; then
-              echo "Refusing to move $tag: it points to $tag_commit rather than $GITHUB_SHA." >&2
-              exit 1
+              # A workflow-only repair may finish this unchanged version. The
+              # existing tag must be an ancestor and its actual map sources
+              # must match; only this copied workflow source is excluded.
+              if ! git merge-base --is-ancestor "$tag_commit" "$GITHUB_SHA"; then
+                echo "Refusing to reuse $tag: $tag_commit is not an ancestor of $GITHUB_SHA." >&2
+                exit 1
+              fi
+              if ! git diff --quiet "$tag_commit" "$GITHUB_SHA" -- ':(top)registration-map' ':(top,exclude)registration-map/publish-workflow.yml'; then
+                echo "Registration Map sources changed after $tag. Use a new version; the existing tag will not move." >&2
+                exit 1
+              fi
+              echo "Reusing immutable $tag at $tag_commit; registration-map sources match $GITHUB_SHA."
             fi
           else
+            tag_commit="$GITHUB_SHA"
             git tag "$tag" "$GITHUB_SHA"
             git push origin "refs/tags/$tag"
           fi
 
-          if retry_gh api "repos/$GITHUB_REPOSITORY/releases/tags/$tag" > release-state.json 2> release-query.err; then
-            node -e 'const r=require("./release-state.json");if(!r.draft)throw Error("This version is already public. Bump the version; published assets will not be replaced.")'
-          else
-            if ! grep -Eiq 'HTTP 404|Not Found.*404' release-query.err; then
-              cat release-query.err >&2
+          find_release() {
+            retry_gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/releases?per_page=100" > releases-list.json || return $?
+            node -e 'const pages=require("./releases-list.json"),matches=pages.flat().filter(r=>r.tag_name===process.env.RELEASE_TAG);if(matches.length>1)throw Error("Multiple releases have this exact tag; refusing ambiguous changes.");if(matches.length){const r=matches[0];if(!r.draft)throw Error("This version is already public. Bump the version; published releases will not be modified.");if(!Number.isSafeInteger(r.id)||r.id<=0)throw Error("Invalid release ID");process.stdout.write(String(r.id));}'
+          }
+          release_id=$(find_release)
+          if [ -z "$release_id" ]; then
+            # If GitHub accepted creation but lost the response, rediscover the
+            # existing draft before treating a retry's duplicate error as failure.
+            if ! retry_gh release create "$tag" --verify-tag --target "$tag_commit" --draft --prerelease --title 'Registration Coverage Map 1.0.0' --notes-file RELEASE-NOTES.md; then
+              release_id=$(find_release)
+              if [ -z "$release_id" ]; then
+                echo "Draft creation failed and the complete release list contains no matching draft." >&2
+                exit 1
+              fi
+            fi
+            release_id=$(find_release)
+            if [ -z "$release_id" ]; then
+              echo "The created draft could not be rediscovered; refusing asset changes." >&2
               exit 1
             fi
-            retry_gh release create "$tag" --verify-tag --target "$GITHUB_SHA" --draft --prerelease --title 'Registration Coverage Map 1.0.0' --notes-file RELEASE-NOTES.md
           fi
 
-          # Clobber is allowed only while this version is still an unpublished draft.
-          retry_gh api "repos/$GITHUB_REPOSITORY/releases/tags/$tag" > release-state.json
-          node -e 'const r=require("./release-state.json");if(!r.draft)throw Error("Release became public; refusing to alter assets.")'
+          assert_draft() {
+            retry_gh api "repos/$GITHUB_REPOSITORY/releases/$release_id" > release-state.json || return $?
+            RELEASE_ID="$release_id" RELEASE_COMMIT="$tag_commit" node -e 'const r=require("./release-state.json");if(r.id!==Number(process.env.RELEASE_ID)||r.tag_name!==process.env.RELEASE_TAG||!r.draft)throw Error("Release identity changed or became public; refusing to modify it.");if(r.target_commitish!==process.env.RELEASE_COMMIT)throw Error("Draft target differs from the immutable release tag commit.");'
+          }
+          # gh release upload/download resolve drafts through the CLI's GraphQL
+          # fallback. Guard each mutation with the stable numeric REST release ID.
           for file in release/*; do
+            assert_draft
             retry_gh release upload "$tag" "$file" --clobber
           done
           # Verify every staged asset byte-for-byte before exposing the preview.
           check_dir=$(mktemp -d)
-          retry_gh release download "$tag" --dir "$check_dir"
+          retry_gh release download "$tag" --dir "$check_dir" --clobber
           for file in release/*; do
             cmp "$file" "$check_dir/$(basename "$file")"
           done
-          retry_gh release edit "$tag" --draft=false --prerelease --latest=false
+          assert_draft
+          retry_gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" -F draft=false -F prerelease=true -f make_latest=false > published-release.json
+          RELEASE_ID="$release_id" node -e 'const r=require("./published-release.json");if(r.id!==Number(process.env.RELEASE_ID)||r.tag_name!==process.env.RELEASE_TAG||r.draft||!r.prerelease)throw Error("Published preview verification failed.");'
