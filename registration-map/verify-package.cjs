@@ -1,0 +1,25 @@
+const assert = require('node:assert/strict'), fs = require('node:fs'), path = require('node:path');
+const {dependency} = require('./test-tools.cjs');
+(async () => {
+  const dir = path.join(__dirname, 'powerbi/dist');
+  const packages = fs.readdirSync(dir).filter(name => name.endsWith('.pbiviz'));
+  assert.equal(packages.length, 1, 'Only one Registration Coverage Map package should be built');
+  const zip = await dependency('jszip').loadAsync(fs.readFileSync(path.join(dir, packages[0])));
+  const manifest = JSON.parse(await zip.file('package.json').async('string'));
+  const resource = manifest.resources.find(entry => entry.file.endsWith('.pbiviz.json'));
+  const pkg = JSON.parse(await zip.file(resource.file).async('string'));
+  const {roles} = await import('./logic.mjs');
+  assert.equal(pkg.visual.guid, 'registrationCoverageMapC34DF5A6F82049BE968C22E8D9EF6031');
+  assert.equal(pkg.visual.version, '1.0.0.0');
+  assert.equal(pkg.visual.displayName, 'Registration Coverage Map');
+  assert.equal(pkg.apiVersion, '5.11.0');
+  assert.deepEqual(pkg.capabilities.dataRoles.map(role => role.name), roles);
+  assert.deepEqual(pkg.capabilities.privileges, [{name: 'ExportContent', essential: false}]);
+  assert.equal(pkg.capabilities.dataViewMappings[0].table.rows.dataReductionAlgorithm.window.count, 30000);
+  assert.equal(pkg.capabilities.suppressDefaultTitle, true); assert.equal(pkg.capabilities.supportsKeyboardFocus, true);
+  assert.ok(pkg.content.js.length > 100000, 'Offline geometry and the complete runtime must be bundled');
+  assert.ok(pkg.content.css.length > 1000, 'Styles are included in the .pbiviz');
+  assert.match(pkg.content.js, /Ireland/); assert.match(pkg.content.js, /RegistrationCountry/);
+  await require('./host-browser-test.cjs').run({packaged: pkg});
+  console.log('PASS package: distinct identity/version, pinned API, 18 roles, optional export privilege, 30,000-row window, bundled offline geography and CSS.');
+})().catch(error => {console.error(error); process.exitCode = 1;});

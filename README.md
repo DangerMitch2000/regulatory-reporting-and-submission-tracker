@@ -4,6 +4,14 @@
 
 Released **23 Oct 2026** · Power BI package **1.18.1.0**. This is an uncertified preview; public demo records are fictional.
 
+## New: Registration Coverage Map 1.0.0
+
+[Download the Power BI map](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/registration-map-v1.0.0/registration-coverage-map-1.0.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/registration-map/preview.html) · [Field mappings and setup](registration-map/README.md)
+
+A separate world-map visual for registration coverage, with searchable product, legal/registration manufacturing-site, business-unit, state, country and expiry filters. Approved and Conditionally Approved registrations are selected by default. Select a country for registration Details, linked IDs, source memberships, copyable IDs and CSV. Distinct registration counts resist duplicate catalog/product rows; missing IDs, unplaced countries and conflicting evidence remain visible in Review.
+
+The map uses bundled offline geography, with no map API key or runtime map-service request. It supports small-country targets, zoom/pan, keyboard navigation, compact responsive layouts, Dark/Light and high contrast. Map Registration ID, Registration country and Registration state first, then the optional product/site/business-unit fields. The [mapping guide](registration-map/README.md) explains country fallbacks, expiry interpretation and data-delivery limits. This is an uncertified preview; demo data is fictional.
+
 ## What's new in 1.18.1
 
 The **estimated LM dossier preparation window** now ends at a valid actual dispatch date. The start is calculated backwards using the existing application standard duration; it does not represent a recorded preparation start or actual time spent preparing.
@@ -300,6 +308,7 @@ For the Tracker, Roadmap, IVDR, Key Submissions and Site Regulatory Plan, map yo
 
 | Visual | Download | Demo |
 | --- | --- | --- |
+| Registration Coverage Map 1.0.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/registration-map-v1.0.0/registration-coverage-map-1.0.0.0.pbiviz) | [World map](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/registration-map/preview.html) |
 | Regulatory Tracker 1.18.1 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.18.1/regulatory-tracker-1.18.1.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
 | Registration Overview / Roadmap 1.5.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.5.0/roadmap-2026-1.5.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap-preview.html) |
 | IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |

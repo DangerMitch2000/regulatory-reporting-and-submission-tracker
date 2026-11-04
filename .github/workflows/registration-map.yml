@@ -1,0 +1,148 @@
+name: Build Registration Coverage Map
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'registration-map/**'
+      - '.github/workflows/registration-map.yml'
+permissions:
+  contents: write
+concurrency:
+  group: registration-map-release
+  cancel-in-progress: false
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: registration-map
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Generate the separate Power BI project
+        run: node build.cjs
+      - name: Install pinned tools
+        timeout-minutes: 5
+        working-directory: registration-map/powerbi
+        run: npm install
+      - name: Install test browser
+        timeout-minutes: 5
+        working-directory: registration-map/powerbi
+        run: npx playwright install --with-deps chromium
+      - name: Rebuild and verify the committed offline demo
+        run: |
+          node prepare-preview.cjs
+          git diff --exit-code -- preview.html
+      - name: Verify geography, registration logic and actual Visual lifecycle
+        env:
+          MAP_BROWSER_CHANNEL: chromium
+        run: |
+          node geography-test.cjs
+          node logic-test.mjs
+          npm --prefix powerbi run typecheck
+          node host-test.cjs
+          node browser-test.cjs
+          node host-browser-test.cjs
+      - name: Build official Power BI package
+        working-directory: registration-map/powerbi
+        run: npm run package -- --no-stats
+      - name: Verify package contents and metadata
+        run: node verify-package.cjs
+      - name: Prepare complete release assets
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          cp powerbi/dist/*.pbiviz release/registration-coverage-map-1.0.0.0.pbiviz
+          cp README.md release/REGISTRATION-COVERAGE-MAP-INSTALL.md
+          cp RELEASE-NOTES.md release/RELEASE-NOTES.md
+          cp THIRD-PARTY-NOTICES.md release/THIRD-PARTY-NOTICES.md
+          cp preview.html release/registration-coverage-map-demo.html
+          cp .test-artifacts/preview-dark.png release/registration-coverage-map-dark.png
+          cp .test-artifacts/preview-light.png release/registration-coverage-map-light.png
+          cp .test-artifacts/preview-compact.png release/registration-coverage-map-compact.png
+          tar --exclude=./release --exclude=./node_modules --exclude=./powerbi/node_modules --exclude=./powerbi/.tmp --exclude=./powerbi/dist --exclude=./.test-artifacts --exclude=./.git -czf release/registration-coverage-map-1.0.0-source.tar.gz .
+          cd release
+          find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: registration-coverage-map-1.0.0
+          path: registration-map/release/
+      - name: Preserve verified browser previews
+        uses: actions/upload-artifact@v4
+        with:
+          name: registration-coverage-map-browser-checks
+          path: registration-map/.test-artifacts/
+          if-no-files-found: ignore
+      - name: Stage all assets in a draft, then publish the preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: registration-map-v1.0.0
+        run: |
+          set -euo pipefail
+          # Retry transient GitHub failures. A failed lookup is never treated as
+          # an absent release unless GitHub explicitly returned HTTP 404.
+          retry_gh() {
+            local attempt status output errors
+            output=$(mktemp)
+            errors=$(mktemp)
+            for attempt in 1 2 3 4 5; do
+              if gh "$@" >"$output" 2>"$errors"; then
+                cat "$output"
+                cat "$errors" >&2
+                rm -f "$output" "$errors"
+                return 0
+              else
+                status=$?
+              fi
+              if ! grep -Eiq 'HTTP 5[0-9][0-9]|status code: 5[0-9][0-9]|timeout|timed out|connection reset|unexpected EOF' "$errors" || [ "$attempt" = 5 ]; then
+                cat "$output"
+                cat "$errors" >&2
+                rm -f "$output" "$errors"
+                return "$status"
+              fi
+              cat "$errors" >&2
+              sleep "$((attempt * 5))"
+            done
+          }
+
+          tag="$RELEASE_TAG"
+          remote_tag=$(git ls-remote origin "refs/tags/$tag" "refs/tags/$tag^{}")
+          if [ -n "$remote_tag" ]; then
+            git fetch --no-tags origin "refs/tags/$tag"
+            tag_commit=$(git rev-parse 'FETCH_HEAD^{commit}')
+            if [ "$tag_commit" != "$GITHUB_SHA" ]; then
+              echo "Refusing to move $tag: it points to $tag_commit rather than $GITHUB_SHA." >&2
+              exit 1
+            fi
+          else
+            git tag "$tag" "$GITHUB_SHA"
+            git push origin "refs/tags/$tag"
+          fi
+
+          if retry_gh api "repos/$GITHUB_REPOSITORY/releases/tags/$tag" > release-state.json 2> release-query.err; then
+            node -e 'const r=require("./release-state.json");if(!r.draft)throw Error("This version is already public. Bump the version; published assets will not be replaced.")'
+          else
+            if ! grep -Eiq 'HTTP 404|Not Found.*404' release-query.err; then
+              cat release-query.err >&2
+              exit 1
+            fi
+            retry_gh release create "$tag" --verify-tag --target "$GITHUB_SHA" --draft --prerelease --title 'Registration Coverage Map 1.0.0' --notes-file RELEASE-NOTES.md
+          fi
+
+          # Clobber is allowed only while this version is still an unpublished draft.
+          retry_gh api "repos/$GITHUB_REPOSITORY/releases/tags/$tag" > release-state.json
+          node -e 'const r=require("./release-state.json");if(!r.draft)throw Error("Release became public; refusing to alter assets.")'
+          for file in release/*; do
+            retry_gh release upload "$tag" "$file" --clobber
+          done
+          # Verify every staged asset byte-for-byte before exposing the preview.
+          check_dir=$(mktemp -d)
+          retry_gh release download "$tag" --dir "$check_dir"
+          for file in release/*; do
+            cmp "$file" "$check_dir/$(basename "$file")"
+          done
+          retry_gh release edit "$tag" --draft=false --prerelease --latest=false
