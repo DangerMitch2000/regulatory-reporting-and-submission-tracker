@@ -1,16 +1,11 @@
-# Change Dashboard 1.1.0 — preview
+# Change Dashboard 1.2.0 — preview
 
-**Event is now the default view.** Switch between Event, Change ID and Application without requiring a SharePoint Change ID on every record.
+- Hide the Awaiting assessment summary card for now; retain its existing fields and detailed evidence.
+- Default Next due to most recently overdue first; click the header for oldest overdue first. Upcoming work follows overdue work and missing dates stay last.
+- Sort and filter every column in the worklist, country breakdown and missing-parent review. Reset table clears table controls while keeping the selected view and top scope filters.
+- Restore top-right distinct counts for Changes, Events, Applications, ROs, Submissions and Registrations. Worklist counts follow the current worklist across all pages; Loaded counts show the complete delivered population.
+- Match the Regulatory Tracker's darker charcoal and muted blue palette, retaining Light and high-contrast modes.
 
-- Event view groups native Velocity events and the affected countries of their linked ROs/applications.
-- Application view includes applications without either an event or a Change ID.
-- The existing Country mapping supplies application lead-market countries. No new fields are required.
-- ROs remain visible before a submission exists; unambiguous RO approval can contribute country approval evidence.
-- Counts, source-state filters, copies, CSV headers and missing-parent review follow the selected view.
-- Missing-parent review separates raw delivered rows from distinct applications.
-- SharePoint assessment responses remain tied to real Change IDs and matching country scope; missing assessment links are stated explicitly.
-- Tested with 64,000 synthetic rows containing only eight Change IDs, plus existing date/state and packaged-browser checks.
+Event, Change ID and Application views, country/RO evidence and all 69 field mappings are preserved. Import **change-dashboard-1.2.0.0.pbiviz** and confirm replacement of Change Dashboard. No remapping is required.
 
-Download **change-dashboard-1.1.0.0.pbiviz** and confirm replacement of your existing Change Dashboard visual. The visual identity and all 69 roles are unchanged, so existing mappings are retained. Map **EventName**, **ROID**, **AppID** and **Country** for the Event country breakdown. Keep SubID and status/date fields for filing progress. The Tracker and Map remain separate visuals.
-
-This is an uncertified preview. Demo records are fictional; verify representative events and applications against Velocity using the same scope and refresh date. See **CHANGE-DASHBOARD-INSTALL.md** for all rules and limitations.
+Logic and packaged browser checks cover newest/oldest ordering, missing dates, combined filters, all table controls, record-count deduplication, 10,000 submissions and 64,000 delivered rows. This is an uncertified preview; demo data is fictional. See CHANGE-DASHBOARD-INSTALL.md for exact counting and filtering rules.

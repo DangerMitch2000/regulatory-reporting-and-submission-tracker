@@ -4,15 +4,15 @@
 
 Released **23 Oct 2026** · Power BI package **1.18.1.0**. This is an uncertified preview; public demo records are fictional.
 
-## Change Dashboard 1.1.0 — Event, Change ID and Application views
+## Change Dashboard 1.2.0 — sorting, filters and record coverage
 
-[Download the Power BI dashboard](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.1.0/change-dashboard-1.1.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Field mappings and counting rules](change-dashboard/README.md)
+[Download the Power BI dashboard](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.2.0/change-dashboard-1.2.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Field mappings and counting rules](change-dashboard/README.md)
 
-**Event is now the default view.** Choose Event, SharePoint Change ID or Application as the starting point. Events without Change IDs enter the main worklist, and applications without an event remain available in Application view. Counts reflect distinct records of the selected type; the missing-parent review distinguishes delivered rows from distinct applications.
+The worklist now starts with **most recently overdue** actions; click Next due for oldest first. Every column header in the worklist, country breakdown and missing-parent table supports sorting and text filtering. Reset table clears table controls. The top right shows distinct Changes, Events, Applications, ROs, Submissions and Registrations for both the current **Worklist** and all **Loaded** records.
 
-Event countries come from the linked ROs and their applications' existing lead-market Country field. ROs remain visible before a submission exists. Manufacturing-site, product, business-unit, country and state filters, country evidence, source links, copy and CSV remain available. The existing 69 field mappings and visual identity are preserved: import the update and confirm replacement of Change Dashboard. The Tracker and Map are separate visuals.
+The Awaiting assessment summary card is hidden for now, leaving overdue internal dispatch, overdue authority submission and awaiting approval. Assessment fields and Details remain available. Dark colours now match the Regulatory Tracker. Event remains the default view, with Change ID and Application views alongside it; events do not require a SharePoint Change ID, and Application view includes records without events.
 
-See the [setup guide](change-dashboard/README.md) for expected-response scope, approval evidence and source reconciliation. Tested with 64,000 synthetic rows containing only eight Change IDs; validate representative records against Velocity. This is an uncertified preview and the demo data is fictional.
+Import and replace the existing Change Dashboard: its identity and all 69 field mappings are unchanged. [Read the guide](change-dashboard/README.md) for country/RO evidence, sorting, filter scope and reconciliation. Tested with 64,000 synthetic rows; validate representative records against Velocity. This is an uncertified preview, with fictional demo data.
 
 ## Registration Coverage Map 1.0.0
 

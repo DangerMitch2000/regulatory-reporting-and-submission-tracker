@@ -1,10 +1,10 @@
-# Change Dashboard 1.1.0
+# Change Dashboard 1.2.0
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.1.0/change-dashboard-1.1.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.1.0)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.2.0/change-dashboard-1.2.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.2.0)
 
-A separate daily worklist with **Event (default), Change ID and Application views**, using the Regulatory Tracker's existing **69 field roles**. Filter by manufacturing site, product, business unit, country and change state. Select a summary count, an event/change/application, then a country to inspect the evidence and linked source records. The existing Tracker and Registration Coverage Map remain separate visuals.
+A separate daily worklist with **Event (default), Change ID and Application views**, using the Regulatory Tracker's existing **69 field roles**. Filter by manufacturing site, product, business unit, country and record state. Select a summary count, an event/change/application, then a country to inspect the evidence and linked source records. The existing Tracker and Registration Coverage Map remain separate visuals.
 
-**Preview release:** package version **1.1.0.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
+**Preview release:** package version **1.2.0.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
 
 ## Install and map existing fields
 
@@ -39,15 +39,24 @@ Use the model's existing **real relationships** to deliver the associated record
 
 Labels, state filter, counts, copied IDs, CSV headers and missing-ID review follow the chosen view. Country/RO/filing evidence remains attached to its delivered associations; the visual does not manufacture missing parent links. The same application may belong to multiple events, so totals across view modes are not additive.
 
-The assessment queue uses **linked SharePoint response records**. In Event/Application views, only responses matching a country already present in the linked RO/application scope are included. Missing assessment links say **Assessment not linked**; zero in this queue does not establish that an unlinked event needs no assessment. Native EventState is shown but is not interpreted as a country-by-country response checklist.
+The **Awaiting assessment summary card is hidden in 1.2.0**. Existing assessment fields and detailed checks are retained for possible later use; no replacement assessment card is added. Assessment Details use **linked SharePoint response records**. In Event/Application views, only responses matching a country already present in the linked RO/application scope are included. Missing assessment links say **Assessment not linked**; a missing link does not establish that an event needs no assessment. Native EventState is shown but is not interpreted as a country-by-country response checklist.
+
+## Table controls and record coverage
+
+- **Next due defaults to most recently overdue first.** Upcoming dated work follows overdue work; undated work stays last. Click Next due to switch to oldest overdue first. For records with several outstanding actions, the representative next action follows that overdue ordering.
+- Click any header in the main worklist, country breakdown or missing-parent table to sort. Click it again to reverse the order. IDs sort naturally (2 before 10); country approval progress sorts by approval fraction. Blank values stay last.
+- Use the filter button beside each header for a case-insensitive text filter. Multiple column filters combine. Date searches use displayed text, such as **Nov 2026**, **overdue** or **Not recorded**; progress accepts a fraction such as **1/4**. Main record/product searches include names, IDs, sites, source state and project/QMS references.
+- Main column filters affect worklist rows, summary cards, copied IDs, CSV and Worklist counts. Country and missing-parent table filters affect only their own detail tables. The top Country filter narrows the overall worklist scope.
+- **Reset table** clears table sorting and column filters while preserving View by and the top scope filters. Switching View by clears main column filters so an event-ID search cannot accidentally hide applications.
+- Top-right **Worklist** counts show distinct Change IDs, Events, Applications, ROs, Submissions and Registrations represented by matching worklist records across all pages, respecting country and inactive-work scope. **Loaded** counts show all delivered records before dashboard filters. Repeated memberships do not inflate either count. Differences can reflect intentional filters or missing parent links, not necessarily missing source records. Both remain limited to what Power BI delivered.
+- Dark mode uses the Regulatory Tracker's charcoal surfaces, muted blue links and selection colours. Light and high-contrast support remain available.
 
 ## What the counts mean
 
-Each card counts **distinct events, Change IDs or applications**, according to View by. It never counts raw product/catalog rows. One record can appear in several cards because its countries can be at different stages. Selecting a card shows every matching record, including approval/assessment work not yet overdue. **Needs attention** includes overdue actions, rejection follow-up and missing/conflicting evidence; **All changes** also includes ordinary progress.
+Each card counts **distinct events, Change IDs or applications**, according to View by. It never counts raw product/catalog rows. One record can appear in several cards because its countries can be at different stages. Selecting a card shows every matching record, including approval work not yet overdue. **Needs attention** includes overdue actions, rejection follow-up and missing/conflicting evidence; **All changes** also includes ordinary progress.
 
 | Card | Rule |
 | --- | --- |
-| Awaiting assessment | An expected response is delivered but a matching response has not been delivered. Response IDs match within the change; if neither ID role has values, the existing tracker country fallback applies. Conflicting or unmatched IDs/countries require review. |
 | Overdue internal dispatch | Dispatch is explicitly required, no usable actual dispatch or later submission/approval evidence exists, and the planned dispatch date is before the as-of day. |
 | Overdue authority submission | Actual dispatch exists, or dispatch is explicitly not required; no submission/approval evidence exists, and the planned submission date is before the as-of day. |
 | Awaiting approval | Submission evidence exists, but approval evidence does not. It need not be overdue; a past approval target is highlighted in Details. |

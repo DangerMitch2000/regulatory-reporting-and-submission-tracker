@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {analyze,derive,roles,mapTable,previousDay,dateField,safeURL,toCsv} from './logic.mjs';
 import {demoRows,demoAsOf,largeRows} from './demo-data.mjs';
+import {compare,tableRows,dueOrder} from './table-tools.mjs';
 const options={asOf:demoAsOf},base=demoRows[0],one=overrides=>analyze([{...base,...overrides}],options).submissions.get(base.SubID);
 assert.equal(roles.length,69);assert.equal(new Set(roles).size,69);
 assert.equal(previousDay(new Date('2026-11-10T10:00:00Z')),demoAsOf);
@@ -85,3 +86,21 @@ assert.equal(eventLarge.changes.length,1000);assert.equal(eventLarge.missing.len
 assert.equal(derive(eventLarge,{view:'all'}).counts.dispatch,1000);assert.equal(derive(appLarge,{view:'all'}).counts.dispatch,16000);
 assert(performance.now()-startedLarge<30000);
 console.log('PASS grouping: independent Event/Application/Change views, application lead-market countries, ROs without submissions and 64,000 rows with only eight Change IDs.');
+
+const recentModel=analyze([
+ {...noChange,EventName:'OLD',SubID:'OLD-SUB',ROID:'OLD-RO',LatestDispatch:'2026-10-01'},
+ {...noChange,EventName:'RECENT',SubID:'RECENT-SUB',ROID:'RECENT-RO',LatestDispatch:'2026-11-08'},
+ {...noChange,EventName:'FUTURE',SubID:'FUTURE-SUB',ROID:'FUTURE-RO',LatestDispatch:'2026-12-01'},
+ {...noChange,EventName:'MISSING',SubID:'MISSING-SUB',ROID:'MISSING-RO',OriginalDispatch:'',LatestDispatch:''}
+],eventOptions);
+assert.deepEqual(derive(recentModel,{view:'all'}).shown.map(x=>x.id),['RECENT','OLD','FUTURE','MISSING']);
+assert.deepEqual(derive(recentModel,{view:'all',sort:'due',direction:'asc'}).shown.map(x=>x.id),['OLD','RECENT','FUTURE','MISSING']);
+assert.deepEqual(derive(recentModel,{view:'all',sort:'record',direction:'desc'}).shown.map(x=>x.id),['RECENT','OLD','MISSING','FUTURE']);
+const filtered=derive(recentModel,{view:'all',columnFilters:{record:'RECENT',due:'Nov 2026'}});
+assert.equal(filtered.shown.length,1);assert.equal(filtered.counts.dispatch,1);assert.equal(filtered.visibleCoverage.event,1);assert.equal(recentModel.coverage.event,4);
+assert.equal(derive(recentModel,{view:'all',columnFilters:{due:'Not recorded'}}).shown[0].id,'MISSING');
+assert.equal(compare(null,1,'desc'),1);assert(compare('RO-2','RO-10','asc')<0);
+assert.deepEqual(tableRows([{x:'B'},{x:'A'},{x:''}],[{key:'x',value:r=>r.x}],{key:'x',direction:'asc',filters:{}}).map(x=>x.x),['A','B','']);
+assert.equal(tableRows([{x:'Belgium'},{x:'France'}],[{key:'x',value:r=>r.x}],{key:'x',direction:'desc',filters:{x:'BEL'}}).length,1);
+assert(dueOrder({due:demoAsOf-86400000,overdue:true},{due:demoAsOf+86400000,overdue:false})<0);
+console.log('PASS tables: newest/oldest overdue, upcoming and blank dates, natural sorting, combined column filters and worklist versus loaded record counts.');
