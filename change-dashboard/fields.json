@@ -1,0 +1,416 @@
+[
+  {
+    "name": "AppID",
+    "displayName": "AppID",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "ROID",
+    "displayName": "ROID",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "SubID",
+    "displayName": "SubID",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "AppCreated",
+    "displayName": "AppCreated",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "ROCreated",
+    "displayName": "ROCreated",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "SubCreated",
+    "displayName": "SubCreated",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "AppStatus",
+    "displayName": "AppStatus",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "ROStatus",
+    "displayName": "ROStatus",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "SubStatus",
+    "displayName": "SubStatus",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "BusinessUnit",
+    "displayName": "BusinessUnit",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "Manufacturer",
+    "displayName": "Manufacturer",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "Product",
+    "displayName": "Product",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "Country",
+    "displayName": "Country",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "SubmissionType",
+    "displayName": "SubmissionType",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "DispatchRequired",
+    "displayName": "Dispatch required",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "OriginalDispatch",
+    "displayName": "OriginalDispatch",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "LatestDispatch",
+    "displayName": "LatestDispatch",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "ActualDispatch",
+    "displayName": "ActualDispatch",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "OriginalSubmission",
+    "displayName": "OriginalSubmission",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "LatestSubmission",
+    "displayName": "LatestSubmission",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "ActualSubmission",
+    "displayName": "ActualSubmission",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "OriginalApproval",
+    "displayName": "OriginalApproval",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "LatestApproval",
+    "displayName": "LatestApproval",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "ActualApproval",
+    "displayName": "ActualApproval",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "RegistrationStart",
+    "displayName": "RegistrationStart",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "RegistrationEnd",
+    "displayName": "RegistrationEnd",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "LMPrepDuration",
+    "displayName": "LM Dossier Preparation Timeline",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "EventName",
+    "displayName": "Regulatory event name / number",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "EventState",
+    "displayName": "Regulatory event state",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "EventPlannedStart",
+    "displayName": "Event planned start",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "EventPlannedCompletion",
+    "displayName": "Event planned completion",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "EventQMS",
+    "displayName": "Event QMS reference",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "ChangeID",
+    "displayName": "Change ID",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "ChangeProjectID",
+    "displayName": "Change Project ID",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "ChangeQMS",
+    "displayName": "Change QMS reference",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "ChangeStatus",
+    "displayName": "Change status",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "ChangeCreated",
+    "displayName": "Change created",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "ChangePlannedImplementation",
+    "displayName": "Planned Implementation Date",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "ChangeResponseDue",
+    "displayName": "Response Due Date",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "ChangeResponseCount",
+    "displayName": "Change response count",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "AssessmentCountry",
+    "displayName": "Change Assessment Response Countries",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "AssessmentTimeline",
+    "displayName": "Change Assessment Response Timeline",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "AssessmentMOHFiling",
+    "displayName": "MOH filing requirement",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "AssessmentDocumentation",
+    "displayName": "Required documentation",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "ExpectedResponseID",
+    "displayName": "Expected response ID",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "ExpectedResponseCountry",
+    "displayName": "Expected response country",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "AssessmentResponseID",
+    "displayName": "Response ID (per country)",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "RegistrationID",
+    "displayName": "Registration ID / name",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "RegistrationNumber",
+    "displayName": "Registration number",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "RegistrationCountry",
+    "displayName": "Registration country",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "RegistrationState",
+    "displayName": "Registration state",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "RegistrationHolder",
+    "displayName": "Registration holder",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "RegistrationAuthority",
+    "displayName": "Registration health authority",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "RegistrationRegion",
+    "displayName": "Registration region",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "RegistrationDivision",
+    "displayName": "Registration division",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "RegistrationProductFamily",
+    "displayName": "Registration product family",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "RegistrationApplicationType",
+    "displayName": "Registration application type",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "RegistrationMarketingStatus",
+    "displayName": "Registration marketing status",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "RegistrationRenewalRequired",
+    "displayName": "Registration renewal required",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "RegistrationRenewalStart",
+    "displayName": "Registration renewal start date",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "RegistrationRenewalTarget",
+    "displayName": "Registration renewal target date",
+    "kind": "Grouping",
+    "description": "Date column (not Date hierarchy); do not summarize."
+  },
+  {
+    "name": "RegistrationComments",
+    "displayName": "Registration comments",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "RegistrationSKU",
+    "displayName": "Registration SKU",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "CatalogNumber",
+    "displayName": "Catalog number",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "RegistrationManufacturingSite",
+    "displayName": "Registration manufacturing site",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "ApplicationURL",
+    "displayName": "Application source URL",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "RegulatoryObjectiveURL",
+    "displayName": "Regulatory objective source URL",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "SubmissionURL",
+    "displayName": "Submission source URL",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "RegistrationURL",
+    "displayName": "Registration source URL",
+    "kind": "Grouping",
+    "description": "Map the source column to this role; no renaming required."
+  }
+]

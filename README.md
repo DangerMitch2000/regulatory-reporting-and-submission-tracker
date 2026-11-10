@@ -4,7 +4,15 @@
 
 Released **23 Oct 2026** · Power BI package **1.18.1.0**. This is an uncertified preview; public demo records are fictional.
 
-## New: Registration Coverage Map 1.0.0
+## New: Change Dashboard 1.0.0
+
+[Download the Power BI dashboard](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.0.0/change-dashboard-1.0.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Field mappings and counting rules](change-dashboard/README.md)
+
+A separate daily worklist using the tracker's existing 69 field roles: one row per Change ID, manufacturing-site/product/business-unit/country filters, clickable assessment and overdue dispatch/submission counts, awaiting-approval work and country-level evidence. Missing dates and conflicting links stay visible for review. Copy IDs, export details, and open linked source records. The dashboard keeps internal dispatch separate from authority submission and distinguishes submission completion from country approval evidence.
+
+Import as a **new visual** and map the existing source columns; the tracker and map remain separate. The [setup guide](change-dashboard/README.md) covers expected-response matching, membership filter scope, state-based evidence, previous-day timing and data-delivery limits. This is an uncertified preview, tested with synthetic data and the packaged runtime; validate representative changes against your Velocity records. The demo uses fictional data.
+
+## Registration Coverage Map 1.0.0
 
 [Download the Power BI map](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/registration-map-v1.0.0/registration-coverage-map-1.0.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/registration-map/preview.html) · [Field mappings and setup](registration-map/README.md)
 

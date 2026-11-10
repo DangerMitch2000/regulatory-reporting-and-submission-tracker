@@ -1,0 +1,3 @@
+import {mount} from './ui.mjs';
+import {demoRows,demoAsOf} from './demo-data.mjs';
+async function start(){const root=document.getElementById('change-demo'),app=await mount(root,{onCopy:async text=>{try{await navigator.clipboard.writeText(text);return true;}catch{return false;}},onExport:async(csv,name)=>{const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return true;},onLaunchUrl:()=>false});app.update(demoRows,{asOf:demoAsOf});const resize=()=>app.resize(root.clientWidth,root.clientHeight);new ResizeObserver(resize).observe(root);resize();window.changeDemo=app;}start();

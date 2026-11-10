@@ -1,0 +1,177 @@
+name: Build Change Dashboard
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'change-dashboard/**'
+      - '.github/workflows/change-dashboard.yml'
+permissions:
+  contents: write
+concurrency:
+  group: change-dashboard-release
+  cancel-in-progress: false
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: change-dashboard
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Generate the separate Power BI project
+        run: node build.cjs
+      - name: Install pinned tools
+        timeout-minutes: 5
+        working-directory: change-dashboard/powerbi
+        run: npm install
+      - name: Install test browser
+        timeout-minutes: 5
+        working-directory: change-dashboard/powerbi
+        run: npx playwright install --with-deps chromium
+      - name: Rebuild and verify the committed offline demo
+        run: |
+          node prepare-preview.cjs
+          git diff --exit-code -- preview.html
+      - name: Verify change logic and actual Visual lifecycle
+        env:
+          CHANGE_BROWSER_CHANNEL: chromium
+        run: |
+          node logic-test.mjs
+          npm --prefix powerbi run typecheck
+          node host-browser-test.cjs
+      - name: Build official Power BI package
+        working-directory: change-dashboard/powerbi
+        run: npm run package -- --no-stats
+      - name: Verify package contents and metadata
+        run: node verify-package.cjs
+      - name: Prepare complete release assets
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          cp powerbi/dist/*.pbiviz release/change-dashboard-1.0.0.0.pbiviz
+          cp README.md release/CHANGE-DASHBOARD-INSTALL.md
+          cp RELEASE-NOTES.md release/RELEASE-NOTES.md
+          cp THIRD-PARTY-NOTICES.md release/THIRD-PARTY-NOTICES.md
+          cp preview.html release/change-dashboard-demo.html
+          cp .test-artifacts/preview-dark.png release/change-dashboard-dark.png
+          cp .test-artifacts/preview-light.png release/change-dashboard-light.png
+          cp .test-artifacts/preview-compact.png release/change-dashboard-compact.png
+          tar --exclude=./release --exclude=./node_modules --exclude=./powerbi/node_modules --exclude=./powerbi/.tmp --exclude=./powerbi/dist --exclude=./.test-artifacts --exclude=./.git -czf release/change-dashboard-1.0.0-source.tar.gz .
+          cd release
+          find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: change-dashboard-1.0.0
+          path: change-dashboard/release/
+      - name: Preserve verified browser previews
+        uses: actions/upload-artifact@v4
+        with:
+          name: change-dashboard-browser-checks
+          path: change-dashboard/.test-artifacts/
+          if-no-files-found: ignore
+          include-hidden-files: true
+      - name: Stage all assets in a draft, then publish the preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: change-dashboard-v1.0.0
+        run: |
+          set -euo pipefail
+          # Retry transient GitHub failures. Draft discovery uses the complete
+          # releases list: the release-by-tag REST endpoint excludes drafts.
+          retry_gh() {
+            local attempt status output errors
+            output=$(mktemp)
+            errors=$(mktemp)
+            for attempt in 1 2 3 4 5; do
+              if gh "$@" >"$output" 2>"$errors"; then
+                cat "$output"
+                cat "$errors" >&2
+                rm -f "$output" "$errors"
+                return 0
+              else
+                status=$?
+              fi
+              if ! grep -Eiq 'HTTP 5[0-9][0-9]|status code: 5[0-9][0-9]|timeout|timed out|connection reset|unexpected EOF' "$errors" || [ "$attempt" = 5 ]; then
+                cat "$output"
+                cat "$errors" >&2
+                rm -f "$output" "$errors"
+                return "$status"
+              fi
+              cat "$errors" >&2
+              sleep "$((attempt * 5))"
+            done
+          }
+
+          tag="$RELEASE_TAG"
+          remote_tag=$(git ls-remote origin "refs/tags/$tag" "refs/tags/$tag^{}")
+          if [ -n "$remote_tag" ]; then
+            git fetch --no-tags origin "refs/tags/$tag"
+            tag_commit=$(git rev-parse 'FETCH_HEAD^{commit}')
+            if [ "$tag_commit" != "$GITHUB_SHA" ]; then
+              # A workflow-only repair may finish this unchanged version. The
+              # existing tag must be an ancestor and its actual map sources
+              # must match; only this copied workflow source is excluded.
+              if ! git merge-base --is-ancestor "$tag_commit" "$GITHUB_SHA"; then
+                echo "Refusing to reuse $tag: $tag_commit is not an ancestor of $GITHUB_SHA." >&2
+                exit 1
+              fi
+              if ! git diff --quiet "$tag_commit" "$GITHUB_SHA" -- ':(top)change-dashboard' ':(top,exclude)change-dashboard/publish-workflow.yml'; then
+                echo "Change Dashboard sources changed after $tag. Use a new version; the existing tag will not move." >&2
+                exit 1
+              fi
+              echo "Reusing immutable $tag at $tag_commit; change-dashboard sources match $GITHUB_SHA."
+            fi
+          else
+            tag_commit="$GITHUB_SHA"
+            git tag "$tag" "$GITHUB_SHA"
+            git push origin "refs/tags/$tag"
+          fi
+
+          find_release() {
+            retry_gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/releases?per_page=100" > releases-list.json || return $?
+            node -e 'const pages=require("./releases-list.json"),matches=pages.flat().filter(r=>r.tag_name===process.env.RELEASE_TAG);if(matches.length>1)throw Error("Multiple releases have this exact tag; refusing ambiguous changes.");if(matches.length){const r=matches[0];if(!r.draft)throw Error("This version is already public. Bump the version; published releases will not be modified.");if(!Number.isSafeInteger(r.id)||r.id<=0)throw Error("Invalid release ID");process.stdout.write(String(r.id));}'
+          }
+          release_id=$(find_release)
+          if [ -z "$release_id" ]; then
+            # If GitHub accepted creation but lost the response, rediscover the
+            # existing draft before treating a retry's duplicate error as failure.
+            if ! retry_gh release create "$tag" --verify-tag --target "$tag_commit" --draft --prerelease --title 'Change Dashboard 1.0.0' --notes-file RELEASE-NOTES.md; then
+              release_id=$(find_release)
+              if [ -z "$release_id" ]; then
+                echo "Draft creation failed and the complete release list contains no matching draft." >&2
+                exit 1
+              fi
+            fi
+            release_id=$(find_release)
+            if [ -z "$release_id" ]; then
+              echo "The created draft could not be rediscovered; refusing asset changes." >&2
+              exit 1
+            fi
+          fi
+
+          assert_draft() {
+            retry_gh api "repos/$GITHUB_REPOSITORY/releases/$release_id" > release-state.json || return $?
+            RELEASE_ID="$release_id" RELEASE_COMMIT="$tag_commit" node -e 'const r=require("./release-state.json");if(r.id!==Number(process.env.RELEASE_ID)||r.tag_name!==process.env.RELEASE_TAG||!r.draft)throw Error("Release identity changed or became public; refusing to modify it.");if(r.target_commitish!==process.env.RELEASE_COMMIT)throw Error("Draft target differs from the immutable release tag commit.");'
+          }
+          # gh release upload/download resolve drafts through the CLI's GraphQL
+          # fallback. Guard each mutation with the stable numeric REST release ID.
+          for file in release/*; do
+            assert_draft
+            retry_gh release upload "$tag" "$file" --clobber
+          done
+          # Verify every staged asset byte-for-byte before exposing the preview.
+          check_dir=$(mktemp -d)
+          retry_gh release download "$tag" --dir "$check_dir" --clobber
+          for file in release/*; do
+            cmp "$file" "$check_dir/$(basename "$file")"
+          done
+          assert_draft
+          retry_gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" -F draft=false -F prerelease=true -f make_latest=false > published-release.json
+          RELEASE_ID="$release_id" node -e 'const r=require("./published-release.json");if(r.id!==Number(process.env.RELEASE_ID)||r.tag_name!==process.env.RELEASE_TAG||r.draft||!r.prerelease)throw Error("Published preview verification failed.");'
