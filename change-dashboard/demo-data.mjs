@@ -14,6 +14,8 @@ export const demoRows=[
  filing('Denmark','106-DK',{ChangeID:'DEMO-CHG-106',ChangeProjectID:'Approved source change',ChangeStatus:'Completed',ROStatus:'Health Authority Approved',Manufacturer:'SCR'}),
  filing('Finland','107-FI',{ChangeID:'DEMO-CHG-107',ChangeProjectID:'Withdrawn filing',SubStatus:'Withdrawn',Manufacturer:'AJG'}),
  filing('Norway','108-NO',{ChangeID:'DEMO-CHG-108',ChangeProjectID:'Authority rejection',SubStatus:'Rejected',Manufacturer:'ARDG'}),
- filing('Poland','unlinked',{ChangeID:'',ChangeProjectID:'',Manufacturer:'ADK'})
+ filing('Poland','unlinked',{ChangeID:'',ChangeProjectID:'',Manufacturer:'ADK'}),
+ {AppID:'DEMO-APP-NO-EVENT',AppStatus:'Active',Country:'Czechia',Product:'Example assay A',Manufacturer:'ADK',BusinessUnit:'Diagnostics'}
 ];
-export function largeRows(count=10000){return Array.from({length:count},(_,i)=>filing('France',String(i),{ChangeID:'LOAD-'+Math.floor(i/4),ChangeQMS:'LOAD-QMS-'+Math.floor(i/4),EventQMS:'LOAD-QMS-'+Math.floor(i/4),ChangeProjectID:'Load test',Product:'Synthetic product '+i%20,Manufacturer:['ABO','ADJ','ADK','AJG','ARDG','SCR'][i%6]}));}
+for(const row of demoRows)if(row.SubID||row.ChangeID){row.EventName=row.ChangeID?'DEMO-EVT-'+row.ChangeID.slice(-3):'DEMO-EVT-NO-CHANGE';row.EventState=row.ChangeStatus==='Completed'?'Closed State':'In Progress State';}
+export function largeRows(count=10000){return Array.from({length:count},(_,i)=>filing('France',String(i),{ChangeID:'LOAD-'+Math.floor(i/4),EventName:'LOAD-EVT-'+Math.floor(i/4),EventState:'In Progress State',ChangeQMS:'LOAD-QMS-'+Math.floor(i/4),EventQMS:'LOAD-QMS-'+Math.floor(i/4),ChangeProjectID:'Load test',Product:'Synthetic product '+i%20,Manufacturer:['ABO','ADJ','ADK','AJG','ARDG','SCR'][i%6]}));}

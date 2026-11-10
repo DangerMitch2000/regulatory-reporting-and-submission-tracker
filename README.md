@@ -4,13 +4,15 @@
 
 Released **23 Oct 2026** · Power BI package **1.18.1.0**. This is an uncertified preview; public demo records are fictional.
 
-## New: Change Dashboard 1.0.0
+## Change Dashboard 1.1.0 — Event, Change ID and Application views
 
-[Download the Power BI dashboard](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.0.0/change-dashboard-1.0.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Field mappings and counting rules](change-dashboard/README.md)
+[Download the Power BI dashboard](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.1.0/change-dashboard-1.1.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Field mappings and counting rules](change-dashboard/README.md)
 
-A separate daily worklist using the tracker's existing 69 field roles: one row per Change ID, manufacturing-site/product/business-unit/country filters, clickable assessment and overdue dispatch/submission counts, awaiting-approval work and country-level evidence. Missing dates and conflicting links stay visible for review. Copy IDs, export details, and open linked source records. The dashboard keeps internal dispatch separate from authority submission and distinguishes submission completion from country approval evidence.
+**Event is now the default view.** Choose Event, SharePoint Change ID or Application as the starting point. Events without Change IDs enter the main worklist, and applications without an event remain available in Application view. Counts reflect distinct records of the selected type; the missing-parent review distinguishes delivered rows from distinct applications.
 
-Import as a **new visual** and map the existing source columns; the tracker and map remain separate. The [setup guide](change-dashboard/README.md) covers expected-response matching, membership filter scope, state-based evidence, previous-day timing and data-delivery limits. This is an uncertified preview, tested with synthetic data and the packaged runtime; validate representative changes against your Velocity records. The demo uses fictional data.
+Event countries come from the linked ROs and their applications' existing lead-market Country field. ROs remain visible before a submission exists. Manufacturing-site, product, business-unit, country and state filters, country evidence, source links, copy and CSV remain available. The existing 69 field mappings and visual identity are preserved: import the update and confirm replacement of Change Dashboard. The Tracker and Map are separate visuals.
+
+See the [setup guide](change-dashboard/README.md) for expected-response scope, approval evidence and source reconciliation. Tested with 64,000 synthetic rows containing only eight Change IDs; validate representative records against Velocity. This is an uncertified preview and the demo data is fictional.
 
 ## Registration Coverage Map 1.0.0
 
