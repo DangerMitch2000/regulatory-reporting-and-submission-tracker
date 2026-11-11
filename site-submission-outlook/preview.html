@@ -656,7 +656,21 @@ function renderDetails(root, result, state, onChange) {
       for(const column of columns) {
         const cell=el('td');cell.dataset.column=column.key;
         if(column.key==='id'){
-          const line=el('div',undefined,'ssRecordIdentity'),toggle=el('button',expanded?'−':'+','ssExpandRecord');toggle.dataset.record=r.recordKey;toggle.setAttribute('aria-expanded',String(expanded));toggle.setAttribute('aria-label',`${expanded?'Collapse':'Expand'} evidence for ${r.id||'source row without a submission ID'}`);toggle.onclick=()=>{const old=wrap.scrollTop;onChange({expandedRecords:expanded?(state.expandedRecords||[]).filter(key=>key!==r.recordKey):[...(state.expandedRecords||[]),r.recordKey]});const current=root.querySelector('.ssTableWrap');if(current)current.scrollTop=old;};
+          const line=el('div',undefined,'ssRecordIdentity'),toggle=el('button',expanded?'−':'+','ssExpandRecord');toggle.dataset.record=r.recordKey;toggle.setAttribute('aria-expanded',String(expanded));toggle.setAttribute('aria-label',`${expanded?'Collapse':'Expand'} evidence for ${r.id||'source row without a submission ID'}`);toggle.onclick=()=>{
+            // Rebuilding Details briefly removes the scrollable content. Keep
+            // both the visual/page position and the table's two scroll axes,
+            // then focus the replacement control without scrolling it again.
+            const parents=[];
+            for(let node=root;node;node=node.parentElement)parents.push({node,top:node.scrollTop,left:node.scrollLeft});
+            const tablePosition={top:wrap.scrollTop,left:wrap.scrollLeft},chartLeft=root.querySelector('.ssStage')?.scrollLeft||0;
+            onChange({expandedRecords:expanded?(state.expandedRecords||[]).filter(key=>key!==r.recordKey):[...(state.expandedRecords||[]),r.recordKey]});
+            const current=root.querySelector('.ssTableWrap'),chart=root.querySelector('.ssStage');
+            if(current){current.scrollTop=tablePosition.top;current.scrollLeft=tablePosition.left;}
+            if(chart)chart.scrollLeft=chartLeft;
+            const replacement=[...root.querySelectorAll('.ssExpandRecord')].find(button=>button.dataset.record===r.recordKey);
+            replacement?.focus({preventScroll:true});
+            for(const {node,top,left} of parents){node.scrollTop=top;node.scrollLeft=left;}
+          };
           const id=el('span',r.id||'Not recorded','ssSubmissionId');if(r.id)selectIdentifier(id);line.append(toggle,id);cell.append(line);
         }else if(column.key==='issue'){
           cell.className='ssAttention';cell.dataset.tone=r.attention.tone;cell.dataset.attention=r.attention.key;cell.title=`${r.attention.reason}\nNext action: ${r.attention.action}`;cell.append(el('strong',r.attention.title,'ssAttentionBadge'),el('span',r.attention.action,'ssAttentionAction'));

@@ -129,9 +129,11 @@ The **Products & countries** column retains country information. One to three pr
 **Copy catalog numbers** includes every distinct matching code across all pages, one per line. A selectable text box remains available when the host blocks clipboard access. **Copy details** includes full catalog associations. Chart search also finds catalog numbers and registration IDs, numbers and countries.
 
 Registration metadata never invents actual dispatch, submission or approval dates.
-## Site Submission Outlook — Responsive chart spacing in 1.6.1
+## Site Submission Outlook — Stable Details expansion in 1.6.2
 
-[Download Site Submission Outlook 1.6.1](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.6.1/site-submission-outlook-1.6.1.0.pbiviz) · [Live preview](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Field mappings and instructions](site-submission-outlook/README.md)
+[Download Site Submission Outlook 1.6.2](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.6.2/site-submission-outlook-1.6.2.0.pbiviz) · [Live preview](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Field mappings and instructions](site-submission-outlook/README.md)
+
+**1.6.2 fix:** expanding or collapsing a submission in Details preserves the visual/page scroll, table scroll and keyboard focus instead of jumping to the top.
 
 **1.6.1 spacing fix:** the chart fills the available height, month bars grow with site-column width, and site backlog boxes align with their month groups. Counting rules and field mappings are unchanged.
 
@@ -320,7 +322,7 @@ For the Tracker, Roadmap, IVDR, Key Submissions and Site Regulatory Plan, map yo
 | IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |
 | Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/key-preview.html) |
 | Site Regulatory Plan 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-plan-2026-v1.1.0/site-regulatory-plan-2026-1.1.0.0.pbiviz) | [Site plan](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-plan-preview.html) |
-| Site Submission Outlook 1.6.1 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.6.1/site-submission-outlook-1.6.1.0.pbiviz) | [Previous, current and next month](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) |
+| Site Submission Outlook 1.6.2 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.6.2/site-submission-outlook-1.6.2.0.pbiviz) | [Previous, current and next month](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) |
 
 Roadmap shows False separately as **Dispatch not required**, retaining recorded dispatch reference dates. Records without a usable dispatch month but with current-year actual submission/approval evidence are shown separately outside the monthly chart. Blanks remain unknown; they are not assumed to mean False. An unmapped field retains the earlier classification behavior.
 

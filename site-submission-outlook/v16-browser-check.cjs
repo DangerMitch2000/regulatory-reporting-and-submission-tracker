@@ -135,6 +135,52 @@ module.exports=async function checkV16(page,scope=page){
  assert.equal(await scope.locator('.ssHit').count(),0);
  assert.deepEqual(await scope.locator('svg').evaluate(svg=>[...svg.querySelectorAll('[x],[y],[width],[height]')].flatMap(n=>['x','y','width','height'].filter(a=>n.hasAttribute(a)&&!Number.isFinite(Number(n.getAttribute(a)))).map(a=>n.tagName+'.'+a))),[]);
  await scope.getByRole('button',{name:'Use main six sites',exact:true}).click();await scope.locator('.ssSites summary').click();
+ // Expanding a submission must not recreate the entire visual at scroll zero.
+ // Exercise actual pointer and keyboard activation from a scrolled Details
+ // table, including its horizontal offset and retained keyboard focus.
+ await metric('inProcess').click();await close();
+ await send(Array.from({length:80},(_,i)=>row('SCROLL-'+String(i).padStart(3,'0'))));
+ await resetFilters();
+ await page.evaluate(()=>{const v=window.visual||testApi.visual;v.update({type:4,viewport:{width:760,height:700}})});
+ await scope.getByRole('button',{name:'Screenshot mode',exact:true}).click();
+ await scope.locator('.siteSubmissions').focus();await page.keyboard.press('Escape');
+ await page.evaluate(()=>{
+  const host=document.getElementById('host'),before=document.createElement('div'),after=document.createElement('div');
+  before.dataset.scrollRegression='';after.dataset.scrollRegression='';before.style.height='250px';after.style.height='800px';
+  host.before(before);host.after(after);window.scrollTo(0,120);
+ });
+ await scope.locator('.siteSubmissions').evaluate(root=>{root.scrollTop=0;});
+ await metric('planned').click();
+ assert.ok(await scope.locator('.siteSubmissions').evaluate(root=>root.scrollTop)>100,'opening a count still intentionally brings Details into view');
+ const scrollTarget=await scope.locator('.siteSubmissions').evaluate(root=>{
+  const table=root.querySelector('.ssTableWrap');table.scrollTop=180;table.scrollLeft=10;root.querySelector('.ssStage').scrollLeft=80;
+  const top=Math.max(table.getBoundingClientRect().top+table.querySelector('thead').getBoundingClientRect().height+12,root.getBoundingClientRect().top+12);
+  const bottom=Math.min(table.getBoundingClientRect().bottom,root.getBoundingClientRect().bottom)-30;
+  const button=[...table.querySelectorAll('.ssExpandRecord')].find(button=>{const b=button.getBoundingClientRect();return b.top>top&&b.bottom<bottom;});
+  if(!button)throw Error('No visible scrolled row for expansion test');
+  button.focus({preventScroll:true});return button.dataset.record;
+ });
+ const scrollToggle=scope.locator('.ssExpandRecord[data-record="'+scrollTarget+'"]');
+ const scrollPosition=()=>scope.locator('.siteSubmissions').evaluate((root,id)=>{
+  const table=root.querySelector('.ssTableWrap'),button=[...root.querySelectorAll('.ssExpandRecord')].find(button=>button.dataset.record===id);
+  return {root:root.scrollTop,table:table.scrollTop,left:table.scrollLeft,chart:root.querySelector('.ssStage').scrollLeft,y:button.getBoundingClientRect().top,page:window.scrollY,focused:document.activeElement===button};
+ },scrollTarget);
+ const beforeExpand=await scrollPosition();
+ assert.ok(beforeExpand.table>0&&beforeExpand.left>0&&beforeExpand.chart>0&&beforeExpand.page>0,'test starts with table, chart and containing page scrolled');
+ const assertScrollStable=async(label,expanded)=>{
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  const after=await scrollPosition();
+  for(const key of ['root','table','left','chart','y','page'])assert.ok(Math.abs(after[key]-beforeExpand[key])<=2,`${label} must preserve ${key}: ${JSON.stringify({before:beforeExpand,after})}`);
+  assert.equal(after.focused,true,`${label} retains focus on the matching plus/minus button`);
+  assert.equal(await scrollToggle.getAttribute('aria-expanded'),String(expanded));
+  assert.equal(await scope.locator('.ssRecordRow').count(),50,'expansion keeps the same results page');
+ };
+ await scrollToggle.click();await assertScrollStable('pointer expansion',true);
+ await scrollToggle.click();await assertScrollStable('pointer collapse',false);
+ await page.keyboard.press('Enter');await assertScrollStable('keyboard expansion',true);
+ await page.keyboard.press('Space');await assertScrollStable('keyboard collapse',false);
+ await close();
+ await page.evaluate(()=>{document.querySelectorAll('[data-scroll-regression]').forEach(node=>node.remove());window.scrollTo(0,0);});
  await page.evaluate(()=>{const v=window.visual||testApi.visual;v.update({type:4,viewport:{width:1440,height:800}})});
  await page.clock.setFixedTime(new Date(originalTime));
 };
