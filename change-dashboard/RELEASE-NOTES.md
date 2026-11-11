@@ -1,13 +1,11 @@
-# Change Dashboard 1.7.0 — dual planning dates preview
+# Change Dashboard 1.7.1 — compact layout preview
 
-- Show **Change implementation** and **Event planned completion** as two labelled values in the same main-list column, across all three grouping modes.
-- Keep either date available when the other is blank. Sort by a usable change implementation date first, otherwise the usable event completion date; filter both source values.
-- Support the verified day/month/year planning-source format, with optional time, alongside ISO and native Power BI dates. Display valid dates consistently as **DD MMM YYYY**.
-- Keep multiple/invalid source values explicit, expose them in hover and **Planning dates** Details, and distinguish format errors from dates outside 1900–2100.
-- Append a separate event-completion column to CSV exports. Dispatch/submission/approval queues and their date parsing are unchanged.
+- Reduce unused header and filter space while retaining Worklist/Loaded coverage, status, as-of date and theme.
+- Place summary counts beside their labels; tighten table rows, section gaps and Details padding without reducing text sizes.
+- Give the dual planning-date column more room. Both dates, related record counts and all filter controls remain available.
+- Place the diagram selection/help and collapsed state legend together. Preserve node sizes, connector alignment, scroll areas and sticky country headings.
+- Retain responsive layouts and 44px touch targets. No field roles, count rules, source relationships or planning-date logic change.
 
-Import **change-dashboard-1.7.0.0.pbiviz**, replacing Change Dashboard. The visual identity and all **70 existing roles** are preserved.
+Import **change-dashboard-1.7.1.0.pbiviz**, replacing Change Dashboard. The visual identity and all **70 existing field roles** are preserved; no remapping is required for this spacing update.
 
-Map your event's **planned_completion_date__rim** field to **Event planned completion**. Keep **planned_change_implementation_date__c** mapped to **Planned Implementation Date**. Use raw Date columns, not Date hierarchies; do not summarize.
-
-Validation covers both source formats, blank/invalid/multiple dates, fallback ordering, filters, separate exports, grouped applications and the source/packaged browser runtime. This is an uncertified preview; demonstration data is fictional.
+The source browser suite passed for both themes, narrow layouts, scrolling headings, filters, diagram/country selection, keyboard/touch interaction and the real visual lifecycle. Release checks also run against the packaged visual. This is an uncertified preview; demonstration data is fictional.

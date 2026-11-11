@@ -1,10 +1,18 @@
-# Change Dashboard 1.7.0
+# Change Dashboard 1.7.1
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.7.0/change-dashboard-1.7.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.7.0)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.7.1/change-dashboard-1.7.1.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.7.1)
 
 A separate daily worklist with **Event (default), Change ID and Application views**, preserving the Regulatory Tracker's existing **69 field roles** and adding one optional **Commercial region** role. Filter by manufacturing site, product, business unit, commercial region, country and record state. Select a summary count, an event/change/application, then a country to inspect the evidence and linked source records. The existing Tracker and Registration Coverage Map remain separate visuals.
 
-**Preview release:** package version **1.7.0.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
+**Preview release:** package version **1.7.1.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
+
+## Compact layout in 1.7.1
+
+- A shorter header keeps Worklist and Loaded counts visible, with status, as-of date and theme arranged together.
+- Summary cards place the count alongside their labels. Tighter filter, table and Details spacing gives more space to records without reducing text sizes.
+- Both planning dates remain labelled in the main list. The date column has more room, and linked record counts stay clickable.
+- The diagram's selection information and collapsed state legend share a row. Node sizes and connector geometry are unchanged.
+- The worklist and diagram keep their existing scroll areas. Country headings remain sticky above scrolling rows; narrow visuals wrap controls and touch controls retain 44px targets.
 
 ## Bug fixes retained from 1.6.1
 

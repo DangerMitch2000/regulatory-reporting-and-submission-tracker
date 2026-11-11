@@ -4,15 +4,15 @@
 
 Released **23 Oct 2026** · Power BI package **1.18.1.0**. This is an uncertified preview; public demo records are fictional.
 
-## Change Dashboard 1.7.0 — change and event planning dates
+## Change Dashboard 1.7.1 — compact layout
 
-[Download the Power BI dashboard](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.7.0/change-dashboard-1.7.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Field mappings and date rules](change-dashboard/README.md)
+[Download the Power BI dashboard](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.7.1/change-dashboard-1.7.1.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Field mappings and date rules](change-dashboard/README.md)
 
-The **Implementation / event completion** column now shows both dates with separate labels. A blank change implementation date no longer prevents the event completion date from being displayed or used for sorting. Both source formats from the report—ISO and day/month/year with time—display as **DD MMM YYYY**.
+A shorter header, horizontal summary cards and tighter table, diagram and Details spacing give the records more room while preserving readable text sizes. Worklist/Loaded counts, all filters, both planning dates and linked-record controls remain visible. Country headings stay above scrolling rows, with responsive wrapping and touch targets retained.
 
-Map the event source field to the existing **Event planned completion** role. Sorting prefers a usable change implementation date, then the event date; filters search both. Source values remain available in hover and Planning dates Details, and CSV exports contain separate columns. These dates do not change workflow queues.
+The **Implementation / event completion** column continues to show both dates separately, formatted as **DD MMM YYYY**. Map the event source field to **Event planned completion**; sorting prefers a usable change implementation date, then event completion. Filters search both, and source values remain available in Details and separate CSV columns.
 
-The visual identity and **70 existing mappings** are retained. The country/diagram links, state colours and scrolling/data-review fixes remain included. This is an uncertified preview, with fictional test data.
+The visual identity and **70 existing mappings** are retained. Workflow counts and date rules are unchanged. This is an uncertified preview, with fictional demonstration data.
 
 ## Registration Coverage Map 1.0.0
 
