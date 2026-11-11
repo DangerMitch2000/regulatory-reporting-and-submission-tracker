@@ -44,3 +44,12 @@
 .change-dashboard .cd-countries tr[data-related=true]>td:first-child{box-shadow:inset 3px 0 var(--cd-accent)}
 .change-dashboard .cd-countries tr[data-related=false]{opacity:.55}
 .change-dashboard .cd-countries tr[data-selected=true]{opacity:1}
+
+/* Both planning dates stay visible in the same column without widening the list. */
+.change-dashboard .cd-planning-item+.cd-planning-item{margin-top:6px}
+.change-dashboard .cd-planning-label{display:block;color:var(--cd-muted);font-size:11px;line-height:1.25;white-space:normal}
+.change-dashboard .cd-planning-value{display:block;line-height:1.35;white-space:normal}
+.change-dashboard .cd-planning-details{padding:0 16px;border-bottom:1px solid var(--cd-line)}
+.change-dashboard .cd-planning-details summary{padding:7px 0}
+.change-dashboard .cd-planning-details dl{padding-bottom:8px}
+.change-dashboard .cd-planning-details p{font-size:11px;color:var(--cd-muted);padding-bottom:9px}

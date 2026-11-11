@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {analyze,derive,roles,mapTable,previousDay,dateField,safeURL,toCsv,MISSING_REGION,relatedItems} from './logic.mjs';
+import {analyze,derive,roles,mapTable,previousDay,dateField,planningDates,safeURL,toCsv,MISSING_REGION,relatedItems} from './logic.mjs';
 import {demoRows,demoAsOf,largeRows} from './demo-data.mjs';
 import {compare,tableRows,dueOrder} from './table-tools.mjs';
 const options={asOf:demoAsOf},base=demoRows[0],one=overrides=>analyze([{...base,...overrides}],options).submissions.get(base.SubID);
@@ -147,15 +147,42 @@ const implementationRows=[
  {...noChange,EventName:'CONFLICT',ROID:'IMP-RO4',SubID:'IMP-SUB4',ChangePlannedImplementation:'2026-12-02'}
 ];
 const implementationModel=analyze(implementationRows,eventOptions);
-assert.deepEqual(derive(implementationModel,{view:'all',sort:'implementation',direction:'asc'}).shown.slice(0,2).map(c=>c.id),['EARLY','LATE']);
+assert.deepEqual(derive(implementationModel,{view:'all',sort:'implementation',direction:'asc'}).shown.slice(0,2).map(c=>c.id),['MISSING-IMPLEMENTATION','EARLY']);
 assert.deepEqual(derive(implementationModel,{view:'all',sort:'implementation',direction:'desc'}).shown.slice(0,2).map(c=>c.id),['LATE','EARLY']);
 assert.equal(implementationModel.changes.find(c=>c.id==='MISSING-IMPLEMENTATION').implementation.kind,'missing','event planned completion is not substituted for implementation');
 assert.equal(implementationModel.changes.find(c=>c.id==='CONFLICT').implementation.kind,'conflict');
-assert.equal(derive(implementationModel,{view:'all',columnFilters:{implementation:'01 Dec 2026'}}).shown[0].id,'EARLY');
-assert.equal(derive(implementationModel,{view:'all',columnFilters:{implementation:'Not recorded'}}).shown[0].id,'MISSING-IMPLEMENTATION');
+assert.deepEqual(derive(implementationModel,{view:'all',columnFilters:{implementation:'01 Dec 2026'}}).shown.map(c=>c.id).sort(),['CONFLICT','EARLY']);
+assert(derive(implementationModel,{view:'all',columnFilters:{implementation:'Not recorded'}}).shown.some(c=>c.id==='MISSING-IMPLEMENTATION'));
 const implementationExport=toCsv(derive(implementationModel,{view:'all',columnFilters:{implementation:'01 Dec 2026'}}).shown,'event');assert.match(implementationExport,/Planned implementation date/);assert.match(implementationExport,/01 Dec 2026/);assert.match(implementationExport,/Related application IDs/);
 const regionExport=toCsv(derive(analyze(regionRows,eventOptions),{view:'all',region:'EMEA'}).shown,'event');assert.match(regionExport,/EMEA/);assert.match(regionExport,/SUB-FR/);assert.equal(regionExport.includes('SUB-JP'),false,'exported related IDs respect commercial-region scope');assert.equal(regionExport.includes('SUB-WITHDRAWN'),false,'exported related IDs respect inactive scope');
 console.log('PASS additions: distinct related items and Change IDs, country/inactive scope, Commercial region across all groupings, missing regions, canonical evidence and implementation sorting/filtering.');
+
+const planningRow=(id,changeDate,eventDate)=>({...noChange,EventName:id,AppID:'APP-'+id,ROID:'RO-'+id,SubID:'SUB-'+id,ChangePlannedImplementation:changeDate,EventPlannedCompletion:eventDate});
+const planningRows=[planningRow('BOTH','2027-03-15','2026-11-30'),planningRow('EVENTONLY','','2026-12-01'),planningRow('CHANGEONLY','2027-01-01',''),planningRow('INVALID','not-a-date','2027-02-01'),planningRow('EMPTY','','')];
+const planningModel=analyze(planningRows,eventOptions),plans=derive(planningModel,{view:'all',sort:'implementation',direction:'asc'});
+assert.deepEqual(plans.shown.map(c=>c.id),['EVENTONLY','CHANGEONLY','INVALID','BOTH','EMPTY'],'sort uses valid change date first, otherwise event date, and undated records last');
+assert.deepEqual(derive(planningModel,{view:'all',sort:'implementation',direction:'desc'}).shown.map(c=>c.id),['BOTH','INVALID','CHANGEONLY','EVENTONLY','EMPTY']);
+const both=planningModel.changes.find(c=>c.id==='BOTH'),eventOnly=planningModel.changes.find(c=>c.id==='EVENTONLY'),invalidPlan=planningModel.changes.find(c=>c.id==='INVALID');
+assert.equal(both.implementation.label,'15 Mar 2027');assert.equal(both.eventCompletion.label,'30 Nov 2026');assert.equal(both.planningDates.field,'ChangePlannedImplementation');
+assert.deepEqual(both.planningDates.items.map(x=>x.sourceLabel),['Change implementation','Event planned completion']);
+assert.equal(eventOnly.implementation.kind,'missing');assert.equal(eventOnly.planningDates.field,'EventPlannedCompletion');assert.equal(eventOnly.planningDates.items[0].label,'Not recorded','fallback never relabels event completion as implementation');
+assert.equal(invalidPlan.implementation.kind,'invalid');assert.equal(invalidPlan.planningDates.field,'EventPlannedCompletion');assert.deepEqual(invalidPlan.planningDates.items[0].values,['not-a-date'],'bad primary source remains inspectable alongside event fallback');
+assert.deepEqual(derive(planningModel,{view:'all',columnFilters:{implementation:'30 Nov 2026'}}).shown.map(c=>c.id),['BOTH'],'search matches secondary displayed date even when primary controls sorting');
+assert.deepEqual(derive(planningModel,{view:'all',columnFilters:{implementation:'not-a-date'}}).shown.map(c=>c.id),['INVALID'],'bad source value remains searchable');
+const manyEvents=analyze([{...planningRow('EVENT-A','','2027-01-01'),AppID:'SHARED-PLANNING-APP'},{...planningRow('EVENT-B','','2027-04-01'),AppID:'SHARED-PLANNING-APP'}],{...options,groupBy:'application'}).changes[0];
+assert.equal(manyEvents.eventCompletion.kind,'conflict');assert.equal(manyEvents.planningDates.value,null,'multiple distinct event completion dates cannot silently choose one');
+assert.deepEqual(manyEvents.planningDates.items[1].values,['01 Jan 2027','01 Apr 2027'],'all linked event dates remain available');
+const ambiguousChange=analyze([{...planningRow('CHANGE-CONFLICT','2027-01-01','2027-03-01')},{...planningRow('CHANGE-CONFLICT','2027-02-01','2027-03-01')}],eventOptions).changes[0];
+assert.equal(ambiguousChange.implementation.kind,'conflict');assert.equal(ambiguousChange.planningDates.field,'EventPlannedCompletion');assert.deepEqual(ambiguousChange.planningDates.items[0].values,['01 Jan 2027','01 Feb 2027']);
+const sameDates=analyze([planningRow('SAME','2027-03-15','2027-03-15'),planningRow('SAME','15 Mar 2027','2027-03-15T18:00:00Z')],eventOptions).changes[0];
+assert.equal(sameDates.eventCompletion.kind,'dated');assert.deepEqual(sameDates.planningDates.items[0].values,['15 Mar 2027']);
+const epochZero=planningDates(dateField([{d:'1970-01-01'}],'d',demoAsOf),dateField([],'d',demoAsOf));assert.equal(epochZero.value,0,'zero timestamp remains a valid sort value');
+const planningCsv=toCsv(plans.shown,'event'),csvHeaders=planningCsv.split('\r\n')[0].split(',');
+assert.equal(csvHeaders.length,21);assert.equal(csvHeaders[13],'"Planned implementation date"');assert.equal(csvHeaders[20],'"Event planned completion date"');
+assert.match(planningCsv,/15 Mar 2027/);assert.match(planningCsv,/30 Nov 2026/);assert.match(planningCsv,/01 Dec 2026/);
+const originalQueues=derive(analyze(planningRows.map(({ChangePlannedImplementation,EventPlannedCompletion,...row})=>row),eventOptions),{view:'all'});
+assert.deepEqual(plans.counts,originalQueues.counts,'planning display dates must not change overdue or approval queues');
+console.log('PASS dual planning dates: independently labelled fields, usable fallback sorting, null-last order, both-date/raw search, retained conflicts, duplicate dates, CSV compatibility and unchanged workflow queues.');
 
 const countryBase={...noChange,ChangeID:'COUNTRY-CHANGE',EventName:'COUNTRY-EVENT',AppID:'COUNTRY-APP',ROID:'COUNTRY-RO',SubID:'COUNTRY-SUB',Country:'New Zealand',RegistrationID:'COUNTRY-REG',RegistrationCountry:'NEW ZEALAND',RegistrationState:'Approved'};
 const countryVariants=[countryBase,{...countryBase,Country:' new   zealand ',RegistrationCountry:'New  Zealand',CatalogNumber:'SECOND'},{...countryBase,Country:'NEW ZEALAND',CatalogNumber:'THIRD'}];

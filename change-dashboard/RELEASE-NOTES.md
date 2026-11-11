@@ -1,13 +1,13 @@
-# Change Dashboard 1.6.1 — bug-fix preview
+# Change Dashboard 1.7.0 — dual planning dates preview
 
-- Fix country rows painting over sticky column titles while scrolling.
-- Keep the selected Details record on the visible worklist page; preserve scrolling and keyboard focus after row selection, sorting and paging.
-- Preserve Diagram/List focus, search caret and List scrolling; reveal country matches in List view.
-- Prevent selected or searched event paths from leaking through a shared application into another event's ROs and submissions.
-- Keep missing/conflicting-country records visible for review, with accurate related counts. Retain both sides of lifecycle-state conflicts under inactive filtering; remove phantom country buckets.
-- Preserve unknown-country records under commercial-region filtering, apply inactive filtering to application-only records, and unify equivalent country-filter values.
-- Clear detail-table filters with **Clear filters**, and preserve country scope after capitalisation-only refreshes.
+- Show **Change implementation** and **Event planned completion** as two labelled values in the same main-list column, across all three grouping modes.
+- Keep either date available when the other is blank. Sort by a usable change implementation date first, otherwise the usable event completion date; filter both source values.
+- Support the verified day/month/year planning-source format, with optional time, alongside ISO and native Power BI dates. Display valid dates consistently as **DD MMM YYYY**.
+- Keep multiple/invalid source values explicit, expose them in hover and **Planning dates** Details, and distinguish format errors from dates outside 1900–2100.
+- Append a separate event-completion column to CSV exports. Dispatch/submission/approval queues and their date parsing are unchanged.
 
-Import **change-dashboard-1.6.1.0.pbiviz** and replace Change Dashboard. The visual identity and all **70 existing mappings** are unchanged; no new fields are required.
+Import **change-dashboard-1.7.0.0.pbiviz**, replacing Change Dashboard. The visual identity and all **70 existing roles** are preserved.
 
-Validation: logic and graph regressions, 13 focused graph browser checks, sticky-header hit tests, full source and packaged Visual interaction/lifecycle checks, 10,000 submissions, 20,000 graph rows and 64,000 delivered rows. No source data is modified. This is an uncertified preview; test/demo data is fictional and live Velocity reconciliation remains a separate check.
+Map your event's **planned_completion_date__rim** field to **Event planned completion**. Keep **planned_change_implementation_date__c** mapped to **Planned Implementation Date**. Use raw Date columns, not Date hierarchies; do not summarize.
+
+Validation covers both source formats, blank/invalid/multiple dates, fallback ordering, filters, separate exports, grouped applications and the source/packaged browser runtime. This is an uncertified preview; demonstration data is fictional.

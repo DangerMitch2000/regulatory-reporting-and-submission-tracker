@@ -28,13 +28,33 @@ export function relatedItems(rows){
 }
 export function previousDay(now=new Date()) {const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Dublin',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now).filter(x=>x.type!=='literal').map(x=>[x.type,x.value]));return Date.UTC(+parts.year,+parts.month-1,+parts.day)-DAY;}
 export function formatDate(value){return Number.isFinite(value)?dateFormat.format(value):'Not recorded';}
+/** The two planning fields also use the verified day/month/year source format. */
+export function parsePlanningDate(value){
+ const input=text(value),match=input.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ T](\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?)?$/);
+ if(!match)return dateFormat.parse(input);
+ if(+match[4]>23||+match[5]>59||+match[6]>59)return NaN;
+ // Delegate calendar validation to the strict existing parser. Discard the
+ // verified time only after checking it: these business targets are dates.
+ return dateFormat.parse(match[3]+'-'+match[2].padStart(2,'0')+'-'+match[1].padStart(2,'0'));
+}
 export function dateField(rs,f,asOf,actual=false){
  const raw=vals(rs,f);if(!raw.length)return {kind:'missing',value:null,label:'Not recorded',raw};
- const parsed=raw.map(v=>dateFormat.parse(v));
- if(parsed.some(v=>!Number.isFinite(v)||new Date(v).getUTCFullYear()>2100||new Date(v).getUTCFullYear()<1900))return {kind:'invalid',value:null,label:'Invalid / outside 1900–2100',raw};
+ const parser=['ChangePlannedImplementation','EventPlannedCompletion'].includes(f)?parsePlanningDate:dateFormat.parse,parsed=raw.map(v=>parser(v));
+ if(parsed.some(v=>!Number.isFinite(v)))return {kind:'invalid',value:null,label:'Invalid / unrecognized date format',raw};
+ if(parsed.some(v=>new Date(v).getUTCFullYear()>2100||new Date(v).getUTCFullYear()<1900))return {kind:'invalid',value:null,label:'Outside 1900–2100',raw};
  if(unique(parsed).length>1)return {kind:'conflict',value:null,label:'Conflicting dates',raw};
  if(actual&&parsed[0]>asOf)return {kind:'future',value:null,label:'After the as-of day',raw};
  return {kind:'dated',value:parsed[0],label:formatDate(parsed[0]),raw};
+}
+/** Keep both business dates explicit; fallback changes sorting, never the source meaning. */
+export function planningDates(implementation,eventCompletion){
+ const items=[['ChangePlannedImplementation','Change implementation',implementation],['EventPlannedCompletion','Event planned completion',eventCompletion]].map(([field,sourceLabel,date])=>{
+  const d=date||{kind:'missing',value:null,label:'Not recorded',raw:[]};
+  const values=unique((d.raw||[]).map(raw=>{const parsed=parsePlanningDate(raw),year=Number.isFinite(parsed)?new Date(parsed).getUTCFullYear():NaN;return year>=1900&&year<=2100?formatDate(parsed):raw;}));
+  return {...d,field,sourceLabel,values};
+ });
+ const usable=items.find(item=>item.kind==='dated');
+ return {items,value:usable?.value??null,field:usable?.field??null,search:items.map(item=>[item.sourceLabel,item.label,...item.values,...item.raw].join(' ')).join(' ')};
 }
 export function safeURL(v){try{const s=text(v);if(!s||/[\s\\\u0000-\u001f]/.test(s))return null;const u=new URL(s);return /^https?:$/.test(u.protocol)&&!u.username&&!u.password?u.href:null;}catch{return null;}}
 export function mapTable(table){const mapped=new Map();for(const [i,c]of (table?.columns||[]).entries())for(const r of roles)if(c.roles?.[r]){if(mapped.has(r))throw Error('Map only one field to '+r);mapped.set(r,i);}const rows=(table?.rows||[]).map(v=>Object.fromEntries([...mapped].map(([r,i])=>[r,v[i] instanceof Date?(Number.isFinite(v[i].valueOf())?v[i].toISOString():'Invalid Date'):v[i]])));return {rows,mappedFields:[...mapped.keys()],missing:Object.values(GROUPINGS).some(g=>mapped.has(g.field))?[]:['EventName, AppID or ChangeID']};}
@@ -121,7 +141,8 @@ export function analyze(rows,options={}){
  // rows would hide the inactive side of a conflicting state from the diagram.
  model.rowExcluded=new Map(rows.map(r=>{const sub=model.submissions.get(text(r.SubID)),ro=roRecords.get(text(r.ROID)),app=appStates.get(text(r.AppID));return [r,sub?sub.excluded:ro?ro.excluded:inactive.has(app?app.value:norm(r.AppStatus))];}));
  for(const [id,rs]of group(rows,grouping.field)){
-  const status=scalar(rs,grouping.state),change={id,groupBy,grouping,rows:rs,status:status.label,statusKey:status.value,closed:['completed','closed','canceled','cancelled','closed state','cancelled state','inactive state','inactive','archived','withdrawn'].includes(status.value),issues:[],countries:[],project:vals(rs,'ChangeProjectID'),qms:vals(rs,groupBy==='change'?'ChangeQMS':'EventQMS'),products:vals(rs,'Product'),sites:unique([...vals(rs,'Manufacturer'),...vals(rs,'RegistrationManufacturingSite')]),units:vals(rs,'BusinessUnit'),implementation:dateField(rs,'ChangePlannedImplementation',asOf),created:dateField(rs,grouping.created,asOf)};
+  const status=scalar(rs,grouping.state),change={id,groupBy,grouping,rows:rs,status:status.label,statusKey:status.value,closed:['completed','closed','canceled','cancelled','closed state','cancelled state','inactive state','inactive','archived','withdrawn'].includes(status.value),issues:[],countries:[],project:vals(rs,'ChangeProjectID'),qms:vals(rs,groupBy==='change'?'ChangeQMS':'EventQMS'),products:vals(rs,'Product'),sites:unique([...vals(rs,'Manufacturer'),...vals(rs,'RegistrationManufacturingSite')]),units:vals(rs,'BusinessUnit'),implementation:dateField(rs,'ChangePlannedImplementation',asOf),eventCompletion:dateField(rs,'EventPlannedCompletion',asOf),created:dateField(rs,grouping.created,asOf)};
+  change.planningDates=planningDates(change.implementation,change.eventCompletion);
   if(status.conflict)change.issues.push('Conflicting '+grouping.singular+' states');
   const countries=new Map(),countryNamesByRow=new Map(),get=name=>{const k=countryNorm(name)||'?';if(!countries.has(k))countries.set(k,makeCountry(name));return countries.get(k);},assign=(r,c)=>{c.rows.push(r);countryNamesByRow.set(r,c.key==='?'?'':c.name);};
   for(const [sid,subRows] of group(rs,'SubID')){const sub=model.submissions.get(sid),c=get(sub.country?sub.countryLabel:'');c.submissions.push(sub);for(const r of subRows)assign(r,c);}
@@ -158,7 +179,7 @@ export const mainColumns=[
  {key:'due',value:c=>c.next?.due??null,search:c=>c.next?.due!=null?formatDate(c.next.due)+(c.next.overdue?' overdue '+c.next.daysLate+' days':' upcoming'):'Not recorded'},
  {key:'action',value:c=>c.next?.action||'',search:c=>[c.next?.action,c.next?.country,...c.issues].join(' ')},
  {key:'related',value:c=>c.related.total,search:c=>c.related.search},
- {key:'implementation',value:c=>c.implementation.value,search:c=>[c.implementation.label,...c.implementation.raw].join(' ')}
+ {key:'implementation',value:c=>c.planningDates.value,search:c=>c.planningDates.search}
 ];
 function queueMatch(c,q){if(q==='assessment')return c.pending&&!c.excluded;return c.candidates.some(x=>x.stage===q&&(['dispatch','submission'].includes(q)?x.overdue:true));}
 function regionCountry(country,change,model,region){
@@ -195,7 +216,7 @@ export function derive(model,state={}){
 }
 const csvCell=v=>'"'+(/^[=+@\-\t\r]/.test(text(v))?"'":'')+String(v??'').replaceAll('"','""')+'"';
 export function toCsv(changes,groupBy=changes[0]?.groupBy||'change'){
- const grouping=GROUPINGS[groupBy]||GROUPINGS.change,header=[groupBy==='change'?'Change ID':grouping.label+' ID',grouping.label+' state','Country','Stage','Next action','Due date','Days overdue','Submission ID','Submission state','RO ID','Evidence','Review notes','Commercial regions','Planned implementation date','Related items','Linked Change IDs','Related application IDs','Related RO IDs','Related submission IDs','Related registration IDs'],lines=[header];
- for(const c of changes){const related=c.related||relatedItems(c.rows||[]),regions=unique((c.scopedRows||c.rows||[]).map(regionValue)).map(r=>r===MISSING_REGION?'Not recorded':r).join('; '),extra=[regions,c.implementation?.label||'Not recorded',related.label,related.changeIDs.join('; '),...['application','ro','submission','registration'].map(k=>related.ids[k].join('; '))];for(const co of c.countries)for(const a of co.candidates)lines.push([c.id,c.status,co.name,a.stage,a.action,a.due===null?'':formatDate(a.due),a.daysLate,a.sub?.id||'',a.sub?.state||'',a.ro?.id||'',a.evidence||'',[...c.issues,...co.issues].join('; '),...extra]);}
+ const grouping=GROUPINGS[groupBy]||GROUPINGS.change,header=[groupBy==='change'?'Change ID':grouping.label+' ID',grouping.label+' state','Country','Stage','Next action','Due date','Days overdue','Submission ID','Submission state','RO ID','Evidence','Review notes','Commercial regions','Planned implementation date','Related items','Linked Change IDs','Related application IDs','Related RO IDs','Related submission IDs','Related registration IDs','Event planned completion date'],lines=[header];
+ for(const c of changes){const related=c.related||relatedItems(c.rows||[]),regions=unique((c.scopedRows||c.rows||[]).map(regionValue)).map(r=>r===MISSING_REGION?'Not recorded':r).join('; '),extra=[regions,c.implementation?.label||'Not recorded',related.label,related.changeIDs.join('; '),...['application','ro','submission','registration'].map(k=>related.ids[k].join('; '))];for(const co of c.countries)for(const a of co.candidates)lines.push([c.id,c.status,co.name,a.stage,a.action,a.due===null?'':formatDate(a.due),a.daysLate,a.sub?.id||'',a.sub?.state||'',a.ro?.id||'',a.evidence||'',[...c.issues,...co.issues].join('; '),...extra,c.eventCompletion?.label||'Not recorded']);}
  return lines.map(r=>r.map(csvCell).join(',')).join('\r\n');
 }

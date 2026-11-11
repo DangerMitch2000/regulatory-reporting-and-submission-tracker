@@ -116,7 +116,7 @@ async function run({packaged}={}){
  assert.match(await page.locator('#second .cd-countries').textContent(),/France/);assert.doesNotMatch(await page.locator('#second .cd-countries').textContent(),/Japan/);
  assert.match(await page.locator('#second .cd-coverage').first().textContent(),/Events 1.*Apps 1.*ROs 1.*Subs 1/);assert.match(await page.locator('#second .cd-coverage').last().textContent(),/Events 2.*Apps 3.*ROs 3.*Subs 3/);
  assert.match(await page.locator('#second .cd-related-cell').textContent(),/1 App.*1 RO.*1 Sub.*0 Regs.*REGION-CHANGE/);
- assert.equal(await page.locator('#second .cd-implementation').textContent(),'01 Feb 2027');
+ assert.match(await page.locator('#second .cd-implementation [data-planning-source=ChangePlannedImplementation]').textContent(),/01 Feb 2027/);
  await page.locator('#second [data-action=related][data-kind=submission]').click();assert.equal(await page.locator('#second .cd-related-records').evaluate(n=>n.open),true);
  assert.match(await page.locator('#second [data-related-kind=submission]').textContent(),/REG-SUB-FR/);assert.doesNotMatch(await page.locator('#second .cd-related-records').textContent(),/REG-SUB-JP/);
  await page.locator('#second [data-action=copy-linked]').click();assert.match(await page.locator('#second .cd-copybox textarea').inputValue(),/REG-SUB-FR/);assert.doesNotMatch(await page.locator('#second .cd-copybox textarea').inputValue(),/REG-SUB-JP/);await page.locator('#second [data-action=close-copy]').click();
@@ -124,7 +124,7 @@ async function run({packaged}={}){
  await page.locator('#second [data-action=reset-table]').click();assert.equal(await page.locator('#second [data-filter=region]').inputValue(),'Europe');
  await page.locator('#second [data-filter-toggle=main][data-col=implementation]').click();await page.locator('#second [data-table-filter=main][data-col=implementation]').fill('Feb 2027');assert.equal(await page.locator('#second .cd-change-table tbody tr').count(),1);
  await page.locator('#second [data-action=reset-table]').click();await page.locator('#second [data-filter=region]').selectOption('APAC');assert.match(await page.locator('#second .cd-countries').textContent(),/Japan/);
- await page.locator('#second [data-filter=region]').selectOption('__not_recorded__');assert.equal(await page.locator('#second .cd-record[data-action=change]').textContent(),'NO-REGION');assert.equal(await page.locator('#second .cd-implementation').textContent(),'Not recorded');
+ await page.locator('#second [data-filter=region]').selectOption('__not_recorded__');assert.equal(await page.locator('#second .cd-record[data-action=change]').textContent(),'NO-REGION');assert.match(await page.locator('#second .cd-implementation [data-planning-source=ChangePlannedImplementation]').textContent(),/Not recorded/);
  await page.locator('#second [data-action=reset]').click();assert.equal(await page.locator('#second [data-filter=region]').inputValue(),'all');
  await page.locator('#second [data-group]').selectOption('application');await page.locator('#second [data-action=change][data-value=REG-APP-FR]').click();await page.locator('#second [data-action=copy-linked]').click();assert.match(await page.locator('#second .cd-copybox textarea').inputValue(),/Event IDs: REGION-EVENT/);await page.locator('#second [data-action=close-copy]').click();await page.locator('#second [data-group]').selectOption('event');
  await page.evaluate(rows=>dashboardHarness.send('second',rows,{omit:['CommercialRegion']}),regionRows);assert.equal(await page.locator('#second [data-filter=region]').isEnabled(),false);assert.equal(await page.locator('#second .cd-record[data-action=change]').count(),2);
@@ -149,6 +149,7 @@ async function run({packaged}={}){
  assert.equal(await page.locator('#colour [data-node]').first().evaluate(n=>getComputedStyle(n).color),'rgb(255, 255, 0)');await page.getByRole('button',{name:'Select submission COLOUR-SUB',exact:true}).click();assert.match(await page.locator('#colour .cd-graph-selection').textContent(),/Conflicting states/);
  await page.evaluate(async()=>{dashboardHarness.instances.colour.visual.destroy();await dashboardHarness.instances.colour.visual.queue;});
  await countryDiagramChecks(page,demoRows);
+ await require('./dual-date-browser-checks.cjs').runChecks(page,demoRows);
  await require("./ui-browser-checks.cjs").runChecks(page,demoRows);
  await require('./audit-browser-test.cjs').runChecks(page,demoRows,largeRows);
  const touch=await browser.newPage({viewport:{width:800,height:900},isMobile:true,hasTouch:true});touch.on('pageerror',e=>errors.push(e.message));await touch.clock.install({time:new Date('2026-11-10T12:00:00Z')});await touch.goto('http://127.0.0.1:'+server.address().port);await touch.evaluate(()=>dashboardHarness.create('touch'));await touch.evaluate(rows=>dashboardHarness.send('touch',rows,{width:800,height:900}),demoRows);await touch.locator('[data-action=related][data-value=DEMO-EVT-101][data-kind=application]').click();

@@ -4,15 +4,15 @@
 
 Released **23 Oct 2026** · Power BI package **1.18.1.0**. This is an uncertified preview; public demo records are fictional.
 
-## Change Dashboard 1.6.1 — scrolling, selection and data-review fixes
+## Change Dashboard 1.7.0 — change and event planning dates
 
-[Download the Power BI dashboard](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.6.1/change-dashboard-1.6.1.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Field mappings, bug fixes and validation](change-dashboard/README.md)
+[Download the Power BI dashboard](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.7.0/change-dashboard-1.7.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Field mappings and date rules](change-dashboard/README.md)
 
-This bug-fix update keeps scrolling country rows behind their headings, preserves list position and keyboard focus, and keeps Details aligned with the visible worklist page. Diagram highlights follow the selected record's delivered paths, without crossing into unrelated work through a shared application.
+The **Implementation / event completion** column now shows both dates with separate labels. A blank change implementation date no longer prevents the event completion date from being displayed or used for sorting. Both source formats from the report—ISO and day/month/year with time—display as **DD MMM YYYY**.
 
-Missing/conflicting-country records remain visible for review, lifecycle-state conflicts retain their evidence, and country/region filters handle missing values and equivalent names consistently. The linked country diagram, Tracker state colours, commercial-region filters and implementation dates remain available.
+Map the event source field to the existing **Event planned completion** role. Sorting prefers a usable change implementation date, then the event date; filters search both. Source values remain available in hover and Planning dates Details, and CSV exports contain separate columns. These dates do not change workflow queues.
 
-Import and replace the existing Change Dashboard: its identity and all **70 field mappings are retained**, with **no new fields required**. Browser and packaged-runtime validation cover scrolling, selection, filters, lifecycle and large synthetic datasets. This is an uncertified preview; private Velocity data has not been independently reconciled.
+The visual identity and **70 existing mappings** are retained. The country/diagram links, state colours and scrolling/data-review fixes remain included. This is an uncertified preview, with fictional test data.
 
 ## Registration Coverage Map 1.0.0
 

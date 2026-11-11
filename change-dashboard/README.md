@@ -1,12 +1,12 @@
-# Change Dashboard 1.6.1
+# Change Dashboard 1.7.0
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.6.1/change-dashboard-1.6.1.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.6.1)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.7.0/change-dashboard-1.7.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.7.0)
 
 A separate daily worklist with **Event (default), Change ID and Application views**, preserving the Regulatory Tracker's existing **69 field roles** and adding one optional **Commercial region** role. Filter by manufacturing site, product, business unit, commercial region, country and record state. Select a summary count, an event/change/application, then a country to inspect the evidence and linked source records. The existing Tracker and Registration Coverage Map remain separate visuals.
 
-**Preview release:** package version **1.6.1.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
+**Preview release:** package version **1.7.0.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
 
-## Bug fixes in 1.6.1
+## Bug fixes retained from 1.6.1
 
 - Country rows stay beneath the sticky column titles, including dimmed rows and open header filters. The header remains clickable in Dark and Light themes.
 - Paging keeps Details on a record from the visible page. Selecting a row preserves list scroll position; keyboard focus stays on row, sort and paging controls.
@@ -26,6 +26,7 @@ Validation covers the real visual lifecycle and packaged browser runtime, long s
 
 | Purpose | Existing field roles |
 | --- | --- |
+| Planning dates | `ChangePlannedImplementation`, `EventPlannedCompletion` |
 | Change identity and context | `ChangeID`, `ChangeStatus`, `ChangeProjectID`, `ChangeQMS`, `ChangeCreated`, `ChangePlannedImplementation` |
 | Expected assessments | `ExpectedResponseID`, `ExpectedResponseCountry`, `ChangeResponseDue`, `ChangeResponseCount` |
 | Returned assessments | `AssessmentResponseID`, `AssessmentCountry`, `AssessmentTimeline`, `AssessmentMOHFiling`, `AssessmentDocumentation` |
@@ -77,8 +78,11 @@ Open **Related items**, or click an App/RO/Sub/Reg count in the worklist, to see
 - **Commercial region** uses the separate supplied source field, never Registration region or inferred geography. If it is unmapped, the filter shows **Not mapped** and the existing worklist still works. When mapped, **Not recorded** lets you inspect missing region values.
 - Selecting a region narrows the delivered country/filing work within each matching event, change or application. Country progress, next action, summary cards, Related items, copied linked IDs, export and **Worklist** counts follow that scope. **Loaded** counts remain the unfiltered delivered population. Source state/date conflicts are checked before scoping so a filter cannot conceal conflicting completion evidence.
 - **Related items** shows distinct **Apps, ROs, Subs and Regs**, plus the linked **Change ID** where available. Repeated catalog/product memberships count once. Click a count to open the full selectable IDs in Details; use **Copy linked IDs** to copy them. ROs without submissions remain visible. The column sorts by the combined number of linked Apps/ROs/Subs/Regs and searches counts, labels and all linked IDs.
-- **Implementation date** displays the existing **Change Planned Implementation Date** (ChangePlannedImplementation), formatted as **DD MMM YYYY**. It does not substitute the event's planned completion, dispatch, submission or approval date. Missing dates say **Not recorded**; conflicting or invalid dates are labelled and withheld from chronological sorting. Sorting uses the actual date, not its displayed text; missing/unusable values stay last in either direction.
-- Both new columns are available in Event, Change ID and Application views and support the existing header sorting, text filters and **Reset table**. Multiple linked changes with different implementation dates show **Conflicting dates**, rather than silently choosing one. The compact list uses horizontal table scrolling on smaller visuals.
+- `Implementation / event completion` shows `Change implementation` and `Event planned completion` separately in the same column. Map the source `planned_change_implementation_date__c` to `Planned Implementation Date` (ChangePlannedImplementation), and the regulatory event's `planned_completion_date__rim` to `Event planned completion` (EventPlannedCompletion). These existing roles are retained; no new field role is added.
+- Both dates display as `DD MMM YYYY`. The two planning fields accept ISO dates/timestamps, three-letter-month dates, and the verified `DD/MM/YYYY` source format with optional time, such as `16/11/2026 00:00:00`. Slash dates in these two fields mean day/month/year. Native Power BI date columns work too; use raw dates, not Date hierarchies or numeric serials. Dispatch, submission, approval and response-date parsing is unchanged.
+- Sorting uses a usable change implementation date first, otherwise a usable event planned completion date. Both values remain visible; a fallback never relabels an event date as a change implementation date. Missing values say `Not recorded`, unmapped roles say `Not mapped`, and unusable sources retain an explicit error. Undated rows stay last in either direction. Header filters search both dates and their labels.
+- Hover a date or expand `Planning dates` in Details to inspect all source values. Multiple distinct dates show `Multiple dates` in the list rather than choosing one arbitrarily. CSV retains the original implementation-date column and appends a separate `Event planned completion date` column. These display/sort dates do not alter dispatch, submission or approval queues.
+- Related items and both planning dates are available in Event, Change ID and Application views. The compact list supports sorting, text filters and **Reset table**, with horizontal table scrolling on smaller visuals.
 
 
 ## Table controls and record coverage
@@ -135,6 +139,7 @@ npm install
 npx playwright install chromium
 cd ..
 node logic-test.mjs
+node date-input-test.mjs
 node relationships-test.mjs
 node graph-browser-test.cjs
 npm --prefix powerbi run typecheck
