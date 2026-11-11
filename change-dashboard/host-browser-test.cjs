@@ -150,6 +150,7 @@ async function run({packaged}={}){
  await page.evaluate(async()=>{dashboardHarness.instances.colour.visual.destroy();await dashboardHarness.instances.colour.visual.queue;});
  await countryDiagramChecks(page,demoRows);
  await require('./dual-date-browser-checks.cjs').runChecks(page,demoRows);
+ await require('./related-space-browser-checks.cjs').runChecks(page,demoRows);
  await require("./ui-browser-checks.cjs").runChecks(page,demoRows);
  await require('./audit-browser-test.cjs').runChecks(page,demoRows,largeRows);
  const touch=await browser.newPage({viewport:{width:800,height:900},isMobile:true,hasTouch:true});touch.on('pageerror',e=>errors.push(e.message));await touch.clock.install({time:new Date('2026-11-10T12:00:00Z')});await touch.goto('http://127.0.0.1:'+server.address().port);await touch.evaluate(()=>dashboardHarness.create('touch'));await touch.evaluate(rows=>dashboardHarness.send('touch',rows,{width:800,height:900}),demoRows);await touch.locator('[data-action=related][data-value=DEMO-EVT-101][data-kind=application]').click();

@@ -122,3 +122,7 @@
 .change-dashboard[data-narrow=true] .cd-metric{display:flex;gap:3px;padding:7px;align-items:flex-start}
 .change-dashboard[data-narrow=true] .cd-graph-context{gap:4px 8px}
 @media(pointer:coarse){.change-dashboard button,.change-dashboard select,.change-dashboard .cd-theme select,.change-dashboard .cd-related-count,.change-dashboard .cd-switch button,.change-dashboard .cd-linkbtn,.change-dashboard .cd-heading-actions button,.change-dashboard .cd-graph-pages button,.change-dashboard .cd-graph-toolbar input,.change-dashboard th input{min-height:44px}}
+
+/* Taller visual frames give related records more room, without padding sparse groups. */
+.change-dashboard .cd-graph-scroll{max-height:var(--cd-related-height,440px)}
+.change-dashboard .cd-linked-ids{max-height:var(--cd-related-list-height,360px)}

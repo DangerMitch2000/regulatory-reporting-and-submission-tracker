@@ -1,11 +1,10 @@
-# Change Dashboard 1.7.1 — compact layout preview
+# Change Dashboard 1.7.2 — more room for Related items
 
-- Reduce unused header and filter space while retaining Worklist/Loaded coverage, status, as-of date and theme.
-- Place summary counts beside their labels; tighten table rows, section gaps and Details padding without reducing text sizes.
-- Give the dual planning-date column more room. Both dates, related record counts and all filter controls remain available.
-- Place the diagram selection/help and collapsed state legend together. Preserve node sizes, connector alignment, scroll areas and sticky country headings.
-- Retain responsive layouts and 44px touch targets. No field roles, count rules, source relationships or planning-date logic change.
+- Grow the related-record diagram with the actual visual height, up to 560px rather than the old fixed 280px ceiling.
+- Increase List view's available height up to 420px rather than 180px.
+- Use maximum heights so sparse groups stay compact without adding empty padding.
+- Keep text and nodes at the same size, connectors aligned, and selection/focus/scroll state through resizing where possible. Countries and evidence remain below the related items.
 
-Import **change-dashboard-1.7.1.0.pbiviz**, replacing Change Dashboard. The visual identity and all **70 existing field roles** are preserved; no remapping is required for this spacing update.
+Import **change-dashboard-1.7.2.0.pbiviz**, replacing Change Dashboard. The visual identity and all **70 field roles** are preserved; no remapping is needed. Count rules, dates and relationships are unchanged.
 
-The source browser suite passed for both themes, narrow layouts, scrolling headings, filters, diagram/country selection, keyboard/touch interaction and the real visual lifecycle. Release checks also run against the packaged visual. This is an uncertified preview; demonstration data is fictional.
+Validation includes height-only resizing, large and sparse related groups, Diagram/List navigation, country header scrolling, both themes, keyboard/touch controls, and the source/packaged visual lifecycle. This is an uncertified preview; demonstration data is fictional.

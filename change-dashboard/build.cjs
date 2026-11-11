@@ -1,7 +1,7 @@
 /* Reproducible, separate Change Dashboard Power BI project. */
 const fs = require('node:fs'), path = require('node:path'), {pathToFileURL} = require('node:url');
 const root = __dirname, out = path.join(root, 'powerbi');
-const VERSION = '1.7.1', PACKAGE_VERSION = '1.7.1.0';
+const VERSION = '1.7.2', PACKAGE_VERSION = '1.7.2.0';
 const GUID = 'changeDashboardF91D534685234516AE47CF62295ED804';
 function write(name, value) {
   const file = path.join(out, name);
