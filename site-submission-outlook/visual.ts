@@ -14,8 +14,9 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
   private registrationMapped: any = {};
   private fallbackCountryMapped = false;
   private identifierMapped: any = {};
+  private scopeMapped: any = {};
   private notice = '';
-  private state: any = {sites: [...DEFAULT_SITES], unit: '*', theme: 'light', capture: false};
+  private state: any = {sites: [...DEFAULT_SITES], unit: '*', product: '*', region: '*', country: '*', theme: 'dark', capture: false};
   private preferenceText: string | undefined;
   private timer: ReturnType<typeof setInterval>;
   private day = new Date().toDateString();
@@ -31,11 +32,11 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
     }, 60000);
   }
   private draw() {
-    render(this.root, this.rows, {state: this.state, width: this.width, missing: this.missing, unitMapped: this.unitMapped, stateMapped: this.stateMapped, dispatchMapped: this.dispatchMapped, registrationMapped:this.registrationMapped, fallbackCountryMapped:this.fallbackCountryMapped, identifierMapped:this.identifierMapped,
+    render(this.root, this.rows, {state: this.state, width: this.width, missing: this.missing, unitMapped: this.unitMapped, stateMapped: this.stateMapped, dispatchMapped: this.dispatchMapped, registrationMapped:this.registrationMapped, fallbackCountryMapped:this.fallbackCountryMapped, identifierMapped:this.identifierMapped, scopeMapped:this.scopeMapped,
       notice: this.notice, highContrast: this.highContrast, onChange: (patch: any) => {
         this.state = {...this.state, ...patch};
-        if (['sites', 'unit', 'theme', 'stateFilters'].some(k => k in patch)) {
-          const value = JSON.stringify({sites: this.state.sites, unit: this.state.unit, theme: this.state.theme, stateFilters: normalizeStateFilters(this.state.stateFilters)});
+        if (['sites', 'unit', 'product', 'region', 'country', 'theme', 'stateFilters'].some(k => k in patch)) {
+          const value = JSON.stringify({sites: this.state.sites, unit: this.state.unit, product: this.state.product, region: this.state.region, country: this.state.country, theme: this.state.theme, stateFilters: normalizeStateFilters(this.state.stateFilters)});
           this.host.persistProperties?.({merge: [{objectName: 'preferences', selector: null, properties: {state: value}}]});
         }
         this.draw();
@@ -56,12 +57,13 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
         this.registrationMapped = mapped.registrationMapped;
         this.fallbackCountryMapped = mapped.fallbackCountryMapped;
         this.identifierMapped = mapped.identifierMapped;
+        this.scopeMapped = mapped.scopeMapped;
         const saved = view?.metadata?.objects?.preferences?.state;
         if (typeof saved === 'string' && saved !== this.preferenceText) {
           this.preferenceText = saved;
           try {
             const parsed = JSON.parse(saved);
-            this.state = {...this.state, sites: normalizeSites(parsed.sites), unit: typeof parsed.unit === 'string' ? parsed.unit : '*', theme: parsed.theme === 'dark' ? 'dark' : 'light', stateFilters: normalizeStateFilters(parsed.stateFilters)};
+            this.state = {...this.state, sites: normalizeSites(parsed.sites), unit: typeof parsed.unit === 'string' ? parsed.unit : '*', product: typeof parsed.product === 'string' ? parsed.product : '*', region: typeof parsed.region === 'string' ? parsed.region : '*', country: typeof parsed.country === 'string' ? parsed.country : '*', theme: parsed.theme === 'light' ? 'light' : 'dark', stateFilters: normalizeStateFilters(parsed.stateFilters)};
           } catch { /* Keep the existing selections if report preferences are malformed. */ }
         }
         this.notice = '';

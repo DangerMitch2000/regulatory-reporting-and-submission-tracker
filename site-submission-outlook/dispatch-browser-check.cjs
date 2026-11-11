@@ -2,13 +2,13 @@ const assert=require('node:assert/strict');
 module.exports=async function checkDispatch(page,scope=page) {
   const fixture=await page.evaluate(()=>{
     const now=new Date(),y=now.getFullYear(),m=now.getMonth(),d=now.getDate(),date=(offset,day)=>new Date(Date.UTC(y,m+offset,day)).toISOString().slice(0,10);
-    const base={Site:'ABO',BusinessUnit:'ID',PlannedSubmission:date(1,10),ActualSubmission:null,SubStatus:'In Progress',ROStatus:'In Progress',AppStatus:'Active',DispatchRequired:'Yes',PlannedDispatch:date(0,d-1),ActualDispatch:null};
+    const base={Site:'ABO',BusinessUnit:'ID',PlannedSubmission:date(1,10),ActualSubmission:null,SubStatus:'In Progress',ROStatus:'In Progress',AppStatus:'Active',DispatchRequired:'Yes',PlannedDispatch:date(0,d-2),ActualDispatch:null};
     return [
       ...Array.from({length:63},(_,i)=>({...base,SubID:'INTERNAL-'+String(i).padStart(3,'0'),Site:i%2?'ADJ':'ABO'})),
-      ...Array.from({length:5},(_,i)=>({...base,SubID:'AUTHORITY-'+i,DispatchRequired:'No',PlannedSubmission:date(0,d-1),PlannedDispatch:null})),
-      {...base,SubID:'ALREADY-DISPATCHED',PlannedSubmission:date(0,d-1),ActualDispatch:date(0,d-1)},
-      {...base,SubID:'UNKNOWN',DispatchRequired:null,PlannedDispatch:null,PlannedSubmission:date(0,d-1)},
-      {...base,SubID:'MISSING-DISPATCH-PLAN',PlannedDispatch:null,PlannedSubmission:date(0,d-1)},
+      ...Array.from({length:5},(_,i)=>({...base,SubID:'AUTHORITY-'+i,DispatchRequired:'No',PlannedSubmission:date(0,d-2),PlannedDispatch:null})),
+      {...base,SubID:'ALREADY-DISPATCHED',PlannedSubmission:date(0,d-2),ActualDispatch:date(0,d-2)},
+      {...base,SubID:'UNKNOWN',DispatchRequired:null,PlannedDispatch:null,PlannedSubmission:date(0,d-2)},
+      {...base,SubID:'MISSING-DISPATCH-PLAN',PlannedDispatch:null,PlannedSubmission:date(0,d-2)},
       {...base,SubID:'COMPLETED',SubStatus:'Completed'},
       {...base,SubID:'APPROVED',ROStatus:'Health Authority Approved'},
       {...base,SubID:'NOT-YET',PlannedDispatch:date(0,d+1)}
@@ -24,9 +24,9 @@ module.exports=async function checkDispatch(page,scope=page) {
   await card('internal').focus();await page.keyboard.press('Enter');
   assert.match(await scope.locator('.ssDetails h3').textContent(),/Internal dispatch overdue/);
   assert.match(await scope.locator('.ssDetails').textContent(),/Showing 1–50 of 63/);
-  assert.ok((await scope.locator('thead').textContent()).includes('Dispatch required'));
-  assert.ok((await scope.locator('thead').textContent()).includes('Planned dispatch'));
-  assert.ok((await scope.locator('thead').textContent()).includes('Actual dispatch'));
+  await scope.locator('.ssRecordRow').first().locator('.ssExpandRecord').click();
+  const expanded=scope.locator('.ssRecordDetail');
+  for(const label of ['Dispatch required','Planned dispatch','Actual dispatch'])assert.ok((await expanded.textContent()).includes(label));
   await page.evaluate(()=>{window.dispatchCopies=[];Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async value=>dispatchCopies.push(value)}})});
   await scope.getByRole('button',{name:'Copy IDs',exact:true}).click();
   assert.deepEqual(await page.evaluate(()=>dispatchCopies.at(-1).split('\n')),fixture.filter(r=>r.SubID.startsWith('INTERNAL-')).map(r=>r.SubID));
@@ -36,9 +36,9 @@ module.exports=async function checkDispatch(page,scope=page) {
   await scope.getByRole('combobox',{name:'Details site',exact:true}).selectOption('*');
   await scope.getByRole('button',{name:'Next',exact:true}).click();assert.match(await scope.locator('.ssDetails').textContent(),/Showing 51–63 of 63/);
   await scope.getByRole('button',{name:'Close details'}).click();
-  await card('authority').click();assert.equal(await scope.locator('tbody tr').count(),6);assert.match(await scope.locator('tbody').textContent(),/Awaiting authority submission/);
+  await card('authority').click();assert.equal(await scope.locator('tbody tr.ssRecordRow').count(),6);await scope.locator('.ssRecordRow').first().locator('.ssExpandRecord').click();assert.match(await scope.locator('.ssRecordDetail').textContent(),/Awaiting authority submission/);
   assert.ok(!(await scope.locator('tbody').textContent()).includes('INTERNAL-'));await scope.getByRole('button',{name:'Close details'}).click();
-  await card('unclassified').click();assert.deepEqual((await scope.locator('tbody tr td:first-child').allTextContents()).sort(),['MISSING-DISPATCH-PLAN','UNKNOWN']);await scope.getByRole('button',{name:'Close details'}).click();
+  await card('unclassified').click();assert.deepEqual((await scope.locator('tbody tr.ssRecordRow .ssSubmissionId').allTextContents()).sort(),['MISSING-DISPATCH-PLAN','UNKNOWN']);await scope.getByRole('button',{name:'Close details'}).click();
   // A dispatch record must remove the same ID from internal delay immediately;
   // the still-future submission plan does not create a late authority submission.
   await send(fixture.map(r=>r.SubID==='INTERNAL-000'?{...r,ActualDispatch:r.PlannedDispatch}:r));
@@ -55,7 +55,7 @@ module.exports=async function checkDispatch(page,scope=page) {
   // The record with an unknown dispatch due date is in the review overdue group,
   // but its recorded next action is still internal dispatch.
   assert.match(await scope.locator('.ssDetails').textContent(),/of 64/);
-  await scope.getByRole('textbox',{name:'Find submission'}).fill('MISSING-DISPATCH');
+  await scope.getByRole('searchbox',{name:'Find submission'}).fill('MISSING-DISPATCH');
   await scope.getByRole('button',{name:'Copy IDs',exact:true}).click();assert.equal(await page.evaluate(()=>dispatchCopies.at(-1)),'MISSING-DISPATCH-PLAN');
   await scope.getByRole('button',{name:'Close details'}).click();
   for(const theme of ['dark','light']) {

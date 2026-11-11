@@ -1,12 +1,16 @@
-# Site Submission Outlook 1.5.0
+# Site Submission Outlook 1.6.0
 
-Identify records without Submission IDs or Registration IDs using two new optional mappings: RO ID and Application ID.
+The plan now shows last month, this month and next month across the six sites. The chart fills the available width, with compact summary counts above it and the longer explanation collapsed below it.
 
-- Details shows each source RO/application pairing and includes these IDs in search.
-- Every delivered missing-Submission-ID source row remains in Details, including repeated rows and rows sharing the same parent identifiers. These rows are not counted as distinct submissions and parent IDs never substitute for Submission IDs.
-- Copy RO IDs and Copy application IDs produce separate distinct ID lists across all matching pages. Copy IDs still contains Submission IDs only. Individual selection and the clipboard fallback support each ID type.
-- Existing submission counts, registration completion, country fallback, overdue groups, filters and visual identity are preserved. Keep Submission ID mapped; its values may be blank.
+- Use yesterday consistently for the As of label, actual-date checks and overdue calculations. Month selection still follows the current calendar month.
+- Move the earlier backlog cutoff before the first displayed month, keeping the monthly plan and backlog separate.
+- Add optional Product and Commercial region filters; Country uses the existing Registration country / Secondary country mappings.
+- Inspect Submitted evidence as actual date, Submission state or Registration approval, counting each submission once.
+- Use compact sortable/filterable Details with Days overdue and expandable secondary source fields. Copy IDs still includes all matching pages.
+- Accept strict day/month/year dates and timestamps; flag conflicting registration states or RO/application links while preserving the agreed completion policy.
 
-Only rows delivered by Power BI can be preserved. Review report filters and model relationships if expected parent records are absent from both the visual and a standard table.
+Import `site-submission-outlook-1.6.0.0.pbiviz` to replace the existing Site Submission Outlook. Its identity and previous field mappings are unchanged. Product and Commercial region are new optional field wells, not additional required columns.
 
-Calculation, browser and actual-package tests cover missing identifiers, source pairs, duplicates, optional mappings, filtered search/copy, clipboard restrictions, both themes and 10,000 submissions plus 1,000 unidentified source rows. All public demonstration records are fictional.
+Previous-month bars show the latest delivered progress, not historical month-end snapshots. The As of label is a reporting reference, not a verified data-refresh timestamp. Partial-delivery notices remain visible. Validate your report against a standard Power BI table using the same mappings and filters.
+
+The release is published only after source, interaction and actual PBIVIZ runtime checks pass. The downloadable HTML preview contains fictional data.

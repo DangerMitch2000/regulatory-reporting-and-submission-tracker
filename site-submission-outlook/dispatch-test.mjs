@@ -1,19 +1,19 @@
 import assert from 'node:assert/strict';
 import {summarize, mapTable, ROLES, DISPATCH_ROLES, resolveRequired} from './submissions.logic.mjs';
-const now = new Date(2026,9,7,12);
+const now = new Date(2026,9,8,12); // Yesterday is the operational reference day.
 const row = (id, patch={}) => ({SubID:id,Site:'ABO',BusinessUnit:'ID',PlannedSubmission:'2026-10-20',ActualSubmission:null,SubStatus:'In Progress',ROStatus:'In Progress',AppStatus:'Active',DispatchRequired:'Yes',PlannedDispatch:'2026-10-05',ActualDispatch:null,...patch});
 const data = [
  row('INTERNAL'),row('INTERNAL'),
  row('NEXT-MONTH',{PlannedSubmission:'2026-11-20'}),
  row('LATER-MONTH',{PlannedSubmission:'2026-12-20'}),
  row('NO-SUB-PLAN',{PlannedSubmission:null}),
- row('OLD-INTERNAL',{PlannedSubmission:'2026-09-20',PlannedDispatch:'2026-09-05'}),
+ row('OLD-INTERNAL',{PlannedSubmission:'2026-08-20',PlannedDispatch:'2026-08-05'}),
  row('TODAY',{PlannedDispatch:'2026-10-07'}),
  row('LATER-DISPATCH',{PlannedDispatch:'2026-10-08'}),
  row('AUTHORITY',{PlannedSubmission:'2026-10-06',ActualDispatch:'2026-10-04'}),
  row('NOT-REQUIRED',{DispatchRequired:'No',PlannedSubmission:'2026-10-06'}),
  row('DISPATCHED-IN-TIME',{ActualDispatch:'2026-10-04'}),
- row('OLD-AUTHORITY',{DispatchRequired:false,PlannedSubmission:'2026-09-20',PlannedDispatch:null}),
+ row('OLD-AUTHORITY',{DispatchRequired:false,PlannedSubmission:'2026-08-20',PlannedDispatch:null}),
  row('UNKNOWN',{DispatchRequired:null,PlannedDispatch:null,PlannedSubmission:'2026-10-06'}),
  row('MISSING-DISPATCH-PLAN',{PlannedDispatch:null,PlannedSubmission:'2026-10-06'}),
  row('BAD-DISPATCH-PLAN',{PlannedDispatch:'bad',PlannedSubmission:'2026-10-06'}),
@@ -76,7 +76,7 @@ const conflictingPlan=summarize([progress,{...progress,PlannedDispatch:'2026-10-
 assert.equal(summarize([row('NOT-YET',{PlannedSubmission:'2026-09-20',PlannedDispatch:'2026-10-08'})],{now}).backlog.count,0);
 assert.ok(summarize([row('ORDER',{PlannedSubmission:'2026-10-01',PlannedDispatch:'2026-10-08'})],{now}).issues.some(r=>/after planned submission/.test(r.reason)));
 const dec=row('YEAR',{PlannedSubmission:'2027-02-01',PlannedDispatch:'2026-12-31'});
-assert.equal(summarize([dec],{now:new Date(2026,11,31)}).overdue.count,0);assert.equal(summarize([dec],{now:new Date(2027,0,1)}).overdue.internal,1);
+assert.equal(summarize([dec],{now:new Date(2026,11,31)}).overdue.count,0);assert.equal(summarize([dec],{now:new Date(2027,0,1)}).overdue.internal,0);assert.equal(summarize([dec],{now:new Date(2027,0,2)}).overdue.internal,1);
 const load=Array.from({length:10000},(_,i)=>row('S-'+i,{DispatchRequired:i%2?'Yes':'No',PlannedSubmission:'2026-10-06'}));
 const start=performance.now(),stress=summarize(load.flatMap(r=>[r,r,r]),{now});
 assert.equal(stress.overdue.count,10000);assert.equal(stress.overdue.internal,5000);assert.equal(stress.overdue.authority,5000);assert.equal(stress.totals.inProcess,10000);

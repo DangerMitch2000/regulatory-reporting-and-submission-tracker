@@ -10,9 +10,9 @@ module.exports=async function checkMetrics(page,scope=page,{compact=false}={}) {
  const submitted=[record('PLAN-COMPLETE',{SubStatus:'Completed'}),record('PLAN-RECEIVED',{SubStatus:'HA Received'}),record('PLAN-ACTUAL',{SubStatus:'Planned',ActualSubmission:'2026-10-02',BusinessUnit:'CMI'}),record('PLAN-REJECTED',{SubStatus:'Rejected'})];
  const review=[record('PLAN-BAD-DATE',{ActualSubmission:'bad'}),record('PLAN-FUTURE-DATE',{ActualSubmission:'2026-10-30'})];
  const planned=[...internal,...authority,...future,...submitted,...review],rows=[...planned,
-   record('OLD-INTERNAL',{PlannedSubmission:'2026-09-20',DispatchRequired:'Yes',PlannedDispatch:'2026-09-05'}),record('OLD-AUTHORITY',{PlannedSubmission:'2026-09-20'}),
+   record('OLD-INTERNAL',{PlannedSubmission:'2026-08-20',DispatchRequired:'Yes',PlannedDispatch:'2026-08-05'}),record('OLD-AUTHORITY',{PlannedSubmission:'2026-08-20'}),
    record('LATER-INTERNAL',{PlannedSubmission:'2026-12-20',DispatchRequired:'Yes',PlannedDispatch:'2026-10-05'}),record('NO-PLAN',{PlannedSubmission:null,DispatchRequired:'Yes',PlannedDispatch:'2026-10-05'}),
-   record('CLOSED-OLD',{PlannedSubmission:'2026-09-20',SubStatus:'Completed'}),record('OTHER-SITE',{Site:'OTHER'}),record('')];
+   record('CLOSED-OLD',{PlannedSubmission:'2026-08-20',SubStatus:'Completed'}),record('OTHER-SITE',{Site:'OTHER'}),record('')];
  const send=async data=>page.evaluate(data=>(window.send||window.testApi.send)(data.flatMap(r=>r.SubID?[r,r]:[r])),data);
  await send(rows);
  await page.evaluate(()=>{window.metricCopies=[];Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async value=>metricCopies.push(value)}})});
@@ -20,18 +20,18 @@ module.exports=async function checkMetrics(page,scope=page,{compact=false}={}) {
  const copied=async()=>{await scope.getByRole('button',{name:'Copy IDs',exact:true}).click();return (await page.evaluate(()=>metricCopies.at(-1))).split('\n').sort();};
  const ids=values=>values.map(r=>r.SubID).sort();
  const close=async()=>scope.getByRole('button',{name:'Close details',exact:true}).click();
- const cases=[['planned',planned],['inProcess',[...internal,...authority,...future]],['submitted',submitted],['completion',submitted],['overdue',[...internal,...authority]],...(!compact?[['review',review]]:[])];
+ const cases=[['planned',planned],['inProcess',[...internal,...authority,...future]],['submitted',submitted],['completion',submitted],['overdue',[...internal,...authority]],['review',review]];
  for(const [key,values] of cases) {
    await metric(key).click();
    assert.deepEqual(await copied(),ids(values),key);
    assert.match(await scope.locator('.ssPager').textContent(),new RegExp('of '+values.length));
    assert.equal(await scope.locator('.ssDetails h3').evaluate(node=>document.activeElement===node),false); // Copy moved focus to the selected IDs.
-   if(key==='completion')assert.match(await scope.locator('.ssDetails').textContent(),/4 of 74 planned submissions.*5%/);
-   if(key==='overdue')assert.match(await scope.locator('.ssDetails').textContent(),/Earlier backlog and later submission plans are excluded/);
-   assert.equal(await scope.locator('th').nth(1).textContent(),'Main issue / next action');
-   if(key==='overdue')assert.match(await scope.locator('tbody tr').filter({hasText:'PLAN-INTERNAL-000'}).locator('.ssAttention').textContent(),/Internal dispatch overdue.*05 Oct 2026.*Complete internal dispatch/);
-   if(key==='submitted')assert.match(await scope.locator('tbody tr').filter({hasText:'PLAN-REJECTED'}).locator('.ssAttention').textContent(),/Health authority rejection/);
-   if(key==='review')assert.match(await scope.locator('tbody tr').first().locator('.ssAttention').textContent(),/Check actual submission date/);
+   if(key==='completion')assert.match(await metric('completion').getAttribute('aria-label'),/5%/);
+   if(key==='overdue')assert.ok(!(await copied()).some(id=>id.startsWith('OLD-')||id==='LATER-INTERNAL'));
+   assert.equal(await scope.locator('.ssAttention').count(),Math.min(values.length,50));
+   if(key==='overdue')assert.match(await scope.locator('tbody tr.ssRecordRow').filter({hasText:'PLAN-INTERNAL-000'}).locator('.ssAttention').getAttribute('title'),/05 Oct 2026[\s\S]*Complete internal dispatch/);
+   if(key==='submitted')assert.match(await scope.locator('tbody tr.ssRecordRow').filter({hasText:'PLAN-REJECTED'}).locator('.ssAttention').textContent(),/Health authority rejection/);
+   if(key==='review')assert.match(await scope.locator('tbody tr.ssRecordRow').first().locator('.ssAttention').textContent(),/Check actual submission date/);
    await close();
  }
  // Prior detail filters and pagination must not silently shrink a newly clicked count.
@@ -40,7 +40,7 @@ module.exports=async function checkMetrics(page,scope=page,{compact=false}={}) {
  await scope.getByRole('button',{name:'Next',exact:true}).click();assert.match(await scope.locator('.ssPager').textContent(),/51–66 of 66/);
  await scope.getByRole('combobox',{name:'Details site',exact:true}).selectOption('ADJ');assert.deepEqual(await copied(),ids(internal.filter(r=>r.Site==='ADJ')));
  await scope.getByRole('combobox',{name:'Dispatch stage',exact:true}).selectOption('Awaiting authority submission');assert.match(await scope.locator('.ssDetails').textContent(),/No matching submissions/);
- await scope.getByRole('textbox',{name:'Find submission',exact:true}).fill('nonexistent');await scope.getByRole('textbox',{name:'Find submission',exact:true}).press('Tab');
+ await scope.getByRole('searchbox',{name:'Find submission',exact:true}).fill('nonexistent');await scope.getByRole('searchbox',{name:'Find submission',exact:true}).press('Tab');
  await metric('planned').click();assert.deepEqual(await copied(),ids(planned));assert.match(await scope.locator('.ssPager').textContent(),/1–50 of 74/);await close();
  // Click the actual coloured segments, including their visible number; the total
  // label above each bar must still open the whole site/month cohort.
@@ -52,8 +52,8 @@ module.exports=async function checkMetrics(page,scope=page,{compact=false}={}) {
  for(const [group,values] of [['outsideSites',['OTHER-SITE']],['outsideMonths',['CLOSED-OLD','LATER-INTERNAL']]]) {
    await scope.locator(`.ssCoverageCount[data-group=${group}]`).click();assert.deepEqual(await copied(),values);await close();
  }
-  await scope.locator('.ssCoverageCount[data-group=missingIds]').click();assert.equal(await scope.locator('tbody tr').count(),1);assert.equal(await scope.locator('tbody td').first().textContent(),'Not recorded');assert.equal(await scope.getByRole('button',{name:'Copy IDs',exact:true}).isDisabled(),true);await close();
-  await scope.getByRole('button',{name:'Data checks · 4',exact:true}).click();assert.equal(await scope.locator('tbody tr').count(),4);assert.deepEqual(await copied(),['NO-PLAN','PLAN-BAD-DATE','PLAN-FUTURE-DATE']);await close();
+  await scope.locator('.ssCoverageCount[data-group=missingIds]').click();assert.equal(await scope.locator('tbody tr.ssRecordRow').count(),1);assert.equal(await scope.locator('.ssRecordRow .ssSubmissionId').first().textContent(),'Not recorded');assert.equal(await scope.getByRole('button',{name:'Copy IDs',exact:true}).isDisabled(),true);await close();
+  await scope.getByRole('button',{name:'Data checks · 4',exact:true}).click();assert.equal(await scope.locator('tbody tr.ssRecordRow').count(),4);assert.deepEqual(await copied(),['NO-PLAN','PLAN-BAD-DATE','PLAN-FUTURE-DATE']);await close();
  // A summary is always calculated within the active business-unit and state scope.
  await scope.getByRole('combobox',{name:'Business unit',exact:true}).selectOption('CMI');await metric('planned').click();assert.deepEqual(await copied(),['PLAN-ACTUAL']);await close();
  await metric('overdue').click();assert.match(await scope.locator('.ssDetails').textContent(),/No matching submissions/);assert.equal(await scope.getByRole('button',{name:'Copy IDs',exact:true}).isDisabled(),true);await close();

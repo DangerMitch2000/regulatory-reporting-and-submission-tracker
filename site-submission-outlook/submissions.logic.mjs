@@ -4,7 +4,8 @@ export const DISPATCH_ROLES = ['DispatchRequired', 'PlannedDispatch', 'ActualDis
 export const REGISTRATION_ROLES = ['RegistrationID', 'RegistrationCountry', 'RegistrationStatus', 'RegistrationStart', 'RegistrationEnd'];
 export const REGISTRATION_COMPLETE_STATES = ['Approved', 'Conditionally Approved'];
 export const IDENTIFIER_FIELDS = [{role:'ROID',label:'RO ID'},{role:'AppID',label:'Application ID'}];
-export const ROLES = ['SubID', 'Site', 'PlannedSubmission', 'ActualSubmission', 'BusinessUnit', ...STATE_FIELDS.map(f=>f.role), ...DISPATCH_ROLES, ...REGISTRATION_ROLES, 'FallbackCountry', ...IDENTIFIER_FIELDS.map(field=>field.role)];
+export const SCOPE_ROLES = ['Product', 'CommercialRegion'];
+export const ROLES = ['SubID', 'Site', 'PlannedSubmission', 'ActualSubmission', 'BusinessUnit', ...STATE_FIELDS.map(f=>f.role), ...DISPATCH_ROLES, ...REGISTRATION_ROLES, 'FallbackCountry', ...IDENTIFIER_FIELDS.map(field=>field.role), ...SCOPE_ROLES];
 export const REQUIRED = ROLES.slice(0, 4);
 export const clean = value => String(value ?? '').trim();
 export const siteKey = value => clean(value).toLocaleUpperCase('en-GB');
@@ -27,11 +28,20 @@ export function parseDay(value) {
     if (!Number.isFinite(+value)) return {kind: 'invalid'};
     [y, m, d] = [value.getUTCFullYear(), value.getUTCMonth() + 1, value.getUTCDate()];
   } else {
-    const match = clean(value).match(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/);
-    if (!match || (clean(value).includes('T') && !Number.isFinite(Date.parse(value)))) return {kind: 'invalid'};
-    [y, m, d] = match.slice(1).map(Number);
+    const text=clean(value), iso=text.match(/^(\d{4})-(\d{2})-(\d{2})(.*)$/), local=text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(.*)$/);
+    if(!iso&&!local)return {kind:'invalid'};
+    const match=iso||local;
+    [y,m,d]=iso?match.slice(1,4).map(Number):[Number(match[3]),Number(match[2]),Number(match[1])];
+    if(match[4]){
+      const time=match[4].match(/^[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,9}))?)?(Z|[+-]\d{2}:?\d{2})?$/);
+      if(!time||Number(time[1])>23||Number(time[2])>59||Number(time[3]||0)>59)return {kind:'invalid'};
+      if(time[5]&&time[5]!=='Z'){
+        const offset=time[5].replace(':','');
+        if(Number(offset.slice(1,3))>23||Number(offset.slice(3))>59)return {kind:'invalid'};
+      }
+    }
   }
-  const day = Date.UTC(y, m - 1, d), check = new Date(day);
+  const check=new Date(0);check.setUTCFullYear(y,m-1,d);check.setUTCHours(0,0,0,0);const day=+check;
   return check.getUTCFullYear() === y && check.getUTCMonth() === m - 1 && check.getUTCDate() === d
     ? {kind: 'date', day} : {kind: 'invalid'};
 }
@@ -43,7 +53,24 @@ export function resolveDate(values) {
 }
 // Keep each delivered registration's fields together: never borrow an ID, state or
 // country from another joined row. Repeated joins must not inflate submissions.
-export function registrationEvidence(rows, mapped = Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,true]))) {
+function registrationReviews(rows,mapped,identifiers){
+  const index=new Map();
+  if(!mapped.RegistrationID)return index;
+  for(const row of rows){
+    const id=clean(row.RegistrationID);if(!id)continue;
+    if(!index.has(id))index.set(id,{states:new Set(),ros:new Set(),apps:new Set()});
+    const evidence=index.get(id),state=mapped.RegistrationStatus?clean(row.RegistrationStatus).toLowerCase().replace(/\s+/g,' '):'';
+    if(state)evidence.states.add(state);
+    if(identifiers?.ROID&&clean(row.ROID))evidence.ros.add(clean(row.ROID));
+    if(identifiers?.AppID&&clean(row.AppID))evidence.apps.add(clean(row.AppID));
+  }
+  return new Map([...index].map(([id,evidence])=>[id,[
+    ...(evidence.states.size>1?['Conflicting states for the same registration ID']:[]),
+    ...(evidence.ros.size>1?['Registration ID is associated with multiple RO IDs']:[]),
+    ...(evidence.apps.size>1?['Registration ID is associated with multiple application IDs']:[])
+  ]]));
+}
+export function registrationEvidence(rows, mapped = Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,true])), identifiers = {ROID:true,AppID:true}, reviews = registrationReviews(rows,mapped,identifiers)) {
   const distinct = new Map();
   for (const row of rows) {
     const values = Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,mapped[role] ? row[role] : null]));
@@ -53,7 +80,7 @@ export function registrationEvidence(rows, mapped = Object.fromEntries(REGISTRAT
     const id=clean(values.RegistrationID), country=clean(values.RegistrationCountry), state=clean(values.RegistrationStatus);
     const start=mapped.RegistrationStart?resolveDate([values.RegistrationStart]):{kind:'unmapped'}, end=mapped.RegistrationEnd?resolveDate([values.RegistrationEnd]):{kind:'unmapped'};
     const complete=Boolean(id && REGISTRATION_COMPLETE_STATES.some(value=>value.toLowerCase()===state.toLowerCase().replace(/\s+/g,' ')));
-    const notes=[];
+    const notes=[...(reviews.get(id)||[])];
     if(start.kind==='issue')notes.push(`${start.reason}: registration start`);
     if(end.kind==='issue')notes.push(`${end.reason}: registration end`);
     if(start.kind==='date'&&end.kind==='date'&&end.day<start.day)notes.push('Registration end date is before its start date');
@@ -99,7 +126,7 @@ function dispatchProgress(record, today) {
   if (required.kind === 'issue') notes.push(required.reason);
   if (plan.kind === 'issue') notes.push(`${plan.reason}: planned dispatch`);
   if (actual.kind === 'issue') notes.push(`${actual.reason}: actual dispatch`);
-  if (actual.kind === 'date' && actual.day > today) notes.push('Actual dispatch date is in the future');
+  if (actual.kind === 'date' && actual.day > today) notes.push('Actual dispatch date is after the as-of date');
   if (plan.kind === 'date' && record.plan.kind === 'date' && plan.day > record.plan.day) notes.push('Planned dispatch is after planned submission');
   if (actual.kind === 'date' && record.actual.kind === 'date' && actual.day > record.actual.day) notes.push('Actual dispatch is after actual submission');
   record.overdue = false;
@@ -119,17 +146,18 @@ function dispatchProgress(record, today) {
   record.dispatchNotes = [...new Set(notes)].join('; ');
   if (record.dispatchNotes) record.reason = [record.reason, record.dispatchNotes].filter(Boolean).join('; ');
 }
-export function calendar(now = new Date()) {
+export function calendar(now = new Date(), reference = 'previousDay') {
   const y = now.getFullYear(), m = now.getMonth();
   const today = Date.UTC(y, m, now.getDate());
-  const months = [0, 1].map(offset => {
+  const asOf=today-(reference==='today'?0:86400000);
+  const months = [-1, 0, 1].map(offset => {
     const start = Date.UTC(y, m + offset, 1), end = Date.UTC(y, m + offset + 1, 1), date = new Date(start);
     return {start, end, key: date.toISOString().slice(0, 7),
       label: date.toLocaleDateString('en-GB', {month: 'long', year: 'numeric', timeZone: 'UTC'}),
       short: date.toLocaleDateString('en-GB', {month: 'short', timeZone: 'UTC'})};
   });
-  return {today, months, label: months[0].key.slice(0, 4) === months[1].key.slice(0, 4)
-    ? `${months[0].label.replace(/ \d{4}$/, '')} & ${months[1].label}` : `${months[0].label} & ${months[1].label}`};
+  return {today, asOf, reference:reference==='today'?'today':'previousDay', currentMonth:months[1].key, months,
+    label:months[0].key.slice(0,4)===months[2].key.slice(0,4)?`${months[0].label.replace(/ \d{4}$/,'')}–${months[2].label}`:`${months[0].label}–${months[2].label}`};
 }
 export function mapTable(table) {
   const columns = table?.columns || [], index = {}, missing = [];
@@ -139,7 +167,7 @@ export function mapTable(table) {
     if (found.length) index[role] = found[0];
     else if (REQUIRED.includes(role)) missing.push(role);
   }
-  return {missing, unitMapped: index.BusinessUnit !== undefined, identifierMapped:Object.fromEntries(IDENTIFIER_FIELDS.map(({role})=>[role,index[role]!==undefined])), fallbackCountryMapped:index.FallbackCountry!==undefined, registrationMapped: Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,index[role] !== undefined])), dispatchMapped: Object.fromEntries(DISPATCH_ROLES.map(role=>[role,index[role] !== undefined])), stateMapped: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,index[role] !== undefined])),
+  return {missing, unitMapped: index.BusinessUnit !== undefined, scopeMapped:Object.fromEntries(SCOPE_ROLES.map(role=>[role,index[role]!==undefined])), identifierMapped:Object.fromEntries(IDENTIFIER_FIELDS.map(({role})=>[role,index[role]!==undefined])), fallbackCountryMapped:index.FallbackCountry!==undefined, registrationMapped: Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,index[role] !== undefined])), dispatchMapped: Object.fromEntries(DISPATCH_ROLES.map(role=>[role,index[role] !== undefined])), stateMapped: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,index[role] !== undefined])),
     rows: (table?.rows || []).map(row => Object.fromEntries(ROLES.map(role => [role, index[role] === undefined ? null : row[index[role]]])))};
 }
 export function normalizeSites(sites) {
@@ -151,30 +179,38 @@ export function normalizeSites(sites) {
   }
   return result;
 }
-export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Date(), stateFilters = {}, stateMapped, dispatchMapped, registrationMapped, fallbackCountryMapped, identifierMapped} = {}) {
-  const dates = calendar(now), selectedSites = normalizeSites(sites), grouped = new Map(), units = new Set(), availableSites = new Map();
+export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', product='*', region='*', country='*', now = new Date(), reference='previousDay', stateFilters = {}, stateMapped, dispatchMapped, registrationMapped, fallbackCountryMapped, identifierMapped, scopeMapped} = {}) {
+  const dates = calendar(now,reference), selectedSites = normalizeSites(sites), grouped = new Map(), units = new Set(), availableSites = new Map(), products=new Set(), regions=new Set(), countries=new Map();
   const mappings = stateMapped ?? Object.fromEntries(STATE_FIELDS.map(({role})=>[role,rows.some(r=>Object.prototype.hasOwnProperty.call(r,role))]));
   const dispatchMappings = dispatchMapped ?? Object.fromEntries(DISPATCH_ROLES.map(role=>[role,rows.some(r=>Object.prototype.hasOwnProperty.call(r,role))]));
   const dispatchEnabled = DISPATCH_ROLES.some(role=>dispatchMappings[role]);
   const registrationMappings=registrationMapped??Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,rows.some(row=>Object.prototype.hasOwnProperty.call(row,role))]));
   const registrationEnabled=REGISTRATION_ROLES.some(role=>registrationMappings[role]);
   const fallbackMapped=fallbackCountryMapped??rows.some(row=>Object.prototype.hasOwnProperty.call(row,'FallbackCountry'));
+  const countryEnabled=Boolean(registrationMappings.RegistrationCountry||fallbackMapped);
   const identifiers=identifierMapped??Object.fromEntries(IDENTIFIER_FIELDS.map(({role})=>[role,rows.some(row=>Object.prototype.hasOwnProperty.call(row,role))]));
+  const scopes=scopeMapped??Object.fromEntries(SCOPE_ROLES.map(role=>[role,rows.some(row=>Object.prototype.hasOwnProperty.call(row,role))]));
+  const registrationChecks=registrationReviews(rows,registrationMappings,identifiers);
   const filters = normalizeStateFilters(stateFilters), choices = Object.fromEntries(STATE_FIELDS.map(({role})=>[role,new Set()]));
   const coverage = {outsideSites: [], outsideMonths: [], missingIds: []};
-  const matches = row => (unit === '*' || clean(row.BusinessUnit) === unit) && STATE_FIELDS.every(({role}) => !mappings[role] || filters[role] === null || filters[role].includes(clean(row[role])));
+  const matches = row => (unit === '*' || clean(row.BusinessUnit) === unit) && (!scopes.Product||product==='*'||clean(row.Product)===product) && (!scopes.CommercialRegion||region==='*'||clean(row.CommercialRegion)===region) && STATE_FIELDS.every(({role}) => !mappings[role] || filters[role] === null || filters[role].includes(clean(row[role])));
+  const countryMatches=resolved=>!countryEnabled||country==='*'||(country===''?!resolved.values.length:resolved.values.some(value=>value.toLocaleLowerCase('en-GB')===clean(country).toLocaleLowerCase('en-GB')));
+  const collectCountries=resolved=>{for(const value of resolved.values.length?resolved.values:['']){const key=value.toLocaleLowerCase('en-GB');if(!countries.has(key))countries.set(key,value);}};
   let missingIds = 0;
   for (const row of rows) {
     const bu = clean(row.BusinessUnit), site = clean(row.Site), id = clean(row.SubID);
     units.add(bu);
+    if(scopes.Product)products.add(clean(row.Product));
+    if(scopes.CommercialRegion)regions.add(clean(row.CommercialRegion));
     STATE_FIELDS.forEach(({role})=>{if(mappings[role])choices[role].add(clean(row[role]));});
     if (site && !availableSites.has(siteKey(site))) availableSites.set(siteKey(site), site);
     if (!id) {
-      if (matches(row)) {
+      const registration=registrationEvidence([row],registrationMappings,identifiers,registrationChecks), resolvedCountry=resolveCountry([row],registration,fallbackMapped);
+      collectCountries(resolvedCountry);
+      if (matches(row)&&countryMatches(resolvedCountry)) {
         missingIds++;
-        const registration=registrationEvidence([row],registrationMappings);
         coverage.missingIds.push({id:'', site:site || 'Unassigned', plan:resolveDate([row.PlannedSubmission]), actual:resolveDate([row.ActualSubmission]), status:'Not counted', reason:'Submission ID not recorded; this source row cannot be counted as a distinct submission',
-          states:Object.fromEntries(STATE_FIELDS.map(({role})=>[role,mappings[role]?[clean(row[role])]:null])), ...relatedEvidence([row],identifiers), registration, country:resolveCountry([row],registration,fallbackMapped),
+          states:Object.fromEntries(STATE_FIELDS.map(({role})=>[role,mappings[role]?[clean(row[role])]:null])), ...relatedEvidence([row],identifiers), registration, country:resolvedCountry, evidenceSource:null, evidenceLabel:'No submission ID',
           dispatch:{required:resolveRequired([row.DispatchRequired],dispatchMappings.DispatchRequired),planned:dispatchMappings.PlannedDispatch?resolveDate([row.PlannedDispatch]):{kind:'unmapped'},actual:dispatchMappings.ActualDispatch?resolveDate([row.ActualDispatch]):{kind:'unmapped'}}});
       }
       continue;
@@ -189,7 +225,9 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
   const issues = [], checks = {missingIds, outsideSites: 0, unassignedSite: 0, multipleSites: 0, missingPlan: 0, planIssues: 0, actualIssues: 0, dispatchIssues: 0, registrationIssues: 0, outsideMonths: 0};
   let scopedRecords = 0;
   for (const [id, list] of grouped) {
-    if (!list.some(matches)) continue;
+    const registration=registrationEvidence(list,registrationMappings,identifiers,registrationChecks), resolvedCountry=resolveCountry(list,registration,fallbackMapped);
+    collectCountries(resolvedCountry);
+    if (!list.some(matches)||!countryMatches(resolvedCountry)) continue;
     scopedRecords++;
     const names = [...new Set(list.map(row => siteKey(row.Site)).filter(Boolean))];
     const plan = resolveDate(list.map(row => row.PlannedSubmission));
@@ -198,9 +236,11 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     const submittedStates = submittedStateEvidence(states);
     const record = {id, site: names.join(' / ') || 'Unassigned', plan, actual, states, submittedStates, ...relatedEvidence(list,identifiers), status: 'In process', reason: ''};
     record.approved = hasState(states, 'ROStatus', 'health authority approved');
-    record.registration=registrationEvidence(list,registrationMappings);
+    record.registration=registration;
     record.registrationComplete=record.registration.qualifying.length>0;
-    record.country=resolveCountry(list,record.registration,fallbackMapped);
+    record.country=resolvedCountry;
+    record.evidenceSource=actual.kind==='date'&&actual.day<=dates.asOf?'actual':submittedStates.length?'state':record.registrationComplete?'registration':null;
+    record.evidenceLabel=({actual:'Actual submission date',state:'Submission state',registration:'Registration approval'})[record.evidenceSource]||'No submission evidence';
     record.dispatch = {required: resolveRequired(list.map(row=>row.DispatchRequired), dispatchMappings.DispatchRequired),
       planned: dispatchMappings.PlannedDispatch ? resolveDate(list.map(row=>row.PlannedDispatch)) : {kind:'unmapped'},
       actual: dispatchMappings.ActualDispatch ? resolveDate(list.map(row=>row.ActualDispatch)) : {kind:'unmapped'}};
@@ -212,16 +252,16 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     const bucket = lookup.get(names[0]);
     if (!bucket) {
       checks.outsideSites++;
-      if (actual.kind === 'date' && actual.day <= dates.today || submittedStates.length || record.registrationComplete) {record.status='Submitted';record.submittedByState=!(actual.kind==='date'&&actual.day<=dates.today)&&submittedStates.length>0;record.submittedByRegistration=!(actual.kind==='date'&&actual.day<=dates.today)&&!submittedStates.length&&record.registrationComplete;}
-      else if (actual.kind==='issue'||actual.kind==='date'&&actual.day>dates.today) record.status='Check date';
-      dispatchProgress(record,dates.today);
+      if (record.evidenceSource) {record.status='Submitted';record.submittedByState=record.evidenceSource==='state';record.submittedByRegistration=record.evidenceSource==='registration';}
+      else if (actual.kind==='issue'||actual.kind==='date'&&actual.day>dates.asOf) record.status='Check date';
+      dispatchProgress(record,dates.asOf);
       coverage.outsideSites.push(record);continue;
     }
     bucket.delivered++;
     record.site = bucket.site;
-    const actualIssue = actual.kind === 'issue' || actual.kind === 'date' && actual.day > dates.today;
+    const actualIssue = actual.kind === 'issue' || actual.kind === 'date' && actual.day > dates.asOf;
     if (actualIssue) {
-      record.status = 'Check date'; record.reason = actual.kind === 'issue' ? `${actual.reason}: actual submission` : 'Actual submission date is in the future';
+      record.status = 'Check date'; record.reason = actual.kind === 'issue' ? `${actual.reason}: actual submission` : 'Actual submission date is after the as-of date';
       checks.actualIssues++;
     }
     const actualSubmitted = actual.kind === 'date' && !actualIssue;
@@ -232,7 +272,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     }
     const registrationIssue=record.registration.notes.length>0;
     if(registrationIssue){checks.registrationIssues++;record.reason=[record.reason,...record.registration.notes].filter(Boolean).join('; ');}
-    dispatchProgress(record, dates.today);
+    dispatchProgress(record, dates.asOf);
     const dispatchIssue = Boolean(record.dispatchNotes && (record.dispatch.required.values.length || [record.dispatch.planned,record.dispatch.actual].some(date=>date.kind!=='blank'&&date.kind!=='unmapped')));
     if (dispatchIssue) checks.dispatchIssues++;
     // All overdue work is independent of the monthly cohort; an early dispatch can be due
@@ -257,6 +297,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     month.rows.push(record);
   }
   const totals = {planned: 0, inProcess: 0, submitted: 0, review: 0, overdue: 0};
+  const evidenceCounts={actual:0,state:0,registration:0};
   const monthTotals = dates.months.map(m => ({...m, ...totals}));
   const oldestFirst = (a, b) => a.plan.day - b.plan.day || a.id.localeCompare(b.id, undefined, {numeric: true});
   const overdueFirst = (a,b) => a.overdueDate - b.overdueDate || a.id.localeCompare(b.id, undefined, {numeric:true});
@@ -267,6 +308,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
     site.overdue.rows.sort(overdueFirst);
     site.months.forEach((m, i) => {
       Object.keys(totals).forEach(key => {totals[key] += m[key]; monthTotals[i][key] += m[key];});
+      m.rows.forEach(record=>{if(record.status==='Submitted'&&record.evidenceSource)evidenceCounts[record.evidenceSource]++;});
       m.rows.sort(oldestFirst);
     });
   }
@@ -274,9 +316,9 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', now = new Da
   const rawStep = peak / 5, magnitude = 10 ** Math.floor(Math.log10(rawStep));
   const step = Math.max(1, ([1, 2, 5, 10].find(s => s * magnitude >= rawStep) || 10) * magnitude);
   const axisMax = Math.max(5, Math.ceil(peak / step) * step);
-  return {...dates, buckets, totals, monthTotals, backlog, overdue, checks, issues, coverage, axisMax, step, scopedRecords, identifierMapped:identifiers, identifiersEnabled:IDENTIFIER_FIELDS.some(({role})=>identifiers[role]), dispatchMapped: dispatchMappings, dispatchEnabled, registrationMapped:registrationMappings, registrationEnabled, countryEnabled:Boolean(registrationMappings.RegistrationCountry||fallbackMapped), fallbackCountryMapped:fallbackMapped,
+  return {...dates, buckets, totals, evidenceCounts, monthTotals, backlog, overdue, checks, issues, coverage, axisMax, step, scopedRecords, scopeMapped:scopes, identifierMapped:identifiers, identifiersEnabled:IDENTIFIER_FIELDS.some(({role})=>identifiers[role]), dispatchMapped: dispatchMappings, dispatchEnabled, registrationMapped:registrationMappings, registrationEnabled, countryEnabled, fallbackCountryMapped:fallbackMapped,
     stateMapped: mappings, stateFilters: filters, stateChoices: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,[...choices[role]].sort((a,b)=>stateLabel(a).localeCompare(stateLabel(b)))])),
-    units: [...units].sort(), availableSites: [...availableSites.values()].sort(),
+    units: [...units].sort(), products:[...products].sort(), regions:[...regions].sort(), countries:[...countries.values()].sort(), availableSites: [...availableSites.values()].sort(),
     issueCount: issues.length + missingIds, completion: totals.planned ? Math.round(totals.submitted / totals.planned * 100) : 0};
 }
 
@@ -296,12 +338,12 @@ export function attentionFor(record) {
     return note('data','review','Submission ID missing','This source row has no submission ID.','Map or correct the source submission ID.');
   }
   if(/Multiple sites|Site not recorded/.test(reason))return note('data','review','Check site assignment',reason,'Confirm the submission’s site before allocating it.');
-  if(record.actual?.kind==='issue'||record.status==='Check date'||/Actual submission date is in the future/.test(reason))return note('data','review','Check actual submission date',record.actual?.kind==='issue'?`${record.actual.reason}: actual submission.`:'The recorded actual submission date is in the future.','Verify the recorded filing date; no date is inferred.');
+  if(record.actual?.kind==='issue'||record.status==='Check date'||/Actual submission date is after the as-of date/.test(reason))return note('data','review','Check actual submission date',record.actual?.kind==='issue'?`${record.actual.reason}: actual submission.`:'The recorded actual submission date is after the as-of date.','Verify the recorded filing date; no date is inferred.');
   if(record.plan?.kind==='issue')return note('data','review','Check planned submission date',`${record.plan.reason}: planned submission.`,'Confirm the applicable planned submission date.');
   if(record.registration?.notes.length)return note('registrationReview','review','Check registration details',record.registration.notes.join('; '),record.registrationComplete?'Registration approval still establishes Submitted. Verify the recorded registration details.':'Verify the linked registration ID, state and dates.');
   if(record.registrationComplete)return note('registration','complete','Registration approval recorded',record.registration.qualifying.map(r=>`${r.id}${r.country?' · '+r.country:''}: ${r.state}`).join('; '),'Counted as Submitted and excluded from overdue work. Review any outdated submission, RO or application states.');
   if(d.required?.kind==='issue')return note('dispatchReview','review','Check dispatch requirement',d.required.reason,'Confirm whether internal dispatch is required.');
-  if(d.actual?.kind==='issue'||/Actual dispatch date is in the future|Actual dispatch is after actual submission/.test(dispatchNotes))return note('dispatchReview','review','Check actual dispatch date',dispatchNotes,'Verify the dispatch date before relying on its stage.');
+  if(d.actual?.kind==='issue'||/Actual dispatch date is after the as-of date|Actual dispatch is after actual submission/.test(dispatchNotes))return note('dispatchReview','review','Check actual dispatch date',dispatchNotes,'Verify the dispatch date before relying on its stage.');
   if(d.planned?.kind==='issue'||/Planned dispatch is after planned submission/.test(dispatchNotes))return note('dispatchReview','review','Check planned dispatch date',dispatchNotes,'Confirm the dispatch deadline and sequence of dates.');
   if(hasState(states,'SubStatus','rejected'))return note('rejection','urgent','Health authority rejection','Submission state is Rejected: filing occurred, but the authority rejected it.','Review the authority’s response and the next regulatory action.');
   if(hasState(states,'ROStatus','rejected'))return note('rejection','urgent','Review rejected RO','The related regulatory objective is recorded as Rejected.','Review the recorded outcome and required follow-up.');

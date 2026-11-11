@@ -11,6 +11,6 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test'),assert=requi
    await page.evaluate(()=>testApi.resize(760,800));await scope.getByRole('combobox',{name:'Theme',exact:true}).selectOption('dark');
    await require('./metrics-browser-check.cjs')(page,scope,{compact:true});
    assert.deepEqual(errors,[]);assert.deepEqual(await page.evaluate(()=>testApi.errors),[]);
-   console.log('PASS: summary/percentage/overdue/segment drill-through, exact two-month cohort, copied IDs across pages, coverage counts, missing-ID rows, empty lists, site/stage/BU/state filters, refresh, keyboard, screenshot-mode exit and compact/dark layout.');
+   console.log('PASS: summary/percentage/overdue/segment drill-through, exact three-month cohort, copied IDs across pages, coverage counts, missing-ID rows, empty lists, site/stage/BU/state filters, refresh, keyboard, screenshot-mode exit and compact/dark layout.');
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1});

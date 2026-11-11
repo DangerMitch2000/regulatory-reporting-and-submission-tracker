@@ -12,7 +12,7 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test'),assert=requi
   await page.clock.setFixedTime(new Date('2026-10-07T12:00:00Z'));
   const url='http://127.0.0.1:'+server.address().port;await page.goto(url+'/verify/harness.html');await page.waitForSelector('body[data-ready=true]');
   const rows=[...Array.from({length:123},(_,i)=>({SubID:'COPY-'+String(i).padStart(4,'0'),Site:'ABO',PlannedSubmission:'2026-10-01',ActualSubmission:null,BusinessUnit:i%3?'ID':'CMI',SubStatus:i%2?'In Progress':'Completed'})),
-    ...Array.from({length:60},(_,i)=>({SubID:'OLD-'+String(i).padStart(4,'0'),Site:'ABO',PlannedSubmission:'2026-09-01',ActualSubmission:null,BusinessUnit:'ID',SubStatus:'In Progress'})),
+    ...Array.from({length:60},(_,i)=>({SubID:'OLD-'+String(i).padStart(4,'0'),Site:'ABO',PlannedSubmission:'2026-08-01',ActualSubmission:null,BusinessUnit:'ID',SubStatus:'In Progress'})),
     {SubID:'DATE-CHECK',Site:'ABO',PlannedSubmission:null,ActualSubmission:null,BusinessUnit:'ID',SubStatus:'In Progress'}];
   await page.evaluate(rows=>{
    testApi.send(rows.flatMap(r=>[r,r]),{preferences:{unit:'*',theme:'light',stateFilters:{}}});
@@ -21,10 +21,10 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test'),assert=requi
    // Capture synthetic test data at the native copy event without changing the user's clipboard.
    document.addEventListener('copy',event=>{const input=document.activeElement;nativeCopies.push(input?.tagName==='TEXTAREA'?input.value.slice(input.selectionStart,input.selectionEnd):window.getSelection().toString());event.preventDefault()});
   },rows);
-  const main=page.locator('#host');await main.locator('.ssHit[data-site=ABO]').first().click();
-  const firstID=main.locator('td.ssSubmissionId').first();await firstID.click();assert.equal(await page.evaluate(()=>window.getSelection().toString()),'COPY-0000');
+  const main=page.locator('#host');await main.locator('.ssHit[data-site=ABO][data-month="2026-10"]').click();
+  const firstID=main.locator('.ssSubmissionId').first();await firstID.click();assert.equal(await page.evaluate(()=>window.getSelection().toString()),'COPY-0000');
   await page.keyboard.press('Control+c');assert.equal(await page.evaluate(()=>nativeCopies.at(-1)),'COPY-0000');
-  await main.getByRole('button',{name:'Next',exact:true}).click();assert.equal(await main.locator('tbody tr').count(),50);
+  await main.getByRole('button',{name:'Next',exact:true}).click();assert.equal(await main.locator('tbody tr.ssRecordRow').count(),50);
   await main.getByRole('button',{name:'Copy IDs',exact:true}).click();
   const all=rows.filter(r=>r.SubID.startsWith('COPY-')).map(r=>r.SubID).join('\n');
   assert.equal(await main.getByRole('textbox',{name:'Submission IDs to copy'}).inputValue(),all);assert.equal(await page.evaluate(()=>copyWrites.at(-1)),all);
@@ -33,9 +33,9 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test'),assert=requi
   await main.getByRole('button',{name:'Hide ID list'}).click();assert.equal(await main.locator('.ssCopyPanel').isVisible(),false);
   await main.getByRole('combobox',{name:'Submission progress'}).selectOption('Submitted');await main.getByRole('button',{name:'Copy IDs',exact:true}).click();
   assert.equal((await page.evaluate(()=>copyWrites.at(-1))).split('\n').length,62);
-  await main.getByRole('textbox',{name:'Find submission',exact:true}).fill('COPY-0002');await main.getByRole('button',{name:'Copy IDs',exact:true}).click();
-  assert.equal(await page.evaluate(()=>copyWrites.at(-1)),'COPY-0002');assert.equal(await main.locator('tbody tr').count(),1);
-  await main.getByRole('textbox',{name:'Find submission',exact:true}).fill('No such ID');await main.getByRole('textbox',{name:'Find submission',exact:true}).press('Tab');
+  await main.getByRole('searchbox',{name:'Find submission',exact:true}).fill('COPY-0002');await main.getByRole('button',{name:'Copy IDs',exact:true}).click();
+  assert.equal(await page.evaluate(()=>copyWrites.at(-1)),'COPY-0002');assert.equal(await main.locator('tbody tr.ssRecordRow').count(),1);
+  await main.getByRole('searchbox',{name:'Find submission',exact:true}).fill('No such ID');await main.getByRole('searchbox',{name:'Find submission',exact:true}).press('Tab');
   assert.equal(await main.getByRole('button',{name:'Copy IDs',exact:true}).isDisabled(),true);
   await main.getByRole('button',{name:'Close details'}).click();await main.locator('.ssBacklogHit[data-site="*"]').click();await main.getByRole('button',{name:'Copy IDs',exact:true}).click();
   assert.equal((await page.evaluate(()=>copyWrites.at(-1))).split('\n').length,60);
@@ -46,13 +46,13 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test'),assert=requi
   await page.keyboard.press('Control+c');assert.equal(await page.evaluate(()=>nativeCopies.at(-1)),'DATE-CHECK');
   await main.getByRole('combobox',{name:'Theme'}).selectOption('dark');await main.getByRole('button',{name:'Data checks · 1'}).click();await main.getByRole('button',{name:'Copy IDs',exact:true}).click();
   await main.locator('.ssDetails').screenshot({path:path.join(root,'copy-details-dark.png')});
-  await main.getByRole('combobox',{name:'Theme'}).selectOption('light');await main.locator('.ssHit[data-site=ABO]').first().click();await main.getByRole('button',{name:'Copy IDs',exact:true}).click();
+  await main.getByRole('combobox',{name:'Theme'}).selectOption('light');await main.locator('.ssHit[data-site=ABO][data-month="2026-10"]').click();await main.getByRole('button',{name:'Copy IDs',exact:true}).click();
   await main.locator('.ssDetails').screenshot({path:path.join(root,'copy-details-light.png')});
   assert.deepEqual(errors,[]);
   await page.goto(url+'/sandbox.html');const frame=page.frameLocator('iframe');await frame.locator('body[data-ready=true]').waitFor();
   const sandbox=page.frames().find(f=>f.url().includes('/verify/harness.html'));
   await sandbox.evaluate(()=>{Object.defineProperty(navigator,'clipboard',{configurable:true,value:undefined});window.nativeCopies=[];document.addEventListener('copy',e=>{const t=document.activeElement;nativeCopies.push(t.tagName==='TEXTAREA'?t.value.slice(t.selectionStart,t.selectionEnd):window.getSelection().toString());e.preventDefault()})});
-  await frame.locator('.ssHit[data-site=ABO]').first().click();await frame.getByRole('button',{name:'Copy IDs',exact:true}).click();
+  await frame.locator('.ssHit[data-site=ABO][data-month="2026-10"]').click();await frame.getByRole('button',{name:'Copy IDs',exact:true}).click();
   const text=await frame.getByRole('textbox',{name:'Submission IDs to copy'}).inputValue();assert.equal(text.split('\n').length,16);assert.match(await frame.getByRole('status').textContent(),/Press Ctrl\+C/);
   await page.keyboard.press('Control+c');assert.equal(await sandbox.evaluate(()=>nativeCopies.at(-1)),text);
   await frame.getByRole('textbox',{name:'Submission IDs to copy'}).click();await frame.getByRole('button',{name:'Select all IDs'}).click();assert.equal(await frame.getByRole('textbox',{name:'Submission IDs to copy'}).evaluate(e=>e.selectionEnd-e.selectionStart),text.length);

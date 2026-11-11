@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {calendar, parseDay, mapTable, summarize, DEFAULT_SITES, ROLES, normalizeSites, normalizeStateFilters, formatStates} from './submissions.logic.mjs';
-const now = new Date(2026, 9, 7, 12), base = {Site: 'ABO', PlannedSubmission: '2026-10-15', ActualSubmission: null, BusinessUnit: 'ID'};
+// Reference day is 7 October: the viewer opens the report on the following day.
+const now = new Date(2026, 9, 8, 12), base = {Site: 'ABO', PlannedSubmission: '2026-10-15', ActualSubmission: null, BusinessUnit: 'ID'};
 const row = (id, patch = {}) => ({...base, SubID: id, ...patch});
 const data = [row('A'), row('A'), row('B', {ActualSubmission: '2026-09-20'}), row('C', {PlannedSubmission: '2026-11-03', ActualSubmission: '2026-10-01'}),
   row('D', {PlannedSubmission: '2026-11-05'}), row('E', {PlannedSubmission: '2026-09-30', ActualSubmission: '2026-10-05'}),
@@ -10,21 +11,21 @@ const data = [row('A'), row('A'), row('B', {ActualSubmission: '2026-09-20'}), ro
   row('L', {PlannedSubmission: null}), row('M', {PlannedSubmission: '07/10/2026'}), row('N'), row('N', {PlannedSubmission: '2026-11-15'}),
   row('O', {ActualSubmission: 'bad'}), row('P', {Site: 'adj', BusinessUnit: 'CMI', ActualSubmission: '2026-10-07'})];
 const r = summarize(data, {now});
-assert.deepEqual(r.totals, {planned: 9, inProcess: 3, submitted: 3, review: 3, overdue: 1});
-assert.equal(r.buckets.length, 6); assert.equal(r.buckets[1].site, 'ADJ'); assert.equal(r.buckets[1].months[0].submitted, 1);
-assert.deepEqual(r.buckets[0].months.map(m => [m.planned, m.inProcess, m.submitted, m.review]), [[6,2,1,3],[2,1,1,0]]);
+assert.deepEqual(r.totals, {planned: 11, inProcess: 4, submitted: 4, review: 3, overdue: 1});
+assert.equal(r.buckets.length, 6); assert.equal(r.buckets[1].site, 'ADJ'); assert.equal(r.buckets[1].months[1].submitted, 1);
+assert.deepEqual(r.buckets[0].months.map(m => [m.planned, m.inProcess, m.submitted, m.review]), [[1,0,1,0],[7,3,1,3],[2,1,1,0]]);
 assert.equal(r.checks.multipleSites, 1); assert.equal(r.checks.unassignedSite, 1); assert.equal(r.checks.outsideSites, 1);
-assert.equal(r.checks.missingIds, 1); assert.equal(r.checks.missingPlan, 1); assert.equal(r.checks.planIssues, 2); assert.equal(r.checks.outsideMonths, 1);
+assert.equal(r.checks.missingIds, 1); assert.equal(r.checks.missingPlan, 1); assert.equal(r.checks.planIssues, 1); assert.equal(r.checks.outsideMonths, 0);
 assert.equal(summarize(data, {now, unit: 'CMI'}).totals.planned, 1);
 assert.equal(summarize(data, {now, sites: []}).totals.planned, 0);
 assert.equal(summarize([row('T'), row('T', {BusinessUnit: 'CMI', PlannedSubmission: '2026-11-02'})], {now, unit: 'ID'}).checks.planIssues, 1);
 assert.equal(summarize([row('T'), row('T', {ActualSubmission: '2026-10-06'})], {now}).totals.submitted, 1);
 assert.equal(summarize([row('T', {Site: '  abo '})], {now}).totals.planned, 1);
 assert.equal(summarize([row('T', {Site: 'ABON'})], {now}).totals.planned, 0);
-assert.deepEqual(calendar(new Date(2026, 11, 31)).months.map(m => m.key), ['2026-12', '2027-01']);
-assert.deepEqual(calendar(new Date(2027, 0, 1)).months.map(m => m.key), ['2027-01', '2027-02']);
+assert.deepEqual(calendar(new Date(2026, 11, 31)).months.map(m => m.key), ['2026-11', '2026-12', '2027-01']);
+assert.deepEqual(calendar(new Date(2027, 0, 1)).months.map(m => m.key), ['2026-12', '2027-01', '2027-02']);
 assert.equal(summarize([row('T', {PlannedSubmission: '2026-11-01'})], {now: new Date(2026, 10, 1)}).totals.overdue, 0);
-assert.equal(summarize([row('T', {PlannedSubmission: '2026-10-31'})], {now: new Date(2026, 10, 1)}).totals.planned, 0);
+assert.equal(summarize([row('T', {PlannedSubmission: '2026-10-31'})], {now: new Date(2026, 10, 1)}).totals.planned, 1);
 assert.equal(parseDay('2026-02-29').kind, 'invalid'); assert.equal(parseDay('2028-02-29').kind, 'date');
 assert.equal(parseDay('2026-13-01').kind, 'invalid'); assert.equal(parseDay('2026-10-01Tgarbage').kind, 'invalid');
 assert.equal(parseDay('2026-10-01T23:45:00-05:00').day, Date.UTC(2026,9,1));
@@ -35,7 +36,7 @@ assert.deepEqual(mapTable({columns, rows: [['A','ABO','2026-10-01',null,'ID']]})
 assert.equal(mapTable({columns: columns.slice(0,4), rows: []}).unitMapped, false);
 assert.deepEqual(mapTable({columns: columns.slice(0,3), rows: []}).missing, ['ActualSubmission']);
 assert.throws(() => mapTable({columns: [...columns, columns[0]], rows: []}), /only one/);
-const old = (id, patch = {}) => row(id, {PlannedSubmission:'2026-09-30', ...patch});
+const old = (id, patch = {}) => row(id, {PlannedSubmission:'2026-08-31', ...patch});
 const historical = [old('OLD', {PlannedSubmission:'2024-01-01'}), old('SEP'), old('SEP'),
   old('CMI', {Site:'ADJ',BusinessUnit:'CMI'}), row('OCT-BOUNDARY',{PlannedSubmission:'2026-10-01'}), row('NOV',{PlannedSubmission:'2026-11-01'}),
   old('LATE-SUBMITTED', {ActualSubmission:'2026-10-05'}), old('ALREADY-SUBMITTED',{ActualSubmission:'2026-09-20'}),
@@ -46,7 +47,7 @@ const historical = [old('OLD', {PlannedSubmission:'2024-01-01'}), old('SEP'), ol
   old('MULTISITE'), old('MULTISITE',{Site:'ADK'}), old('OUTSIDE',{Site:'OTHER'}), old('NOSITE',{Site:null}), old(''),
   old('FUTURE-PLAN',{PlannedSubmission:'2026-12-01'})];
 const h=summarize(historical,{now});
-assert.equal(h.backlog.count,3);assert.equal(h.backlog.cutoff,Date.UTC(2026,9,1));
+assert.equal(h.backlog.count,3);assert.equal(h.backlog.cutoff,Date.UTC(2026,8,1));
 assert.deepEqual(h.backlog.rows.map(r=>r.id),['OLD','CMI','SEP']);assert.ok(h.backlog.rows.every(r=>r.overdue&&r.actual.kind==='blank'));
 assert.deepEqual(h.buckets.map(s=>s.backlog.count),[2,1,0,0,0,0]);assert.equal(h.totals.planned,2);assert.equal(h.totals.inProcess,2);
 assert.ok(h.backlog.rows.every(r=>!h.buckets.some(s=>s.months.some(m=>m.rows.some(a=>a.id===r.id)))));
@@ -57,8 +58,8 @@ assert.equal(summarize([old('SITE'),old('SITE',{Site:'OTHER'})],{now,sites:['ABO
 assert.ok(h.issues.some(r=>r.id==='FUTURE-ACTUAL'));assert.ok(h.issues.some(r=>r.id==='BAD-ACTUAL'));
 assert.ok(h.issues.some(r=>r.id==='CONFLICT-ACTUAL'));assert.ok(h.issues.some(r=>r.id==='CONFLICT-PLAN'));
 const carry=[old('SEP'),row('OCT',{PlannedSubmission:'2026-10-01'}),row('NOV',{PlannedSubmission:'2026-11-01'})];
-assert.equal(summarize(carry,{now}).backlog.count,1);assert.equal(summarize(carry,{now:new Date(2026,10,1)}).backlog.count,2);
-assert.equal(summarize([old('DEC',{PlannedSubmission:'2026-12-31'})],{now:new Date(2027,0,1)}).backlog.count,1);
+assert.equal(summarize(carry,{now}).backlog.count,1);assert.equal(summarize(carry,{now:new Date(2026,10,1)}).backlog.count,1);
+assert.equal(summarize([old('DEC',{PlannedSubmission:'2026-12-31'})],{now:new Date(2027,0,1)}).backlog.count,0);
 assert.equal(summarize([old('SEP',{ActualSubmission:'2026-10-07'})],{now}).backlog.count,0);
 assert.equal(summarize([],{now}).backlog.count,0);
 const lifecycle = [
@@ -96,7 +97,7 @@ const split=[row('SPLIT',{SubStatus:'Cancelled',AppStatus:'Active',BusinessUnit:
 assert.equal(summarize(split,{now,stateFilters:{SubStatus:['Cancelled'],AppStatus:['Inactive']}}).scopedRecords,0);
 assert.equal(summarize(split,{now,unit:'CMI',stateFilters:{SubStatus:['Cancelled']}}).scopedRecords,0);
 assert.equal(summarize(split,{now,unit:'ID',stateFilters:{SubStatus:['Cancelled']}}).totals.planned,1);
-assert.deepEqual(summarize(split,{now,stateFilters:{SubStatus:['Cancelled']}}).buckets[0].months[0].rows[0].states.SubStatus,['Cancelled','Planned']);
+assert.deepEqual(summarize(split,{now,stateFilters:{SubStatus:['Cancelled']}}).buckets[0].months[1].rows[0].states.SubStatus,['Cancelled','Planned']);
 const evidence=[old('EVIDENCE',{SubStatus:'Planned'}),old('EVIDENCE',{SubStatus:'Completed',ActualSubmission:'2026-10-01'})];
 assert.equal(summarize(evidence,{now,stateFilters:{SubStatus:['Planned']}}).backlog.count,0);
 assert.equal(summarize(evidence.map(r=>({...r,PlannedSubmission:'2026-10-01'})),{now,stateFilters:{SubStatus:['Planned']}}).totals.submitted,1);
@@ -145,8 +146,8 @@ const completedPlan=summarize([
 ],{now});
 assert.deepEqual(completedPlan.totals,{planned:7,inProcess:1,submitted:6,review:0,overdue:0});
 assert.equal(completedPlan.completion,86);assert.equal(completedPlan.checks.actualIssues,3);assert.equal(completedPlan.issues.length,3);
-assert.equal(completedPlan.buckets[0].months[0].rows.find(r=>r.id==='NO-DATE').actual.kind,'blank');
-assert.equal(completedPlan.buckets[0].months[0].rows.find(r=>r.id==='NO-DATE').submittedByState,true);
+assert.equal(completedPlan.buckets[0].months[1].rows.find(r=>r.id==='NO-DATE').actual.kind,'blank');
+assert.equal(completedPlan.buckets[0].months[1].rows.find(r=>r.id==='NO-DATE').submittedByState,true);
 assert.equal(summarize([row('OPTIONAL',{SubStatus:'Completed'})],{now,stateMapped:{SubStatus:false}}).totals.submitted,0);
 assert.equal(summarize(statusEvidence.map(r=>({...r,PlannedSubmission:'2026-10-01'})),{now,unit:'ID',stateFilters:{SubStatus:['In Progress']}}).totals.submitted,1);
 // All source states: filing evidence differs from internal distribution and inactive work.
@@ -160,18 +161,18 @@ for (const [state,submitted] of stateCases) {
   const source = row('STATE',{SubStatus:state,PlannedSubmission:'2026-10-01'});
   const current = summarize([source,source],{now});
   assert.deepEqual(current.totals,{planned:1,inProcess:submitted?0:1,submitted:submitted?1:0,review:0,overdue:submitted?0:1},String(state));
-  assert.equal(current.buckets[0].months[0].rows[0].actual.kind,'blank');
-  assert.equal(summarize([{...source,PlannedSubmission:'2026-09-01'}],{now}).backlog.count,submitted?0:1,String(state));
+  assert.equal(current.buckets[0].months[1].rows[0].actual.kind,'blank');
+  assert.equal(summarize([{...source,PlannedSubmission:'2026-08-01'}],{now}).backlog.count,submitted?0:1,String(state));
   assert.equal(summarize([{...source,ActualSubmission:'2026-10-01'}],{now}).totals.submitted,1,'A valid actual date independently establishes filing');
   assert.equal(summarize([source],{now,stateMapped:{SubStatus:false}}).totals.submitted,0);
   assert.equal(summarize([row('WRONG-ROLE',{ROStatus:state,AppStatus:state})],{now}).totals.submitted,0);
   if (submitted) {
-    assert.deepEqual(current.buckets[0].months[0].rows[0].submittedStates,[state]);
+    assert.deepEqual(current.buckets[0].months[1].rows[0].submittedStates,[state]);
     const variant={...source,SubStatus:'  '+state.toLowerCase().replaceAll(' ','   ')+'  '};
     assert.equal(summarize([variant],{now}).totals.submitted,1);
     const duplicate = [{...source,SubStatus:'In Progress',BusinessUnit:'ID'},{...source,BusinessUnit:'CMI'}];
     assert.equal(summarize(duplicate,{now,unit:'ID',stateFilters:{SubStatus:['In Progress']}}).totals.submitted,1);
-    assert.equal(summarize(duplicate.map(r=>({...r,PlannedSubmission:'2026-09-01'})),{now,unit:'ID',stateFilters:{SubStatus:['In Progress']}}).backlog.count,0);
+    assert.equal(summarize(duplicate.map(r=>({...r,PlannedSubmission:'2026-08-01'})),{now,unit:'ID',stateFilters:{SubStatus:['In Progress']}}).backlog.count,0);
     for (const actual of ['invalid','2026-12-01']) {
       const check=summarize([{...source,ActualSubmission:actual}],{now});
       assert.equal(check.totals.submitted,1);assert.equal(check.totals.review,0);assert.equal(check.checks.actualIssues,1);
@@ -180,16 +181,68 @@ for (const [state,submitted] of stateCases) {
 }
 const multiState=summarize(['Completed','HA Received','Sent To Health Authority','Rejected','Distributed'].map(SubStatus=>row('ONE',{SubStatus})),{now});
 assert.equal(multiState.totals.planned,1);assert.equal(multiState.totals.submitted,1);
-assert.deepEqual(multiState.buckets[0].months[0].rows[0].submittedStates,['Completed','HA Received','Sent To Health Authority','Rejected']);
+assert.deepEqual(multiState.buckets[0].months[1].rows[0].submittedStates,['Completed','HA Received','Sent To Health Authority','Rejected']);
 assert.equal(summarize([row('CONFLICT',{SubStatus:'Planned'}),row('CONFLICT',{SubStatus:'Cancelled',Site:'ADK'})],{now,stateFilters:{SubStatus:['Planned']}}).checks.multipleSites,1);
 assert.equal(summarize([row('CONFLICT',{SubStatus:'Planned'}),row('CONFLICT',{SubStatus:'Cancelled',PlannedSubmission:'2026-11-01'})],{now,stateFilters:{SubStatus:['Planned']}}).checks.planIssues,1);
 assert.equal(summarize([row('ISSUE',{SubStatus:'Cancelled',ActualSubmission:'bad'}),row('ISSUE2',{SubStatus:'Planned',ActualSubmission:'bad'}),row('',{SubStatus:'Cancelled'})],{now,stateFilters:{SubStatus:['Cancelled']}}).issueCount,2);
+// Calendar window follows the viewer's month, while operational checks use yesterday.
+const january=calendar(new Date(2027,0,1,12));
+assert.equal(january.today,Date.UTC(2027,0,1));assert.equal(january.asOf,Date.UTC(2026,11,31));assert.equal(january.currentMonth,'2027-01');
+assert.deepEqual(january.months.map(m=>m.key),['2026-12','2027-01','2027-02']);
+assert.equal(calendar(new Date(2028,2,1,12)).asOf,Date.UTC(2028,1,29));
+const boundaries=summarize([row('BEFORE',{PlannedSubmission:'2026-08-31'}),row('FIRST',{PlannedSubmission:'2026-09-01'}),row('LAST',{PlannedSubmission:'2026-11-30'}),row('AFTER',{PlannedSubmission:'2026-12-01'})],{now});
+assert.deepEqual(boundaries.monthTotals.map(m=>m.planned),[1,0,1]);assert.deepEqual(boundaries.backlog.rows.map(r=>r.id),['BEFORE']);
+assert.deepEqual(boundaries.coverage.outsideMonths.map(r=>r.id),['AFTER']);
+const asOfRows=[row('DUE',{PlannedSubmission:'2026-10-07'}),row('PAST',{PlannedSubmission:'2026-10-06'}),row('ACTUAL-ASOF',{ActualSubmission:'2026-10-07'}),row('ACTUAL-TODAY',{ActualSubmission:'2026-10-08'})];
+const asOf=summarize(asOfRows,{now});
+assert.equal(asOf.totals.overdue,1);assert.equal(asOf.totals.submitted,1);assert.equal(asOf.checks.actualIssues,1);
+assert.match(asOf.issues.find(r=>r.id==='ACTUAL-TODAY').reason,/after the as-of date/);
+assert.equal(summarize(asOfRows,{now,reference:'today'}).totals.overdue,2);assert.equal(summarize(asOfRows,{now,reference:'today'}).totals.submitted,2);
+// Explicit day/month/year input is accepted without relying on locale guessing.
+for(const value of ['08/09/2026','8/9/2026 00:00:00','08/09/2026 23:59:59.123','2026-09-08T23:59:59+01:00'])assert.equal(parseDay(value).day,Date.UTC(2026,8,8),value);
+for(const value of ['31/02/2026','29/02/2026','31/04/2026','2026-04-31','08/09/2026 24:00:00','08/09/2026 12:60:00','08/09/2026 12:00:60','2026-09-08T24:00:00Z','2026-09-08T12:00:00+99:00',46000])assert.equal(parseDay(value).kind,'invalid',String(value));
+assert.equal(parseDay('29/02/2028 00:00:00').day,Date.UTC(2028,1,29));
+// Scope filters select a submission using a single delivered row, then retain all
+// evidence for that ID. Country uses the registration-first resolved value.
+const scopes=[
+  row('SCOPE',{Product:'A',CommercialRegion:'EU',BusinessUnit:'ID',SubStatus:'Planned',RegistrationID:'R-SCOPE',RegistrationStatus:'Planned',RegistrationCountry:'Ireland',FallbackCountry:'Germany'}),
+  row('SCOPE',{Product:'B',CommercialRegion:'APAC',BusinessUnit:'CMI',SubStatus:'Completed',ActualSubmission:'2026-10-05',RegistrationID:'R-SCOPE',RegistrationStatus:'Approved',RegistrationCountry:'France',FallbackCountry:'Germany'}),
+  row('FALLBACK',{Product:'A',CommercialRegion:'EU',FallbackCountry:'Germany'}),
+  row('PRIMARY',{Product:'A',CommercialRegion:'EU',RegistrationCountry:'Italy',FallbackCountry:'Germany'}),
+  row('',{Product:'A',CommercialRegion:'EU',FallbackCountry:'Germany'}),
+  row('',{Product:'A',CommercialRegion:'EU',FallbackCountry:'Germany'}),
+  row('',{Product:'B',CommercialRegion:'APAC',FallbackCountry:'Japan'})
+];
+const scoped=summarize(scopes,{now,product:'A',region:'EU',unit:'ID',stateFilters:{SubStatus:['Planned']},country:'france'});
+assert.equal(scoped.scopedRecords,1);assert.equal(scoped.totals.submitted,1);assert.equal(scoped.checks.registrationIssues,1);
+assert.deepEqual(scoped.evidenceCounts,{actual:1,state:0,registration:0});assert.equal(scoped.buckets[0].months[1].rows[0].evidenceSource,'actual');
+assert.equal(summarize(scopes,{now,product:'A',region:'APAC'}).scopedRecords,0);
+assert.equal(summarize(scopes,{now,product:'A',region:'EU',unit:'CMI'}).scopedRecords,0);
+assert.equal(summarize(scopes,{now,product:'A',stateFilters:{SubStatus:['Completed']}}).scopedRecords,0);
+const german=summarize(scopes,{now,country:'Germany'});assert.equal(german.scopedRecords,1);assert.equal(german.checks.missingIds,2);
+assert.notEqual(german.coverage.missingIds[0],german.coverage.missingIds[1]);
+assert.deepEqual(scoped.products,['A','B']);assert.deepEqual(scoped.regions,['APAC','EU']);assert.deepEqual(scoped.countries,['France','Germany','Ireland','Italy','Japan']);
+assert.deepEqual(scoped.scopeMapped,{Product:true,CommercialRegion:true});
+const scopeUnmapped=mapTable({columns:columns.slice(0,4),rows:[['UNMAPPED','ABO','2026-10-01',null]]});
+assert.deepEqual(scopeUnmapped.scopeMapped,{Product:false,CommercialRegion:false});
+assert.equal(summarize(scopeUnmapped.rows,{now,scopeMapped:scopeUnmapped.scopeMapped,product:'A',region:'EU',country:'Ireland',registrationMapped:scopeUnmapped.registrationMapped,fallbackCountryMapped:false}).totals.planned,1);
+assert.equal(summarize([row('PRODUCT-CONFLICT',{Product:'A'}),row('PRODUCT-CONFLICT',{Product:'B',PlannedSubmission:'2026-11-01'})],{now,product:'A'}).checks.planIssues,1);
+assert.equal(summarize([row('REGION-CONFLICT',{CommercialRegion:'EU'}),row('REGION-CONFLICT',{CommercialRegion:'APAC',Site:'ADJ'})],{now,region:'EU'}).checks.multipleSites,1);
+const evidenceSummary=summarize([
+  row('ACTUAL',{ActualSubmission:'2026-10-05',SubStatus:'Completed',RegistrationID:'REGA',RegistrationStatus:'Approved'}),
+  row('STATE',{SubStatus:'Completed',RegistrationID:'REGS',RegistrationStatus:'Approved'}),
+  row('REG',{RegistrationID:'REGR',RegistrationStatus:'Conditionally Approved'}),
+  row('RO',{ROStatus:'Health Authority Approved'}),
+  row('OUTSIDE',{PlannedSubmission:'2026-12-01',ActualSubmission:'2026-10-05'})
+],{now});
+assert.deepEqual(evidenceSummary.evidenceCounts,{actual:1,state:1,registration:1});assert.equal(evidenceSummary.totals.submitted,3);
+assert.equal(Object.values(evidenceSummary.evidenceCounts).reduce((a,b)=>a+b,0),evidenceSummary.totals.submitted);
 const big = Array.from({length:10000}, (_,i) => row('PERF-'+i, {Site: DEFAULT_SITES[i%6], ActualSubmission: i%2 ? null : '2026-10-01', PlannedSubmission: i%3 ? '2026-10-15' : '2026-11-15', SubStatus:i%2?'Cancelled':'Completed',ROStatus:i%3?'In Progress':'Archived',AppStatus:i%4?'Active':'Inactive'}));
 const start = performance.now(), stress = summarize(big.flatMap(r => [r,r,r]), {now});
 const ms = performance.now() - start;
 assert.equal(stress.totals.planned, 10000); assert.equal(stress.totals.submitted,5000); assert.equal(stress.totals.inProcess,5000);
 assert.ok(ms < 5000, `30k-row calculation unexpectedly slow: ${ms}ms`);
-const backlogStart=performance.now(),backlogStress=summarize(big.flatMap(r=>Array(3).fill({...r,PlannedSubmission:'2026-09-30'})),{now});
+const backlogStart=performance.now(),backlogStress=summarize(big.flatMap(r=>Array(3).fill({...r,PlannedSubmission:'2026-08-31'})),{now});
 assert.equal(backlogStress.backlog.count,5000);assert.equal(backlogStress.totals.planned,0);assert.equal(backlogStress.checks.outsideMonths,5000);
 assert.ok(performance.now()-backlogStart<5000);
 assert.equal(summarize(big.flatMap(r=>[r,r,r]),{now,stateFilters:{SubStatus:['Cancelled']}}).totals.inProcess,5000);

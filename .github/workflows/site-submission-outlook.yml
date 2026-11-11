@@ -13,13 +13,15 @@ concurrency:
   cancel-in-progress: false
 jobs:
   package:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     defaults:
       run:
         working-directory: site-submission-outlook
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -61,26 +63,117 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi/dist/*.pbiviz release/site-submission-outlook-1.5.0.0.pbiviz
+          cp powerbi/dist/*.pbiviz release/site-submission-outlook-1.6.0.0.pbiviz
           cp README.md release/SITE-SUBMISSION-OUTLOOK-INSTALL.md
           cp preview.html release/site-submission-outlook-demo.html
           cp site-submission-outlook-preview.png release/site-submission-outlook-preview.png
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf release/site-submission-outlook-source.tar.gz powerbi submissions.logic.mjs submissions.ui.mjs submissions.css visual.ts build.cjs demo.mjs preview-entry.mjs prepare-preview.cjs preview.html prepare-tests.cjs logic-test.mjs browser-test.cjs copy-test.cjs dispatch-test.mjs dispatch-browser-test.cjs dispatch-browser-check.cjs metrics-browser-test.cjs metrics-browser-check.cjs attention-test.mjs registration-test.mjs registration-browser-test.cjs registration-browser-check.cjs identity-test.mjs identity-browser-test.cjs identity-browser-check.cjs package-test.cjs serve.cjs README.md RELEASE-NOTES.md
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf release/site-submission-outlook-source.tar.gz powerbi submissions.logic.mjs submissions.ui.mjs submissions.css visual.ts build.cjs demo.mjs preview-entry.mjs prepare-preview.cjs preview.html prepare-tests.cjs logic-test.mjs browser-test.cjs copy-test.cjs dispatch-test.mjs dispatch-browser-test.cjs dispatch-browser-check.cjs metrics-browser-test.cjs metrics-browser-check.cjs attention-test.mjs registration-test.mjs registration-browser-test.cjs registration-browser-check.cjs identity-test.mjs identity-browser-test.cjs identity-browser-check.cjs v16-browser-check.cjs package-test.cjs serve.cjs README.md RELEASE-NOTES.md
           cd release
           sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: site-submission-outlook-1.5.0
+          name: site-submission-outlook-1.6.0
           path: site-submission-outlook/release/
-      - name: Publish separate Site Submission Outlook release
+      - name: Stage all assets in a draft, then publish the preview
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: site-submission-outlook-v1.5.0
+          RELEASE_TAG: site-submission-outlook-v1.6.0
         run: |
-          if gh release view "$RELEASE_TAG" --json isDraft,targetCommitish > release-state.json 2>/dev/null; then
-            node -e 'const fs=require("fs"),r=JSON.parse(fs.readFileSync("release-state.json"));if(!r.isDraft||r.targetCommitish!==process.env.GITHUB_SHA)throw Error("This version already exists. Bump the version instead of replacing it.")'
+          set -euo pipefail
+          # Retry transient GitHub failures. Draft discovery uses the complete
+          # releases list: the release-by-tag REST endpoint excludes drafts.
+          retry_gh() {
+            local attempt status output errors
+            output=$(mktemp)
+            errors=$(mktemp)
+            for attempt in 1 2 3 4 5; do
+              if gh "$@" >"$output" 2>"$errors"; then
+                cat "$output"
+                cat "$errors" >&2
+                rm -f "$output" "$errors"
+                return 0
+              else
+                status=$?
+              fi
+              if ! grep -Eiq 'HTTP 5[0-9][0-9]|status code: 5[0-9][0-9]|timeout|timed out|connection reset|unexpected EOF' "$errors" || [ "$attempt" = 5 ]; then
+                cat "$output"
+                cat "$errors" >&2
+                rm -f "$output" "$errors"
+                return "$status"
+              fi
+              cat "$errors" >&2
+              sleep "$((attempt * 5))"
+            done
+          }
+
+          tag="$RELEASE_TAG"
+          remote_tag=$(git ls-remote origin "refs/tags/$tag" "refs/tags/$tag^{}")
+          if [ -n "$remote_tag" ]; then
+            git fetch --no-tags origin "refs/tags/$tag"
+            tag_commit=$(git rev-parse 'FETCH_HEAD^{commit}')
+            if [ "$tag_commit" != "$GITHUB_SHA" ]; then
+              # A workflow-only repair may finish this unchanged version. The
+              # existing tag must be an ancestor and its actual visual sources
+              # must match; only this copied workflow source is excluded.
+              if ! git merge-base --is-ancestor "$tag_commit" "$GITHUB_SHA"; then
+                echo "Refusing to reuse $tag: $tag_commit is not an ancestor of $GITHUB_SHA." >&2
+                exit 1
+              fi
+              if ! git diff --quiet "$tag_commit" "$GITHUB_SHA" -- ':(top)site-submission-outlook' ':(top,exclude)site-submission-outlook/publish-workflow.yml'; then
+                echo "Site Submission Outlook sources changed after $tag. Use a new version; the existing tag will not move." >&2
+                exit 1
+              fi
+              echo "Reusing immutable $tag at $tag_commit; site-submission-outlook sources match $GITHUB_SHA."
+            fi
           else
-            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --draft --title "Site Submission Outlook 1.5.0" --notes-file RELEASE-NOTES.md
+            tag_commit="$GITHUB_SHA"
+            git tag "$tag" "$GITHUB_SHA"
+            git push origin "refs/tags/$tag"
           fi
-          gh release upload "$RELEASE_TAG" release/* --clobber
-          gh release edit "$RELEASE_TAG" --draft=false --prerelease --latest=false
+
+          find_release() {
+            retry_gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/releases?per_page=100" > releases-list.json || return $?
+            node -e 'const pages=require("./releases-list.json"),matches=pages.flat().filter(r=>r.tag_name===process.env.RELEASE_TAG);if(matches.length>1)throw Error("Multiple releases have this exact tag; refusing ambiguous changes.");if(matches.length){const r=matches[0];if(!r.draft)throw Error("This version is already public. Bump the version; published releases will not be modified.");if(!Number.isSafeInteger(r.id)||r.id<=0)throw Error("Invalid release ID");process.stdout.write(String(r.id));}'
+          }
+          release_id=$(find_release)
+          if [ -z "$release_id" ]; then
+            # If GitHub accepted creation but lost the response, rediscover the
+            # existing draft before treating a retry's duplicate error as failure.
+            if ! retry_gh release create "$tag" --verify-tag --target "$tag_commit" --draft --prerelease --title 'Site Submission Outlook 1.6.0' --notes-file RELEASE-NOTES.md; then
+              release_id=$(find_release)
+              if [ -z "$release_id" ]; then
+                echo "Draft creation failed and the complete release list contains no matching draft." >&2
+                exit 1
+              fi
+            fi
+            for probe in 1 2 3 4 5 6 7 8 9 10; do
+              release_id=$(find_release)
+              if [ -n "$release_id" ]; then break; fi
+              sleep 3
+            done
+            if [ -z "$release_id" ]; then
+              echo "The created draft could not be rediscovered; refusing asset changes." >&2
+              exit 1
+            fi
+          fi
+
+          assert_draft() {
+            retry_gh api "repos/$GITHUB_REPOSITORY/releases/$release_id" > release-state.json || return $?
+            RELEASE_ID="$release_id" RELEASE_COMMIT="$tag_commit" node -e 'const r=require("./release-state.json");if(r.id!==Number(process.env.RELEASE_ID)||r.tag_name!==process.env.RELEASE_TAG||!r.draft)throw Error("Release identity changed or became public; refusing to modify it.");if(r.target_commitish!==process.env.RELEASE_COMMIT)throw Error("Draft target differs from the immutable release tag commit.");'
+          }
+          # gh release upload/download resolve drafts through the CLI's GraphQL
+          # fallback. Guard each mutation with the stable numeric REST release ID.
+          for file in release/*; do
+            assert_draft
+            retry_gh release upload "$tag" "$file" --clobber
+          done
+          # Verify every staged asset byte-for-byte before exposing the preview.
+          check_dir=$(mktemp -d)
+          retry_gh release download "$tag" --dir "$check_dir" --clobber
+          for file in release/*; do
+            cmp "$file" "$check_dir/$(basename "$file")"
+          done
+          assert_draft
+          retry_gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" -F draft=false -F prerelease=true -f make_latest=false > published-release.json
+          RELEASE_ID="$release_id" node -e 'const r=require("./published-release.json");if(r.id!==Number(process.env.RELEASE_ID)||r.tag_name!==process.env.RELEASE_TAG||r.draft||!r.prerelease)throw Error("Published preview verification failed.");'
+

@@ -17,7 +17,7 @@ const counting = result => ({totals:result.totals, checks:result.checks, scopedR
   ids:monthly(result).map(record => [record.id,record.status,Boolean(record.overdue)]).sort()});
 
 assert.deepEqual(IDENTIFIER_FIELDS, [{role:'ROID',label:'RO ID'},{role:'AppID',label:'Application ID'}]);
-assert.deepEqual(ROLES.slice(-2), ['ROID','AppID']);
+assert.deepEqual(ROLES.slice(-4), ['ROID','AppID','Product','CommercialRegion']);
 assert.deepEqual(REQUIRED, ['SubID','Site','PlannedSubmission','ActualSubmission']);
 
 // A known Submission ID remains the count grain even when several submissions
@@ -126,7 +126,7 @@ assert.deepEqual(get(summarize([row('EXPLICIT',{ROID:'RO-IGNORED',AppID:'APP-USE
 // date/site checks and coverage outside the selected sites or month cohort.
 const routed = summarize([
   row('MONTH',{ROID:'RO-MONTH',AppID:'APP-MONTH'}),
-  row('BACKLOG',{ROID:'RO-BACKLOG',AppID:'APP-BACKLOG',PlannedSubmission:'2026-09-02'}),
+  row('BACKLOG',{ROID:'RO-BACKLOG',AppID:'APP-BACKLOG',PlannedSubmission:'2026-08-02'}),
   row('OUTSIDE-SITE',{ROID:'RO-OUTSIDE-SITE',AppID:'APP-OUTSIDE-SITE',Site:'OTHER'}),
   row('OUTSIDE-MONTH',{ROID:'RO-OUTSIDE-MONTH',AppID:'APP-OUTSIDE-MONTH',PlannedSubmission:'2026-12-02'}),
   row('MISSING-PLAN',{ROID:'RO-MISSING-PLAN',AppID:'APP-MISSING-PLAN',PlannedSubmission:null}),
