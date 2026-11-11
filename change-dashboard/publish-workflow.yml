@@ -34,7 +34,24 @@ jobs:
       - name: Install test browser
         timeout-minutes: 5
         working-directory: change-dashboard/powerbi
-        run: npx playwright install --with-deps chromium
+        run: |
+          set -euo pipefail
+          npx playwright install chromium
+          check_browser() {
+            node - <<'NODE'
+          const { chromium } = require('@playwright/test');
+          (async () => {
+            const browser = await chromium.launch({ headless: true, channel: 'chromium' });
+            await browser.close();
+          })().catch(error => { console.error(error); process.exitCode = 1; });
+          NODE
+          }
+          # Hosted Ubuntu already supplies the runtime libraries. Only contact
+          # OS package mirrors when the actual browser cannot launch without them.
+          if ! check_browser; then
+            npx playwright install-deps chromium
+            check_browser
+          fi
       - name: Rebuild and verify the committed offline demo
         run: |
           node prepare-preview.cjs
