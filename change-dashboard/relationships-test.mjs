@@ -13,6 +13,33 @@ assert.equal(focused.nodeKeys.size,6);assert.equal(focused.edgeKeys.size,5);
 for(const kind of ['application','ro','submission','registration'])assert(!focused.nodeKeys.has(graphKey(kind,{application:'APP-2',ro:'RO-2',submission:'SUB-2',registration:'REG-2'}[kind])),'shared parent must not highlight siblings');
 assert.equal(traceGraph(graph,'missing key').nodeKeys.size,0);
 
+// A marketing application can have ROs for several events in the same country.
+// Its aggregate links must not imply that every event owns every one of its ROs.
+const sharedApplication=buildGraph([
+ {ChangeID:'CHANGE',EventName:'EVENT-A',AppID:'APP-SHARED',ROID:'RO-A',SubID:'SUB-A',RegistrationID:'REG-A',Country:'France'},
+ {ChangeID:'CHANGE',EventName:'EVENT-B',AppID:'APP-SHARED',ROID:'RO-B',SubID:'SUB-B',RegistrationID:'REG-B',Country:'France'},
+ {ChangeID:'CHANGE',EventName:'EVENT-B',AppID:'APP-OTHER',ROID:'RO-OTHER',SubID:'SUB-OTHER',Country:'Germany'},
+ {ChangeID:'CHANGE',EventName:'EVENT-A',AppID:'APP-SHARED',ROID:'RO-A',SubID:'SUB-A',RegistrationID:'REG-A',Country:'France',CatalogNumber:'CAT-2'}
+]);
+const eventATrace=traceGraph(sharedApplication,graphKey('event','EVENT-A'));
+assert.deepEqual(sharedApplication.nodes.filter(n=>eventATrace.nodeKeys.has(n.key)).map(n=>n.id).sort(),['CHANGE','EVENT-A','APP-SHARED','RO-A','SUB-A','REG-A'].sort());
+assert.equal(eventATrace.edgeKeys.size,5);
+const roATrace=traceGraph(sharedApplication,graphKey('ro','RO-A'));
+assert(!roATrace.nodeKeys.has(graphKey('event','EVENT-B')),'RO selection cannot acquire another event through its shared application');
+const appTrace=traceGraph(sharedApplication,graphKey('application','APP-SHARED'));
+assert(appTrace.nodeKeys.has(graphKey('event','EVENT-A'))&&appTrace.nodeKeys.has(graphKey('event','EVENT-B')));
+assert(appTrace.nodeKeys.has(graphKey('ro','RO-A'))&&appTrace.nodeKeys.has(graphKey('ro','RO-B')));
+assert(!appTrace.nodeKeys.has(graphKey('application','APP-OTHER')),'shared event does not add sibling applications');
+assert.equal(sharedApplication.paths.length,3,'duplicate catalogue memberships reuse the same source path');
+const searchA=graphWindow(sharedApplication,{query:'EVENT-A'});assert.equal(searchA.nodes.length,6);assert.equal(searchA.edges.length,5);assert(!searchA.nodes.some(n=>n.id==='RO-B'));
+const splitPath=buildGraph([{EventName:'EVENT-A',AppID:'APP-SHARED'},{AppID:'APP-SHARED',ROID:'RO-B',SubID:'SUB-B'},{EventName:'EVENT-A',AppID:'APP-SHARED',ROID:'',SubID:'SUB-DISCONNECTED'}]);
+const splitTrace=traceGraph(splitPath,graphKey('event','EVENT-A'));assert.equal(splitTrace.nodeKeys.size,2);assert.equal(splitTrace.edgeKeys.size,1);assert(!splitTrace.nodeKeys.has(graphKey('submission','SUB-DISCONNECTED')),'missing RO breaks the source-row path');
+// Two search matches can retain both endpoints of an unrelated edge; the edge
+// itself must also have search-path provenance before it is drawn.
+const crossSearch=buildGraph([{EventName:'MATCH-E1',AppID:'APP-A',ROID:'RO-A'},{EventName:'MATCH-E2',AppID:'APP-B',ROID:'RO-B'},{EventName:'OTHER',AppID:'APP-A',ROID:'RO-B'}]);
+const crossWindow=graphWindow(crossSearch,{query:'MATCH'});assert(crossWindow.nodes.some(n=>n.id==='APP-A')&&crossWindow.nodes.some(n=>n.id==='RO-B'));assert(!crossWindow.edges.some(e=>e.source===graphKey('application','APP-A')&&e.target===graphKey('ro','RO-B')),'search cannot include unrelated edges merely because their endpoints are visible');
+console.log('PASS anchored paths: shared applications/events, reverse selection, same-country memberships, duplicate paths, missing intermediates and search edge provenance.');
+
 assert.equal(graphCountryKey('  UNITED   Kingdom\tOF   Great Britain '),'united kingdom of great britain');
 assert.equal(graphCountryKey(null),'');
 const france=traceCountries(graph,[' FRANCE ']);

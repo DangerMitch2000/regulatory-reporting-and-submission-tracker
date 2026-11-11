@@ -1,10 +1,21 @@
-# Change Dashboard 1.6.0
+# Change Dashboard 1.6.1
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.6.0/change-dashboard-1.6.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.6.0)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.6.1/change-dashboard-1.6.1.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.6.1)
 
 A separate daily worklist with **Event (default), Change ID and Application views**, preserving the Regulatory Tracker's existing **69 field roles** and adding one optional **Commercial region** role. Filter by manufacturing site, product, business unit, commercial region, country and record state. Select a summary count, an event/change/application, then a country to inspect the evidence and linked source records. The existing Tracker and Registration Coverage Map remain separate visuals.
 
-**Preview release:** package version **1.6.0.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
+**Preview release:** package version **1.6.1.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
+
+## Bug fixes in 1.6.1
+
+- Country rows stay beneath the sticky column titles, including dimmed rows and open header filters. The header remains clickable in Dark and Light themes.
+- Paging keeps Details on a record from the visible page. Selecting a row preserves list scroll position; keyboard focus stays on row, sort and paging controls.
+- Diagram and List controls retain focus, search caret and scroll position. Country selection reveals matching List records, including later pages.
+- Selecting or searching an event cannot highlight another event's ROs/submissions through a shared application. Highlighted paths must be delivered together in a contiguous source-row segment; a missing intermediate ID breaks that path.
+- Missing/conflicting country records remain visible for review and included in their applicable record counts. Conflicting lifecycle states retain all source evidence instead of silently dropping the inactive side.
+- Country filters combine case/whitespace variants and keep scope after a case-only refresh. Commercial-region scope preserves the unknown-country bucket. Inactive application-only records follow the inactive toggle. **Clear filters** also clears detail-table filters.
+
+Validation covers the real visual lifecycle and packaged browser runtime, long scrolling country lists, keyboard/touch interaction, shared-record paths, conflicting and missing source records, all three grouping modes, 10,000 submissions, 20,000 graph rows and 64,000 delivered rows. These synthetic-data checks validate visual behavior; they do not independently reconcile your private Velocity database or Power BI relationships.
 
 ## Install and map existing fields
 
@@ -125,6 +136,7 @@ npx playwright install chromium
 cd ..
 node logic-test.mjs
 node relationships-test.mjs
+node graph-browser-test.cjs
 npm --prefix powerbi run typecheck
 node host-browser-test.cjs
 node prepare-preview.cjs

@@ -171,3 +171,29 @@ for(const groupBy of ['change','event','application']){
 const countryConflict=analyze([countryBase,{...countryBase,Country:'France'}],eventOptions).submissions.get('COUNTRY-SUB');assert.equal(countryConflict.stage,'review');assert.equal(countryConflict.approved,false,'genuinely different countries remain a conflict');
 assert.equal(countryVariants[1].Country,' new   zealand ','normalization must not mutate delivered source values');
 console.log('PASS country canonicalization: equivalent case/spacing stays one country across all views, source rows and distinct counts retained, registration and RO-only matching, genuine conflicts preserved.');
+
+// Review records must remain traceable even when their country cannot be assigned.
+const reviewBase={...noChange,ChangeID:'REVIEW-CHANGE',EventName:'REVIEW-EVENT',AppID:'REVIEW-APP',ROID:'REVIEW-RO',SubID:'REVIEW-SUB',Country:'France',CommercialRegion:'EMEA'};
+for(const groupBy of ['event','application','change']){
+ const conflictingRows=[reviewBase,{...reviewBase,Country:'Germany',CatalogNumber:'SECOND'}],reviewModel=analyze(conflictingRows,{...options,groupBy}),review=derive(reviewModel,{view:'all'}).shown[0];
+ assert.equal(review.countries.length,1);assert.equal(review.countries[0].key,'?');assert.equal(review.scopedRows.length,2,'conflicting-country memberships remain visible for review');
+ assert.deepEqual(review.related.counts,{application:1,ro:1,submission:1,registration:0});assert.equal(review.countryForRow(conflictingRows[0]),'');assert.equal(review.countryForRow(conflictingRows[1]),'');
+ assert.equal(derive(reviewModel,{view:'all',region:'EMEA'}).shown[0].scopedRows.length,2);assert.equal(derive(reviewModel,{view:'all',country:'Country not recorded'}).shown[0].scopedRows.length,2);assert.equal(derive(reviewModel,{view:'all',country:'France'}).shown.length,0,'no conflicted filing is assigned arbitrarily to France');
+ assert.equal(derive(reviewModel,{view:'all'}).visibleCoverage.submission,1);assert.equal(review.countries[0].complete,false);
+ const roConflictRows=conflictingRows.map(r=>({...r,SubID:''})),roConflict=derive(analyze(roConflictRows,{...options,groupBy}),{view:'all'}).shown[0];
+ assert.equal(roConflict.countries.length,1,'one conflicted RO is one review bucket, not three phantom countries');assert.equal(roConflict.countries[0].key,'?');assert.equal(roConflict.scopedRows.length,2);assert.equal(roConflict.related.counts.ro,1);assert.equal(roConflict.done,0);
+ const blankMembership={...reviewBase,Country:'',CatalogNumber:'BLANK-COUNTRY'},resolvedRows=[reviewBase,blankMembership],resolved=derive(analyze(resolvedRows,{...options,groupBy}),{view:'all'}).shown[0];
+ assert.equal(resolved.scopedRows.length,2,'an incomplete duplicate membership retains the canonical filing country');assert.equal(resolved.countryForRow(blankMembership),'France');assert.equal(blankMembership.Country,'','source evidence is not overwritten');
+ const conflictStateRows=[reviewBase,{...reviewBase,SubStatus:'Withdrawn'},{...reviewBase,SubID:'INACTIVE-SUB',ROID:'INACTIVE-RO',SubStatus:'Withdrawn'}],conflictStateModel=analyze(conflictStateRows,{...options,groupBy}),stateReview=derive(conflictStateModel,{view:'all'}).shown[0];
+ assert.equal(stateReview.scopedRows.length,2,'retain both conflicting states but exclude the separate truly inactive filing');assert.deepEqual(new Set(stateReview.scopedRows.map(r=>r.SubStatus)),new Set(['In Progress','Withdrawn']));assert.equal(stateReview.related.counts.submission,1);assert.equal(stateReview.countries[0].submissions.find(s=>s.id==='REVIEW-SUB').stage,'review');
+ assert.equal(derive(conflictStateModel,{view:'all',includeInactive:true}).shown[0].scopedRows.length,3);
+}
+const inactiveAppOnly={EventName:'INACTIVE-EVENT',AppID:'INACTIVE-APP',AppStatus:'Inactive',Country:'France'},inactiveAppModel=analyze([inactiveAppOnly],eventOptions);
+assert.equal(derive(inactiveAppModel,{view:'all'}).shown.length,0,'inactive application-only rows do not create empty visible worklist records');
+const inactiveIncluded=derive(inactiveAppModel,{view:'all',includeInactive:true});assert.equal(inactiveIncluded.shown.length,1);assert.equal(inactiveIncluded.visibleCoverage.application,1);assert.equal(inactiveIncluded.shown[0].countries[0].candidates[0].stage,'excluded');assert.equal(inactiveIncluded.counts.dispatch,0);
+const appStateConflict=derive(analyze([inactiveAppOnly,{...inactiveAppOnly,AppStatus:'Active'}],eventOptions),{view:'all'});assert.equal(appStateConflict.shown[0].scopedRows.length,2,'conflicting application-only states are preserved for diagram review');
+const crossEventConflict=derive(analyze([reviewBase,{...reviewBase,EventName:'OTHER-REVIEW-EVENT',Country:'Germany'}],eventOptions),{view:'all'});
+for(const c of crossEventConflict.shown){assert.equal(c.total,1,'partial event rows cannot turn the canonical conflicted filing into an extra certain RO country');assert.equal(c.countries[0].key,'?');assert.deepEqual(c.countries[0].roIDs,['REVIEW-RO']);assert.equal(c.scopedRows.length,1);}
+console.log('PASS review visibility: conflicting/missing country source rows, canonical inactive/state conflicts, no duplicate RO-only countries, explicit inactive application-only scope.');
+const variantParents=analyze([reviewBase,{...reviewBase,EventName:'SECOND-EVENT',AppID:'SECOND-APP',ROID:'SECOND-RO',SubID:'SECOND-SUB',Country:'FRANCE'}],eventOptions);
+assert.deepEqual(variantParents.options.countries,['France'],'equivalent countries across separate records share a filter choice');assert.equal(derive(variantParents,{view:'all',country:'France'}).shown.length,2);assert.equal(derive(variantParents,{view:'all',country:' france '}).visibleCoverage.submission,2,'country filtering uses the same canonical comparison as country links');

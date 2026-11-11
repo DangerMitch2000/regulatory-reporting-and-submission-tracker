@@ -34,7 +34,7 @@ export function nodeState(node){
 }
 
 export function buildGraph(rows=[],{countryForRow=row=>row.Country}={}){
- const byKey=new Map(),edgeMap=new Map();
+ const byKey=new Map(),edgeMap=new Map(),pathMap=new Map();
  for(const row of rows||[]){
   if(!row||typeof row!=='object')continue;
   const country=text(countryForRow(row)),countryKey=graphCountryKey(country);
@@ -51,6 +51,14 @@ export function buildGraph(rows=[],{countryForRow=row=>row.Country}={}){
    const key=edgeKey(source,target);if(!edgeMap.has(key))edgeMap.set(key,{key,source,target,countryKeys:new Set()});
    edgeMap.get(key).countryKeys.add(countryKey);
   }
+  // Preserve contiguous source-row paths. Aggregate adjacent edges alone can
+  // falsely cross from Event A to Event B's RO through a shared application.
+  // A missing intermediate ID starts a new segment, never an inferred link.
+  let segment=[];
+  for(const key of [...keys,null]){
+   if(key){segment.push(key);continue;}
+   if(segment.length){const id=JSON.stringify(segment);if(!pathMap.has(id))pathMap.set(id,{nodeKeys:segment,edgeKeys:segment.slice(1).map((target,i)=>edgeMap.get(edgeKey(segment[i],target)).key)});segment=[];}
+  }
  }
  const nodes=[...byKey.values()].sort((a,b)=>a.column-b.column||order(a.id,b.id));
  for(const node of nodes){node.countries=[...node.countries].sort(order);node.countryKeys=[...node.countryKeys].sort(order);node.states=[...node.states].sort(order);}
@@ -60,23 +68,19 @@ export function buildGraph(rows=[],{countryForRow=row=>row.Country}={}){
  const incoming=new Map(nodes.map(n=>[n.key,[]])),outgoing=new Map(nodes.map(n=>[n.key,[]]));
  for(const edge of edges){incoming.get(edge.target).push(edge);outgoing.get(edge.source).push(edge);}
  const columns=GRAPH_KINDS.map(column=>({...column,nodes:nodes.filter(n=>n.kind===column.kind)}));
- return {nodes,edges,columns,byKey,incoming,outgoing};
+ const paths=[...pathMap.values()],pathsByNode=new Map(nodes.map(n=>[n.key,[]]));
+ for(const path of paths)for(const key of path.nodeKeys)pathsByNode.get(key).push(path);
+ return {nodes,edges,columns,byKey,incoming,outgoing,paths,pathsByNode};
 }
 
 function traceMany(graph,keys){
  const seeds=[...new Set(keys)].filter(key=>graph.byKey.has(key)),nodeKeys=new Set(seeds),edgeKeys=new Set();
- // Separate walks are essential: do not descend again from a shared ancestor.
- for(const [index,next]of [[graph.incoming,'source'],[graph.outgoing,'target']]){
-  const seen=new Set(seeds),queue=seeds.slice();
-  for(let i=0;i<queue.length;i++)for(const edge of index.get(queue[i])||[]){
-   edgeKeys.add(edge.key);nodeKeys.add(edge[next]);
-   if(!seen.has(edge[next])){seen.add(edge[next]);queue.push(edge[next]);}
-  }
- }
+ const paths=new Set(seeds.flatMap(key=>graph.pathsByNode.get(key)||[]));
+ for(const path of paths){for(const key of path.nodeKeys)nodeKeys.add(key);for(const key of path.edgeKeys)edgeKeys.add(key);}
  return {nodeKeys,edgeKeys};
 }
 
-/** Ancestors and descendants of one item, without sibling branches. */
+/** Upstream/downstream paths delivered with this item, without shared-record leakage. */
 export function traceGraph(graph,key){return traceMany(graph,[key]);}
 
 /** Highlight only associations delivered for these countries, including disconnected records. */
@@ -94,7 +98,7 @@ export function graphWindow(graph,{query='',selectedKey='',revealKeys=null,limit
  const limit=Number.isFinite(limitPerColumn)?Math.max(1,Math.min(200,Math.floor(limitPerColumn))):60;
  const q=text(query).toLocaleLowerCase('en');
  const matches=q?graph.nodes.filter(n=>n.id.toLocaleLowerCase('en').includes(q)):[];
- const allowed=q?traceMany(graph,matches.map(n=>n.key)).nodeKeys:null;
+ const matchedPaths=q?traceMany(graph,matches.map(n=>n.key)):null,allowed=matchedPaths?.nodeKeys||null;
  const columns=graph.columns.map(column=>{
   const all=allowed?column.nodes.filter(n=>allowed.has(n.key)):column.nodes;
   const pageCount=Math.max(1,Math.ceil(all.length/limit));
@@ -109,7 +113,7 @@ export function graphWindow(graph,{query='',selectedKey='',revealKeys=null,limit
   return {...column,nodes,total:all.length,page,pageCount,hidden:all.length-nodes.length};
  });
  const nodes=columns.flatMap(c=>c.nodes),shown=new Set(nodes.map(n=>n.key));
- const eligibleEdges=allowed?graph.edges.filter(e=>allowed.has(e.source)&&allowed.has(e.target)):graph.edges;
+ const eligibleEdges=matchedPaths?graph.edges.filter(e=>matchedPaths.edgeKeys.has(e.key)):graph.edges;
  const edges=eligibleEdges.filter(e=>shown.has(e.source)&&shown.has(e.target));
  const omittedEdgeCounts=new Map(nodes.map(n=>[n.key,{incoming:0,outgoing:0,total:0}]));
  for(const edge of eligibleEdges){

@@ -12,13 +12,38 @@ export function mountRelationships(host,rows,options={}){
  let state={mode:'diagram',query:'',selectedKey:'',pageByKind:{},legendOpen:false,focusCountry:null,...options.state},revealKeys=null;
  const ensure=()=>graph||(graph=buildGraph(rows,{countryForRow:options.countryForRow}));
  const selection=()=>state.selectedKey?ensure().byKey.get(state.selectedKey)||null:null;
+ function rememberFocus(){
+  const el=host.ownerDocument.activeElement;if(!host.contains(el))return null;
+  if(el.matches('[data-graph-search]'))return {type:'search',start:el.selectionStart,end:el.selectionEnd};
+  if(el.matches('[data-node]'))return {type:'node',value:el.dataset.node};
+  if(el.matches('[data-graph-mode]'))return {type:'mode',value:el.dataset.graphMode};
+  if(el.matches('[data-graph-page]'))return {type:'page',value:el.dataset.graphPage,label:el.getAttribute('aria-label')};
+  if(el.matches('[data-graph-action]'))return {type:'action',value:el.dataset.graphAction};
+  if(el.matches('.cd-graph-legend summary'))return {type:'legend'};
+  if(el.matches('.cd-graph-scroll'))return {type:'scroll'};
+  if(el.matches('[data-related-kind]'))return {type:'column',value:el.dataset.relatedKind};
+  return null;
+ }
+ function restoreFocus(saved){
+  if(!saved)return;const find=(selector,predicate)=>[...host.querySelectorAll(selector)].find(predicate);let el;
+  if(saved.type==='search')el=host.querySelector('[data-graph-search]');
+  if(saved.type==='node')el=find('[data-node]',n=>n.dataset.node===saved.value);
+  if(saved.type==='mode')el=find('[data-graph-mode]',n=>n.dataset.graphMode===saved.value);
+  if(saved.type==='page')el=find('[data-graph-page]',n=>!n.disabled&&n.dataset.graphPage===saved.value&&n.getAttribute('aria-label')===saved.label)||find('[data-graph-page]',n=>!n.disabled&&n.dataset.graphPage===saved.value)||find('[data-related-kind]',n=>n.dataset.relatedKind===saved.value);
+  if(saved.type==='action')el=find('[data-graph-action]',n=>n.dataset.graphAction===saved.value)||host.querySelector('[data-graph-search]');
+  if(saved.type==='legend')el=host.querySelector('.cd-graph-legend summary');
+  if(saved.type==='scroll')el=host.querySelector('.cd-graph-scroll');
+  if(saved.type==='column')el=find('[data-related-kind]',n=>n.dataset.relatedKind===saved.value);
+  el?.focus({preventScroll:true});if(saved.type==='search'&&el&&Number.isInteger(saved.start))el.setSelectionRange(saved.start,saved.end);
+ }
  function countryInfo(){return state.focusCountry?'<div class="cd-graph-selection cd-graph-country"><div><strong>Country: '+esc(state.focusCountry.label)+'</strong><span>'+(traceCountries(ensure(),[state.focusCountry.key]).nodeKeys.size?'Matching records and links highlighted; counts are unchanged.':'No linked records delivered for this country.')+'</span></div><button type="button" data-graph-action="clear">Clear selection</button></div>':'';}
  function selectedInfo(){const n=graph.byKey.get(state.selectedKey),s=n?nodeState(n):null;return n?`<div class="cd-graph-selection"><div><strong>${esc(n.id)}</strong><span><b class="cd-state-label" style="${stateStyle(s)}"><i class="cd-state-dot" aria-hidden="true"></i>${esc(stateDescription(s))}</b> · ${esc(n.countries?.join(' · ')||'Country not recorded')}</span></div><button type="button" data-graph-action="copy">Copy ID</button><button type="button" data-graph-action="clear">Clear selection</button></div>`:'<div class="cd-graph-hint">Select an item to highlight its upstream and downstream links.</div>';}
  function legend(columns){return '<details class="cd-graph-legend" '+(state.legendOpen?'open':'')+'><summary>State colours</summary><div class="cd-state-legend-grid">'+columns.filter(c=>c.nodes.length).map(c=>{const states=[...new Map(c.nodes.map(n=>{const s=nodeState(n);return [s.key,s];})).values()];return '<section><strong>'+esc(c.label)+'</strong>'+states.map(s=>'<span class="cd-state-label" style="'+stateStyle(s)+'"><i class="cd-state-dot" aria-hidden="true"></i>'+esc(s.label)+'</span>').join('')+'</section>';}).join('')+'</div><p>States of the items currently shown. Each item uses its own source state; colour does not infer completion. The outline marks your selection.</p></details>';}
  function render(){
   if(destroyed||!details.open)return;ensure();
   if(state.selectedKey&&!graph.byKey.has(state.selectedKey))state.selectedKey='';
-  const previous=host.querySelector('.cd-graph-scroll'),scroll={left:previous?.scrollLeft||0,top:previous?.scrollTop||0};
+  const previous=host.querySelector('.cd-graph-scroll'),scroll={left:previous?.scrollLeft||0,top:previous?.scrollTop||0},focus=rememberFocus();
+  const listScroll=new Map([...host.querySelectorAll('.cd-linked-ids')].map(el=>[el.closest('[data-related-kind]').dataset.relatedKind,{top:el.scrollTop,left:el.scrollLeft}]));
   const trace=state.selectedKey?traceGraph(graph,state.selectedKey):state.focusCountry?traceCountries(graph,[state.focusCountry.key]):null;
   const win=graphWindow(graph,{query:state.query,limitPerColumn:LIMIT,pageByKind:state.pageByKind,revealKeys});
   if(revealKeys){state.pageByKind=Object.fromEntries(win.columns.map(c=>[c.kind,c.page]));revealKeys=null;}
@@ -35,6 +60,8 @@ export function mountRelationships(host,rows,options={}){
   const list=`<div class="cd-related-grid">${columns.map(c=>`<section data-related-kind="${c.kind}" tabindex="-1"><h3>${esc(c.label)} (${c.total??c.nodes.length})</h3><div class="cd-linked-ids">${c.nodes.length?c.nodes.map(n=>`<div data-active="${!trace||trace.nodeKeys.has(n.key)}">${nodeButton(n,state.selectedKey)}</div>`).join(''):(state.query?'No matching items':'Not recorded')}</div></section>`).join('')}</div>`;
   host.innerHTML=`<div class="cd-graph-toolbar"><div class="cd-graph-modes"><button type="button" data-graph-mode="diagram" aria-pressed="${state.mode==='diagram'}">Diagram</button><button type="button" data-graph-mode="list" aria-pressed="${state.mode==='list'}">List</button></div><label>Find ID<input type="search" data-graph-search value="${esc(state.query)}" placeholder="Application, RO, submission…"></label>${state.query?'<button type="button" data-graph-action="reset-search">Clear search</button>':''}</div>${state.focusCountry?countryInfo():selectedInfo()}${legend(columns)}${state.mode==='list'?list:diagram}<div class="cd-graph-pages">${pages}</div><p class="cd-graph-note">Lines show adjacent record IDs delivered together. Missing links stay unconnected.${eligibleEdges.length>edges.length?' Showing '+edges.length+' of '+eligibleEdges.length+' visible links; search for an ID to narrow the diagram.':''}${win.hiddenNodeCount?' Some items are on other column pages; + marks additional links.':''}${state.query?' Search includes matching records and their linked paths.':''}</p><div role="status" class="cd-graph-feedback"></div>`;
   const now=host.querySelector('.cd-graph-scroll');if(now){now.scrollLeft=scroll.left;now.scrollTop=scroll.top;}
+  for(const el of host.querySelectorAll('.cd-linked-ids')){const previous=listScroll.get(el.closest('[data-related-kind]').dataset.relatedKind);if(previous){el.scrollTop=previous.top;el.scrollLeft=previous.left;}}
+  restoreFocus(focus);
  }
  async function click(event){
   const node=event.target.closest('[data-node]'),mode=event.target.closest('[data-graph-mode]'),page=event.target.closest('[data-graph-page]'),action=event.target.closest('[data-graph-action]');
@@ -52,5 +79,5 @@ export function mountRelationships(host,rows,options={}){
  function legendToggle(event){if(event.target.matches('.cd-graph-legend'))state.legendOpen=event.target.open;}
  host.addEventListener('click',click);host.addEventListener('input',input);host.addEventListener('toggle',legendToggle,true);details.addEventListener('toggle',toggle);render();
  return {getState:()=>({...state,pageByKind:{...state.pageByKind}}),getSelection:selection,resize:render,
-  selectCountry(value,label){state.focusCountry={key:graphCountryKey(value),label};state.selectedKey='';state.query='';state.pageByKind={};ensure();revealKeys=traceCountries(graph,[state.focusCountry.key]).nodeKeys;details.open=true;render();const first=[...host.querySelectorAll('.cd-graph-node[data-active=true]')].find(n=>n.closest('[data-related-kind]').dataset.relatedKind==='application')||host.querySelector('.cd-graph-node[data-active=true]');const scroll=host.querySelector('.cd-graph-scroll');if(first&&scroll)scroll.scrollTop=Math.max(0,first.offsetTop-48);},showKind(kind){details.open=true;render();const el=host.querySelector('[data-related-kind="'+kind+'"]');el?.scrollIntoView({block:'nearest',inline:'nearest'});el?.focus({preventScroll:true});},destroy(){destroyed=true;host.removeEventListener('click',click);host.removeEventListener('input',input);host.removeEventListener('toggle',legendToggle,true);details.removeEventListener('toggle',toggle);}};
+  selectCountry(value,label){state.focusCountry={key:graphCountryKey(value),label};state.selectedKey='';state.query='';state.pageByKind={};ensure();revealKeys=traceCountries(graph,[state.focusCountry.key]).nodeKeys;details.open=true;render();const first=[...host.querySelectorAll('.cd-graph-node[data-active=true]')].find(n=>n.closest('[data-related-kind]').dataset.relatedKind==='application')||host.querySelector('.cd-graph-node[data-active=true]');const scroll=host.querySelector('.cd-graph-scroll');if(first&&scroll)scroll.scrollTop=Math.max(0,first.offsetTop-48);for(const box of host.querySelectorAll('.cd-linked-ids')){const active=box.querySelector('[data-active=true]');if(active)box.scrollTop=Math.max(0,box.scrollTop+active.getBoundingClientRect().top-box.getBoundingClientRect().top);}},showKind(kind){details.open=true;render();const el=host.querySelector('[data-related-kind="'+kind+'"]');el?.scrollIntoView({block:'nearest',inline:'nearest'});el?.focus({preventScroll:true});},destroy(){destroyed=true;host.removeEventListener('click',click);host.removeEventListener('input',input);host.removeEventListener('toggle',legendToggle,true);details.removeEventListener('toggle',toggle);}};
 }

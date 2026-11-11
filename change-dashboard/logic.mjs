@@ -90,11 +90,11 @@ function roWithoutSubmission(id,rows,model){
  if(ro.conflict||app.conflict||country.conflict||!country.value||vals(rows,'AppID').length!==1)issues.push('RO country, application link or state needs review');
  const excluded=inactive.has(ro.value)||inactive.has(app.value),approved=!excluded&&!issues.length&&approvedStates.has(ro.value);
  if(!approved&&!excluded)issues.push('No linked submission delivered for RO '+id);
- return {id,approved,excluded,sent:approved,stage:excluded?'excluded':approved?'complete':'review',action:excluded?'Inactive / withdrawn RO':approved?'Country approval evidence recorded':'Review RO without a linked submission',evidence:approved?'RO state: '+ro.label:'RO '+id,issues,overdue:false,daysLate:0,due:null};
+ return {id,country:country.value,countryLabel:country.label,approved,excluded,sent:approved,stage:excluded?'excluded':approved?'complete':'review',action:excluded?'Inactive / withdrawn RO':approved?'Country approval evidence recorded':'Review RO without a linked submission',evidence:approved?'RO state: '+ro.label:'RO '+id,issues,overdue:false,daysLate:0,due:null};
 }
 function finishCountry(c,change,model){
  const allSubs=[...c.submissions,...c.roItems];let usable=allSubs.filter(s=>!s.excluded);
- c.excluded=allSubs.length>0&&!usable.length;
+ c.excluded=allSubs.length>0?!usable.length:c.rows.length>0&&c.rows.every(r=>model.rowExcluded.get(r));
  c.pending=c.requirements.some(e=>e.hasExpected&&!e.returned&&!e.issue);
  if(c.pending)usable=usable.filter(s=>!c.roItems.includes(s)||s.stage!=='review'||s.issues.some(i=>!i.startsWith('No linked submission delivered')));
  for(const e of c.requirements)if(e.issue)c.issues.push(e.issue);
@@ -116,14 +116,27 @@ export function analyze(rows,options={}){
  const groupBy=GROUPINGS[options.groupBy]?options.groupBy:'change',grouping=GROUPINGS[groupBy];
  const asOf=options.asOf??previousDay(),mapped=new Set(options.mappedFields||roles),model={asOf,mapped,rows,groupBy,grouping,missing:[],changes:[],submissions:new Map(),registrations:group(rows,'RegistrationID')};
  for(const [id,rs]of group(rows,'SubID'))model.submissions.set(id,submission(id,rs,model));
- const roGroups=group(rows,'ROID');
+ const roGroups=group(rows,'ROID'),roRecords=new Map([...roGroups].map(([id,rs])=>[id,roWithoutSubmission(id,rs,model)])),appStates=new Map([...group(rows,'AppID')].map(([id,rs])=>[id,scalar(rs,'AppStatus')]));
+ // Exclusion belongs to the canonical record. Filtering individual membership
+ // rows would hide the inactive side of a conflicting state from the diagram.
+ model.rowExcluded=new Map(rows.map(r=>{const sub=model.submissions.get(text(r.SubID)),ro=roRecords.get(text(r.ROID)),app=appStates.get(text(r.AppID));return [r,sub?sub.excluded:ro?ro.excluded:inactive.has(app?app.value:norm(r.AppStatus))];}));
  for(const [id,rs]of group(rows,grouping.field)){
   const status=scalar(rs,grouping.state),change={id,groupBy,grouping,rows:rs,status:status.label,statusKey:status.value,closed:['completed','closed','canceled','cancelled','closed state','cancelled state','inactive state','inactive','archived','withdrawn'].includes(status.value),issues:[],countries:[],project:vals(rs,'ChangeProjectID'),qms:vals(rs,groupBy==='change'?'ChangeQMS':'EventQMS'),products:vals(rs,'Product'),sites:unique([...vals(rs,'Manufacturer'),...vals(rs,'RegistrationManufacturingSite')]),units:vals(rs,'BusinessUnit'),implementation:dateField(rs,'ChangePlannedImplementation',asOf),created:dateField(rs,grouping.created,asOf)};
   if(status.conflict)change.issues.push('Conflicting '+grouping.singular+' states');
-  const countries=new Map(),get=name=>{const k=countryNorm(name)||'?';if(!countries.has(k))countries.set(k,makeCountry(name));return countries.get(k);};
-  for(const [sid,subRows] of group(rs,'SubID')){const sub=model.submissions.get(sid),c=get(sub.country?sub.countryLabel:'');c.submissions.push(sub);c.rows.push(...subRows);}
-  for(const [rid,rr]of group(rs,'ROID')){const country=countryScalar(rr,'Country'),c=get(country.conflict?'':country.label==='Not recorded'?'':country.label);c.roIDs.push(rid);if(!vals(rr,'SubID').length)c.roItems.push(roWithoutSubmission(rid,roGroups.get(rid),model));}
-  for(const r of rs)if(!text(r.SubID)){const name=groupBy==='change'?text(r.ExpectedResponseCountry)||text(r.AssessmentCountry)||text(r.Country)||text(r.RegistrationCountry):text(r.Country);get(name).rows.push(r);}
+  const countries=new Map(),countryNamesByRow=new Map(),get=name=>{const k=countryNorm(name)||'?';if(!countries.has(k))countries.set(k,makeCountry(name));return countries.get(k);},assign=(r,c)=>{c.rows.push(r);countryNamesByRow.set(r,c.key==='?'?'':c.name);};
+  for(const [sid,subRows] of group(rs,'SubID')){const sub=model.submissions.get(sid),c=get(sub.country?sub.countryLabel:'');c.submissions.push(sub);for(const r of subRows)assign(r,c);}
+  for(const [rid,rr]of group(rs,'ROID')){
+   const ro=roRecords.get(rid),subIDs=vals(rr,'SubID');
+   if(!subIDs.length){const c=get(ro.country?ro.countryLabel:'');c.roIDs.push(rid);c.roItems.push(ro);for(const r of rr)assign(r,c);continue;}
+   // The RO follows its canonical filing country. Re-reading only this parent's
+   // partial membership rows could create a second, falsely certain country.
+   const buckets=new Map();for(const id of subIDs){const sub=model.submissions.get(id),c=get(sub.country?sub.countryLabel:'');buckets.set(c.key,c);if(!c.roIDs.includes(rid))c.roIDs.push(rid);}
+   for(const r of rr)if(!text(r.SubID)){const c=buckets.size===1?[...buckets.values()][0]:buckets.get(countryNorm(r.Country))||get('');if(!c.roIDs.includes(rid))c.roIDs.push(rid);assign(r,c);}
+  }
+  for(const r of rs)if(!text(r.SubID)&&!text(r.ROID)){const name=text(r.Country)||(groupBy==='change'?(text(r.ExpectedResponseCountry)||text(r.AssessmentCountry)||text(r.RegistrationCountry)):'');assign(r,get(name));}
+  // Keep the original rows intact for source Details while exposing the same
+  // country assignment to scoping and the interactive relationship diagram.
+  change.countryForRow=r=>countryNamesByRow.get(r)??'';
   for(const e0 of responses.resolve(rs)){const e={...e0,countryKey:countryNorm(e0.countryKey)};if(groupBy!=='change'&&!countries.has(e.countryKey))continue;const responseCountries=unique(e.responses.map(r=>countryNorm(r.AssessmentCountry)).filter(Boolean));if(e.returned&&responseCountries.some(n=>n!==e.countryKey)){e.issue='Response country conflicts with expected country';e.returned=false;}const c=get(e.countryKey?e.country:'');c.requirements.push(e);}
   if(!countries.size)get('');
   const expectedCount=scalar(rs,'ChangeResponseCount');const n=Number(expectedCount.value);
@@ -135,7 +148,8 @@ export function analyze(rows,options={}){
  model.missing=rows.filter(r=>!text(r[grouping.field]));
  model.coverage=recordCounts(rows);
  model.missingApplications=vals(model.missing,'AppID').length;
- model.options={sites:unique(model.changes.flatMap(c=>c.sites)).sort(),products:unique(model.changes.flatMap(c=>c.products)).sort(),units:unique(model.changes.flatMap(c=>c.units)).sort(),regions:unique(model.changes.flatMap(c=>c.rows.map(regionValue))).sort(),countries:unique(model.changes.flatMap(c=>c.countries.map(x=>x.name))).sort(),statuses:unique(model.changes.map(c=>c.status)).sort()};return model;
+ const countryOptions=new Map();for(const c of model.changes)for(const country of c.countries)if(!countryOptions.has(country.key))countryOptions.set(country.key,country.name);
+ model.options={sites:unique(model.changes.flatMap(c=>c.sites)).sort(),products:unique(model.changes.flatMap(c=>c.products)).sort(),units:unique(model.changes.flatMap(c=>c.units)).sort(),regions:unique(model.changes.flatMap(c=>c.rows.map(regionValue))).sort(),countries:[...countryOptions.values()].sort(),statuses:unique(model.changes.map(c=>c.status)).sort()};return model;
 }
 export const queueDefinitions=[['assessment','Awaiting assessment'],['dispatch','Overdue internal dispatch'],['submission','Overdue authority submission'],['approval','Awaiting approval']];
 export const mainColumns=[
@@ -153,17 +167,17 @@ function regionCountry(country,change,model,region){
  const subIDs=new Set(vals(rows,'SubID')),roIDs=new Set(vals(rows,'ROID'));
  // Keep canonical evidence from all delivered rows. Region selects memberships,
  // not which state/date values are allowed to resolve the record.
- return finishCountry({...makeCountry(country.name),rows,requirements:country.requirements,submissions:country.submissions.filter(s=>subIDs.has(s.id)),roItems:country.roItems.filter(r=>roIDs.has(r.id)),roIDs:[...roIDs]},change,model);
+ return finishCountry({...makeCountry(country.name),key:country.key,rows,requirements:country.requirements,submissions:country.submissions.filter(s=>subIDs.has(s.id)),roItems:country.roItems.filter(r=>roIDs.has(r.id)),roIDs:[...roIDs]},change,model);
 }
 function scopedRecordRows(change,countries,model,state){
  const countryKeys=new Set(countries.map(x=>x.key));
- return change.rows.filter(r=>(state.region==='all'||regionValue(r)===state.region)&&countryKeys.has(countryNorm(r.Country)||(model.groupBy==='change'?countryNorm(r.ExpectedResponseCountry)||countryNorm(r.AssessmentCountry)||countryNorm(r.RegistrationCountry):'')||'?')&&(state.includeInactive||![r.SubStatus,r.ROStatus,r.AppStatus].some(s=>inactive.has(norm(s)))));
+ return change.rows.filter(r=>(state.region==='all'||regionValue(r)===state.region)&&countryKeys.has(countryNorm(change.countryForRow(r))||'?')&&(state.includeInactive||!model.rowExcluded.get(r)));
 }
 export function derive(model,state={}){
  state={...DEFAULT_STATE,...state};
  const matched=model.changes.filter(c=>(state.status==='all'||c.status===state.status)&&c.rows.some(r=>(state.site==='all'||[text(r.Manufacturer),text(r.RegistrationManufacturingSite)].includes(state.site))&&(state.product==='all'||text(r.Product)===state.product)&&(state.unit==='all'||text(r.BusinessUnit)===state.unit)));
  const changes=filterRows(matched.map(c=>{
-  const countries=c.countries.map(x=>regionCountry(x,c,model,state.region)).filter(x=>x&&(state.country==='all'||x.name===state.country)&&(state.includeInactive||!x.excluded));
+  const countries=c.countries.map(x=>regionCountry(x,c,model,state.region)).filter(x=>x&&(state.country==='all'||countryNorm(x.name)===countryNorm(state.country))&&(state.includeInactive||!x.excluded));
   const eligible=!c.closed||state.includeInactive,flags=Object.fromEntries(queueDefinitions.map(([k])=>[k,eligible&&countries.some(x=>queueMatch(x,k))]));
   const candidates=countries.flatMap(x=>x.candidates.map(a=>({...a,country:x.name,countryKey:x.key}))).filter(a=>state.queue==='all'||a.stage===state.queue);
   candidates.sort((a,b)=>dueOrder(a,b,state.sort==='due'?state.direction:'desc'));

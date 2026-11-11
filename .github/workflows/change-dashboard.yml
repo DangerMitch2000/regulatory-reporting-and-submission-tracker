@@ -45,6 +45,7 @@ jobs:
         run: |
           node logic-test.mjs
           node relationships-test.mjs
+          node graph-browser-test.cjs
           npm --prefix powerbi run typecheck
           node host-browser-test.cjs
       - name: Build official Power BI package
@@ -56,7 +57,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release
-          cp powerbi/dist/*.pbiviz release/change-dashboard-1.6.0.0.pbiviz
+          cp powerbi/dist/*.pbiviz release/change-dashboard-1.6.1.0.pbiviz
           cp README.md release/CHANGE-DASHBOARD-INSTALL.md
           cp RELEASE-NOTES.md release/RELEASE-NOTES.md
           cp THIRD-PARTY-NOTICES.md release/THIRD-PARTY-NOTICES.md
@@ -65,12 +66,12 @@ jobs:
           cp .test-artifacts/preview-relationships.png release/change-dashboard-relationships.png
           cp .test-artifacts/preview-light.png release/change-dashboard-light.png
           cp .test-artifacts/preview-compact.png release/change-dashboard-compact.png
-          tar --exclude=./release --exclude=./node_modules --exclude=./powerbi/node_modules --exclude=./powerbi/.tmp --exclude=./powerbi/dist --exclude=./.test-artifacts --exclude=./.git -czf release/change-dashboard-1.6.0-source.tar.gz .
+          tar --exclude=./release --exclude=./node_modules --exclude=./powerbi/node_modules --exclude=./powerbi/.tmp --exclude=./powerbi/dist --exclude=./.test-artifacts --exclude=./.git -czf release/change-dashboard-1.6.1-source.tar.gz .
           cd release
           find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: change-dashboard-1.6.0
+          name: change-dashboard-1.6.1
           path: change-dashboard/release/
       - name: Preserve verified browser previews
         uses: actions/upload-artifact@v4
@@ -82,7 +83,7 @@ jobs:
       - name: Stage all assets in a draft, then publish the preview
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: change-dashboard-v1.6.0
+          RELEASE_TAG: change-dashboard-v1.6.1
         run: |
           set -euo pipefail
           # Retry transient GitHub failures. Draft discovery uses the complete
@@ -144,7 +145,7 @@ jobs:
           if [ -z "$release_id" ]; then
             # If GitHub accepted creation but lost the response, rediscover the
             # existing draft before treating a retry's duplicate error as failure.
-            if ! retry_gh release create "$tag" --verify-tag --target "$tag_commit" --draft --prerelease --title 'Change Dashboard 1.6.0' --notes-file RELEASE-NOTES.md; then
+            if ! retry_gh release create "$tag" --verify-tag --target "$tag_commit" --draft --prerelease --title 'Change Dashboard 1.6.1' --notes-file RELEASE-NOTES.md; then
               release_id=$(find_release)
               if [ -z "$release_id" ]; then
                 echo "Draft creation failed and the complete release list contains no matching draft." >&2

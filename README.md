@@ -4,15 +4,15 @@
 
 Released **23 Oct 2026** · Power BI package **1.18.1.0**. This is an uncertified preview; public demo records are fictional.
 
-## Change Dashboard 1.6.0 — linked countries and record diagram
+## Change Dashboard 1.6.1 — scrolling, selection and data-review fixes
 
-[Download the Power BI dashboard](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.6.0/change-dashboard-1.6.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Field mappings and counting rules](change-dashboard/README.md)
+[Download the Power BI dashboard](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.6.1/change-dashboard-1.6.1.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Field mappings, bug fixes and validation](change-dashboard/README.md)
 
-The country list and **Related items** diagram now work together. Select a country to highlight its records and connecting lines; select an item to highlight its countries and inspect the matching evidence. Items shared by several countries keep those choices visible. Countries hidden by table filters can be revealed explicitly, while dashboard scope and counts remain unchanged.
+This bug-fix update keeps scrolling country rows behind their headings, preserves list position and keyboard focus, and keeps Details aligned with the visible worklist page. Diagram highlights follow the selected record's delivered paths, without crossing into unrelated work through a shared application.
 
-The diagram retains the Regulatory Tracker state colours, search, Diagram/List switching, copied IDs and paging. Commercial region filtering, implementation dates, worklist counts and completion rules remain available.
+Missing/conflicting-country records remain visible for review, lifecycle-state conflicts retain their evidence, and country/region filters handle missing values and equivalent names consistently. The linked country diagram, Tracker state colours, commercial-region filters and implementation dates remain available.
 
-Import and replace the existing Change Dashboard: its identity and all **70 existing mappings are retained**, with **no new fields required**. [Read the guide](change-dashboard/README.md) for linked selection and source relationship requirements. This is an uncertified preview, with fictional demo data.
+Import and replace the existing Change Dashboard: its identity and all **70 field mappings are retained**, with **no new fields required**. Browser and packaged-runtime validation cover scrolling, selection, filters, lifecycle and large synthetic datasets. This is an uncertified preview; private Velocity data has not been independently reconciled.
 
 ## Registration Coverage Map 1.0.0
 
