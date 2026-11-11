@@ -1,3 +1,4 @@
+import trackerStates from './tracker/states.js';
 /** Delivered associations only. A line is never inferred from parallel ID lists. */
 export const GRAPH_KINDS=Object.freeze([
  {kind:'change',field:'ChangeID',label:'Change IDs',state:'ChangeStatus',index:0},
@@ -12,6 +13,23 @@ const natural=new Intl.Collator('en',{numeric:true,sensitivity:'base'});
 const order=(a,b)=>natural.compare(a,b)||(a<b?-1:a>b?1:0);
 export const graphKey=(kind,id)=>JSON.stringify([kind,text(id)]);
 const edgeKey=(source,target)=>JSON.stringify([source,target]);
+
+/** Each node uses only its own delivered lifecycle state; colours never imply completion. */
+export function nodeState(node){
+ const values=[...new Set((node?.states||[]).map(text).filter(Boolean))].sort(order);
+ const normalize=value=>text(value).replace(/\s+/g,' ').toLowerCase();
+ const keys=[...new Set(values.map(normalize))];
+ const key=keys.length>1?'conflicting values':keys[0]||'not recorded';
+ const field=GRAPH_KINDS.find(column=>column.kind===node?.kind)?.state;
+ const canonical=(trackerStates.catalogs[field]||[]).find(value=>normalize(value)===key);
+ const label=keys.length>1?'Conflicting states':key==='not recorded'?'Not recorded':canonical||values[0];
+ const validColour=value=>typeof value==='string'&&/^#[0-9a-f]{6}$/i.test(value);
+ const known=Object.hasOwn(trackerStates.colours,key)&&validColour(trackerStates.colours[key]);
+ const colour=known?trackerStates.colours[key]:trackerStates.colours['not recorded'];
+ const dark=validColour(trackerStates.dark[colour])?trackerStates.dark[colour]:colour;
+ const light=validColour(trackerStates.light[colour])?trackerStates.light[colour]:colour;
+ return {key,label,colour,dark,light,values,known};
+}
 
 export function buildGraph(rows=[]){
  const byKey=new Map(),edgeMap=new Map();

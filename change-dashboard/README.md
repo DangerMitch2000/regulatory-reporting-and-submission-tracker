@@ -1,10 +1,10 @@
-# Change Dashboard 1.4.0
+# Change Dashboard 1.5.0
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.4.0/change-dashboard-1.4.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.4.0)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.5.0/change-dashboard-1.5.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.5.0)
 
 A separate daily worklist with **Event (default), Change ID and Application views**, preserving the Regulatory Tracker's existing **69 field roles** and adding one optional **Commercial region** role. Filter by manufacturing site, product, business unit, commercial region, country and record state. Select a summary count, an event/change/application, then a country to inspect the evidence and linked source records. The existing Tracker and Registration Coverage Map remain separate visuals.
 
-**Preview release:** package version **1.4.0.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
+**Preview release:** package version **1.5.0.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
 
 ## Install and map existing fields
 
@@ -46,6 +46,8 @@ The **Awaiting assessment summary card remains hidden**. Existing assessment fie
 Open **Related items**, or click an App/RO/Sub/Reg count in the worklist, to see **Change ID → Event → Application → RO → Submission → Registration** as connected columns.
 
 - Lines connect adjacent identifiers supplied together in the same scoped Power BI row. Repeated product/catalog rows produce one node and one line. Independent lists are never paired by position, and missing intermediate IDs do not produce a guessed shortcut. Disconnected records stay visible. Correct source relationships are still required.
+- **State colours** use the existing Regulatory Tracker palette for each item's own Change, Event, Application, RO, Submission or Registration state. A coloured border, dot, label and soft tint remain distinct from the selection outline. Diagram and List views use the same palette. Hover a node for its state, select it for the full label, or expand **State colours** for the legend of currently shown items.
+- Case and whitespace variants of the same state resolve together. Missing or unknown states are neutral grey, with the supplied unknown label retained. Conflicting source states use the Tracker's conflict colour and say **Conflicting states**; no arbitrary state is chosen. Colour never inherits from a parent/child or changes the dashboard's completion rules: a Completed submission can be green while its RO is still awaiting approval. High-contrast mode uses the host colours with textual state labels.
 - Click a node, or focus it and press Enter, to highlight its upstream and downstream paths while dimming unrelated branches. Shared ancestors do not cause all sibling branches to highlight. The selection strip shows the full ID, delivered country and state; **Copy ID** preserves the clipboard fallback. **Clear selection** restores all lines. Diagram selections do not change the worklist counts or country evidence selection.
 - **Find ID** searches within the selected record and retains connected context. **List** provides a compact alternative with selectable/copyable IDs. **Copy linked IDs** still copies the complete scoped set.
 - The diagram follows the top Country, Commercial region and inactive-work scope. It loads only when expanded and keeps selection/open state while inspecting the same parent. Selecting another parent resets the diagram selection. The existing column mappings and 70-role identity are unchanged.

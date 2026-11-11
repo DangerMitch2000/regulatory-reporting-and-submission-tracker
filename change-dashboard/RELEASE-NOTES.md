@@ -1,10 +1,10 @@
-# Change Dashboard 1.4.0 — preview
+# Change Dashboard 1.5.0 — preview
 
-- Turn Related items into an interactive diagram connecting Change IDs, Events, Applications, ROs, Submissions and Registrations using the delivered row associations.
-- Select a node to highlight its upstream/downstream path, view its full ID/country/state and copy the ID. Unrelated branches dim; missing links remain unconnected.
-- Add ID search with connected context, Diagram/List switching and bounded column paging for larger groups. Counts, filters and complete copied/exported IDs are unchanged.
-- Keep the diagram compact, lazy-loaded, keyboard accessible and aligned during scrolling/resizing, including touch-sized nodes. Dark, Light and high-contrast styles are retained.
+- Colour diagram items by their **own source state**, using the Regulatory Tracker palette: soft fills, coloured borders/dots and readable labels.
+- Keep the selection outline and path highlighting separate from state colour. List view uses the same state colours.
+- Add state hover text, explicit selected-state labels and a compact **State colours** legend. Missing/unknown values remain neutral; conflicting states are clearly identified.
+- Preserve Dark, Light and host high-contrast modes. All relationship links, counts, filters and completion rules remain unchanged.
 
-Import **change-dashboard-1.4.0.0.pbiviz** and replace Change Dashboard. All 70 existing field mappings and the visual identity are preserved; **no new fields are required**.
+Import **change-dashboard-1.5.0.0.pbiviz** and replace Change Dashboard. All 70 existing field mappings and the visual identity are preserved; **no new fields are required**.
 
-Tests cover correct per-row links, duplicates, missing parents, path tracing without sibling branches, copy/search/paging, narrow and touch layouts, safe ID rendering, packaged browser behavior and 20,000 graph source rows. This is an uncertified preview; demo data is fictional.
+Tests cover every record type, parent/child state isolation, missing/unknown/conflicting states, case/whitespace normalization, safe rendering, legend persistence, theme changes, keyboard/touch interaction and the packaged browser runtime. This is an uncertified preview; demo data is fictional.

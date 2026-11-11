@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {GRAPH_KINDS,graphKey,buildGraph,traceGraph,graphWindow} from './relationships.mjs';
+import {GRAPH_KINDS,graphKey,buildGraph,traceGraph,graphWindow,nodeState} from './relationships.mjs';
 const row={ChangeID:'CHG-1',EventName:'EVT-1',AppID:'APP-1',ROID:'RO-1',SubID:'SUB-1',RegistrationID:'REG-1',Country:'France',SubStatus:'Completed'};
 const pair=(graph,sourceKind,sourceID,targetKind,targetID)=>graph.edges.some(e=>e.source===graphKey(sourceKind,sourceID)&&e.target===graphKey(targetKind,targetID));
 const graph=buildGraph([row,{...row,CatalogNumber:'CAT-2'},{...row,Country:'Germany',AppID:'APP-2',ROID:'RO-2',SubID:'SUB-2',RegistrationID:'REG-2'}]);
@@ -12,6 +12,19 @@ const focused=traceGraph(graph,graphKey('submission','SUB-1'));
 assert.equal(focused.nodeKeys.size,6);assert.equal(focused.edgeKeys.size,5);
 for(const kind of ['application','ro','submission','registration'])assert(!focused.nodeKeys.has(graphKey(kind,{application:'APP-2',ro:'RO-2',submission:'SUB-2',registration:'REG-2'}[kind])),'shared parent must not highlight siblings');
 assert.equal(traceGraph(graph,'missing key').nodeKeys.size,0);
+
+const stateRows={...row,ChangeStatus:'Completed',EventState:'In Regulatory Assessment State',AppStatus:'Active',ROStatus:'Health Authority Approved',SubStatus:'Distributed',RegistrationState:'Conditionally Approved'};
+const stateGraph=buildGraph([stateRows]);
+const expectedStates={change:['completed','#70b85c'],event:['in regulatory assessment state','#c16ccb'],application:['active','#4d91e8'],ro:['health authority approved','#27ae78'],submission:['distributed','#e177b3'],registration:['conditionally approved','#a3bd45']};
+for(const n of stateGraph.nodes){const resolved=nodeState(n),expected=expectedStates[n.kind];assert.equal(resolved.key,expected[0]);assert.equal(resolved.colour,expected[1]);assert.equal(resolved.known,true);assert.match(resolved.dark,/^#[0-9a-f]{6}$/i);assert.match(resolved.light,/^#[0-9a-f]{6}$/i);assert.equal(resolved.label,stateRows[GRAPH_KINDS[n.column].state]);}
+assert.equal(nodeState(graph.byKey.get(graphKey('application','APP-1'))).colour,'#abb4c2','missing child state must not inherit completed submission or another parent state');
+const normalized=nodeState({kind:'ro',states:['  HEALTH   AUTHORITY APPROVED ','Health Authority Approved','health authority approved']});assert.equal(normalized.key,'health authority approved');assert.equal(normalized.label,'Health Authority Approved');assert.equal(normalized.colour,'#27ae78');assert.equal(normalized.values.length,3);
+const conflict=nodeState({kind:'submission',states:['Completed','Planned',' completed ']});assert.equal(conflict.key,'conflicting values');assert.equal(conflict.label,'Conflicting states');assert.equal(conflict.colour,'#e06ded');assert.deepEqual(conflict.values,['Completed','completed','Planned']);
+for(const missing of [undefined,{kind:'registration',states:[]},{kind:'event',states:['','  ',null]}]){const resolved=nodeState(missing);assert.equal(resolved.key,'not recorded');assert.equal(resolved.label,'Not recorded');assert.equal(resolved.colour,'#abb4c2');}
+for(const unknown of ['Custom phase','constructor','toString','__proto__','red; background:url(https://example.invalid)','<img src=x onerror=alert(1)>']){const resolved=nodeState({kind:'registration',states:[unknown]});assert.equal(resolved.label,unknown);assert.equal(resolved.colour,'#abb4c2');assert.equal(resolved.known,false);assert.match(resolved.dark,/^#[0-9a-f]{6}$/i);assert.match(resolved.light,/^#[0-9a-f]{6}$/i);}
+assert.equal(nodeState({kind:'registration',states:['Cancelled']}).colour,'#e27c70','known tracker palette alias remains available');
+const missingReg=buildGraph([{...stateRows,RegistrationState:''}]);assert.equal(nodeState(missingReg.byKey.get(graphKey('registration','REG-1'))).key,'not recorded');
+console.log('PASS graph states: own-state colours for all six record kinds, canonical labels, case/space normalization, missing/unknown/conflicting states and trusted hex-only palette values.');
 
 const incomplete=buildGraph([{...row,ChangeID:'',SubID:''}]);
 assert.equal(incomplete.nodes.length,4);assert.equal(incomplete.edges.length,2);
