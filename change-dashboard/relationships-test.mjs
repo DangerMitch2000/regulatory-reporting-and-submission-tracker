@@ -1,0 +1,46 @@
+import assert from 'node:assert/strict';
+import {GRAPH_KINDS,graphKey,buildGraph,traceGraph,graphWindow} from './relationships.mjs';
+const row={ChangeID:'CHG-1',EventName:'EVT-1',AppID:'APP-1',ROID:'RO-1',SubID:'SUB-1',RegistrationID:'REG-1',Country:'France',SubStatus:'Completed'};
+const pair=(graph,sourceKind,sourceID,targetKind,targetID)=>graph.edges.some(e=>e.source===graphKey(sourceKind,sourceID)&&e.target===graphKey(targetKind,targetID));
+const graph=buildGraph([row,{...row,CatalogNumber:'CAT-2'},{...row,Country:'Germany',AppID:'APP-2',ROID:'RO-2',SubID:'SUB-2',RegistrationID:'REG-2'}]);
+assert.equal(GRAPH_KINDS.length,6);assert.equal(graph.nodes.length,10);assert.equal(graph.edges.length,9);
+assert(pair(graph,'application','APP-1','ro','RO-1'));assert(pair(graph,'ro','RO-1','submission','SUB-1'));assert(pair(graph,'submission','SUB-1','registration','REG-1'));
+assert(!pair(graph,'application','APP-1','ro','RO-2'));assert(!pair(graph,'submission','SUB-1','registration','REG-2'));
+assert.deepEqual(graph.byKey.get(graphKey('event','EVT-1')).countries,['France','Germany']);
+assert.deepEqual(graph.byKey.get(graphKey('submission','SUB-1')).states,['Completed']);
+const focused=traceGraph(graph,graphKey('submission','SUB-1'));
+assert.equal(focused.nodeKeys.size,6);assert.equal(focused.edgeKeys.size,5);
+for(const kind of ['application','ro','submission','registration'])assert(!focused.nodeKeys.has(graphKey(kind,{application:'APP-2',ro:'RO-2',submission:'SUB-2',registration:'REG-2'}[kind])),'shared parent must not highlight siblings');
+assert.equal(traceGraph(graph,'missing key').nodeKeys.size,0);
+
+const incomplete=buildGraph([{...row,ChangeID:'',SubID:''}]);
+assert.equal(incomplete.nodes.length,4);assert.equal(incomplete.edges.length,2);
+assert.equal(incomplete.incoming.get(graphKey('registration','REG-1')).length,0,'no invented RO-registration edge across missing submission');
+assert.equal(incomplete.outgoing.get(graphKey('ro','RO-1')).length,0);
+assert.equal(graphWindow(incomplete).nodes.length,4,'disconnected registration remains visible');
+const parallel=buildGraph([{AppID:'APP-A'},{ROID:'RO-A'},{SubID:'SUB-A'},{RegistrationID:'REG-A'}]);assert.equal(parallel.edges.length,0,'independent lists cannot generate links');
+const duplicateText=buildGraph([{ChangeID:'SAME',EventName:'SAME',AppID:'SAME',ROID:'SAME',SubID:'SAME',RegistrationID:'SAME'}]);assert.equal(duplicateText.nodes.length,6);assert.equal(new Set(duplicateText.nodes.map(n=>n.key)).size,6);
+const many=buildGraph([row,{...row,AppID:'APP-2'},{...row,ROID:'RO-2'},{...row,SubID:'SUB-2'}]);
+assert.equal(many.incoming.get(graphKey('ro','RO-1')).length,2,'multiple delivered parents retained');
+assert.equal(many.incoming.get(graphKey('submission','SUB-1')).length,2);assert.equal(many.incoming.get(graphKey('registration','REG-1')).length,2);
+const hostile='<img src=x onerror=alert(1)>\" __proto__';const literal=buildGraph([{EventName:hostile,AppID:'constructor'}]);assert.equal(literal.nodes[0].id,hostile);assert.equal(literal.edges.length,1);assert.equal(literal.byKey.get(graphKey('application','constructor')).id,'constructor');
+const reordered=buildGraph([{...row,AppID:'APP-10'},row,{...row,AppID:'APP-2'}]);assert.deepEqual(reordered.columns[2].nodes.map(n=>n.id),['APP-1','APP-2','APP-10']);
+assert.deepEqual(buildGraph([row,{...row,AppID:'APP-2'}]).nodes,buildGraph([{...row,AppID:'APP-2'},row]).nodes,'input ordering does not change graph ordering');
+
+const windowed=graphWindow(graph,{limitPerColumn:1});assert.equal(windowed.nodes.length,6);assert.equal(windowed.hiddenNodeCount,4);assert.equal(windowed.hiddenEdgeCount,4);
+assert.equal(windowed.omittedEdgeCounts.get(graphKey('event','EVT-1')).outgoing,1);
+const pageTwo=graphWindow(graph,{limitPerColumn:1,pageByKind:{application:1,ro:1,submission:1,registration:1}});assert(pageTwo.nodes.some(n=>n.id==='APP-2'));assert(!pageTwo.nodes.some(n=>n.id==='APP-1'));assert.equal(pageTwo.edges.length,5);
+const revealed=graphWindow(graph,{limitPerColumn:1,selectedKey:graphKey('application','APP-2')});assert.equal(revealed.columns[2].page,1);
+const search=graphWindow(graph,{query:'sub-2'});assert.equal(search.nodes.length,6);assert.equal(search.edges.length,5);assert.equal(search.matchCount,1);assert(search.nodes.some(n=>n.id==='CHG-1'));assert(!search.nodes.some(n=>n.id==='SUB-1'));
+const none=graphWindow(graph,{query:'absent'});assert.equal(none.nodes.length,0);assert.equal(none.edges.length,0);assert(none.columns.every(c=>c.page===0&&c.pageCount===1));
+const multiSearch=graphWindow(graph,{query:'SUB-'});assert.equal(multiSearch.nodes.length,10);assert.equal(multiSearch.edges.length,9);
+const sourceGraphCount=graph.nodes.length;graphWindow(graph,{query:'sub-2',limitPerColumn:1});assert.equal(graph.nodes.length,sourceGraphCount,'windowing does not mutate source graph');
+
+const start=performance.now(),largeRows=Array.from({length:20000},(_,i)=>({ChangeID:'LOAD-CHG',EventName:'LOAD-EVENT',AppID:'APP-'+Math.floor(i/2),ROID:'RO-'+Math.floor(i/2),SubID:'SUB-'+Math.floor(i/2),RegistrationID:'REG-'+Math.floor(i/2),CatalogNumber:'CAT-'+i}));
+const large=buildGraph(largeRows),limited=graphWindow(large),searched=graphWindow(large,{query:'SUB-'});
+assert.equal(large.nodes.length,40002);assert.equal(large.edges.length,40001);assert(limited.nodes.length<=360);assert(searched.nodes.length<=360);
+assert.equal(large.byKey.size,40002);assert.equal(limited.columns[2].total,10000);assert.equal(limited.columns[2].pageCount,167);
+assert.equal(traceGraph(large,graphKey('submission','SUB-9999')).nodeKeys.size,6);
+assert(performance.now()-start<15000,'large graph building, search and bounded windowing should complete promptly');
+assert.deepEqual(buildGraph([]).nodes,[]);assert.deepEqual(graphWindow(buildGraph([])).edges,[]);
+console.log('PASS relationships: delivered adjacent links, duplicate protection, disconnected records, exact typed IDs, ancestor/descendant tracing without siblings, search context, pagination and 20,000 source rows ('+Math.round(performance.now()-start)+' ms).');

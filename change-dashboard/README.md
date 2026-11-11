@@ -1,10 +1,10 @@
-# Change Dashboard 1.3.0
+# Change Dashboard 1.4.0
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.3.0/change-dashboard-1.3.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.3.0)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.4.0/change-dashboard-1.4.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.4.0)
 
 A separate daily worklist with **Event (default), Change ID and Application views**, preserving the Regulatory Tracker's existing **69 field roles** and adding one optional **Commercial region** role. Filter by manufacturing site, product, business unit, commercial region, country and record state. Select a summary count, an event/change/application, then a country to inspect the evidence and linked source records. The existing Tracker and Registration Coverage Map remain separate visuals.
 
-**Preview release:** package version **1.3.0.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
+**Preview release:** package version **1.4.0.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
 
 ## Install and map existing fields
 
@@ -40,6 +40,16 @@ Use the model's existing **real relationships** to deliver the associated record
 Labels, state filter, counts, copied IDs, CSV headers and missing-ID review follow the chosen view. Country/RO/filing evidence remains attached to its delivered associations; the visual does not manufacture missing parent links. The same application may belong to multiple events, so totals across view modes are not additive.
 
 The **Awaiting assessment summary card remains hidden**. Existing assessment fields and detailed checks are retained for possible later use; no replacement assessment card is added. Assessment Details use **linked SharePoint response records**. In Event/Application views, only responses matching a country already present in the linked RO/application scope are included. Missing assessment links say **Assessment not linked**; a missing link does not establish that an event needs no assessment. Native EventState is shown but is not interpreted as a country-by-country response checklist.
+
+## Interactive related-record diagram
+
+Open **Related items**, or click an App/RO/Sub/Reg count in the worklist, to see **Change ID → Event → Application → RO → Submission → Registration** as connected columns.
+
+- Lines connect adjacent identifiers supplied together in the same scoped Power BI row. Repeated product/catalog rows produce one node and one line. Independent lists are never paired by position, and missing intermediate IDs do not produce a guessed shortcut. Disconnected records stay visible. Correct source relationships are still required.
+- Click a node, or focus it and press Enter, to highlight its upstream and downstream paths while dimming unrelated branches. Shared ancestors do not cause all sibling branches to highlight. The selection strip shows the full ID, delivered country and state; **Copy ID** preserves the clipboard fallback. **Clear selection** restores all lines. Diagram selections do not change the worklist counts or country evidence selection.
+- **Find ID** searches within the selected record and retains connected context. **List** provides a compact alternative with selectable/copyable IDs. **Copy linked IDs** still copies the complete scoped set.
+- The diagram follows the top Country, Commercial region and inactive-work scope. It loads only when expanded and keeps selection/open state while inspecting the same parent. Selecting another parent resets the diagram selection. The existing column mappings and 70-role identity are unchanged.
+- Nodes and connectors share one scroll area, with columns sized for the visual. The diagram stays at a maximum 280px viewport height. Large groups show 40 records per column page; column arrows access the rest. A **+** indicates additional links outside the displayed view. At most 1,500 visible lines are drawn at once; a notice appears if further links need an ID search. These display limits never change the source counts or exports.
 
 ## Commercial region and event-list context
 
@@ -104,6 +114,7 @@ npm install
 npx playwright install chromium
 cd ..
 node logic-test.mjs
+node relationships-test.mjs
 npm --prefix powerbi run typecheck
 node host-browser-test.cjs
 node prepare-preview.cjs

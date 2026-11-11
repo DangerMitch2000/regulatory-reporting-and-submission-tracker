@@ -1,10 +1,10 @@
-# Change Dashboard 1.3.0 — preview
+# Change Dashboard 1.4.0 — preview
 
-- Add a top **Commercial region** filter, using a new optional source-field mapping. Missing regions can be reviewed as Not recorded; no region is inferred from geography or registration data.
-- Add **Related items** to the main event/change/application list: distinct App, RO, Sub and Reg counts plus available Change IDs. Click counts for the full selectable IDs in Details. Repeated source rows do not inflate the counts.
-- Add **Implementation date**, using the existing Change Planned Implementation Date in DD MMM YYYY format. Missing/conflicting values are clearly labelled; event completion dates are never substituted.
-- Both new columns support sorting and text filters. Region selections scope country work, cards, next actions, linked IDs, exports and Worklist counts; Loaded counts remain unchanged.
+- Turn Related items into an interactive diagram connecting Change IDs, Events, Applications, ROs, Submissions and Registrations using the delivered row associations.
+- Select a node to highlight its upstream/downstream path, view its full ID/country/state and copy the ID. Unrelated branches dim; missing links remain unconnected.
+- Add ID search with connected context, Diagram/List switching and bounded column paging for larger groups. Counts, filters and complete copied/exported IDs are unchanged.
+- Keep the diagram compact, lazy-loaded, keyboard accessible and aligned during scrolling/resizing, including touch-sized nodes. Dark, Light and high-contrast styles are retained.
 
-Import **change-dashboard-1.3.0.0.pbiviz** and replace Change Dashboard. The identity and 69 existing mappings are retained. Map your separate Commercial region column to the new **Commercial region** well to enable that filter.
+Import **change-dashboard-1.4.0.0.pbiviz** and replace Change Dashboard. All 70 existing field mappings and the visual identity are preserved; **no new fields are required**.
 
-The dark theme, newest-overdue ordering, Reset table and hidden assessment card are preserved. Automated logic/browser checks include duplicate memberships, region and country scope, optional fields, missing/conflicting dates, linked ID copying, sorting/filtering and large delivered datasets. This is an uncertified preview; demo data is fictional.
+Tests cover correct per-row links, duplicates, missing parents, path tracing without sibling branches, copy/search/paging, narrow and touch layouts, safe ID rendering, packaged browser behavior and 20,000 graph source rows. This is an uncertified preview; demo data is fictional.

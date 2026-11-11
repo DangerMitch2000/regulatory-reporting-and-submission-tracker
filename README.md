@@ -4,15 +4,15 @@
 
 Released **23 Oct 2026** · Power BI package **1.18.1.0**. This is an uncertified preview; public demo records are fictional.
 
-## Change Dashboard 1.3.0 — commercial regions and event context
+## Change Dashboard 1.4.0 — interactive related-record diagram
 
-[Download the Power BI dashboard](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.3.0/change-dashboard-1.3.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Field mappings and counting rules](change-dashboard/README.md)
+[Download the Power BI dashboard](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.4.0/change-dashboard-1.4.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Field mappings and counting rules](change-dashboard/README.md)
 
-Filter country work by **Commercial region** using a separate optional source field. The main list now shows **Related items** — distinct App, RO, Sub and Reg counts, plus available Change IDs — and **Implementation date** from the existing Change Planned Implementation Date. Click linked counts for full selectable IDs. Both columns support sorting and filtering; missing or conflicting dates remain explicit.
+**Related items** now connects Change IDs, Events, Applications, ROs, Submissions and Registrations with lines based on delivered row associations. Click a node to highlight its linked path and inspect or copy its full ID. Search retains connected context; a List option and column paging keep larger groups manageable. Missing links remain unconnected, and repeated membership rows do not duplicate nodes or lines.
 
-Region and country selections narrow country progress, next actions, summary cards, linked counts and Worklist totals. Loaded totals still show all delivered records. Event remains the default, with Change ID and Application views alongside it. Newest-overdue ordering, Reset table, darker Tracker colours and the hidden Awaiting assessment card are preserved.
+Commercial region filtering, related-record counts, Change Planned Implementation Date, newest-overdue ordering and dark Tracker colours remain in place. The diagram follows the scoped worklist while preserving source counts and full exports.
 
-Import and replace the existing Change Dashboard: its identity and all 69 existing field mappings are retained. Map your separate region column to the new **Commercial region** well (CommercialRegion) to enable the filter. [Read the guide](change-dashboard/README.md) for evidence, filtering and reconciliation. Tested with 64,000 synthetic rows; validate representative records against Velocity. This is an uncertified preview, with fictional demo data.
+Import and replace the existing Change Dashboard: its identity and all **70 existing mappings are retained**, with **no new fields required** for this update. [Read the guide](change-dashboard/README.md) for diagram behavior and source relationship requirements. Tested with 64,000 synthetic worklist rows and 20,000 graph source rows; validate representative records against Velocity. This is an uncertified preview, with fictional demo data.
 
 ## Registration Coverage Map 1.0.0
 
