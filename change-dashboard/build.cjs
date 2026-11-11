@@ -1,7 +1,7 @@
 /* Reproducible, separate Change Dashboard Power BI project. */
 const fs = require('node:fs'), path = require('node:path'), {pathToFileURL} = require('node:url');
 const root = __dirname, out = path.join(root, 'powerbi');
-const VERSION = '1.2.0', PACKAGE_VERSION = '1.2.0.0';
+const VERSION = '1.3.0', PACKAGE_VERSION = '1.3.0.0';
 const GUID = 'changeDashboardF91D534685234516AE47CF62295ED804';
 function write(name, value) {
   const file = path.join(out, name);
@@ -9,6 +9,7 @@ function write(name, value) {
   fs.writeFileSync(file, typeof value === 'string' || Buffer.isBuffer(value) ? value : JSON.stringify(value, null, 2) + '\n');
 }
 async function build() {
+  const descriptions=Object.fromEntries(JSON.parse(fs.readFileSync(path.join(root,'fields.json'),'utf8')).map(f=>[f.name,f.description]));
   const {roles, names, dates} = await import(pathToFileURL(path.join(root, 'logic.mjs')).href);
   if (new Set(roles).size !== roles.length) throw Error('Duplicate field roles');
   write('package.json', {
@@ -29,7 +30,7 @@ async function build() {
   write('capabilities.json', {
     suppressDefaultTitle: true, privileges: [{name: 'ExportContent', essential: false}],
     dataRoles: roles.map(name => ({name, displayName: names[name] || name, kind: 'Grouping',
-      description: dates.includes(name) ? 'Use a raw date column, not a date hierarchy. Do not summarize.' : 'Map the source column; no renaming is necessary. Do not summarize.'})),
+      description: dates.includes(name) ? 'Use a raw date column, not a date hierarchy. Do not summarize.' : descriptions[name] || 'Map the source column; no renaming is necessary. Do not summarize.'})),
     dataViewMappings: [{conditions: [Object.fromEntries(roles.map(name => [name, {max: 1}]))], table: {rows: {select: roles.map(role => ({for: {in: role}})), dataReductionAlgorithm: {window: {count: 30000}}}}}],
     objects: {}, supportsHighlight: false, supportsKeyboardFocus: true, supportsEmptyDataView: true, sorting: {default: {}}
   });

@@ -11,9 +11,20 @@ const inactive=new Set(['inactive','archived','withdrawn','canceled','cancelled'
 const approvedStates=new Set(['health authority approved','conditionally approved']);
 const submittedStates=new Set(['completed','ha received','sent to health authority','rejected']);
 export const GROUPINGS={change:{field:'ChangeID',state:'ChangeStatus',label:'Change ID',singular:'change',plural:'changes',created:'ChangeCreated'},event:{field:'EventName',state:'EventState',label:'Event',singular:'event',plural:'events',created:null},application:{field:'AppID',state:'AppStatus',label:'Application',singular:'application',plural:'applications',created:'AppCreated'}};
-export const DEFAULT_STATE={groupBy:'event',site:'all',product:'all',unit:'all',country:'all',status:'all',view:'attention',queue:'all',includeInactive:false,sort:'due',direction:'desc',columnFilters:{}};
+export const DEFAULT_STATE={groupBy:'event',site:'all',product:'all',unit:'all',region:'all',country:'all',status:'all',view:'attention',queue:'all',includeInactive:false,sort:'due',direction:'desc',columnFilters:{}};
+export const MISSING_REGION='__not_recorded__';
+export const regionValue=row=>text(row.CommercialRegion)||MISSING_REGION;
 export const RECORD_FIELDS={change:'ChangeID',event:'EventName',application:'AppID',ro:'ROID',submission:'SubID',registration:'RegistrationID'};
 export function recordCounts(rows){return Object.fromEntries(Object.entries(RECORD_FIELDS).map(([k,f])=>[k,vals(rows,f).length]));}
+export function relatedItems(rows){
+ const labels={application:'Apps',ro:'ROs',submission:'Subs',registration:'Regs'},longLabels={application:'Applications',ro:'ROs',submission:'Submissions',registration:'Registrations'};
+ const ids=Object.fromEntries(Object.keys(labels).map(k=>[k,vals(rows,RECORD_FIELDS[k]).sort((a,b)=>compare(a,b,'asc'))]));
+ const counts=Object.fromEntries(Object.entries(ids).map(([k,values])=>[k,values.length])),changeIDs=vals(rows,'ChangeID').sort((a,b)=>compare(a,b,'asc'));
+ const label=Object.entries(labels).map(([k,label])=>counts[k]+' '+label).join(' · ');
+ const detail=[...Object.entries(longLabels).map(([k,label])=>label+': '+(ids[k].join(', ')||'Not recorded')),'Change IDs: '+(changeIDs.join(', ')||'Not recorded')].join('\n');
+ const search=[label,...Object.entries(longLabels).map(([k,label])=>counts[k]+' '+label),detail].join(' ');
+ return {ids,counts,changeIDs,total:Object.values(counts).reduce((a,b)=>a+b,0),label,detail,search};
+}
 export function previousDay(now=new Date()) {const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Dublin',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now).filter(x=>x.type!=='literal').map(x=>[x.type,x.value]));return Date.UTC(+parts.year,+parts.month-1,+parts.day)-DAY;}
 export function formatDate(value){return Number.isFinite(value)?dateFormat.format(value):'Not recorded';}
 export function dateField(rs,f,asOf,actual=false){
@@ -121,34 +132,53 @@ export function analyze(rows,options={}){
  model.missing=rows.filter(r=>!text(r[grouping.field]));
  model.coverage=recordCounts(rows);
  model.missingApplications=vals(model.missing,'AppID').length;
- model.options={sites:unique(model.changes.flatMap(c=>c.sites)).sort(),products:unique(model.changes.flatMap(c=>c.products)).sort(),units:unique(model.changes.flatMap(c=>c.units)).sort(),countries:unique(model.changes.flatMap(c=>c.countries.map(x=>x.name))).sort(),statuses:unique(model.changes.map(c=>c.status)).sort()};return model;
+ model.options={sites:unique(model.changes.flatMap(c=>c.sites)).sort(),products:unique(model.changes.flatMap(c=>c.products)).sort(),units:unique(model.changes.flatMap(c=>c.units)).sort(),regions:unique(model.changes.flatMap(c=>c.rows.map(regionValue))).sort(),countries:unique(model.changes.flatMap(c=>c.countries.map(x=>x.name))).sort(),statuses:unique(model.changes.map(c=>c.status)).sort()};return model;
 }
 export const queueDefinitions=[['assessment','Awaiting assessment'],['dispatch','Overdue internal dispatch'],['submission','Overdue authority submission'],['approval','Awaiting approval']];
 export const mainColumns=[
  {key:'record',value:c=>c.id,search:c=>[c.id,...c.products,...c.sites,c.status,...c.project,...c.qms].join(' ')},
  {key:'progress',value:c=>c.total?c.done/c.total:null,search:c=>`${c.done}/${c.total} ${c.done} / ${c.total} ${c.countries.map(x=>x.name).join(' ')}`},
  {key:'due',value:c=>c.next?.due??null,search:c=>c.next?.due!=null?formatDate(c.next.due)+(c.next.overdue?' overdue '+c.next.daysLate+' days':' upcoming'):'Not recorded'},
- {key:'action',value:c=>c.next?.action||'',search:c=>[c.next?.action,c.next?.country,...c.issues].join(' ')}
+ {key:'action',value:c=>c.next?.action||'',search:c=>[c.next?.action,c.next?.country,...c.issues].join(' ')},
+ {key:'related',value:c=>c.related.total,search:c=>c.related.search},
+ {key:'implementation',value:c=>c.implementation.value,search:c=>[c.implementation.label,...c.implementation.raw].join(' ')}
 ];
 function queueMatch(c,q){if(q==='assessment')return c.pending&&!c.excluded;return c.candidates.some(x=>x.stage===q&&(['dispatch','submission'].includes(q)?x.overdue:true));}
+function regionCountry(country,change,model,region){
+ if(region==='all')return country;
+ const rows=country.rows.filter(r=>regionValue(r)===region);if(!rows.length)return null;
+ const subIDs=new Set(vals(rows,'SubID')),roIDs=new Set(vals(rows,'ROID'));
+ // Keep canonical evidence from all delivered rows. Region selects memberships,
+ // not which state/date values are allowed to resolve the record.
+ return finishCountry({...makeCountry(country.name),rows,requirements:country.requirements,submissions:country.submissions.filter(s=>subIDs.has(s.id)),roItems:country.roItems.filter(r=>roIDs.has(r.id)),roIDs:[...roIDs]},change,model);
+}
+function scopedRecordRows(change,countries,model,state){
+ const countryKeys=new Set(countries.map(x=>x.key));
+ return change.rows.filter(r=>(state.region==='all'||regionValue(r)===state.region)&&countryKeys.has(norm(r.Country)||(model.groupBy==='change'?norm(r.ExpectedResponseCountry)||norm(r.AssessmentCountry)||norm(r.RegistrationCountry):'')||'?')&&(state.includeInactive||![r.SubStatus,r.ROStatus,r.AppStatus].some(s=>inactive.has(norm(s)))));
+}
 export function derive(model,state={}){
  state={...DEFAULT_STATE,...state};
  const matched=model.changes.filter(c=>(state.status==='all'||c.status===state.status)&&c.rows.some(r=>(state.site==='all'||[text(r.Manufacturer),text(r.RegistrationManufacturingSite)].includes(state.site))&&(state.product==='all'||text(r.Product)===state.product)&&(state.unit==='all'||text(r.BusinessUnit)===state.unit)));
  const changes=filterRows(matched.map(c=>{
-  const countries=c.countries.filter(x=>(state.country==='all'||x.name===state.country)&&(state.includeInactive||!x.excluded));
+  const countries=c.countries.map(x=>regionCountry(x,c,model,state.region)).filter(x=>x&&(state.country==='all'||x.name===state.country)&&(state.includeInactive||!x.excluded));
   const eligible=!c.closed||state.includeInactive,flags=Object.fromEntries(queueDefinitions.map(([k])=>[k,eligible&&countries.some(x=>queueMatch(x,k))]));
   const candidates=countries.flatMap(x=>x.candidates.map(a=>({...a,country:x.name,countryKey:x.key}))).filter(a=>state.queue==='all'||a.stage===state.queue);
   candidates.sort((a,b)=>dueOrder(a,b,state.sort==='due'?state.direction:'desc'));
   const next=candidates.find(x=>!['complete','excluded'].includes(x.stage))||candidates[0]||null;
   const attention=c.issues.length>0||countries.some(x=>x.attention),done=countries.filter(x=>x.complete).length;
-  return {...c,countries,flags,next,attention,done,total:countries.length,scopeNote:'Country progress for the matching '+model.grouping.singular};
+  const scopedRows=scopedRecordRows(c,countries,model,state),related=relatedItems(scopedRows);
+  return {...c,countries,flags,next,attention,done,total:countries.length,scopedRows,related,scopeNote:'Country progress for the matching '+model.grouping.singular};
  }).filter(c=>c.total>0),mainColumns,state.columnFilters);
  const counts=Object.fromEntries(queueDefinitions.map(([k])=>[k,changes.filter(c=>c.flags[k]).length]));
  const shown=changes.filter(c=>(state.view==='all'||c.attention)&&(state.queue==='all'||c.flags[state.queue]));
- const column=mainColumns.find(c=>c.key===state.sort)||mainColumns[2];
+ const column=mainColumns.find(c=>c.key===state.sort)||mainColumns.find(c=>c.key==='due');
  shown.sort((a,b)=>(state.sort==='due'?dueOrder(a.next||{due:null},b.next||{due:null},state.direction):compare(column.value(a),column.value(b),state.direction))||a.id.localeCompare(b.id));
- const countRows=shown.flatMap(c=>{const countryKeys=new Set(c.countries.map(x=>x.key));return c.rows.filter(r=>countryKeys.has(norm(r.Country)||(model.groupBy==='change'?norm(r.ExpectedResponseCountry)||norm(r.AssessmentCountry)||norm(r.RegistrationCountry):'')||'?')&&(state.includeInactive||![r.SubStatus,r.ROStatus,r.AppStatus].some(s=>inactive.has(norm(s)))));});
+ const countRows=shown.flatMap(c=>c.scopedRows);
  return {changes,shown,counts,attention:changes.filter(c=>c.attention).length,active:changes.filter(c=>!c.closed).length,closed:changes.filter(c=>c.closed).length,visibleCoverage:recordCounts(countRows),missing:model.missing,options:model.options,state};
 }
 const csvCell=v=>'"'+(/^[=+@\-\t\r]/.test(text(v))?"'":'')+String(v??'').replaceAll('"','""')+'"';
-export function toCsv(changes,groupBy=changes[0]?.groupBy||'change'){const grouping=GROUPINGS[groupBy]||GROUPINGS.change,header=[groupBy==='change'?'Change ID':grouping.label+' ID',grouping.label+' state','Country','Stage','Next action','Due date','Days overdue','Submission ID','Submission state','RO ID','Evidence','Review notes'];const lines=[header];for(const c of changes)for(const co of c.countries)for(const a of co.candidates)lines.push([c.id,c.status,co.name,a.stage,a.action,a.due===null?'':formatDate(a.due),a.daysLate,a.sub?.id||'',a.sub?.state||'',a.ro?.id||'',a.evidence||'',[...c.issues,...co.issues].join('; ')]);return lines.map(r=>r.map(csvCell).join(',')).join('\r\n');}
+export function toCsv(changes,groupBy=changes[0]?.groupBy||'change'){
+ const grouping=GROUPINGS[groupBy]||GROUPINGS.change,header=[groupBy==='change'?'Change ID':grouping.label+' ID',grouping.label+' state','Country','Stage','Next action','Due date','Days overdue','Submission ID','Submission state','RO ID','Evidence','Review notes','Commercial regions','Planned implementation date','Related items','Linked Change IDs','Related application IDs','Related RO IDs','Related submission IDs','Related registration IDs'],lines=[header];
+ for(const c of changes){const related=c.related||relatedItems(c.rows||[]),regions=unique((c.scopedRows||c.rows||[]).map(regionValue)).map(r=>r===MISSING_REGION?'Not recorded':r).join('; '),extra=[regions,c.implementation?.label||'Not recorded',related.label,related.changeIDs.join('; '),...['application','ro','submission','registration'].map(k=>related.ids[k].join('; '))];for(const co of c.countries)for(const a of co.candidates)lines.push([c.id,c.status,co.name,a.stage,a.action,a.due===null?'':formatDate(a.due),a.daysLate,a.sub?.id||'',a.sub?.state||'',a.ro?.id||'',a.evidence||'',[...c.issues,...co.issues].join('; '),...extra]);}
+ return lines.map(r=>r.map(csvCell).join(',')).join('\r\n');
+}

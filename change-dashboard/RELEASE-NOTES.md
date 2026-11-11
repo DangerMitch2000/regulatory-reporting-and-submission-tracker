@@ -1,11 +1,10 @@
-# Change Dashboard 1.2.0 — preview
+# Change Dashboard 1.3.0 — preview
 
-- Hide the Awaiting assessment summary card for now; retain its existing fields and detailed evidence.
-- Default Next due to most recently overdue first; click the header for oldest overdue first. Upcoming work follows overdue work and missing dates stay last.
-- Sort and filter every column in the worklist, country breakdown and missing-parent review. Reset table clears table controls while keeping the selected view and top scope filters.
-- Restore top-right distinct counts for Changes, Events, Applications, ROs, Submissions and Registrations. Worklist counts follow the current worklist across all pages; Loaded counts show the complete delivered population.
-- Match the Regulatory Tracker's darker charcoal and muted blue palette, retaining Light and high-contrast modes.
+- Add a top **Commercial region** filter, using a new optional source-field mapping. Missing regions can be reviewed as Not recorded; no region is inferred from geography or registration data.
+- Add **Related items** to the main event/change/application list: distinct App, RO, Sub and Reg counts plus available Change IDs. Click counts for the full selectable IDs in Details. Repeated source rows do not inflate the counts.
+- Add **Implementation date**, using the existing Change Planned Implementation Date in DD MMM YYYY format. Missing/conflicting values are clearly labelled; event completion dates are never substituted.
+- Both new columns support sorting and text filters. Region selections scope country work, cards, next actions, linked IDs, exports and Worklist counts; Loaded counts remain unchanged.
 
-Event, Change ID and Application views, country/RO evidence and all 69 field mappings are preserved. Import **change-dashboard-1.2.0.0.pbiviz** and confirm replacement of Change Dashboard. No remapping is required.
+Import **change-dashboard-1.3.0.0.pbiviz** and replace Change Dashboard. The identity and 69 existing mappings are retained. Map your separate Commercial region column to the new **Commercial region** well to enable that filter.
 
-Logic and packaged browser checks cover newest/oldest ordering, missing dates, combined filters, all table controls, record-count deduplication, 10,000 submissions and 64,000 delivered rows. This is an uncertified preview; demo data is fictional. See CHANGE-DASHBOARD-INSTALL.md for exact counting and filtering rules.
+The dark theme, newest-overdue ordering, Reset table and hidden assessment card are preserved. Automated logic/browser checks include duplicate memberships, region and country scope, optional fields, missing/conflicting dates, linked ID copying, sorting/filtering and large delivered datasets. This is an uncertified preview; demo data is fictional.

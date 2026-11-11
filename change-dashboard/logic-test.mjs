@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import {analyze,derive,roles,mapTable,previousDay,dateField,safeURL,toCsv} from './logic.mjs';
+import {analyze,derive,roles,mapTable,previousDay,dateField,safeURL,toCsv,MISSING_REGION,relatedItems} from './logic.mjs';
 import {demoRows,demoAsOf,largeRows} from './demo-data.mjs';
 import {compare,tableRows,dueOrder} from './table-tools.mjs';
 const options={asOf:demoAsOf},base=demoRows[0],one=overrides=>analyze([{...base,...overrides}],options).submissions.get(base.SubID);
-assert.equal(roles.length,69);assert.equal(new Set(roles).size,69);
+assert.equal(roles.length,70);assert.equal(new Set(roles).size,70);
 assert.equal(previousDay(new Date('2026-11-10T10:00:00Z')),demoAsOf);
 assert.equal(previousDay(new Date('2026-07-01T23:30:00Z')),Date.UTC(2026,6,1),'Dublin daylight saving calendar day');
 assert.equal(dateField([{d:'1970-01-01'}],'d',demoAsOf).value,0);
@@ -55,7 +55,7 @@ assert.deepEqual(mapTable({columns:[{roles:{AppID:true}}],rows:[['APP']]}).missi
 assert(toCsv([{...first,id:'=DANGEROUS'}]).includes("'=DANGEROUS"));
 const started=performance.now(),big=analyze(largeRows(),options),large=derive(big,{view:'all'}),duration=performance.now()-started;
 assert.equal(big.submissions.size,10000);assert.equal(large.changes.length,2500);assert.equal(large.counts.dispatch,2500);assert(duration<20000,'10k submissions should analyze in under 20 seconds');
-console.log(`PASS logic: 69 mappings, state/date evidence, duplicate handling, missing links, country assessments, filters and 10,000 submissions (${Math.round(duration)} ms).`);
+console.log(`PASS logic: 70 mappings, state/date evidence, duplicate handling, missing links, country assessments, filters and 10,000 submissions (${Math.round(duration)} ms).`);
 
 const eventOptions={...options,groupBy:'event'},appOptions={...options,groupBy:'application'};
 const eventModel=analyze(demoRows,eventOptions),events=derive(eventModel,{view:'all'});
@@ -104,3 +104,55 @@ assert.deepEqual(tableRows([{x:'B'},{x:'A'},{x:''}],[{key:'x',value:r=>r.x}],{ke
 assert.equal(tableRows([{x:'Belgium'},{x:'France'}],[{key:'x',value:r=>r.x}],{key:'x',direction:'desc',filters:{x:'BEL'}}).length,1);
 assert(dueOrder({due:demoAsOf-86400000,overdue:true},{due:demoAsOf+86400000,overdue:false})<0);
 console.log('PASS tables: newest/oldest overdue, upcoming and blank dates, natural sorting, combined column filters and worklist versus loaded record counts.');
+
+const relatedSample=relatedItems([{AppID:'A',ROID:'R',SubID:'S',RegistrationID:'G',ChangeID:'C'},{AppID:'A',ROID:'R',SubID:'S',RegistrationID:'G',ChangeID:'C',CatalogNumber:'SECOND'},{AppID:'B',ROID:'R2',SubID:'',RegistrationID:'',ChangeID:'C2'}]);
+assert.deepEqual(relatedSample.counts,{application:2,ro:2,submission:1,registration:1});assert.equal(relatedSample.total,6);assert.deepEqual(relatedSample.changeIDs,['C','C2']);assert.match(relatedSample.search,/2 Apps/);assert.match(relatedSample.detail,/Submissions: S/);
+assert.deepEqual(relatedItems([{}]).counts,{application:0,ro:0,submission:0,registration:0});
+const scopedRelated=derive(eventModel,{view:'all',country:'Italy'}).shown[0];
+assert.deepEqual(scopedRelated.related.counts,{application:1,ro:1,submission:1,registration:1},'catalog rows must not inflate related counts');
+assert.equal(scopedRelated.related.counts.registration,derive(eventModel,{view:'all',country:'Italy'}).visibleCoverage.registration);
+assert.deepEqual(roScope.related.counts,{application:2,ro:2,submission:0,registration:0},'ROs without submissions remain related records');
+const relatedFilter=derive(eventModel,{view:'all',columnFilters:{related:'DEMO-SUB-101-IT'}});assert.equal(relatedFilter.shown.length,1);assert.equal(relatedFilter.shown[0].id,'DEMO-EVT-101');
+assert.equal(derive(eventModel,{view:'all',columnFilters:{related:'DEMO-CHG-101'}}).shown.length,1,'Change IDs are searchable');
+const relatedSorted=derive(eventModel,{view:'all',sort:'related',direction:'desc'}).shown;assert(relatedSorted.every((r,i)=>!i||relatedSorted[i-1].related.total>=r.related.total));
+
+const regionBase={...noChange,ChangeID:'REGION-CHANGE',EventName:'REGION-EVENT',AppID:'REGION-APP',ExpectedResponseID:'',ExpectedResponseCountry:'',AssessmentResponseID:'',AssessmentCountry:''};
+const regionRows=[
+ {...regionBase,Country:'France',CommercialRegion:'EMEA',ROID:'RO-FR',SubID:'SUB-FR',RegistrationID:'REG-FR',RegistrationState:'Planned',LatestDispatch:'2026-11-03'},
+ {...regionBase,Country:'France',CommercialRegion:'EMEA',ROID:'RO-FR',SubID:'SUB-FR',RegistrationID:'REG-FR',RegistrationState:'Planned',LatestDispatch:'2026-11-03',CatalogNumber:'EXTRA'},
+ {...regionBase,Country:'Japan',CommercialRegion:'APAC',ROID:'RO-JP',SubID:'SUB-JP',DispatchRequired:false,LatestSubmission:'2026-11-08'},
+ {...regionBase,Country:'Brazil',CommercialRegion:'',RegistrationRegion:'LATAM',ROID:'RO-BR',SubID:'SUB-BR',LatestDispatch:'2026-11-07'},
+ {...regionBase,Country:'France',CommercialRegion:'EMEA',ROID:'RO-WITHDRAWN',SubID:'SUB-WITHDRAWN',SubStatus:'Withdrawn'}
+];
+for(const groupBy of ['event','application','change']){
+ const regionModel=analyze(regionRows,{...options,groupBy});
+ assert.deepEqual(new Set(regionModel.options.regions),new Set(['EMEA','APAC',MISSING_REGION]));
+ const regional=derive(regionModel,{view:'all',region:'EMEA'}),event=regional.shown[0];
+ assert.equal(regional.shown.length,1);assert.deepEqual(event.countries.map(c=>c.name),['France']);assert.equal(event.next.country,'France');assert.equal(regional.counts.submission,0);assert.equal(regional.counts.dispatch,1);
+ assert.deepEqual(event.related.counts,{application:1,ro:1,submission:1,registration:1});assert.deepEqual(event.related.changeIDs,['REGION-CHANGE']);assert.equal(regional.visibleCoverage.submission,1);assert.equal(regionModel.coverage.submission,4);
+ assert.equal(derive(regionModel,{view:'all',region:'EMEA',includeInactive:true}).shown[0].related.counts.submission,2);
+ const unknown=derive(regionModel,{view:'all',region:MISSING_REGION});assert.deepEqual(unknown.shown[0].countries.map(c=>c.name),['Brazil'],'missing commercial region is not inferred from registration region');
+ assert.equal(derive(regionModel,{view:'all',region:'EMEA',country:'Japan'}).shown.length,0);
+ assert.equal(derive(regionModel,{view:'all',region:'APAC'}).shown[0].next.action,'Submit to health authority');
+}
+const regionConflict=analyze([{...regionRows[0]},{...regionRows[0],CommercialRegion:'APAC',SubStatus:'Completed'}],eventOptions);
+assert.equal(derive(regionConflict,{view:'all',region:'EMEA'}).shown[0].countries[0].submissions[0].stage,'review','region cannot conceal conflicting canonical state evidence');
+const unconfiguredRegion=analyze([{...noChange,CommercialRegion:undefined,RegistrationRegion:'EMEA'}],eventOptions);assert.deepEqual(unconfiguredRegion.options.regions,[MISSING_REGION]);assert.equal(derive(unconfiguredRegion,{view:'all',region:MISSING_REGION}).shown.length,1);
+
+const implementationRows=[
+ {...noChange,EventName:'EARLY',ROID:'IMP-RO1',SubID:'IMP-SUB1',ChangePlannedImplementation:'2026-12-01'},
+ {...noChange,EventName:'LATE',ROID:'IMP-RO2',SubID:'IMP-SUB2',ChangePlannedImplementation:'2027-02-01'},
+ {...noChange,EventName:'MISSING-IMPLEMENTATION',ROID:'IMP-RO3',SubID:'IMP-SUB3',ChangePlannedImplementation:'',EventPlannedCompletion:'2026-11-20'},
+ {...noChange,EventName:'CONFLICT',ROID:'IMP-RO4',SubID:'IMP-SUB4',ChangePlannedImplementation:'2026-12-01'},
+ {...noChange,EventName:'CONFLICT',ROID:'IMP-RO4',SubID:'IMP-SUB4',ChangePlannedImplementation:'2026-12-02'}
+];
+const implementationModel=analyze(implementationRows,eventOptions);
+assert.deepEqual(derive(implementationModel,{view:'all',sort:'implementation',direction:'asc'}).shown.slice(0,2).map(c=>c.id),['EARLY','LATE']);
+assert.deepEqual(derive(implementationModel,{view:'all',sort:'implementation',direction:'desc'}).shown.slice(0,2).map(c=>c.id),['LATE','EARLY']);
+assert.equal(implementationModel.changes.find(c=>c.id==='MISSING-IMPLEMENTATION').implementation.kind,'missing','event planned completion is not substituted for implementation');
+assert.equal(implementationModel.changes.find(c=>c.id==='CONFLICT').implementation.kind,'conflict');
+assert.equal(derive(implementationModel,{view:'all',columnFilters:{implementation:'01 Dec 2026'}}).shown[0].id,'EARLY');
+assert.equal(derive(implementationModel,{view:'all',columnFilters:{implementation:'Not recorded'}}).shown[0].id,'MISSING-IMPLEMENTATION');
+const implementationExport=toCsv(derive(implementationModel,{view:'all',columnFilters:{implementation:'01 Dec 2026'}}).shown,'event');assert.match(implementationExport,/Planned implementation date/);assert.match(implementationExport,/01 Dec 2026/);assert.match(implementationExport,/Related application IDs/);
+const regionExport=toCsv(derive(analyze(regionRows,eventOptions),{view:'all',region:'EMEA'}).shown,'event');assert.match(regionExport,/EMEA/);assert.match(regionExport,/SUB-FR/);assert.equal(regionExport.includes('SUB-JP'),false,'exported related IDs respect commercial-region scope');assert.equal(regionExport.includes('SUB-WITHDRAWN'),false,'exported related IDs respect inactive scope');
+console.log('PASS additions: distinct related items and Change IDs, country/inactive scope, Commercial region across all groupings, missing regions, canonical evidence and implementation sorting/filtering.');

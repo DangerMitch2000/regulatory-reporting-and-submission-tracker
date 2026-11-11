@@ -412,5 +412,11 @@
     "displayName": "Registration source URL",
     "kind": "Grouping",
     "description": "Map the source column to this role; no renaming required."
+  },
+  {
+    "name": "CommercialRegion",
+    "displayName": "Commercial region",
+    "kind": "Grouping",
+    "description": "Map the separate Commercial region source column. Do not use Registration region or infer from country. Do not summarize."
   }
 ]

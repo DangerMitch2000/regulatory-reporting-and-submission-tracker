@@ -1,15 +1,15 @@
-# Change Dashboard 1.2.0
+# Change Dashboard 1.3.0
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.2.0/change-dashboard-1.2.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.2.0)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.3.0/change-dashboard-1.3.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.3.0)
 
-A separate daily worklist with **Event (default), Change ID and Application views**, using the Regulatory Tracker's existing **69 field roles**. Filter by manufacturing site, product, business unit, country and record state. Select a summary count, an event/change/application, then a country to inspect the evidence and linked source records. The existing Tracker and Registration Coverage Map remain separate visuals.
+A separate daily worklist with **Event (default), Change ID and Application views**, preserving the Regulatory Tracker's existing **69 field roles** and adding one optional **Commercial region** role. Filter by manufacturing site, product, business unit, commercial region, country and record state. Select a summary count, an event/change/application, then a country to inspect the evidence and linked source records. The existing Tracker and Registration Coverage Map remain separate visuals.
 
-**Preview release:** package version **1.2.0.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
+**Preview release:** package version **1.3.0.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
 
 ## Install and map existing fields
 
 1. Download the `.pbiviz` above. In Power BI Desktop, use **Visualizations (…) → Import a visual from a file**.
-2. For an existing Change Dashboard, confirm replacement on import: its visual identity and all 69 field roles are unchanged. For a new instance, map the same source columns used in the Tracker into the matching named wells; Power BI does not automatically copy another visual's mappings.
+2. For an existing Change Dashboard, confirm replacement on import: its visual identity and all 69 existing field roles are unchanged. Add your separate Commercial region source column to the new **Commercial region** well (CommercialRegion). This is the only new mapping; it does not use Registration region or a country-to-region lookup. For a new instance, map the same source columns used in the Tracker into the matching named wells; Power BI does not automatically copy another visual's mappings.
 3. Map **EventName** for Event view, **AppID** for Application view and **ChangeID** for Change ID view. Each view works independently of the other parent IDs. If EventName is unmapped on first load, the visual starts with the available Application or Change ID mapping. Include the country/RO and filing identifiers below. Add status and date evidence before interpreting the action counts. Keep identifiers as text; select **Don't summarize** and raw date columns, not date hierarchies.
 4. Validate a few known changes against Velocity, including a pending country, an overdue dispatch, a submitted filing and an approved registration. Save and publish your report as usual.
 
@@ -20,7 +20,7 @@ A separate daily worklist with **Event (default), Change ID and Application view
 | Returned assessments | `AssessmentResponseID`, `AssessmentCountry`, `AssessmentTimeline`, `AssessmentMOHFiling`, `AssessmentDocumentation` |
 | Existing record links | `EventName`, `EventState`, `EventQMS`, `AppID`, `ROID`, `SubID`, `RegistrationID` |
 | Source states | `AppStatus`, `ROStatus`, `SubStatus`, `RegistrationState` |
-| Scope filters | `Manufacturer`, `RegistrationManufacturingSite`, `Product`, `BusinessUnit`, `Country` |
+| Scope filters | `Manufacturer`, `RegistrationManufacturingSite`, `Product`, `BusinessUnit`, `Country`, new optional `CommercialRegion` |
 | Dispatch | `DispatchRequired`, `OriginalDispatch`, `LatestDispatch`, `ActualDispatch` |
 | Authority submission | `OriginalSubmission`, `LatestSubmission`, `ActualSubmission` |
 | Approval | `OriginalApproval`, `LatestApproval`, `ActualApproval` |
@@ -39,16 +39,25 @@ Use the model's existing **real relationships** to deliver the associated record
 
 Labels, state filter, counts, copied IDs, CSV headers and missing-ID review follow the chosen view. Country/RO/filing evidence remains attached to its delivered associations; the visual does not manufacture missing parent links. The same application may belong to multiple events, so totals across view modes are not additive.
 
-The **Awaiting assessment summary card is hidden in 1.2.0**. Existing assessment fields and detailed checks are retained for possible later use; no replacement assessment card is added. Assessment Details use **linked SharePoint response records**. In Event/Application views, only responses matching a country already present in the linked RO/application scope are included. Missing assessment links say **Assessment not linked**; a missing link does not establish that an event needs no assessment. Native EventState is shown but is not interpreted as a country-by-country response checklist.
+The **Awaiting assessment summary card remains hidden**. Existing assessment fields and detailed checks are retained for possible later use; no replacement assessment card is added. Assessment Details use **linked SharePoint response records**. In Event/Application views, only responses matching a country already present in the linked RO/application scope are included. Missing assessment links say **Assessment not linked**; a missing link does not establish that an event needs no assessment. Native EventState is shown but is not interpreted as a country-by-country response checklist.
+
+## Commercial region and event-list context
+
+- **Commercial region** uses the separate supplied source field, never Registration region or inferred geography. If it is unmapped, the filter shows **Not mapped** and the existing worklist still works. When mapped, **Not recorded** lets you inspect missing region values.
+- Selecting a region narrows the delivered country/filing work within each matching event, change or application. Country progress, next action, summary cards, Related items, copied linked IDs, export and **Worklist** counts follow that scope. **Loaded** counts remain the unfiltered delivered population. Source state/date conflicts are checked before scoping so a filter cannot conceal conflicting completion evidence.
+- **Related items** shows distinct **Apps, ROs, Subs and Regs**, plus the linked **Change ID** where available. Repeated catalog/product memberships count once. Click a count to open the full selectable IDs in Details; use **Copy linked IDs** to copy them. ROs without submissions remain visible. The column sorts by the combined number of linked Apps/ROs/Subs/Regs and searches counts, labels and all linked IDs.
+- **Implementation date** displays the existing **Change Planned Implementation Date** (ChangePlannedImplementation), formatted as **DD MMM YYYY**. It does not substitute the event's planned completion, dispatch, submission or approval date. Missing dates say **Not recorded**; conflicting or invalid dates are labelled and withheld from chronological sorting. Sorting uses the actual date, not its displayed text; missing/unusable values stay last in either direction.
+- Both new columns are available in Event, Change ID and Application views and support the existing header sorting, text filters and **Reset table**. Multiple linked changes with different implementation dates show **Conflicting dates**, rather than silently choosing one. The compact list uses horizontal table scrolling on smaller visuals.
+
 
 ## Table controls and record coverage
 
 - **Next due defaults to most recently overdue first.** Upcoming dated work follows overdue work; undated work stays last. Click Next due to switch to oldest overdue first. For records with several outstanding actions, the representative next action follows that overdue ordering.
 - Click any header in the main worklist, country breakdown or missing-parent table to sort. Click it again to reverse the order. IDs sort naturally (2 before 10); country approval progress sorts by approval fraction. Blank values stay last.
 - Use the filter button beside each header for a case-insensitive text filter. Multiple column filters combine. Date searches use displayed text, such as **Nov 2026**, **overdue** or **Not recorded**; progress accepts a fraction such as **1/4**. Main record/product searches include names, IDs, sites, source state and project/QMS references.
-- Main column filters affect worklist rows, summary cards, copied IDs, CSV and Worklist counts. Country and missing-parent table filters affect only their own detail tables. The top Country filter narrows the overall worklist scope.
+- Main column filters affect worklist rows, summary cards, copied IDs, CSV and Worklist counts. Country and missing-parent table filters affect only their own detail tables. The top Country and Commercial region filters narrow the overall worklist scope.
 - **Reset table** clears table sorting and column filters while preserving View by and the top scope filters. Switching View by clears main column filters so an event-ID search cannot accidentally hide applications.
-- Top-right **Worklist** counts show distinct Change IDs, Events, Applications, ROs, Submissions and Registrations represented by matching worklist records across all pages, respecting country and inactive-work scope. **Loaded** counts show all delivered records before dashboard filters. Repeated memberships do not inflate either count. Differences can reflect intentional filters or missing parent links, not necessarily missing source records. Both remain limited to what Power BI delivered.
+- Top-right **Worklist** counts show distinct Change IDs, Events, Applications, ROs, Submissions and Registrations represented by matching worklist records across all pages, respecting country, commercial-region and inactive-work scope. **Loaded** counts show all delivered records before dashboard filters. Repeated memberships do not inflate either count. Differences can reflect intentional filters or missing parent links, not necessarily missing source records. Both remain limited to what Power BI delivered.
 - Dark mode uses the Regulatory Tracker's charcoal surfaces, muted blue links and selection colours. Light and high-contrast support remain available.
 
 ## What the counts mean
@@ -71,7 +80,7 @@ The country fraction means **delivered countries whose linked active work all ha
 
 ## Filters and missing data
 
-- Site matches either legal-manufacturer site or registration manufacturing site. Site, product and business unit must match the **same delivered membership row**. They select an event, change or application, after which country progress retains that record's delivered country scope. The Country filter explicitly narrows that scope. This prevents a product filter from silently hiding another expected country.
+- Site matches either legal-manufacturer site or registration manufacturing site. Site, product and business unit must match the **same delivered membership row**. They select an event, change or application, after which country progress retains that record's delivered country scope. The Country and Commercial region filters explicitly narrow that scope. This prevents a product filter from silently hiding another expected country.
 - Blank/unknown dispatch flags require review. Explicit `true`/`false` Boolean or text values are supported; other labels are not guessed.
 - Inactive, archived, withdrawn, canceled/cancelled or deferred filing work is excluded from action queues. Use **Include inactive / withdrawn work and closed records in queues** to inspect excluded country records and to include closed changes' otherwise-active work in queues. Inactive filings themselves never become overdue work merely by selecting this option.
 - Missing-parent review follows View by: missing EventName, ChangeID or AppID. It shows delivered row count **and distinct application count**, plus Event/Application/RO/Submission/Registration IDs. Rows without Change IDs are ordinary Event/Application records when those IDs exist. Rows without events remain available in Application view. Review covers all delivered rows before dashboard filters; it can include duplicate membership rows.
