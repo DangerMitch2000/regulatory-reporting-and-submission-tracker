@@ -4,15 +4,15 @@
 
 Released **23 Oct 2026** · Power BI package **1.18.1.0**. This is an uncertified preview; public demo records are fictional.
 
-## Change Dashboard 1.5.0 — state colours in the relationship diagram
+## Change Dashboard 1.6.0 — linked countries and record diagram
 
-[Download the Power BI dashboard](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.5.0/change-dashboard-1.5.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Field mappings and counting rules](change-dashboard/README.md)
+[Download the Power BI dashboard](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.6.0/change-dashboard-1.6.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Field mappings and counting rules](change-dashboard/README.md)
 
-The connected **Related items** diagram now colours each Change, Event, Application, RO, Submission and Registration by its **own state**, matching the Regulatory Tracker palette. Soft tints and coloured borders keep the layout calm; the selection outline still highlights the chosen path. Hover for the state or expand **State colours** for the legend. Missing, unknown and conflicting states remain explicit, with Dark/Light/high-contrast support.
+The country list and **Related items** diagram now work together. Select a country to highlight its records and connecting lines; select an item to highlight its countries and inspect the matching evidence. Items shared by several countries keep those choices visible. Countries hidden by table filters can be revealed explicitly, while dashboard scope and counts remain unchanged.
 
-Search, Diagram/List switching, copied IDs and paging remain available. Commercial region filtering, implementation dates, worklist counts and completion rules are unchanged. Colours never inherit from another record.
+The diagram retains the Regulatory Tracker state colours, search, Diagram/List switching, copied IDs and paging. Commercial region filtering, implementation dates, worklist counts and completion rules remain available.
 
-Import and replace the existing Change Dashboard: its identity and all **70 existing mappings are retained**, with **no new fields required**. [Read the guide](change-dashboard/README.md) for state meanings and source relationship requirements. This is an uncertified preview, with fictional demo data.
+Import and replace the existing Change Dashboard: its identity and all **70 existing mappings are retained**, with **no new fields required**. [Read the guide](change-dashboard/README.md) for linked selection and source relationship requirements. This is an uncertified preview, with fictional demo data.
 
 ## Registration Coverage Map 1.0.0
 

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {GRAPH_KINDS,graphKey,buildGraph,traceGraph,graphWindow,nodeState} from './relationships.mjs';
+import {GRAPH_KINDS,graphKey,graphCountryKey,buildGraph,traceGraph,traceCountries,graphWindow,nodeState} from './relationships.mjs';
 const row={ChangeID:'CHG-1',EventName:'EVT-1',AppID:'APP-1',ROID:'RO-1',SubID:'SUB-1',RegistrationID:'REG-1',Country:'France',SubStatus:'Completed'};
 const pair=(graph,sourceKind,sourceID,targetKind,targetID)=>graph.edges.some(e=>e.source===graphKey(sourceKind,sourceID)&&e.target===graphKey(targetKind,targetID));
 const graph=buildGraph([row,{...row,CatalogNumber:'CAT-2'},{...row,Country:'Germany',AppID:'APP-2',ROID:'RO-2',SubID:'SUB-2',RegistrationID:'REG-2'}]);
@@ -12,6 +12,36 @@ const focused=traceGraph(graph,graphKey('submission','SUB-1'));
 assert.equal(focused.nodeKeys.size,6);assert.equal(focused.edgeKeys.size,5);
 for(const kind of ['application','ro','submission','registration'])assert(!focused.nodeKeys.has(graphKey(kind,{application:'APP-2',ro:'RO-2',submission:'SUB-2',registration:'REG-2'}[kind])),'shared parent must not highlight siblings');
 assert.equal(traceGraph(graph,'missing key').nodeKeys.size,0);
+
+assert.equal(graphCountryKey('  UNITED   Kingdom\tOF   Great Britain '),'united kingdom of great britain');
+assert.equal(graphCountryKey(null),'');
+const france=traceCountries(graph,[' FRANCE ']);
+assert.equal(france.nodeKeys.size,6);assert.equal(france.edgeKeys.size,5);
+for(const kind of ['application','ro','submission','registration'])assert(!france.nodeKeys.has(graphKey(kind,{application:'APP-2',ro:'RO-2',submission:'SUB-2',registration:'REG-2'}[kind])),'country selection must not traverse a shared event into another country');
+assert.equal(traceCountries(graph,['France','Germany']).nodeKeys.size,10);assert.equal(traceCountries(graph,['France','Germany']).edgeKeys.size,9);
+assert.equal(traceCountries(graph,[]).nodeKeys.size,0);assert.equal(traceCountries(graph,['unknown']).nodeKeys.size,0);
+const countryLinks=buildGraph([
+ {...row,Country:'  New   Zealand  '},
+ {...row,Country:'new zealand',CatalogNumber:'duplicate'},
+ {...row,Country:'Germany',ROID:'RO-2',SubID:'SUB-2'},
+ {Country:'New Zealand',ROID:'RO-2'},
+ {EventName:'MISSING-EVENT',AppID:'MISSING-APP',Country:''},
+ {EventName:'MISSING-EVENT',AppID:'KNOWN-APP',Country:'France'},
+ {RegistrationID:'DISCONNECTED-REG',Country:'New Zealand'}
+]);
+const nz=traceCountries(countryLinks,['new zealand']);
+assert(nz.nodeKeys.has(graphKey('ro','RO-2')));assert(nz.nodeKeys.has(graphKey('application','APP-1')));
+const germanyOnly=countryLinks.edges.find(e=>e.source===graphKey('application','APP-1')&&e.target===graphKey('ro','RO-2'));
+assert(!nz.edgeKeys.has(germanyOnly.key),'two highlighted endpoints do not invent a country association for their edge');
+assert(nz.nodeKeys.has(graphKey('registration','DISCONNECTED-REG')),'country selection retains disconnected linked records');
+assert.deepEqual(countryLinks.byKey.get(graphKey('submission','SUB-1')).countryKeys,['new zealand'],'country key normalization deduplicates case and whitespace variants');
+const missingCountry=traceCountries(countryLinks,['']);
+assert.equal(missingCountry.nodeKeys.size,2);assert.equal(missingCountry.edgeKeys.size,1);
+assert(missingCountry.nodeKeys.has(graphKey('application','MISSING-APP')));assert(!missingCountry.nodeKeys.has(graphKey('application','KNOWN-APP')),'missing country does not act as all countries');
+assert.deepEqual(countryLinks.byKey.get(graphKey('application','MISSING-APP')).countries,[],'missing country does not introduce a blank display label');
+const assigned=buildGraph([{EventName:'EXPECTED-EVENT',ExpectedResponseCountry:'Spain'}],{countryForRow:r=>r.Country||r.ExpectedResponseCountry});
+assert.equal(traceCountries(assigned,['spain']).nodeKeys.size,1,'caller can supply the current grouping country assignment without graph inference');
+console.log('PASS graph countries: delivered node and edge membership, shared ancestors, mixed-country edges, normalized names, missing buckets, disconnected records and caller country assignment.');
 
 const stateRows={...row,ChangeStatus:'Completed',EventState:'In Regulatory Assessment State',AppStatus:'Active',ROStatus:'Health Authority Approved',SubStatus:'Distributed',RegistrationState:'Conditionally Approved'};
 const stateGraph=buildGraph([stateRows]);
@@ -44,6 +74,9 @@ const windowed=graphWindow(graph,{limitPerColumn:1});assert.equal(windowed.nodes
 assert.equal(windowed.omittedEdgeCounts.get(graphKey('event','EVT-1')).outgoing,1);
 const pageTwo=graphWindow(graph,{limitPerColumn:1,pageByKind:{application:1,ro:1,submission:1,registration:1}});assert(pageTwo.nodes.some(n=>n.id==='APP-2'));assert(!pageTwo.nodes.some(n=>n.id==='APP-1'));assert.equal(pageTwo.edges.length,5);
 const revealed=graphWindow(graph,{limitPerColumn:1,selectedKey:graphKey('application','APP-2')});assert.equal(revealed.columns[2].page,1);
+const countryRevealed=graphWindow(graph,{limitPerColumn:1,revealKeys:traceCountries(graph,['Germany']).nodeKeys});
+assert(countryRevealed.nodes.some(n=>n.id==='APP-2'));assert(countryRevealed.nodes.some(n=>n.id==='SUB-2'));assert.equal(countryRevealed.columns[4].page,1);assert.equal(countryRevealed.edges.length,5);
+const selectedPriority=graphWindow(graph,{limitPerColumn:1,selectedKey:graphKey('application','APP-1'),revealKeys:traceCountries(graph,['Germany']).nodeKeys});assert.equal(selectedPriority.columns[2].page,0,'explicit selected item wins over first country match');
 const search=graphWindow(graph,{query:'sub-2'});assert.equal(search.nodes.length,6);assert.equal(search.edges.length,5);assert.equal(search.matchCount,1);assert(search.nodes.some(n=>n.id==='CHG-1'));assert(!search.nodes.some(n=>n.id==='SUB-1'));
 const none=graphWindow(graph,{query:'absent'});assert.equal(none.nodes.length,0);assert.equal(none.edges.length,0);assert(none.columns.every(c=>c.page===0&&c.pageCount===1));
 const multiSearch=graphWindow(graph,{query:'SUB-'});assert.equal(multiSearch.nodes.length,10);assert.equal(multiSearch.edges.length,9);

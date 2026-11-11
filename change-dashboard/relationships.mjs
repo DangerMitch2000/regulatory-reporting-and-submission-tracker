@@ -12,6 +12,8 @@ const text=v=>v==null?'':String(v).trim();
 const natural=new Intl.Collator('en',{numeric:true,sensitivity:'base'});
 const order=(a,b)=>natural.compare(a,b)||(a<b?-1:a>b?1:0);
 export const graphKey=(kind,id)=>JSON.stringify([kind,text(id)]);
+/** Empty is an explicit missing-country bucket, not a wildcard. */
+export const graphCountryKey=value=>text(value).replace(/\s+/g,' ').toLocaleLowerCase('en');
 const edgeKey=(source,target)=>JSON.stringify([source,target]);
 
 /** Each node uses only its own delivered lifecycle state; colours never imply completion. */
@@ -31,27 +33,30 @@ export function nodeState(node){
  return {key,label,colour,dark,light,values,known};
 }
 
-export function buildGraph(rows=[]){
+export function buildGraph(rows=[],{countryForRow=row=>row.Country}={}){
  const byKey=new Map(),edgeMap=new Map();
  for(const row of rows||[]){
   if(!row||typeof row!=='object')continue;
+  const country=text(countryForRow(row)),countryKey=graphCountryKey(country);
   const keys=GRAPH_KINDS.map(column=>{
    const id=text(row[column.field]);if(!id)return null;
    const key=graphKey(column.kind,id);let node=byKey.get(key);
-   if(!node){node={key,kind:column.kind,id,column:column.index,countries:new Set(),states:new Set()};byKey.set(key,node);}
-   const country=text(row.Country),state=text(row[column.state]);
-   if(country)node.countries.add(country);if(state)node.states.add(state);
+   if(!node){node={key,kind:column.kind,id,column:column.index,countries:new Set(),countryKeys:new Set(),states:new Set()};byKey.set(key,node);}
+   const state=text(row[column.state]);
+   node.countryKeys.add(countryKey);if(country)node.countries.add(country);if(state)node.states.add(state);
    return key;
   });
   for(let i=0;i<keys.length-1;i++){
    const source=keys[i],target=keys[i+1];if(!source||!target)continue;
-   const key=edgeKey(source,target);if(!edgeMap.has(key))edgeMap.set(key,{key,source,target});
+   const key=edgeKey(source,target);if(!edgeMap.has(key))edgeMap.set(key,{key,source,target,countryKeys:new Set()});
+   edgeMap.get(key).countryKeys.add(countryKey);
   }
  }
  const nodes=[...byKey.values()].sort((a,b)=>a.column-b.column||order(a.id,b.id));
- for(const node of nodes){node.countries=[...node.countries].sort(order);node.states=[...node.states].sort(order);}
+ for(const node of nodes){node.countries=[...node.countries].sort(order);node.countryKeys=[...node.countryKeys].sort(order);node.states=[...node.states].sort(order);}
  const rank=new Map(nodes.map((n,i)=>[n.key,i]));
  const edges=[...edgeMap.values()].sort((a,b)=>rank.get(a.source)-rank.get(b.source)||rank.get(a.target)-rank.get(b.target));
+ for(const edge of edges)edge.countryKeys=[...edge.countryKeys].sort(order);
  const incoming=new Map(nodes.map(n=>[n.key,[]])),outgoing=new Map(nodes.map(n=>[n.key,[]]));
  for(const edge of edges){incoming.get(edge.target).push(edge);outgoing.get(edge.source).push(edge);}
  const columns=GRAPH_KINDS.map(column=>({...column,nodes:nodes.filter(n=>n.kind===column.kind)}));
@@ -74,12 +79,18 @@ function traceMany(graph,keys){
 /** Ancestors and descendants of one item, without sibling branches. */
 export function traceGraph(graph,key){return traceMany(graph,[key]);}
 
+/** Highlight only associations delivered for these countries, including disconnected records. */
+export function traceCountries(graph,countries=[]){
+ const wanted=new Set(Array.from(countries,graphCountryKey)),matches=item=>item.countryKeys.some(key=>wanted.has(key));
+ return {nodeKeys:new Set(graph.nodes.filter(matches).map(node=>node.key)),edgeKeys:new Set(graph.edges.filter(matches).map(edge=>edge.key))};
+}
+
 /**
  * Bound DOM work while keeping the full graph available for lookup/highlighting.
  * Search retains each match's actual upstream/downstream paths. Pagination never
  * creates links to an arbitrary item in the next visible column.
  */
-export function graphWindow(graph,{query='',selectedKey='',limitPerColumn=60,pageByKind={}}={}){
+export function graphWindow(graph,{query='',selectedKey='',revealKeys=null,limitPerColumn=60,pageByKind={}}={}){
  const limit=Number.isFinite(limitPerColumn)?Math.max(1,Math.min(200,Math.floor(limitPerColumn))):60;
  const q=text(query).toLocaleLowerCase('en');
  const matches=q?graph.nodes.filter(n=>n.id.toLocaleLowerCase('en').includes(q)):[];
@@ -92,7 +103,8 @@ export function graphWindow(graph,{query='',selectedKey='',limitPerColumn=60,pag
   // Only use this option when intentionally revealing a new selection; ordinary
   // paging can omit it so a user is not forced back to the selected item's page.
   const selectedIndex=selectedKey?all.findIndex(n=>n.key===selectedKey):-1;
-  if(selectedIndex>=0)page=Math.floor(selectedIndex/limit);
+  const revealIndex=selectedIndex>=0?selectedIndex:revealKeys?all.findIndex(n=>revealKeys.has(n.key)):-1;
+  if(revealIndex>=0)page=Math.floor(revealIndex/limit);
   const nodes=all.slice(page*limit,(page+1)*limit);
   return {...column,nodes,total:all.length,page,pageCount,hidden:all.length-nodes.length};
  });

@@ -156,3 +156,18 @@ assert.equal(derive(implementationModel,{view:'all',columnFilters:{implementatio
 const implementationExport=toCsv(derive(implementationModel,{view:'all',columnFilters:{implementation:'01 Dec 2026'}}).shown,'event');assert.match(implementationExport,/Planned implementation date/);assert.match(implementationExport,/01 Dec 2026/);assert.match(implementationExport,/Related application IDs/);
 const regionExport=toCsv(derive(analyze(regionRows,eventOptions),{view:'all',region:'EMEA'}).shown,'event');assert.match(regionExport,/EMEA/);assert.match(regionExport,/SUB-FR/);assert.equal(regionExport.includes('SUB-JP'),false,'exported related IDs respect commercial-region scope');assert.equal(regionExport.includes('SUB-WITHDRAWN'),false,'exported related IDs respect inactive scope');
 console.log('PASS additions: distinct related items and Change IDs, country/inactive scope, Commercial region across all groupings, missing regions, canonical evidence and implementation sorting/filtering.');
+
+const countryBase={...noChange,ChangeID:'COUNTRY-CHANGE',EventName:'COUNTRY-EVENT',AppID:'COUNTRY-APP',ROID:'COUNTRY-RO',SubID:'COUNTRY-SUB',Country:'New Zealand',RegistrationID:'COUNTRY-REG',RegistrationCountry:'NEW ZEALAND',RegistrationState:'Approved'};
+const countryVariants=[countryBase,{...countryBase,Country:' new   zealand ',RegistrationCountry:'New  Zealand',CatalogNumber:'SECOND'},{...countryBase,Country:'NEW ZEALAND',CatalogNumber:'THIRD'}];
+for(const groupBy of ['change','event','application']){
+ const canonical=analyze(countryVariants,{...options,groupBy}),single=derive(analyze([countryBase],{...options,groupBy}),{view:'all'}),combined=derive(canonical,{view:'all'}),item=combined.shown[0];
+ assert.equal(item.countries.length,1);assert.equal(item.countries[0].key,'new zealand');assert.equal(item.countries[0].name,'New Zealand');assert.equal(item.scopedRows.length,3,'country case/whitespace variants retain all source memberships');
+ assert.deepEqual(combined.counts,single.counts);assert.deepEqual(combined.visibleCoverage,single.visibleCoverage);assert.deepEqual(item.related.counts,{application:1,ro:1,submission:1,registration:1});
+ assert.equal(canonical.submissions.get('COUNTRY-SUB').country,'new zealand');assert.equal(canonical.submissions.get('COUNTRY-SUB').countryLabel,'New Zealand');assert.equal(canonical.submissions.get('COUNTRY-SUB').approved,true,'registration-country case and whitespace variants match canonical application country');
+ assert.equal(derive(canonical,{view:'all',country:'New Zealand'}).shown[0].scopedRows.length,3);
+ const roVariants=countryVariants.map(r=>({...r,SubID:'',ROStatus:'Health Authority Approved'})),roCombined=derive(analyze(roVariants,{...options,groupBy}),{view:'all'}).shown[0];
+ assert.equal(roCombined.countries.length,1);assert.equal(roCombined.countries[0].name,'New Zealand');assert.equal(roCombined.scopedRows.length,3);assert.equal(roCombined.related.counts.submission,0);assert.equal(roCombined.done,1,'RO-only records use the same country normalization');
+}
+const countryConflict=analyze([countryBase,{...countryBase,Country:'France'}],eventOptions).submissions.get('COUNTRY-SUB');assert.equal(countryConflict.stage,'review');assert.equal(countryConflict.approved,false,'genuinely different countries remain a conflict');
+assert.equal(countryVariants[1].Country,' new   zealand ','normalization must not mutate delivered source values');
+console.log('PASS country canonicalization: equivalent case/spacing stays one country across all views, source rows and distinct counts retained, registration and RO-only matching, genuine conflicts preserved.');

@@ -1,10 +1,11 @@
-# Change Dashboard 1.5.0 — preview
+# Change Dashboard 1.6.0 — preview
 
-- Colour diagram items by their **own source state**, using the Regulatory Tracker palette: soft fills, coloured borders/dots and readable labels.
-- Keep the selection outline and path highlighting separate from state colour. List view uses the same state colours.
-- Add state hover text, explicit selected-state labels and a compact **State colours** legend. Missing/unknown values remain neutral; conflicting states are clearly identified.
-- Preserve Dark, Light and host high-contrast modes. All relationship links, counts, filters and completion rules remain unchanged.
+- Connect the country list and Related items diagram in both directions. Country selection highlights its exact delivered records and links; selecting an item highlights its countries and shows the matching evidence.
+- Handle records shared by several countries without leaving unrelated country evidence on screen. Missing countries remain explicit, and shared ancestors do not highlight sibling-country branches.
+- Reveal country branches on later diagram pages, preserve country-table filters with an explicit **Show related countries** action, and keep Diagram/List, keyboard and state colours consistent.
+- Keep worklist counts, dashboard filters, copied IDs and exports independent of local highlighting. Refresh and parent changes clear stale linked selections.
+- Normalize equivalent country spellings by case and whitespace so duplicate source memberships remain one country and retain their linked rows.
 
-Import **change-dashboard-1.5.0.0.pbiviz** and replace Change Dashboard. All 70 existing field mappings and the visual identity are preserved; **no new fields are required**.
+Import **change-dashboard-1.6.0.0.pbiviz** and replace Change Dashboard. All **70 field mappings** and the visual identity are retained; **no new fields are required**.
 
-Tests cover every record type, parent/child state isolation, missing/unknown/conflicting states, case/whitespace normalization, safe rendering, legend persistence, theme changes, keyboard/touch interaction and the packaged browser runtime. This is an uncertified preview; demo data is fictional.
+Validation includes graph and country logic, 20,000-row graph construction, 10,000-submission worklists, browser interaction and the browser runtime extracted from the packaged visual. This is an uncertified preview; demo data is fictional.

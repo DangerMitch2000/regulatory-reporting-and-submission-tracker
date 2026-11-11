@@ -36,3 +36,9 @@
 .change-dashboard .cd-state-label{color:var(--cd-state-text);font-weight:500}.change-dashboard .cd-linked-ids [data-node]{color:var(--cd-state-text)}.change-dashboard .cd-linked-ids [data-node][aria-pressed=true]{outline:2px solid var(--cd-focus);outline-offset:1px;border-radius:3px}
 .change-dashboard .cd-graph-legend{font-size:12px;margin-bottom:8px}.change-dashboard .cd-graph-legend summary{padding:3px 0;font-size:11px;color:var(--cd-muted)}.change-dashboard .cd-state-legend-grid{display:flex;gap:12px 24px;flex-wrap:wrap;padding:6px 0}.change-dashboard .cd-state-legend-grid section{display:flex;flex-direction:column;gap:5px}.change-dashboard .cd-state-legend-grid strong{font-size:11px;color:var(--cd-muted)}.change-dashboard .cd-graph-legend p{color:var(--cd-muted);font-size:11px;margin-bottom:8px}
 .change-dashboard[data-high-contrast=true] [data-state],.change-dashboard[data-high-contrast=true] .cd-state-label{--cd-state-colour:var(--cd-fg)!important;--cd-state-text:var(--cd-fg)!important;--cd-state-tint:transparent!important}
+
+/* Country and diagram selection share focus without narrowing counts. */
+.change-dashboard .cd-country-link-note{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--cd-muted);padding:6px 12px;border-bottom:1px solid var(--cd-line);overflow-wrap:anywhere}
+.change-dashboard .cd-countries tr[data-related=true]>td:first-child{box-shadow:inset 3px 0 var(--cd-accent)}
+.change-dashboard .cd-countries tr[data-related=false]{opacity:.55}
+.change-dashboard .cd-countries tr[data-selected=true]{opacity:1}

@@ -1,10 +1,10 @@
-# Change Dashboard 1.5.0
+# Change Dashboard 1.6.0
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.5.0/change-dashboard-1.5.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.5.0)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.6.0/change-dashboard-1.6.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.6.0)
 
 A separate daily worklist with **Event (default), Change ID and Application views**, preserving the Regulatory Tracker's existing **69 field roles** and adding one optional **Commercial region** role. Filter by manufacturing site, product, business unit, commercial region, country and record state. Select a summary count, an event/change/application, then a country to inspect the evidence and linked source records. The existing Tracker and Registration Coverage Map remain separate visuals.
 
-**Preview release:** package version **1.5.0.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
+**Preview release:** package version **1.6.0.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
 
 ## Install and map existing fields
 
@@ -52,6 +52,14 @@ Open **Related items**, or click an App/RO/Sub/Reg count in the worklist, to see
 - **Find ID** searches within the selected record and retains connected context. **List** provides a compact alternative with selectable/copyable IDs. **Copy linked IDs** still copies the complete scoped set.
 - The diagram follows the top Country, Commercial region and inactive-work scope. It loads only when expanded and keeps selection/open state while inspecting the same parent. Selecting another parent resets the diagram selection. The existing column mappings and 70-role identity are unchanged.
 - Nodes and connectors share one scroll area, with columns sized for the visual. The diagram stays at a maximum 280px viewport height. Large groups show 40 records per column page; column arrows access the rest. A **+** indicates additional links outside the displayed view. At most 1,500 visible lines are drawn at once; a notice appears if further links need an ID search. These display limits never change the source counts or exports.
+
+## Connected country list
+
+- Select a country in the detail table to open Related items and highlight that country's delivered records and connecting lines. The diagram clears its ID search and reveals the first matching record on each column's page. Other branches stay visible but dimmed; counts, dashboard filters and exports are unchanged.
+- Select a diagram item (or a record in List view) to highlight its countries below. A single-country item selects that country's evidence and scrolls the country list to its row. For an item shared by several countries, the current evidence stays only if it belongs to that item; otherwise choose one of the highlighted countries.
+- Country-table filters remain in place. If they hide a related country, **Show related countries** clears only those table filters. It does not clear the dashboard's Country, Commercial region or other scope filters.
+- **Clear selection** restores the full diagram and removes the country-link highlight, retaining the country evidence you were inspecting. Selecting another parent resets the link selection; refresh removes selections for records no longer delivered.
+- Countries use the existing application lead-market **Country** role and the existing Change-view fallback for assessment-only records. Missing countries remain explicit. No country is guessed from the order of parallel lists, and highlighting a shared parent never lights an unrelated country's links.
 
 ## Commercial region and event-list context
 

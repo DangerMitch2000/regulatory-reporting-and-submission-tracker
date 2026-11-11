@@ -6,6 +6,7 @@ import {compare,filterRows,dueOrder} from './table-tools.mjs';
 export const roles=fields.map(f=>f.name),names=Object.fromEntries(fields.map(f=>[f.name,f.displayName]));
 export const dates=fields.filter(f=>f.description.startsWith('Date column')).map(f=>f.name);
 export const text=v=>v==null?'':String(v).trim(),norm=v=>text(v).toLowerCase(),unique=v=>[...new Set(v.filter(x=>x!==null&&x!==undefined&&x!==''))];
+const countryName=v=>text(v).replace(/\s+/g,' '),countryNorm=v=>countryName(v).toLocaleLowerCase('en');
 const DAY=86400000,vals=(rs,f)=>unique(rs.map(r=>text(r[f]))),key=(...xs)=>JSON.stringify(xs);
 const inactive=new Set(['inactive','archived','withdrawn','canceled','cancelled','deferred','cancelled state','inactive state']);
 const approvedStates=new Set(['health authority approved','conditionally approved']);
@@ -39,10 +40,12 @@ export function safeURL(v){try{const s=text(v);if(!s||/[\s\\\u0000-\u001f]/.test
 export function mapTable(table){const mapped=new Map();for(const [i,c]of (table?.columns||[]).entries())for(const r of roles)if(c.roles?.[r]){if(mapped.has(r))throw Error('Map only one field to '+r);mapped.set(r,i);}const rows=(table?.rows||[]).map(v=>Object.fromEntries([...mapped].map(([r,i])=>[r,v[i] instanceof Date?(Number.isFinite(v[i].valueOf())?v[i].toISOString():'Invalid Date'):v[i]])));return {rows,mappedFields:[...mapped.keys()],missing:Object.values(GROUPINGS).some(g=>mapped.has(g.field))?[]:['EventName, AppID or ChangeID']};}
 function group(rs,field){const out=new Map();for(const r of rs){const id=text(r[field]);if(!id)continue;if(!out.has(id))out.set(id,[]);out.get(id).push(r);}return out;}
 function scalar(rs,f){const values=vals(rs,f),normalized=unique(values.map(norm));return {values,value:normalized.length===1?normalized[0]:'',label:values.join(' / ')||'Not recorded',conflict:normalized.length>1};}
+// Country display labels must not turn equivalent source spellings into a new country key.
+function countryScalar(rs,f){const values=unique(rs.map(r=>countryName(r[f]))),normalized=unique(values.map(countryNorm));return {values,value:normalized.length===1?normalized[0]:'',label:(normalized.length===1?values[0]:values.join(' / '))||'Not recorded',conflict:normalized.length>1};}
 function target(rs,latest,original,asOf){const d=dateField(rs,latest,asOf);return {...(d.kind==='missing'?dateField(rs,original,asOf):d),field:d.kind==='missing'?original:latest};}
 function submission(id,rs,model){
  const {asOf}=model,issues=[],add=s=>{if(!issues.includes(s))issues.push(s);};
- const s=scalar(rs,'SubStatus'),ro=scalar(rs,'ROStatus'),app=scalar(rs,'AppStatus'),country=scalar(rs,'Country');
+ const s=scalar(rs,'SubStatus'),ro=scalar(rs,'ROStatus'),app=scalar(rs,'AppStatus'),country=countryScalar(rs,'Country');
  for(const [label,x]of [['Submission state',s],['RO state',ro],['Application state',app]])if(x.conflict)add(label+' has conflicting values');
  if(country.conflict||!country.value)add('Submission country missing or conflicting');
  if(vals(rs,'ROID').length>1||vals(rs,'AppID').length>1)add('Submission links to conflicting applications or ROs');
@@ -53,7 +56,7 @@ function submission(id,rs,model){
  for(const [name,d]of Object.entries(plans))if(!['dated','missing'].includes(d.kind))add('Planned '+name+': '+d.label);
  for(const [a,b]of [['dispatch','submission'],['submission','approval']])if(actual[a].kind==='dated'&&actual[b].kind==='dated'&&actual[a].value>actual[b].value)add('Actual '+a+' is later than actual '+b);
  const regIDs=vals(rs,'RegistrationID'),regEvidence=[];
- for(const rid of regIDs){const rr=model.registrations.get(rid)||[],state=scalar(rr,'RegistrationState'),rc=scalar(rr,'RegistrationCountry'),rro=vals(rr,'ROID');
+ for(const rid of regIDs){const rr=model.registrations.get(rid)||[],state=scalar(rr,'RegistrationState'),rc=countryScalar(rr,'RegistrationCountry'),rro=vals(rr,'ROID');
   if(state.conflict){add('Registration '+rid+' has conflicting states');continue;}
   if(!['approved','conditionally approved'].includes(state.value))continue;
   if(rc.conflict||(rc.value&&country.value&&rc.value!==country.value)){add('Registration '+rid+' country does not match submission');continue;}
@@ -81,9 +84,9 @@ function submission(id,rs,model){
  const overdue=Number.isFinite(due)&&due<asOf,daysLate=overdue?Math.round((asOf-due)/DAY):0;
  return {id,rows:rs,state:s.label,roState:ro.label,appState:app.label,country:country.value,countryLabel:country.label,flag,actual,plans,stage,due,overdue,daysLate,action,evidence,issues,excluded,approved,sent,regEvidence};
 }
-function makeCountry(name){return {key:norm(name)||'?',name:text(name)||'Country not recorded',requirements:[],submissions:[],roItems:[],roIDs:[],rows:[],issues:[],pending:false};}
+function makeCountry(name){return {key:countryNorm(name)||'?',name:countryName(name)||'Country not recorded',requirements:[],submissions:[],roItems:[],roIDs:[],rows:[],issues:[],pending:false};}
 function roWithoutSubmission(id,rows,model){
- const ro=scalar(rows,'ROStatus'),app=scalar(rows,'AppStatus'),country=scalar(rows,'Country'),issues=[];
+ const ro=scalar(rows,'ROStatus'),app=scalar(rows,'AppStatus'),country=countryScalar(rows,'Country'),issues=[];
  if(ro.conflict||app.conflict||country.conflict||!country.value||vals(rows,'AppID').length!==1)issues.push('RO country, application link or state needs review');
  const excluded=inactive.has(ro.value)||inactive.has(app.value),approved=!excluded&&!issues.length&&approvedStates.has(ro.value);
  if(!approved&&!excluded)issues.push('No linked submission delivered for RO '+id);
@@ -117,11 +120,11 @@ export function analyze(rows,options={}){
  for(const [id,rs]of group(rows,grouping.field)){
   const status=scalar(rs,grouping.state),change={id,groupBy,grouping,rows:rs,status:status.label,statusKey:status.value,closed:['completed','closed','canceled','cancelled','closed state','cancelled state','inactive state','inactive','archived','withdrawn'].includes(status.value),issues:[],countries:[],project:vals(rs,'ChangeProjectID'),qms:vals(rs,groupBy==='change'?'ChangeQMS':'EventQMS'),products:vals(rs,'Product'),sites:unique([...vals(rs,'Manufacturer'),...vals(rs,'RegistrationManufacturingSite')]),units:vals(rs,'BusinessUnit'),implementation:dateField(rs,'ChangePlannedImplementation',asOf),created:dateField(rs,grouping.created,asOf)};
   if(status.conflict)change.issues.push('Conflicting '+grouping.singular+' states');
-  const countries=new Map(),get=name=>{const k=norm(name)||'?';if(!countries.has(k))countries.set(k,makeCountry(name));return countries.get(k);};
+  const countries=new Map(),get=name=>{const k=countryNorm(name)||'?';if(!countries.has(k))countries.set(k,makeCountry(name));return countries.get(k);};
   for(const [sid,subRows] of group(rs,'SubID')){const sub=model.submissions.get(sid),c=get(sub.country?sub.countryLabel:'');c.submissions.push(sub);c.rows.push(...subRows);}
-  for(const [rid,rr]of group(rs,'ROID')){const country=scalar(rr,'Country'),c=get(country.conflict?'':country.label==='Not recorded'?'':country.label);c.roIDs.push(rid);if(!vals(rr,'SubID').length)c.roItems.push(roWithoutSubmission(rid,roGroups.get(rid),model));}
+  for(const [rid,rr]of group(rs,'ROID')){const country=countryScalar(rr,'Country'),c=get(country.conflict?'':country.label==='Not recorded'?'':country.label);c.roIDs.push(rid);if(!vals(rr,'SubID').length)c.roItems.push(roWithoutSubmission(rid,roGroups.get(rid),model));}
   for(const r of rs)if(!text(r.SubID)){const name=groupBy==='change'?text(r.ExpectedResponseCountry)||text(r.AssessmentCountry)||text(r.Country)||text(r.RegistrationCountry):text(r.Country);get(name).rows.push(r);}
-  for(const e0 of responses.resolve(rs)){const e={...e0};if(groupBy!=='change'&&!countries.has(e.countryKey))continue;const responseCountries=unique(e.responses.map(r=>norm(r.AssessmentCountry)).filter(Boolean));if(e.returned&&responseCountries.some(n=>n!==e.countryKey)){e.issue='Response country conflicts with expected country';e.returned=false;}const c=get(e.countryKey?e.country:'');c.requirements.push(e);}
+  for(const e0 of responses.resolve(rs)){const e={...e0,countryKey:countryNorm(e0.countryKey)};if(groupBy!=='change'&&!countries.has(e.countryKey))continue;const responseCountries=unique(e.responses.map(r=>countryNorm(r.AssessmentCountry)).filter(Boolean));if(e.returned&&responseCountries.some(n=>n!==e.countryKey)){e.issue='Response country conflicts with expected country';e.returned=false;}const c=get(e.countryKey?e.country:'');c.requirements.push(e);}
   if(!countries.size)get('');
   const expectedCount=scalar(rs,'ChangeResponseCount');const n=Number(expectedCount.value);
   if(expectedCount.conflict||expectedCount.value&&(!Number.isInteger(n)||n<0))change.issues.push('Invalid / conflicting source response count');
@@ -154,7 +157,7 @@ function regionCountry(country,change,model,region){
 }
 function scopedRecordRows(change,countries,model,state){
  const countryKeys=new Set(countries.map(x=>x.key));
- return change.rows.filter(r=>(state.region==='all'||regionValue(r)===state.region)&&countryKeys.has(norm(r.Country)||(model.groupBy==='change'?norm(r.ExpectedResponseCountry)||norm(r.AssessmentCountry)||norm(r.RegistrationCountry):'')||'?')&&(state.includeInactive||![r.SubStatus,r.ROStatus,r.AppStatus].some(s=>inactive.has(norm(s)))));
+ return change.rows.filter(r=>(state.region==='all'||regionValue(r)===state.region)&&countryKeys.has(countryNorm(r.Country)||(model.groupBy==='change'?countryNorm(r.ExpectedResponseCountry)||countryNorm(r.AssessmentCountry)||countryNorm(r.RegistrationCountry):'')||'?')&&(state.includeInactive||![r.SubStatus,r.ROStatus,r.AppStatus].some(s=>inactive.has(norm(s)))));
 }
 export function derive(model,state={}){
  state={...DEFAULT_STATE,...state};
