@@ -1,10 +1,14 @@
-# Site Submission Outlook — 1.6.0
+# Site Submission Outlook — 1.6.1
 
 A separate Power BI visual showing **last month, this month and next month** for **ABO, ADJ, ADK, AJG, ARDG and SCR**. Each month's planned submissions are split by their latest delivered progress. The visual has its own identity and does not replace the Regulatory Tracker.
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.6.0/site-submission-outlook-1.6.0.0.pbiviz) · [Interactive fictional preview](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.6.0)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.6.1/site-submission-outlook-1.6.1.0.pbiviz) · [Interactive fictional preview](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.6.1)
 
-## What's new
+## Spacing fix in 1.6.1
+
+The chart now uses the available vertical space instead of stopping at a fixed height. Month bars grow with each site's column width, keeping clear gaps between sites without leaving oversized empty lanes. Each site's backlog box aligns with its three month bars. Compact visuals keep readable labels and horizontal scrolling; the counting rules and field mappings are unchanged.
+
+## Three-month outlook features
 
 - Three months in a full-width chart, with a compact summary strip instead of a tall side panel.
 - Shorter text beneath the chart; detailed rules are in **How counts work**. Data checks and incomplete-delivery notices remain accessible.
@@ -16,7 +20,7 @@ A separate Power BI visual showing **last month, this month and next month** for
 
 ## Import and map
 
-Import `site-submission-outlook-1.6.0.0.pbiviz` through **Visualizations → … → Import a visual from a file**. Replace the existing Site Submission Outlook visual when prompted. The visual GUID and existing 19 roles are unchanged; the two new roles are optional.
+Import `site-submission-outlook-1.6.1.0.pbiviz` through **Visualizations → … → Import a visual from a file**. Replace the existing Site Submission Outlook visual when prompted. The visual GUID and all 21 roles are unchanged from 1.6.0. The Product and Commercial region roles added in 1.6.0 remain optional.
 
 | Field well | Source column |
 |---|---|
@@ -39,8 +43,8 @@ Import `site-submission-outlook-1.6.0.0.pbiviz` through **Visualizations → …
 | Secondary country (optional) | Related country name, used when no Registration country is recorded |
 | RO ID (optional) | Regulatory objective ID associated with this source row |
 | Application ID (optional) | Application ID associated with this source row |
-| **Product (optional, new)** | Related product name; repeated product joins do not multiply submissions |
-| **Commercial region (optional, new)** | Separate commercial-region field, not a guessed registration-region replacement |
+| **Product (optional)** | Related product name; repeated product joins do not multiply submissions |
+| **Commercial region (optional)** | Separate commercial-region field, not a guessed registration-region replacement |
 
 Use raw date columns, not Date hierarchies, and do not summarize the columns. Map the state from the correct table even when several source fields have the same name. If a revised plan is preferred, map that date instead: the visual uses the supplied plan and does not invent a fallback. No new required fields, change IDs, events or assessment-response fields are needed.
 
@@ -129,7 +133,7 @@ node metrics-browser-test.cjs
 node registration-browser-test.cjs
 node identity-browser-test.cjs
 npm --prefix powerbi run package -- --no-stats
-unzip -o 'powerbi/dist/*1.6.0.0.pbiviz' -d package-check
+unzip -o 'powerbi/dist/*1.6.1.0.pbiviz' -d package-check
 node package-test.cjs
 ```
 

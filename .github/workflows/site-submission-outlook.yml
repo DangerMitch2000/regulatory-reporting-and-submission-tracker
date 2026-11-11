@@ -63,7 +63,7 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi/dist/*.pbiviz release/site-submission-outlook-1.6.0.0.pbiviz
+          cp powerbi/dist/*.pbiviz release/site-submission-outlook-1.6.1.0.pbiviz
           cp README.md release/SITE-SUBMISSION-OUTLOOK-INSTALL.md
           cp preview.html release/site-submission-outlook-demo.html
           cp site-submission-outlook-preview.png release/site-submission-outlook-preview.png
@@ -72,12 +72,12 @@ jobs:
           sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: site-submission-outlook-1.6.0
+          name: site-submission-outlook-1.6.1
           path: site-submission-outlook/release/
       - name: Stage all assets in a draft, then publish the preview
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: site-submission-outlook-v1.6.0
+          RELEASE_TAG: site-submission-outlook-v1.6.1
         run: |
           set -euo pipefail
           # Retry transient GitHub failures. Draft discovery uses the complete
@@ -139,7 +139,7 @@ jobs:
           if [ -z "$release_id" ]; then
             # If GitHub accepted creation but lost the response, rediscover the
             # existing draft before treating a retry's duplicate error as failure.
-            if ! retry_gh release create "$tag" --verify-tag --target "$tag_commit" --draft --prerelease --title 'Site Submission Outlook 1.6.0' --notes-file RELEASE-NOTES.md; then
+            if ! retry_gh release create "$tag" --verify-tag --target "$tag_commit" --draft --prerelease --title 'Site Submission Outlook 1.6.1' --notes-file RELEASE-NOTES.md; then
               release_id=$(find_release)
               if [ -z "$release_id" ]; then
                 echo "Draft creation failed and the complete release list contains no matching draft." >&2

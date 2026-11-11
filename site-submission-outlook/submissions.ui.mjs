@@ -107,7 +107,9 @@ export function render(root, rows, options = {}) {
   const ticks=Array.from({length:Math.floor(r.axisMax/r.step)+1},(_,i)=>i*r.step);
   for(const tick of ticks){const y=bottom-tick/r.axisMax*chartHeight;svg.append(svgEl('line',{x1:left,x2:right,y1:y,y2:y,stroke:colors.border,'stroke-width':tick?1:1.5}));text(left-12,y+5,String(tick),15,colors.muted,{'text-anchor':'end'});}
   text(left,20,'Submissions',14,colors.muted);
-  const groupWidth=(right-left)/Math.max(sites.length,1),barGap=8,barWidth=Math.min(42,(groupWidth-36)/3),currentKey=r.currentMonth;
+  // Use most of each site's lane for its three months. The old fixed 42px cap
+  // left half of a wide visual empty between groups.
+  const groupWidth=(right-left)/Math.max(sites.length,1),barGap=Math.max(8,Math.min(14,groupWidth*.04)),barWidth=Math.min(96,(groupWidth*.78-2*barGap)/3),currentKey=r.currentMonth;
   r.buckets.forEach((site,i)=>{
     const cx=left+groupWidth*(i+.5),start=cx-(site.months.length*barWidth+(site.months.length-1)*barGap)/2;
     if(i)svg.append(svgEl('line',{x1:left+groupWidth*i,x2:left+groupWidth*i,y1:bottom+12,y2:bottom+66,stroke:colors.border}));
@@ -127,7 +129,7 @@ export function render(root, rows, options = {}) {
       for(const segment of segments)metricHit(x,segment.y,barWidth,segment.height,{site:site.key,month:month.key,metric:segment.key},segment.count,`${site.site} · ${month.label} · ${metricLabels[segment.key]}`,'ssSegmentHit');
     });
     text(cx,bottom+57,site.site.length>14?site.site.slice(0,13)+'…':site.site,18,colors.ink,{...centered,...bold}).append(svgEl('title',{},site.site));
-    const width=Math.min(groupWidth-16,150),x=cx-width/2,y=bottom+80;
+    const width=Math.min(groupWidth-16,3*barWidth+2*barGap),x=cx-width/2,y=bottom+80;
     svg.append(svgEl('rect',{x,y,width,height:32,rx:5,fill:colors.backlogBg,stroke:highContrast?colors.ink:'none'}));
     text(cx,y+22,String(site.backlog.count),18,colors.backlog,{...centered,...bold});metricHit(x,y,width,32,{kind:'backlog',site:site.key},site.backlog.count,`${site.site} · Earlier overdue backlog`,'ssBacklogHit');
   });
@@ -162,7 +164,7 @@ export function render(root, rows, options = {}) {
   // the scrollbar width and changes a wrapped control/footer line.
   for(let pass=0;pass<2;pass++){
     const end=state.capture?footer:help,nonChartHeight=end.offsetTop+end.offsetHeight+(state.capture?0:10)-stage.offsetHeight,scale=svg.getBoundingClientRect().width/W;
-    if(root.clientHeight&&scale)drawChart(Math.max(280,Math.min(416,(root.clientHeight-nonChartHeight-3)/scale)));
+    if(root.clientHeight&&scale)drawChart(Math.max(280,(root.clientHeight-nonChartHeight-3)/scale));
   }
   if (state.detail) renderDetails(root, r, state, onChange);
   return r;

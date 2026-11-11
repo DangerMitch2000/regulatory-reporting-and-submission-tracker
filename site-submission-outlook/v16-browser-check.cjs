@@ -88,13 +88,53 @@ module.exports=async function checkV16(page,scope=page){
  for(const [i,site] of ['ABO','ADJ','ADK','AJG','ARDG','SCR'].entries()){await scope.getByRole('checkbox',{name:'Include '+site,exact:true}).click();assert.equal(await scope.locator('.ssHit').count(),(5-i)*3);}
  assert.equal(await scope.locator('.ssHit').count(),0);assert.match(await scope.locator('svg').textContent(),/Choose up to six sites/);
  await scope.getByRole('button',{name:'Use main six sites',exact:true}).click();await scope.locator('.ssSites summary').click();
- for(const width of [1440,760,520]){
-  await page.evaluate(width=>{const v=window.visual||testApi.visual;v.update({type:4,viewport:{width,height:820}})},width);
+ for(const [width,height] of [[1440,820],[1800,1100],[2560,1400],[760,820],[520,820]]){
+  await page.evaluate(viewport=>{const v=window.visual||testApi.visual;v.update({type:4,viewport})},{width,height});
   const overflow=await scope.locator('.siteSubmissions').evaluate(root=>({scroll:root.scrollWidth,client:root.clientWidth}));
   assert.ok(overflow.scroll<=overflow.client+1,`visual overflows at ${width}px: ${JSON.stringify(overflow)}`);
   assert.equal(await scope.locator('.ssHit').count(),18);
   assert.deepEqual(await scope.locator('svg').evaluate(svg=>[...svg.querySelectorAll('text')].filter(n=>{const b=n.getBBox(),v=svg.viewBox.baseVal;return b.x<0||b.x+b.width>v.width+1||b.y+b.height>v.height+1}).map(n=>n.textContent)),[]);
+  if(width>=1440){
+   const geometry=await scope.locator('.siteSubmissions').evaluate(root=>{
+    const chart=root.querySelector('svg'),hits=[...chart.querySelectorAll('.ssHit')],view=chart.viewBox.baseVal,help=root.querySelector('.ssCountHelp'),end=help.offsetTop+help.offsetHeight;
+    const groups=['ABO','ADJ'].map(site=>hits.filter(h=>h.dataset.site===site).map(h=>({x:Number(h.getAttribute('x')),w:Number(h.getAttribute('width'))})));
+    return {unused:root.clientHeight-end,overflow:root.scrollHeight-root.clientHeight,chartHeight:chart.getBoundingClientRect().height,span:groups[0][2].x+groups[0][2].w-groups[0][0].x,pitch:groups[1][0].x-groups[0][0].x,svgHeight:view.height};
+   });
+   assert.ok(geometry.unused>=0&&geometry.unused<40,`chart should use tall viewport without leaving a blank lower panel: ${width}x${height} ${JSON.stringify(geometry)}`);
+   assert.ok(geometry.overflow<=1,`wide chart and footer must fit together: ${JSON.stringify(geometry)}`);
+   assert.ok(geometry.span/geometry.pitch>.72&&geometry.span/geometry.pitch<.88,`month bars should fill each site lane with clear inter-site space: ${JSON.stringify(geometry)}`);
+  }
  }
+ // Screenshot mode should use the space released by the controls, without
+ // clipping the as-of footer or replacing the chart with oversized bars.
+ await page.evaluate(()=>{const v=window.visual||testApi.visual;v.update({type:4,viewport:{width:1800,height:1100}})});
+ const normalHeight=await scope.locator('svg').evaluate(svg=>svg.getBoundingClientRect().height);
+ await scope.getByRole('button',{name:'Screenshot mode',exact:true}).click();
+ const captureGeometry=await scope.locator('.siteSubmissions').evaluate(root=>({
+  chartHeight:root.querySelector('svg').getBoundingClientRect().height,
+  unused:root.clientHeight-(root.querySelector('.ssFooter').offsetTop+root.querySelector('.ssFooter').offsetHeight),
+  overflow:root.scrollHeight-root.clientHeight
+ }));
+ assert.ok(captureGeometry.chartHeight>normalHeight+30,'capture uses space released by hidden controls');
+ assert.ok(captureGeometry.unused>=0&&captureGeometry.unused<30,`capture fills the panel and preserves its footer: ${JSON.stringify(captureGeometry)}`);
+ assert.ok(captureGeometry.overflow<=1,'capture does not require vertical scrolling');
+ await scope.locator('.siteSubmissions').focus();await page.keyboard.press('Escape');
+ // Filtering to one site must keep all three months readable and balanced;
+ // filtering to zero sites must still produce a finite, usable empty chart.
+ await page.evaluate(()=>{const v=window.visual||testApi.visual;v.update({type:4,viewport:{width:1440,height:1000}})});
+ await scope.locator('.ssSites summary').click();
+ for(const site of ['ADJ','ADK','AJG','ARDG','SCR'])await scope.getByRole('checkbox',{name:'Include '+site,exact:true}).click();
+ assert.equal(await scope.locator('.ssHit').count(),3);
+ const singleSite=await scope.locator('svg').evaluate(svg=>{
+  const hits=[...svg.querySelectorAll('.ssHit')].map(n=>({x:+n.getAttribute('x'),width:+n.getAttribute('width')}));
+  return {hits,center:(hits[0].x+hits[2].x+hits[2].width)/2,viewWidth:svg.viewBox.baseVal.width};
+ });
+ assert.ok(singleSite.hits.every(h=>Number.isFinite(h.x)&&h.width>=30&&h.width<=120),'one-site bars remain substantial without stretching across the whole plot');
+ assert.ok(Math.abs(singleSite.center-singleSite.viewWidth/2)<35,'single-site month cluster stays centered');
+ await scope.getByRole('checkbox',{name:'Include ABO',exact:true}).click();
+ assert.equal(await scope.locator('.ssHit').count(),0);
+ assert.deepEqual(await scope.locator('svg').evaluate(svg=>[...svg.querySelectorAll('[x],[y],[width],[height]')].flatMap(n=>['x','y','width','height'].filter(a=>n.hasAttribute(a)&&!Number.isFinite(Number(n.getAttribute(a)))).map(a=>n.tagName+'.'+a))),[]);
+ await scope.getByRole('button',{name:'Use main six sites',exact:true}).click();await scope.locator('.ssSites summary').click();
  await page.evaluate(()=>{const v=window.visual||testApi.visual;v.update({type:4,viewport:{width:1440,height:800}})});
  await page.clock.setFixedTime(new Date(originalTime));
 };
