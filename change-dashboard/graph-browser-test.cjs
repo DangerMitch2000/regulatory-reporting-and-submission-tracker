@@ -26,6 +26,21 @@ async function run({probe=false}={}){
   await reset([{ChangeID:'CHANGE',EventName:'EVENT-A',AppID:'SHARED-APP',ROID:'RO-A',SubID:'SUB-A',Country:'France'},{ChangeID:'CHANGE',EventName:'EVENT-B',AppID:'SHARED-APP',ROID:'RO-B',SubID:'SUB-B',Country:'France'}]);
   await page.getByRole('button',{name:'Select event EVENT-A',exact:true}).click();check('Event selection excludes another event’s RO through a shared application',await page.locator('.cd-graph-node[data-active=true] [data-node]').evaluateAll(ns=>ns.map(n=>JSON.parse(n.dataset.node)[1]).sort()),['CHANGE','EVENT-A','SHARED-APP','RO-A','SUB-A'].sort());
   await page.locator('[data-graph-search]').fill('EVENT-A');check('ID search excludes unrelated shared-application branches',await page.locator('.cd-graph-node [data-node]').evaluateAll(ns=>ns.map(n=>JSON.parse(n.dataset.node)[1]).sort()),['CHANGE','EVENT-A','SHARED-APP','RO-A','SUB-A'].sort());
+  await reset();await page.getByRole('button',{name:'Select submission SUB-12',exact:true}).click();
+  await page.locator('.cd-graph-scroll').evaluate(el=>el.scrollTop=200);
+  const geometry=()=>page.evaluate(()=>{
+   const scroll=document.querySelector('.cd-graph-scroll'),canvas=scroll.querySelector('.cd-graph-canvas'),style=getComputedStyle(canvas),columns=[...scroll.querySelectorAll('.cd-graph-column')],buttons=new Map([...scroll.querySelectorAll('[data-node]')].map(n=>[n.dataset.node,n.getBoundingClientRect()]));
+   const errors=[...scroll.querySelectorAll('path')].map(path=>{const a=buttons.get(path.dataset.from),b=buttons.get(path.dataset.to),start=path.getPointAtLength(0),end=path.getPointAtLength(path.getTotalLength()),p=new DOMPoint(start.x,start.y).matrixTransform(path.getScreenCTM()),q=new DOMPoint(end.x,end.y).matrixTransform(path.getScreenCTM());return Math.max(Math.abs(p.x-a.right),Math.abs(p.y-(a.top+a.height/2)),Math.abs(q.x-b.left),Math.abs(q.y-(b.top+b.height/2)));});
+   return {available:scroll.clientWidth,used:canvas.getBoundingClientRect().width+parseFloat(style.marginLeft)+parseFloat(style.marginRight),columnWidths:columns.map(n=>n.getBoundingClientRect().width),edgeError:Math.max(0,...errors),left:scroll.scrollLeft,top:scroll.scrollTop,overflow:scroll.scrollWidth-scroll.clientWidth,pageOverflow:document.documentElement.scrollWidth-innerWidth,selected:[...scroll.querySelectorAll('[aria-pressed=true]')].map(n=>n.dataset.node)};
+  });
+  for(const width of [1280,1920,2560,390]){
+   await page.setViewportSize({width,height:1000});await page.evaluate(width=>{document.querySelector('.change-dashboard').style.width=width+'px';controller.resize();},width);
+   const result=await geometry();check('Resize '+width+' retains graph selection',result.selected,[JSON.stringify(['submission','SUB-12'])]);check('Resize '+width+' retains node focus',(await focus()).node,JSON.stringify(['submission','SUB-12']));check('Resize '+width+' retains graph vertical scroll',result.top,200);
+   check('Resize '+width+' keeps all six columns',result.columnWidths.length,6);check('Resize '+width+' keeps connector endpoints attached',result.edgeError<=1,true);check('Resize '+width+' does not overflow the browser page',result.pageOverflow<=1,true);
+   if(width>=1280){check('Wide '+width+' uses the full diagram viewport',Math.abs(result.available-result.used)<=1,true);check('Wide '+width+' has no unnecessary horizontal scrollbar',result.overflow<=1,true);}
+   else{check('Narrow diagram retains readable column widths',result.columnWidths.every(w=>w>=159.9),true);check('Narrow diagram scrolls internally',result.overflow>0,true);}
+  }
+  await page.locator('.cd-graph-scroll').evaluate(el=>el.scrollLeft=140);await page.evaluate(()=>controller.resize());check('Narrow redraw preserves horizontal scroll',(await geometry()).left,140);
   assert.deepEqual(errors,[]);console.log(JSON.stringify(findings,null,2));console.log(probe?'Completed relationship-view diagnostic probe.':'PASS relationship view: anchored shared-record paths, keyboard controls, country reveal, List scrolling and responsive search focus.');
  }finally{await browser?.close();await new Promise(r=>server.close(r));}
 }

@@ -1,10 +1,21 @@
-# Change Dashboard 1.7.3
+# Change Dashboard 1.8.0
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.7.3/change-dashboard-1.7.3.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.7.3)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.8.0/change-dashboard-1.8.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.8.0)
 
 A separate daily worklist with **Event (default), Change ID and Application views**, preserving the Regulatory Tracker's existing **69 field roles** and adding one optional **Commercial region** role. Filter by manufacturing site, product, business unit, commercial region, country and record state. Select a summary count, an event/change/application, then a country to inspect the evidence and linked source records. The existing Tracker and Registration Coverage Map remain separate visuals.
 
-**Preview release:** package version **1.7.3.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
+**Preview release:** package version **1.8.0.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
+
+## Diagrams, filter menus and resizing in 1.8.0
+
+- Select an event, change or application in the main worklist by its name or row to open **Related items** directly in **Diagram** view. Keyboard Enter on the record name works too.
+- The six diagram columns fill the available visual width. Narrow visuals keep readable columns and scroll horizontally within the diagram. Country details stay underneath.
+- You can still collapse Related items or switch to List. Refreshing or resizing keeps that choice; selecting a main-list record opens Diagram again. Opening the diagram preserves the page and worklist scroll position.
+- Top filter menus open beside their controls inside the visual, with searchable values and keyboard navigation. They stay within the available space at different report scales and close cleanly when the visual scrolls, refreshes or resizes.
+- Responsive layout and base text size follow the visual's own width. This keeps the same-sized visual consistent across browser window sizes; narrow visuals wrap controls and retain internal table/diagram scrolling.
+- Record links, country scope, counts, state colours and the default business unit **ID** are unchanged. Replace the existing visual with **change-dashboard-1.8.0.0.pbiviz**; no field remapping is required.
+
+Power BI's page view still controls how the whole report is scaled. **Actual size** displays the designed page at its original size, so a large report can require scrolling. **Fit to page** and **Fit to width** scale it to the available area. The visual cannot change that host setting or guarantee identical text sharpness after host scaling. For the best fit, size the report canvas and the visual for the intended audience, then check both page views in the Service. See [Microsoft's report display settings](https://learn.microsoft.com/en-us/power-bi/create-reports/power-bi-report-display-settings).
 
 ## Business unit default in 1.7.3
 
@@ -12,7 +23,7 @@ The dashboard opens with **Business unit = ID**. Choose another unit or **All** 
 
 An empty or partial delivery does not discard the ID selection. If a mapped dataset has no matching ID records, the selected filter stays visible with an empty worklist. When a nonempty delivery has no BusinessUnit field mapping, the dashboard uses All so unmapped records remain accessible.
 
-The visual identity, all 70 field roles and counting rules are unchanged. Import version **1.7.3.0** to apply the new startup default.
+The visual identity, all 70 field roles and counting rules are unchanged. Later versions retain this startup default.
 
 ## More room for Related items in 1.7.2
 
@@ -85,8 +96,8 @@ Open **Related items**, or click an App/RO/Sub/Reg count in the worklist, to see
 - Case and whitespace variants of the same state resolve together. Missing or unknown states are neutral grey, with the supplied unknown label retained. Conflicting source states use the Tracker's conflict colour and say **Conflicting states**; no arbitrary state is chosen. Colour never inherits from a parent/child or changes the dashboard's completion rules: a Completed submission can be green while its RO is still awaiting approval. High-contrast mode uses the host colours with textual state labels.
 - Click a node, or focus it and press Enter, to highlight its upstream and downstream paths while dimming unrelated branches. Shared ancestors do not cause all sibling branches to highlight. The selection strip shows the full ID, delivered country and state; **Copy ID** preserves the clipboard fallback. **Clear selection** restores all lines. Diagram selections do not change the worklist counts or country evidence selection.
 - **Find ID** searches within the selected record and retains connected context. **List** provides a compact alternative with selectable/copyable IDs. **Copy linked IDs** still copies the complete scoped set.
-- The diagram follows the top Country, Commercial region and inactive-work scope. It loads only when expanded and keeps selection/open state while inspecting the same parent. Selecting another parent resets the diagram selection. The existing column mappings and 70-role identity are unchanged.
-- Nodes and connectors share one scroll area, with columns sized for the visual. The diagram stays at a maximum 280px viewport height. Large groups show 40 records per column page; column arrows access the rest. A **+** indicates additional links outside the displayed view. At most 1,500 visible lines are drawn at once; a notice appears if further links need an ID search. These display limits never change the source counts or exports.
+- The diagram follows the top Country, Commercial region and inactive-work scope. Selecting a main-list record opens Diagram view; manually collapsed sections stay collapsed during refresh and resize. Selecting another parent resets the diagram selection. The existing column mappings and 70-role identity are unchanged.
+- Nodes and connectors share one scroll area, with columns sized for the visual. The diagram's maximum height follows the visual height (about 55%, bounded to 280–560px); small groups use only the space they need. Large groups show 40 records per column page; column arrows access the rest. A **+** indicates additional links outside the displayed view. At most 1,500 visible lines are drawn at once; a notice appears if further links need an ID search. These display limits never change the source counts or exports.
 
 ## Connected country list
 

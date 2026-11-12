@@ -51,7 +51,9 @@ export function mountRelationships(host,rows,options={}){
   const visibleNodes=columns.flatMap(c=>c.nodes),visibleKeys=new Set(visibleNodes.map(n=>n.key));
   const eligibleEdges=win.edges,edges=(trace?[...eligibleEdges.filter(e=>trace.edgeKeys.has(e.key)),...eligibleEdges.filter(e=>!trace.edgeKeys.has(e.key))]:eligibleEdges).slice(0,1500),drawnEdgeKeys=new Set(edges.map(e=>e.key));
   const nodeHeight=host.ownerDocument.defaultView.matchMedia('(pointer: coarse)').matches?44:30,STEP=nodeHeight+12;
-  const COL=Math.max(160,Math.min(200,Math.floor((host.clientWidth-26-5*GAP)/6)));
+  // Start at the readable minimum, then fit the actual scroll viewport below.
+  // Its client width accounts for borders and any vertical scrollbar.
+  const COL=160;
   const maxRows=Math.max(1,...columns.map(c=>c.nodes.length)),height=TOP+maxRows*STEP+12,width=GRAPH_KINDS.length*(COL+GAP)-GAP;
   const positions=new Map();columns.forEach((c,i)=>c.nodes.forEach((n,j)=>positions.set(n.key,{x:i*(COL+GAP),y:TOP+j*STEP+(maxRows-c.nodes.length)*STEP/2})));
   const pages=columns.map(c=>{const page=c.page||0,total=c.total??c.nodes.length,pageCount=c.pageCount||Math.max(1,Math.ceil(total/LIMIT));return `<div><strong>${esc(c.label)}</strong><span>${total?Math.min(page*LIMIT+1,total):0}–${Math.min((page+1)*LIMIT,total)} / ${total}</span>${pageCount>1?`<button type="button" data-graph-page="${c.kind}" data-page="${page-1}" aria-label="Previous ${esc(c.label)}" ${page===0?'disabled':''}>‹</button><button type="button" data-graph-page="${c.kind}" data-page="${page+1}" aria-label="Next ${esc(c.label)}" ${page>=pageCount-1?'disabled':''}>›</button>`:''}</div>`;}).join('');
@@ -59,7 +61,19 @@ export function mountRelationships(host,rows,options={}){
   const diagram=`<div class="cd-graph-scroll" tabindex="0" role="region" aria-label="Related record diagram. Scroll to see all columns."><div class="cd-graph-canvas" style="width:${width}px;height:${height}px">${svg}${columns.map((c,i)=>`<section data-related-kind="${c.kind}" tabindex="-1" class="cd-graph-column" style="left:${i*(COL+GAP)}px;width:${COL}px;height:${height}px"><h3>${esc(c.label)} (${c.total??c.nodes.length})</h3>${c.nodes.length?c.nodes.map(n=>{const p=positions.get(n.key),hidden=(graph.incoming.get(n.key)||[]).concat(graph.outgoing.get(n.key)||[]).some(e=>!drawnEdgeKeys.has(e.key));return `<div class="cd-graph-node" data-selected="${state.selectedKey===n.key}" data-active="${!trace||trace.nodeKeys.has(n.key)}" style="top:${p.y}px;height:${nodeHeight}px">${nodeButton(n,state.selectedKey)}${hidden?'<span class="cd-graph-more" title="Additional links are outside this view">+</span>':''}</div>`;}).join(''):'<p class="cd-context">'+(state.query?'No matching items':'Not recorded')+'</p>'}</section>`).join('')}</div></div>`;
   const list=`<div class="cd-related-grid">${columns.map(c=>`<section data-related-kind="${c.kind}" tabindex="-1"><h3>${esc(c.label)} (${c.total??c.nodes.length})</h3><div class="cd-linked-ids">${c.nodes.length?c.nodes.map(n=>`<div data-active="${!trace||trace.nodeKeys.has(n.key)}">${nodeButton(n,state.selectedKey)}</div>`).join(''):(state.query?'No matching items':'Not recorded')}</div></section>`).join('')}</div>`;
   host.innerHTML=`<div class="cd-graph-toolbar"><div class="cd-graph-modes"><button type="button" data-graph-mode="diagram" aria-pressed="${state.mode==='diagram'}">Diagram</button><button type="button" data-graph-mode="list" aria-pressed="${state.mode==='list'}">List</button></div><label>Find ID<input type="search" data-graph-search value="${esc(state.query)}" placeholder="Application, RO, submission…"></label>${state.query?'<button type="button" data-graph-action="reset-search">Clear search</button>':''}</div><div class="cd-graph-context">${state.focusCountry?countryInfo():selectedInfo()}${legend(columns)}</div>${state.mode==='list'?list:diagram}<div class="cd-graph-pages">${pages}</div><p class="cd-graph-note">Lines show adjacent record IDs delivered together. Missing links stay unconnected.${eligibleEdges.length>edges.length?' Showing '+edges.length+' of '+eligibleEdges.length+' visible links; search for an ID to narrow the diagram.':''}${win.hiddenNodeCount?' Some items are on other column pages; + marks additional links.':''}${state.query?' Search includes matching records and their linked paths.':''}</p><div role="status" class="cd-graph-feedback"></div>`;
-  const now=host.querySelector('.cd-graph-scroll');if(now){now.scrollLeft=scroll.left;now.scrollTop=scroll.top;}
+  const now=host.querySelector('.cd-graph-scroll');if(now){
+   const canvas=now.querySelector('.cd-graph-canvas'),lines=now.querySelector('.cd-graph-lines'),style=host.ownerDocument.defaultView.getComputedStyle(canvas),margin=(parseFloat(style.marginLeft)||0)+(parseFloat(style.marginRight)||0),sections=[...now.querySelectorAll('.cd-graph-column')],paths=[...lines.querySelectorAll('path')];
+   const fit=()=>{
+    const col=Math.max(COL,(now.clientWidth-margin-(columns.length-1)*GAP)/columns.length),canvasWidth=columns.length*(col+GAP)-GAP;
+    canvas.style.width=canvasWidth+'px';lines.setAttribute('width',canvasWidth);lines.setAttribute('viewBox','0 0 '+canvasWidth+' '+height);
+    columns.forEach((column,i)=>{const x=i*(col+GAP);sections[i].style.left=x+'px';sections[i].style.width=col+'px';column.nodes.forEach(node=>positions.get(node.key).x=x);});
+    edges.forEach((edge,i)=>{const a=positions.get(edge.source),b=positions.get(edge.target),x=a.x+col,y=a.y+nodeHeight/2,xx=b.x,yy=b.y+nodeHeight/2;paths[i].setAttribute('d',`M ${x} ${y} C ${x+GAP/2} ${y}, ${xx-GAP/2} ${yy}, ${xx} ${yy}`);});
+   };
+   const before=now.clientWidth;fit();
+   // Removing an unnecessary horizontal bar can also remove a vertical bar.
+   if(now.clientWidth!==before)fit();
+   now.scrollLeft=scroll.left;now.scrollTop=scroll.top;
+  }
   for(const el of host.querySelectorAll('.cd-linked-ids')){const previous=listScroll.get(el.closest('[data-related-kind]').dataset.relatedKind);if(previous){el.scrollTop=previous.top;el.scrollLeft=previous.left;}}
   restoreFocus(focus);
  }

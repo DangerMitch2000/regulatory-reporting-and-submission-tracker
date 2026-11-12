@@ -1,7 +1,7 @@
 /* Reproducible, separate Change Dashboard Power BI project. */
 const fs = require('node:fs'), path = require('node:path'), {pathToFileURL} = require('node:url');
 const root = __dirname, out = path.join(root, 'powerbi');
-const VERSION = '1.7.3', PACKAGE_VERSION = '1.7.3.0';
+const VERSION = '1.8.0', PACKAGE_VERSION = '1.8.0.0';
 const GUID = 'changeDashboardF91D534685234516AE47CF62295ED804';
 function write(name, value) {
   const file = path.join(out, name);
@@ -35,7 +35,7 @@ async function build() {
     objects: {}, supportsHighlight: false, supportsKeyboardFocus: true, supportsEmptyDataView: true, sorting: {default: {}}
   });
   write('tsconfig.json', {compilerOptions: {allowJs: true, checkJs: false, allowSyntheticDefaultImports: true, esModuleInterop: true, resolveJsonModule: true, target: 'es2022', module: 'esnext', moduleResolution: 'node', sourceMap: true, outDir: './.tmp/build', declaration: false, skipLibCheck: true, lib: ['es2022', 'dom']}, files: ['src/visual.ts']});
-  for (const name of ['logic.mjs', 'table-tools.mjs', 'relationships.mjs', 'relationship-view.mjs', 'ui.mjs', 'fields.json', 'visual.ts']) write('src/' + name, fs.readFileSync(path.join(root, name)));
+  for (const name of ['logic.mjs', 'table-tools.mjs', 'relationships.mjs', 'relationship-view.mjs', 'filter-menus.mjs', 'ui.mjs', 'fields.json', 'visual.ts']) write('src/' + name, fs.readFileSync(path.join(root, name)));
   for (const file of fs.readdirSync(path.join(root, 'tracker'))) write('src/tracker/' + file, fs.readFileSync(path.join(root, 'tracker', file)));
   write('style/visual.less', fs.readFileSync(path.join(root, 'styles.css')));
   for (const name of ['README.md', 'RELEASE-NOTES.md', 'THIRD-PARTY-NOTICES.md']) if (fs.existsSync(path.join(root, name))) write(name, fs.readFileSync(path.join(root, name)));
