@@ -40,7 +40,6 @@ body{margin:20px;background:#edf2f7;font:14px Segoe UI}#host{width:min(1320px, 1
  function filterRows(rows,key='all',mapped=true){const index=bySubmission(rows,mapped);return rows.filter(row=>matches(index.get(String(row.SubID??'').trim())||resolve([row.DispatchRequired],mapped),key));}
  return {options,parse,resolve,bySubmission,matches,filterRows};
 });
-
 ;const dispatchModule=globalThis.regulatoryDispatchRequired,dispatchUI=dispatchModule;const dispatchRequired=dispatchModule.default||dispatchModule;
 const dateRoles=['OriginalDispatch','LatestDispatch','ActualDispatch','ActualSubmission','ActualApproval'];
 const statusRoles=['SubStatus','ROStatus'];
