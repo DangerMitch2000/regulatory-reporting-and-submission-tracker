@@ -1,6 +1,11 @@
 name: Build Site Submission Outlook
 on:
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish a versioned release after validation
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths:
@@ -75,6 +80,7 @@ jobs:
           name: site-submission-outlook-1.6.2
           path: site-submission-outlook/release/
       - name: Stage all assets in a draft, then publish the preview
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: site-submission-outlook-v1.6.2

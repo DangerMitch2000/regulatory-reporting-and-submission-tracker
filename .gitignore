@@ -1,0 +1,25 @@
+# Installed dependencies and generated Power BI projects
+**/node_modules/
+**/.tmp/
+**/dist/
+**/package-check/
+**/archive-check/
+/regulatory-tracker/powerbi-visual/
+/roadmap/roadmap-2026/
+/roadmap/local-preview.html
+/ivdr-overview/ivdr-comparison/
+/key-submissions/key-submissions/
+/site-regulatory-plan/site-plan/
+/change-dashboard/powerbi/
+/registration-map/powerbi/
+/site-submission-outlook/powerbi/
+
+# Release staging and browser output
+**/*-release/
+**/release/
+**/release-assets/
+**/release-check/
+**/test-results/
+**/playwright-report/
+.DS_Store
+Thumbs.db

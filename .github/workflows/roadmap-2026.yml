@@ -1,14 +1,17 @@
 name: Build 2026 Roadmap
 on:
   workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish a new Roadmap release (requires a new version)'
+        required: false
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths:
-      - 'roadmap-*'
-      - 'dispatch-required.js'
-      - 'prepare-preview.cjs'
-      - 'make-standalone.cjs'
-      - 'test-next.cjs'
+      - 'roadmap/**'
+      - 'shared/**'
       - '.github/workflows/roadmap-2026.yml'
 permissions:
   contents: write
@@ -19,6 +22,9 @@ jobs:
   package:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: roadmap
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,17 +39,17 @@ jobs:
           node make-standalone.cjs
           git diff --exit-code -- roadmap-preview.html
       - name: Install pinned build tools
-        working-directory: roadmap-2026
+        working-directory: roadmap/roadmap-2026
         timeout-minutes: 5
         run: npm install
       - name: Type check and bundle actual Visual host
-        working-directory: roadmap-2026
+        working-directory: roadmap/roadmap-2026
         run: |
           npm test
           npx tsc --noEmit
           npx esbuild verify/harness.ts --bundle --outfile=verify/harness.js --loader:.less=css
       - name: Install and verify test browser
-        working-directory: roadmap-2026
+        working-directory: roadmap/roadmap-2026
         timeout-minutes: 5
         run: |
           npx playwright install chromium
@@ -54,7 +60,7 @@ jobs:
       - name: Verify interactions, evidence and responsive layout
         run: node roadmap-browser-run.cjs
       - name: Build Power BI package
-        working-directory: roadmap-2026
+        working-directory: roadmap/roadmap-2026
         run: npm run package -- --no-stats
       - name: Verify actual packaged runtime
         run: |
@@ -64,17 +70,18 @@ jobs:
         run: |
           mkdir -p roadmap-release
           cp roadmap-2026/dist/*.pbiviz roadmap-release/roadmap-2026-1.5.0.0.pbiviz
-          cp roadmap-2026.README.md roadmap-release/ROADMAP-INSTALL.md
+          cp README.md roadmap-release/ROADMAP-INSTALL.md
           cp roadmap-2026/verify/roadmap-preview-package.png roadmap-release/roadmap-preview.png
           cp roadmap-preview.html roadmap-release/roadmap-demo.html
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf roadmap-release/roadmap-2026-source.tar.gz roadmap-2026 roadmap-2026.build.cjs roadmap-2026.verify.cjs roadmap-2026.logic.js roadmap-2026.ui.js roadmap-2026.css roadmap-2026.README.md roadmap-2026.RELEASE-NOTES.md roadmap-refresh-logic-test.cjs roadmap-refresh-browser.cjs roadmap-browser-run.cjs roadmap-status.verify.cjs roadmap-dispatch.verify.cjs dispatch-required.js test-next.cjs test-host.cjs test-render.cjs prepare-preview.cjs make-standalone.cjs
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf roadmap-release/roadmap-2026-source.tar.gz -C .. roadmap/roadmap-2026 roadmap/roadmap-2026.build.cjs roadmap/roadmap-2026.verify.cjs roadmap/roadmap-2026.logic.js roadmap/roadmap-2026.ui.js roadmap/roadmap-2026.css roadmap/README.md roadmap/RELEASE-NOTES.md roadmap/roadmap-refresh-logic-test.cjs roadmap/roadmap-refresh-browser.cjs roadmap/roadmap-browser-run.cjs roadmap/roadmap-status.verify.cjs roadmap/roadmap-dispatch.verify.cjs shared/dispatch-required.js roadmap/test-next.cjs roadmap/test-host.cjs roadmap/test-render.cjs roadmap/prepare-preview.cjs roadmap/make-standalone.cjs
           cd roadmap-release
           sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
           name: roadmap-2026-1.5.0
-          path: roadmap-release/
+          path: roadmap/roadmap-release/
       - name: Stage all assets in a draft, then publish the preview
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: roadmap-2026-v1.5.0
@@ -129,7 +136,7 @@ jobs:
           if [ -z "$release_id" ]; then
             # If GitHub accepted creation but lost the response, rediscover the
             # existing draft before treating a retry's duplicate error as failure.
-            if ! retry_gh release create "$tag" --verify-tag --target "$tag_commit" --draft --prerelease --title 'Roadmap 1.5.0' --notes-file roadmap-2026.RELEASE-NOTES.md; then
+            if ! retry_gh release create "$tag" --verify-tag --target "$tag_commit" --draft --prerelease --title 'Roadmap 1.5.0' --notes-file RELEASE-NOTES.md; then
               release_id=$(find_release)
               if [ -z "$release_id" ]; then
                 echo "Draft creation failed and the complete release list contains no matching draft." >&2

@@ -1,17 +1,30 @@
 name: Build Key Submissions 2026
 on:
   workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish a new version after its version and release tag have been updated'
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths:
-      - 'dispatch-required.js'
-      - 'key-*'
+      - 'shared/dispatch-required.js'
+      - 'key-submissions/**'
+      - '.github/workflows/key-submissions.yml'
+  pull_request:
+    paths:
+      - 'key-submissions/**'
+      - 'shared/dispatch-required.js'
       - '.github/workflows/key-submissions.yml'
 permissions:
   contents: write
 jobs:
   package:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: key-submissions
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,7 +35,7 @@ jobs:
           node key-submissions.build.cjs
           node key-demo.cjs
       - name: Install pinned build tools
-        working-directory: key-submissions
+        working-directory: key-submissions/key-submissions
         run: npm install
       - name: Verify scope and actual visual
         run: |
@@ -39,17 +52,18 @@ jobs:
         run: |
           mkdir -p key-release
           cp key-submissions/dist/*.pbiviz key-release/key-submissions-2026-1.1.0.0.pbiviz
-          cp key-submissions.README.md key-release/KEY-SUBMISSIONS-INSTALL.md
+          cp README.md key-release/KEY-SUBMISSIONS-INSTALL.md
           cp key-preview.html key-release/key-demo.html
           cp key-submissions/verify/key-preview.png key-release/key-preview.png
           cp key-submissions/verify/key-dispatch-details.png key-release/key-dispatch-details.png
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf key-release/key-source.tar.gz key-submissions key-submissions.build.cjs key-submissions.logic.js key-submissions.ui.js key-submissions.css key-submissions.README.md key-test.cjs key-host-test.cjs key-browser-test.cjs key-demo.cjs dispatch-required.js
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude='key-submissions/key-release' -czf key-release/key-source.tar.gz -C .. key-submissions shared
           cd key-release && sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
           name: key-submissions-2026
-          path: key-release/
+          path: key-submissions/key-release/
       - name: Publish Key Submissions preview
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

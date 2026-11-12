@@ -65,6 +65,6 @@ Windowed Power BI data delivery is supported. Loading or host limits show an exp
 
 ## Development
 
-Run `node build.cjs`, install dependencies in `powerbi/`, and run `node prepare-preview.cjs`. Verification commands: `node --test logic-test.mjs`, `node geography-test.cjs`, `node host-test.cjs`, `node browser-test.cjs` and `node host-browser-test.cjs`. The release workflow also typechecks, builds and inspects the packaged visual. Synthetic tests do not substitute for testing the report’s actual source model and tenant configuration.
+From the repository root, first run `cd registration-map`. Run `node build.cjs`, install dependencies in `powerbi/`, and run `node prepare-preview.cjs`. Verification commands: `node --test logic-test.mjs`, `node geography-test.cjs`, `node host-test.cjs`, `node browser-test.cjs` and `node host-browser-test.cjs`. The release workflow also typechecks, builds and inspects the packaged visual; publishing requires a manual run with **publish** enabled. Synthetic tests do not substitute for testing the report’s actual source model and tenant configuration.
 
 See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for pinned Natural Earth geometry and public-domain provenance. Boundaries follow that dataset’s published cartographic view; country colouring reflects supplied records.

@@ -114,7 +114,7 @@ The chart has three bars per selected site. At narrow widths, its chart area scr
 
 ## Build and verification
 
-Source: `submissions.logic.mjs`, `submissions.ui.mjs`, `submissions.css`, `visual.ts`, `build.cjs`.
+Source: `submissions.logic.mjs`, `submissions.ui.mjs`, `submissions.css`, `visual.ts`, `build.cjs`. From the repository root, first run `cd site-submission-outlook`.
 
 ```sh
 node build.cjs
@@ -141,7 +141,7 @@ unzip -o 'powerbi/dist/*1.6.2.0.pbiviz' -d package-check
 node package-test.cjs
 ```
 
-On Windows, extract the PBIVIZ as ZIP with an archive tool and set `TRACKER_BROWSER_CHANNEL=msedge` to use installed Edge. GitHub Actions runs source calculations, type checks, browser interactions and the **actual packaged runtime** before publishing a separate prerelease with the package, demo, preview, source archive and SHA-256 checksums.
+On Windows, extract the PBIVIZ as ZIP with an archive tool and set `TRACKER_BROWSER_CHANNEL=msedge` to use installed Edge. GitHub Actions runs source calculations, type checks, browser interactions and the **actual packaged runtime**. Manual runs with **publish** enabled then publish a separate prerelease with the package, demo, preview, source archive and SHA-256 checksums.
 
 Checks include three-month/year boundaries, yesterday cutoffs, planned/backlog separation, duplicate joins, all completion rules, mutually exclusive evidence counts, missing IDs, optional and unmapped filters, registration conflicts, state selections, copying across pages, keyboard controls, resize behavior, 10,000-submission data, and packaged field mappings. The preview uses fictional data. Local/browser tests do not validate your actual Power BI relationships or your organization's import policy. This is an uncertified custom visual and requests no network or export privileges.
 

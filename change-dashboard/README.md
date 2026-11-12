@@ -145,7 +145,7 @@ To reconcile, compare **distinct IDs for the selected view** in the same source 
 
 ## Build and verify
 
-Use Node 22:
+Use Node 22. From the repository root, first run `cd change-dashboard`:
 
 ```sh
 node build.cjs
@@ -166,4 +166,4 @@ cd ..
 node verify-package.cjs
 ```
 
-The CI workflow pins Ubuntu 24.04 and dependency versions, tests the actual Visual class and packaged JavaScript, publishes a separate versioned GitHub preview release, and verifies downloaded release assets against the staged files. Tests cover duplicate data, expected-response matching, conflicting countries/links/states, missing/future dates, state evidence, 10,000 submissions plus 64,000 delivered rows with only eight Change IDs, pagination, resize, partial delivery, Dark/Light/high contrast, safe links and clipboard/export fallback. The runtime has no external service dependency; `ExportContent` is optional.
+The CI workflow pins Ubuntu 24.04 and dependency versions and tests the actual Visual class and packaged JavaScript. Manual runs with **publish** enabled also publish a separate versioned GitHub preview release and verify downloaded release assets against the staged files. Tests cover duplicate data, expected-response matching, conflicting countries/links/states, missing/future dates, state evidence, 10,000 submissions plus 64,000 delivered rows with only eight Change IDs, pagination, resize, partial delivery, Dark/Light/high contrast, safe links and clipboard/export fallback. The runtime has no external service dependency; `ExportContent` is optional.

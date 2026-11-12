@@ -1,17 +1,30 @@
 name: Build Site Regulatory Plan 2026
 on:
   workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish a new version after its version and release tag have been updated'
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths:
-      - 'dispatch-required.js'
-      - 'site-plan*'
+      - 'shared/dispatch-required.js'
+      - 'site-regulatory-plan/**'
+      - '.github/workflows/site-plan.yml'
+  pull_request:
+    paths:
+      - 'site-regulatory-plan/**'
+      - 'shared/dispatch-required.js'
       - '.github/workflows/site-plan.yml'
 permissions:
   contents: write
 jobs:
   package:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site-regulatory-plan
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,7 +35,7 @@ jobs:
           node site-plan.build.cjs
           node site-plan-demo.cjs
       - name: Install pinned build tools
-        working-directory: site-plan
+        working-directory: site-regulatory-plan/site-plan
         run: npm install
       - name: Verify calculations and actual visual
         run: |
@@ -39,18 +52,19 @@ jobs:
         run: |
           mkdir -p site-plan-release
           cp site-plan/dist/*.pbiviz site-plan-release/site-regulatory-plan-2026-1.1.0.0.pbiviz
-          cp site-plan.README.md site-plan-release/SITE-PLAN-INSTALL.md
+          cp README.md site-plan-release/SITE-PLAN-INSTALL.md
           cp site-plan-preview.html site-plan-release/site-plan-demo.html
           cp site-plan/verify/site-plan-preview.png site-plan-release/site-plan-preview.png
           cp site-plan/verify/site-plan-small.png site-plan-release/site-plan-small.png
           cp site-plan/verify/site-plan-dispatch.png site-plan-release/site-plan-dispatch.png
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf site-plan-release/site-plan-source.tar.gz site-plan site-plan.build.cjs site-plan.logic.js site-plan.ui.js site-plan.css site-plan.README.md site-plan-test.cjs site-plan-host-test.cjs site-plan-browser-test.cjs site-plan-demo.cjs dispatch-required.js
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude='site-regulatory-plan/site-plan-release' -czf site-plan-release/site-plan-source.tar.gz -C .. site-regulatory-plan shared
           cd site-plan-release && sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
           name: site-regulatory-plan-2026
-          path: site-plan-release/
+          path: site-regulatory-plan/site-plan-release/
       - name: Publish Site Regulatory Plan preview
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

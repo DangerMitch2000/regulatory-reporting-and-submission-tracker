@@ -1,6 +1,11 @@
 name: Build Registration Coverage Map
 on:
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish a versioned release after validation
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths:
@@ -81,6 +86,7 @@ jobs:
           if-no-files-found: ignore
           include-hidden-files: true
       - name: Stage all assets in a draft, then publish the preview
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: registration-map-v1.0.0

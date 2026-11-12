@@ -1,17 +1,30 @@
 name: Build IVDR Registration Overview
 on:
   workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish a new version after its version and release tag have been updated'
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths:
-      - 'ivdr-*'
-      - 'dispatch-required.js'
+      - 'ivdr-overview/**'
+      - 'shared/dispatch-required.js'
+      - '.github/workflows/ivdr-comparison.yml'
+  pull_request:
+    paths:
+      - 'ivdr-overview/**'
+      - 'shared/dispatch-required.js'
       - '.github/workflows/ivdr-comparison.yml'
 permissions:
   contents: write
 jobs:
   package:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ivdr-overview
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,7 +35,7 @@ jobs:
           node ivdr-comparison.build.cjs
           node ivdr-demo.cjs
       - name: Install pinned build tools
-        working-directory: ivdr-comparison
+        working-directory: ivdr-overview/ivdr-comparison
         run: npm install
       - name: Check calculations and actual visual
         run: |
@@ -39,17 +52,18 @@ jobs:
         run: |
           mkdir -p ivdr-release
           cp ivdr-comparison/dist/*.pbiviz ivdr-release/ivdr-registration-overview-1.2.0.0.pbiviz
-          cp ivdr-comparison.README.md ivdr-release/IVDR-INSTALL.md
+          cp README.md ivdr-release/IVDR-INSTALL.md
           cp ivdr-preview.html ivdr-release/ivdr-demo.html
           cp ivdr-comparison/verify/ivdr-preview.png ivdr-release/ivdr-preview.png
           cp ivdr-comparison/verify/ivdr-preview-small.png ivdr-release/ivdr-preview-small.png
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf ivdr-release/ivdr-source.tar.gz ivdr-comparison ivdr-comparison.build.cjs ivdr-roadmap.logic.js ivdr-comparison.logic.js ivdr-comparison.ui.js ivdr-comparison.css ivdr-comparison.README.md ivdr-test.cjs ivdr-host-test.cjs ivdr-browser-test.cjs ivdr-demo.cjs dispatch-required.js
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist --exclude='ivdr-overview/ivdr-release' -czf ivdr-release/ivdr-source.tar.gz -C .. ivdr-overview shared
           cd ivdr-release && sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
           name: ivdr-registration-overview
-          path: ivdr-release/
+          path: ivdr-overview/ivdr-release/
       - name: Publish separate preview release
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
