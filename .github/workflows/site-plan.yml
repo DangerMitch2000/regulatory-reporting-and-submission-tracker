@@ -21,7 +21,7 @@ permissions:
   contents: write
 jobs:
   package:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: site-regulatory-plan
@@ -70,3 +70,4 @@ jobs:
         run: |
           gh release create site-plan-2026-v1.1.0 --target "$GITHUB_SHA" --prerelease --title "Site Regulatory Plan — 2026" --notes "Adds optional Submission Dispatch required mapping and an All-default filter, also labelled in screenshot mode. Explicit False excludes dispatch plan counts and missing dispatch-plan checks while preserving submission and approval plans. Distinct not-required totals need valid 2026 plan evidence. Blank, conflicting, invalid and unmapped values never become False; full submission groups resolve before site/unit filtering. Calculation, compiled-host and browser checks passed. See SITE-PLAN-INSTALL.md."
           gh release upload site-plan-2026-v1.1.0 site-plan-release/*
+

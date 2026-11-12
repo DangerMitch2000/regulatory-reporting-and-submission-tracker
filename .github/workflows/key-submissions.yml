@@ -21,7 +21,7 @@ permissions:
   contents: write
 jobs:
   package:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: key-submissions
@@ -69,3 +69,4 @@ jobs:
         run: |
           gh release create key-submissions-2026-v1.1.0 --target "$GITHUB_SHA" --prerelease --title "Key Submissions — 2026 (ID) 1.1.0" --notes "Adds optional Submission Dispatch required mapping and an All-default filter. Explicit False skips the pending dispatch step; when all dispatch dates are blank, a clearly labelled submission/approval date can qualify a key ID record for 2026. Invalid higher-priority dates still block fallback. Blanks, conflicts, invalid values and unmapped fields remain distinct. Real date values stay intact. Scope, optional mapping, conflict, compiled-host and browser checks passed. See KEY-SUBMISSIONS-INSTALL.md."
           gh release upload key-submissions-2026-v1.1.0 key-release/*
+

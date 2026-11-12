@@ -17,7 +17,7 @@ permissions:
   contents: write
 jobs:
   package:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: regulatory-tracker
@@ -156,4 +156,5 @@ jobs:
               gh release upload "$tag" "$file"
             fi
           done
+
 

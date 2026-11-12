@@ -21,7 +21,7 @@ permissions:
   contents: write
 jobs:
   package:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: ivdr-overview
@@ -69,3 +69,4 @@ jobs:
         run: |
           gh release create ivdr-overview-v1.2.0 --target "$GITHUB_SHA" --prerelease --title "IVDR Registration Overview 1.2 — Dispatch required" --notes "Adds optional Dispatch required mapping and an All-default True / False / Blank filter. Explicit False appears as Dispatch not required, retains dated IVDR/Non-IVDR totals and is excluded from Unconfirmed, Inferred and Missing Dates. Undated non-dispatch records with current-year actual evidence are shown separately without inventing a month. Conflicting, invalid and unmapped values remain distinguishable. Screenshot mode preserves filter and non-dispatch context. Includes fictional demo, source and mapping guide. Calculation, compiled host and browser checks passed before packaging. Actual Power BI mapping requires verification."
           gh release upload ivdr-overview-v1.2.0 ivdr-release/*
+
