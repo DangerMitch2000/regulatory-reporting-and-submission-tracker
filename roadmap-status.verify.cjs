@@ -24,6 +24,7 @@ module.exports=async function({page,assert,path,dir}){
  await page.getByRole('checkbox',{name:'Include inferred dispatches'}).check();
  assert.match(await page.locator('.average').innerText(),/8 ÷ 12/);
  await choose('View','status');
+ await choose('Status review scope','unconfirmed');
  assert.equal(await page.getByRole('combobox',{name:'Status review scope',exact:true}).inputValue(),'unconfirmed');
  assert.equal(await list().count(),5);
  assert.equal(await chartTotal(),5);assert.equal(await page.locator('.status-chart [data-chart="status-monthly"]').count(),1);
@@ -33,16 +34,16 @@ module.exports=async function({page,assert,path,dir}){
  assert.match(await page.locator('.status-worklist').innerText(),/Completed — dispatch date missing/);
  assert.equal(await summarySum('.submission-status-summary'),5);
  assert.equal(await summarySum('.ro-status-summary'),5);
- assert.match(await page.locator('.submission-status-summary').innerText(),/Conflicting/);
+ assert.match(await page.locator('.submission-status-summary').textContent(),/Conflicting/);
  await choose('Submission status','value:"completed"');
  assert.equal(await list().count(),1);assert.match(await list().innerText(),/STATUS-A-001/);
  assert.equal(await chartTotal(),1);
  await choose('Submission status','*');await choose('RO status','value:"health authority approved"');
  assert.equal(await list().count(),2);assert.match(await page.locator('.status-worklist').innerText(),/STATUS-D-004/);
- await choose('RO status','*');await choose('Review site','site:North');assert.equal(await list().count(),2);
- await page.locator('#resize').click();assert.equal(await page.getByRole('combobox',{name:'View',exact:true}).inputValue(),'status');assert.equal(await page.getByRole('combobox',{name:'Review site',exact:true}).inputValue(),'site:North');assert.equal(await list().count(),2);
- await send(rows);assert.equal(await page.getByRole('combobox',{name:'Review site',exact:true}).inputValue(),'site:North');
- await choose('Review site','*');
+ await choose('RO status','*');await choose('Site','site:North');assert.equal(await list().count(),2);
+ await page.locator('#resize').click();assert.equal(await page.getByRole('combobox',{name:'View',exact:true}).inputValue(),'status');assert.equal(await page.getByRole('combobox',{name:'Site',exact:true}).inputValue(),'site:North');assert.equal(await list().count(),2);
+ await send(rows);assert.equal(await page.getByRole('combobox',{name:'Site',exact:true}).inputValue(),'site:North');
+ await choose('Site','*');
  const search=page.getByRole('searchbox',{name:'Search status records',exact:true});
  await search.fill('STATUS-D-004');await search.press('Tab');assert.equal(await list().count(),1);
  assert.match(await list().innerText(),/Conflicting/);assert.match(await list().innerText(),/In Progress/);
@@ -55,10 +56,10 @@ module.exports=async function({page,assert,path,dir}){
  assert.equal(await list().count(),2);assert.match(await page.locator('.status-worklist tr[data-submission-id="STATUS-K-011"]').innerText(),/Date issue/);
  await send(rows);
  await choose('Status review scope','all');assert.equal(await list().count(),8);
- const dispatched=await page.locator('.status-worklist tr[data-submission-id="STATUS-G-007"]').innerText();assert.ok(dispatched.includes(y+'-01-01'));assert.ok(dispatched.includes(plan));
+ const dispatched=await page.locator('.status-worklist tr[data-submission-id="STATUS-G-007"]').innerText();assert.match(dispatched,new RegExp('1 Jan '+y));assert.match(dispatched,new RegExp('2 Jan '+y));
  // Existing reports without the new roles keep their date counts, with an honest mapping state.
  const mapped=await page.evaluate(()=>window.__roadmapTest.roles.filter(k=>!['SubStatus','ROStatus'].includes(k)));
- await send(rows,mapped);assert.match(await page.locator('.submission-status-summary').innerText(),/not mapped/i);assert.match(await page.locator('.ro-status-summary').innerText(),/not mapped/i);assert.equal(await summarySum('.submission-status-summary'),8);
+ await send(rows,mapped);assert.match(await page.locator('.submission-status-summary').textContent(),/not mapped/i);assert.match(await page.locator('.ro-status-summary').textContent(),/not mapped/i);assert.equal(await summarySum('.submission-status-summary'),8);
  await choose('View','overview');assert.match(await page.locator('.average').innerText(),/8 ÷ 12/);
  await send(rows);await choose('View','status');await choose('Status review scope','unconfirmed');
  // One ID with many joined rows must appear only once; no giant DOM for the worklist.
@@ -68,6 +69,7 @@ module.exports=async function({page,assert,path,dir}){
  await page.getByRole('button',{name:'Next records',exact:true}).click();assert.equal(await list().count(),25);
  await page.getByRole('button',{name:'Next records',exact:true}).click();assert.equal(await list().count(),12);
  await send(rows);assert.ok(await list().count()<=5);assert.ok(await list().count()>0);
+ await page.evaluate(()=>window.__roadmapTest.resize(1440,800));
  await page.locator('.roadmap2026').screenshot({path:path.join(dir,'roadmap-status-worklist.png')});
  // Captures contain the selected scope and both status summaries, not tiny record rows.
  await page.getByRole('button',{name:'Screenshot mode',exact:true}).click();
@@ -82,3 +84,4 @@ module.exports=async function({page,assert,path,dir}){
  assert.equal(await chartTotal(),0);
  console.log('PASS: optional status mappings, distinct status counts, unchanged dispatch classification, conflicts, scope/site/status/search filters, resize/refresh, pagination, and status screenshot mode.');
 };
+

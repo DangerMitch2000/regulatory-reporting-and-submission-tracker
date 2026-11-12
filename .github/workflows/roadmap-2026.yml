@@ -9,63 +9,161 @@ on:
       - 'prepare-preview.cjs'
       - 'make-standalone.cjs'
       - 'test-next.cjs'
-      - 'test-render.cjs'
-      - 'test-host.cjs'
       - '.github/workflows/roadmap-2026.yml'
 permissions:
   contents: write
+concurrency:
+  group: roadmap-2026-release
+  cancel-in-progress: false
 jobs:
   package:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Generate separate Roadmap project
+      - name: Generate Power BI project and test harness
         run: |
           node roadmap-2026.build.cjs
           node roadmap-2026.verify.cjs
           node make-standalone.cjs
+          git diff --exit-code -- roadmap-preview.html
       - name: Install pinned build tools
         working-directory: roadmap-2026
+        timeout-minutes: 5
         run: npm install
-      - name: Test classification and type checking
+      - name: Type check and bundle actual Visual host
         working-directory: roadmap-2026
         run: |
           npm test
           npx tsc --noEmit
-          npx esbuild src/visual.ts --bundle --platform=node --format=cjs --outfile=verify/visual-host.cjs --loader:.less=empty
-          node ../test-host.cjs
-      - name: Verify actual visual
-        working-directory: roadmap-2026
-        run: |
           npx esbuild verify/harness.ts --bundle --outfile=verify/harness.js --loader:.less=css
-          npx playwright install --with-deps chromium
-          node verify/run.cjs
-      - name: Package visual
+      - name: Install and verify test browser
         working-directory: roadmap-2026
-        run: npm run package -- --verbose
-      - name: Prepare separate release assets
+        timeout-minutes: 5
+        run: |
+          npx playwright install chromium
+          if ! node -e "require('@playwright/test').chromium.launch({headless:true}).then(b=>b.close()).catch(e=>{console.error(e);process.exit(1)})"; then
+            npx playwright install-deps chromium
+            node -e "require('@playwright/test').chromium.launch({headless:true}).then(b=>b.close()).catch(e=>{console.error(e);process.exit(1)})"
+          fi
+      - name: Verify interactions, evidence and responsive layout
+        run: node roadmap-browser-run.cjs
+      - name: Build Power BI package
+        working-directory: roadmap-2026
+        run: npm run package -- --no-stats
+      - name: Verify actual packaged runtime
+        run: |
+          unzip 'roadmap-2026/dist/*.pbiviz' -d package-check
+          node roadmap-browser-run.cjs --package
+      - name: Prepare release assets
         run: |
           mkdir -p roadmap-release
-          cp roadmap-2026/dist/*.pbiviz roadmap-release/roadmap-2026-1.4.0.0.pbiviz
-          cp roadmap-2026/README.md roadmap-release/ROADMAP-INSTALL.md
-          cp roadmap-2026/verify/roadmap-preview.png roadmap-release/roadmap-preview.png
-          cp roadmap-2026/verify/roadmap-preview-small.png roadmap-release/roadmap-preview-small.png
-          cp roadmap-2026/verify/roadmap-status-review.png roadmap-release/roadmap-status-review.png
-          cp roadmap-2026/verify/roadmap-status-review-small.png roadmap-release/roadmap-status-review-small.png
-          cp roadmap-2026/verify/roadmap-dispatch-required.png roadmap-release/roadmap-dispatch-required.png
+          cp roadmap-2026/dist/*.pbiviz roadmap-release/roadmap-2026-1.5.0.0.pbiviz
+          cp roadmap-2026.README.md roadmap-release/ROADMAP-INSTALL.md
+          cp roadmap-2026/verify/roadmap-preview-package.png roadmap-release/roadmap-preview.png
           cp roadmap-preview.html roadmap-release/roadmap-demo.html
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf roadmap-release/roadmap-2026-source.tar.gz roadmap-2026 roadmap-2026.build.cjs roadmap-2026.verify.cjs roadmap-2026.logic.js roadmap-2026.ui.js roadmap-2026.css roadmap-2026.README.md roadmap-status.verify.cjs roadmap-dispatch.verify.cjs dispatch-required.js test-next.cjs test-render.cjs test-host.cjs prepare-preview.cjs make-standalone.cjs
-          cd roadmap-release && sha256sum * > SHA256SUMS.txt
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf roadmap-release/roadmap-2026-source.tar.gz roadmap-2026 roadmap-2026.build.cjs roadmap-2026.verify.cjs roadmap-2026.logic.js roadmap-2026.ui.js roadmap-2026.css roadmap-2026.README.md roadmap-2026.RELEASE-NOTES.md roadmap-refresh-logic-test.cjs roadmap-refresh-browser.cjs roadmap-browser-run.cjs roadmap-status.verify.cjs roadmap-dispatch.verify.cjs dispatch-required.js test-next.cjs test-host.cjs test-render.cjs prepare-preview.cjs make-standalone.cjs
+          cd roadmap-release
+          sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: roadmap-2026-package-1.4.0
+          name: roadmap-2026-1.5.0
           path: roadmap-release/
-      - name: Publish separate Roadmap preview
+      - name: Stage all assets in a draft, then publish the preview
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: roadmap-2026-v1.5.0
         run: |
-          gh release create roadmap-2026-v1.4.0 --target "$GITHUB_SHA" --prerelease --title "Registration Overview 1.4.0 — Dispatch requirement" --notes "Adds the optional Submission Dispatch required field and an All/True/False/Blank filter. Explicit False is shown separately as Dispatch not required, never Unconfirmed or Inferred. Stored dispatch dates retain their original chart month; records without a dispatch month but current-year submission/approval evidence are listed outside the chart, separately from Missing Dates. Blank, unmapped, invalid and conflicting values never imply False. Existing date and status evidence is preserved. Includes distinct-submission calculation, host and browser checks. See ROADMAP-INSTALL.md."
-          gh release upload roadmap-2026-v1.4.0 roadmap-release/*
+          set -euo pipefail
+          # Retry transient GitHub failures. Draft discovery uses the complete
+          # releases list: the release-by-tag REST endpoint excludes drafts.
+          retry_gh() {
+            local attempt status output errors
+            output=$(mktemp)
+            errors=$(mktemp)
+            for attempt in 1 2 3 4 5; do
+              if gh "$@" >"$output" 2>"$errors"; then
+                cat "$output"
+                cat "$errors" >&2
+                rm -f "$output" "$errors"
+                return 0
+              else
+                status=$?
+              fi
+              if ! grep -Eiq 'HTTP 5[0-9][0-9]|status code: 5[0-9][0-9]|timeout|timed out|connection reset|unexpected EOF' "$errors" || [ "$attempt" = 5 ]; then
+                cat "$output"
+                cat "$errors" >&2
+                rm -f "$output" "$errors"
+                return "$status"
+              fi
+              cat "$errors" >&2
+              sleep "$((attempt * 5))"
+            done
+          }
+
+          tag="$RELEASE_TAG"
+          remote_tag=$(git ls-remote origin "refs/tags/$tag" "refs/tags/$tag^{}")
+          if [ -n "$remote_tag" ]; then
+            git fetch --no-tags origin "refs/tags/$tag"
+            tag_commit=$(git rev-parse 'FETCH_HEAD^{commit}')
+            if [ "$tag_commit" != "$GITHUB_SHA" ]; then
+              echo "Refusing to move an existing version tag. Use a new version." >&2
+              exit 1
+            fi
+          else
+            tag_commit="$GITHUB_SHA"
+            git tag "$tag" "$GITHUB_SHA"
+            git push origin "refs/tags/$tag"
+          fi
+
+          find_release() {
+            retry_gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/releases?per_page=100" > releases-list.json || return $?
+            node -e 'const pages=require("./releases-list.json"),matches=pages.flat().filter(r=>r.tag_name===process.env.RELEASE_TAG);if(matches.length>1)throw Error("Multiple releases have this exact tag; refusing ambiguous changes.");if(matches.length){const r=matches[0];if(!r.draft)throw Error("This version is already public. Bump the version; published releases will not be modified.");if(!Number.isSafeInteger(r.id)||r.id<=0)throw Error("Invalid release ID");process.stdout.write(String(r.id));}'
+          }
+          release_id=$(find_release)
+          if [ -z "$release_id" ]; then
+            # If GitHub accepted creation but lost the response, rediscover the
+            # existing draft before treating a retry's duplicate error as failure.
+            if ! retry_gh release create "$tag" --verify-tag --target "$tag_commit" --draft --prerelease --title 'Roadmap 1.5.0' --notes-file roadmap-2026.RELEASE-NOTES.md; then
+              release_id=$(find_release)
+              if [ -z "$release_id" ]; then
+                echo "Draft creation failed and the complete release list contains no matching draft." >&2
+                exit 1
+              fi
+            fi
+            for probe in 1 2 3 4 5 6 7 8 9 10; do
+              release_id=$(find_release)
+              if [ -n "$release_id" ]; then break; fi
+              sleep 3
+            done
+            if [ -z "$release_id" ]; then
+              echo "The created draft could not be rediscovered; refusing asset changes." >&2
+              exit 1
+            fi
+          fi
+
+          assert_draft() {
+            retry_gh api "repos/$GITHUB_REPOSITORY/releases/$release_id" > release-state.json || return $?
+            RELEASE_ID="$release_id" RELEASE_COMMIT="$tag_commit" node -e 'const r=require("./release-state.json");if(r.id!==Number(process.env.RELEASE_ID)||r.tag_name!==process.env.RELEASE_TAG||!r.draft)throw Error("Release identity changed or became public; refusing to modify it.");if(r.target_commitish!==process.env.RELEASE_COMMIT)throw Error("Draft target differs from the immutable release tag commit.");'
+          }
+          # gh release upload/download resolve drafts through the CLI's GraphQL
+          # fallback. Guard each mutation with the stable numeric REST release ID.
+          for file in roadmap-release/*; do
+            assert_draft
+            retry_gh release upload "$tag" "$file" --clobber
+          done
+          # Verify every staged asset byte-for-byte before exposing the preview.
+          check_dir=$(mktemp -d)
+          retry_gh release download "$tag" --dir "$check_dir" --clobber
+          for file in roadmap-release/*; do
+            cmp "$file" "$check_dir/$(basename "$file")"
+          done
+          assert_draft
+          retry_gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" -F draft=false -F prerelease=true -f make_latest=false > published-release.json
+          RELEASE_ID="$release_id" node -e 'const r=require("./published-release.json");if(r.id!==Number(process.env.RELEASE_ID)||r.tag_name!==process.env.RELEASE_TAG||r.draft||!r.prerelease)throw Error("Published preview verification failed.");'
+

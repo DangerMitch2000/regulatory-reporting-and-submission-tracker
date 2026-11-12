@@ -14,8 +14,8 @@ module.exports=async({page,assert,path,dir})=>{
  await page.getByRole('checkbox',{name:'Include inferred dispatches'}).check();
  const flag=page.getByRole('combobox',{name:'Dispatch required',exact:true});assert.equal(await flag.inputValue(),'all');
  assert.match(await page.locator('.average').innerText(),/5 ÷ 12/);
- assert.match(await page.locator('.not-required-outside').innerText(),/: 1 outside chart/);
- assert.match(await page.locator('.cleanup').innerText(),/: 0$/);
+ assert.match(await page.locator('.not-required-outside').textContent(),/: 1 outside chart/);
+ assert.match(await page.locator('.cleanup').textContent(),/: 0\./);
  const grey=page.locator('svg rect[fill="#6b7280"][tabindex]');assert.equal(await grey.count(),1);assert.match(await grey.getAttribute('aria-label'),/Dispatch not required, 2/);
  await flag.selectOption('false');assert.match(await page.locator('.average').innerText(),/2 ÷ 12/);
  await page.locator('#resize').click();assert.equal(await flag.inputValue(),'false');
@@ -24,7 +24,8 @@ module.exports=async({page,assert,path,dir})=>{
  await page.getByRole('button',{name:'Clear review filters',exact:true}).click();
  assert.match(await page.locator('.review-count').innerText(),/^2 matching/);
  assert.match(await page.locator('.status-worklist').innerText(),/False — dispatch not required/);
- assert.match(await page.locator('tr[data-submission-id="FALSE-ACTUAL"]').innerText(),/Actual dispatch:/);
+ await page.getByRole('button',{name:'Show details for FALSE-ACTUAL',exact:true}).click();
+ assert.match(await page.locator('tr[data-detail-for="FALSE-ACTUAL"]').innerText(),/Actual dispatch/);
  assert.equal(await page.locator('.completed-missing').count(),0);
  await page.getByRole('combobox',{name:'Status review scope',exact:true}).selectOption('not-required-outside');
  assert.match(await page.locator('.review-count').innerText(),/^1 matching/);
@@ -43,3 +44,4 @@ module.exports=async({page,assert,path,dir})=>{
  await page.locator('.slideCapture').focus();await page.keyboard.press('Escape');
  console.log('PASS: actual Visual dispatch filter persistence, distinct false category, grey bars, separate undated scope, evidence worklist, status screenshot and unmapped compatibility.');
 };
+

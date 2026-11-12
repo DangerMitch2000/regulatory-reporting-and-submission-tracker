@@ -19,6 +19,14 @@ export function parseDay(value){
  const n=Date.UTC(y,m-1,d),date=new Date(n);
  return date.getUTCFullYear()===y&&date.getUTCMonth()===m-1&&date.getUTCDate()===d?{kind:'date',day:n}:{kind:'invalid'};
 }
+const monthLabels=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+// Display the written calendar day. Internal day numbers are already UTC days.
+export function formatDay(value,fallback='—'){
+ const parsed=typeof value==='number'&&Number.isFinite(value)?{kind:'date',day:value}:parseDay(value);
+ if(parsed.kind!=='date')return fallback;
+ const date=new Date(parsed.day);if(!Number.isFinite(+date))return fallback;
+ return `${date.getUTCDate()} ${monthLabels[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
+}
 function resolve(values){const valid=new Set();let invalid=false;for(const value of values){const p=parseDay(value);if(p.kind==='invalid')invalid=true;if(p.kind==='date')valid.add(p.day);}
  return invalid||valid.size>1?{kind:'issue'}:valid.size?{kind:'date',day:[...valid][0]}:{kind:'blank'};}
 export function mapTable(table){const columns=table?.columns||[],indices={};for(const role of roles){const a=columns.map((c,i)=>c.roles?.[role]?i:-1).filter(i=>i>=0);if(a.length>1)throw Error('Map only one column to '+role);if(a.length)indices[role]=a[0];}
@@ -38,44 +46,64 @@ function resolveStatus(values,mapped){
 export function summarize(rows,today=viewingDay(),includeInferred=false,businessUnit='*',options={}){
  const mappedRoles=options.mappedRoles===undefined?[...roles]:[...options.mappedRoles],mapped=new Set(mappedRoles);
  const dispatchFilter=options.dispatchRequired||'all',dispatchIndex=dispatchRequired.bySubmission(rows,mapped.has('DispatchRequired'));
+ const referenceYear=new Date(today).getUTCFullYear(),requestedYear=Number(options.year);
+ const year=options.year!==null&&options.year!==undefined&&options.year!==''&&Number.isInteger(requestedYear)&&requestedYear>=100&&requestedYear<=9999?requestedYear:referenceYear;
+ const years=[...new Set([referenceYear,...rows.flatMap(row=>dateRoles.map(field=>parseDay(row[field])).filter(date=>date.kind==='date').map(date=>new Date(date.day).getUTCFullYear()))])].sort((a,b)=>a-b);
+ const siteFilter=options.site||'*';
  const unitKey=r=>String(r.BusinessUnit??'').trim()||null;
+ const siteNames=list=>[...new Set(list.map(r=>String(r.Site??'').trim()).filter(Boolean))].sort();
+ const siteInfo=names=>({siteKey:names.length>1?'ambiguous':names.length===1?'site:'+names[0]:'unassigned',site:names.length>1?'Multiple sites (unallocated)':names[0]||'Unassigned'});
+ const matchesSite=names=>siteFilter==='*'||siteFilter==='ambiguous'&&names.length>1||siteFilter==='unassigned'&&!names.length||siteFilter.startsWith('site:')&&names.includes(siteFilter.slice(5));
  const units=[...new Set(rows.map(unitKey))].sort((a,b)=>String(a).localeCompare(String(b)));
  // Select records by membership, then retain all delivered associations for those IDs.
  // This avoids hiding conflicting dates or multi-site membership in joined rows.
  const selected=new Set(rows.filter(r=>businessUnit==='*'||unitKey(r)===businessUnit).map(r=>String(r.SubID??'').trim()).filter(Boolean));
  rows=rows.filter(r=>{const id=String(r.SubID??'').trim();return (id?selected.has(id):businessUnit==='*'||unitKey(r)===businessUnit)&&dispatchRequired.matches(dispatchIndex.get(id)||dispatchRequired.resolve([r.DispatchRequired],mapped.has('DispatchRequired')),dispatchFilter);});
- const groups=new Map();let missingIdRows=0;
- for(const row of rows){const id=String(row.SubID??'').trim();if(!id){missingIdRows++;continue;}if(!groups.has(id))groups.set(id,[]);groups.get(id).push(row);}
- const year=new Date(today).getUTCFullYear(),zero=()=>categories.map(()=>0),months=Array.from({length:12},zero),totals=zero(),issues=[],excluded=[],missing=[],missingRecords=[],notRequiredOutside=[],notRequiredOutsideRecords=[],records=[],ambiguousSites=[],undatedInferred=[],sites=new Map();let outsideYear=0;
+ const groups=new Map(),siteChoices=new Map();let missingIdRows=0;
+ for(const row of rows){const id=String(row.SubID??'').trim();if(!id){const names=siteNames([row]);if(matchesSite(names))missingIdRows++;continue;}if(!groups.has(id))groups.set(id,[]);groups.get(id).push(row);}
+ // Site choices describe association membership before site filtering. A named
+ // site can include a multi-site submission without reallocating its chart bar.
+ for(const [id,list]of groups){const names=siteNames(list),info=siteInfo(names);
+  for(const name of names){const key='site:'+name;if(!siteChoices.has(key))siteChoices.set(key,{key,label:name,count:0});siteChoices.get(key).count++;}
+  if(names.length!==1){if(!siteChoices.has(info.siteKey))siteChoices.set(info.siteKey,{key:info.siteKey,label:info.site,count:0});siteChoices.get(info.siteKey).count++;}
+  if(!matchesSite(names))groups.delete(id);
+ }
+ const siteOptions=[...siteChoices.values()].sort((a,b)=>a.label.localeCompare(b.label));
+ const zero=()=>categories.map(()=>0),months=Array.from({length:12},zero),totals=zero(),issues=[],excluded=[],missing=[],missingRecords=[],notRequiredOutside=[],notRequiredOutsideRecords=[],records=[],allRecords=[],ambiguousSites=[],undatedInferred=[],sites=new Map();let outsideYear=0,undated=0;
  for(const [id,list]of groups){const dates=Object.fromEntries(dateRoles.map(k=>[k,resolve(list.map(r=>r[k]))]));
   const bad=Object.entries(dates).filter(([,p])=>p.kind==='issue').map(([k])=>k);if(bad.length)issues.push({id,fields:bad});
   const evidence=['ActualSubmission','ActualApproval'].filter(k=>dates[k].kind==='date').map(k=>({field:k,day:dates[k].day}));
   const actualAbsent=dates.ActualDispatch.kind==='blank';
   const required=dispatchIndex.get(id),notRequired=required.value===false;
-  const names=[...new Set(list.map(r=>String(r.Site??'').trim()).filter(Boolean))].sort();
-  const siteKey=names.length>1?'ambiguous':names.length===1?'site:'+names[0]:'unassigned',site=names.length>1?'Multiple sites (unallocated)':names[0]||'Unassigned';
+  const names=siteNames(list),{siteKey,site}=siteInfo(names);
   const status={subStatus:resolveStatus(list.map(r=>r.SubStatus),mapped.has('SubStatus')),roStatus:resolveStatus(list.map(r=>r.ROStatus),mapped.has('ROStatus'))};
   const reviewPlan=dates.LatestDispatch.kind==='blank'?dates.OriginalDispatch:dates.LatestDispatch;
   const dateValues=Object.fromEntries(dateRoles.map(field=>[field,[...new Set(list.map(r=>r[field]).filter(value=>value!==null&&value!==undefined&&value!=='').map(value=>value instanceof Date&&Number.isFinite(+value)?value.toISOString():String(value)))].sort()]));
-  const record={id,siteKey,site,sites:names,evidence,dateIssues:bad,dateValues,dispatchRequired:required,reviewPlannedDay:reviewPlan.kind==='date'?reviewPlan.day:null,planState:reviewPlan.kind,missingActual:actualAbsent&&!notRequired,...status};
+  const record={id,siteKey,site,sites:names,evidence,dateIssues:bad,dateValues,dates,dispatchRequired:required,reviewPlannedDay:reviewPlan.kind==='date'?reviewPlan.day:null,planState:reviewPlan.kind,missingActual:actualAbsent&&!notRequired,...status,
+   ...Object.fromEntries(dateRoles.map(field=>[field[0].toLowerCase()+field.slice(1)+'Day',dates[field].kind==='date'?dates[field].day:null]))};
   // Cleanup scope is independent of the inference toggle. Invalid/conflicting plans
   // are unusable but remain explicitly flagged. A valid plan in either field means
   // this is NOT a no-usable-dispatch-date record, even if a higher-priority field fails.
   const noPlan=dates.LatestDispatch.kind!=='date'&&dates.OriginalDispatch.kind!=='date';
   if(actualAbsent&&noPlan&&evidence.some(e=>new Date(e.day).getUTCFullYear()===year)){const outside={...record,month:null,category:notRequired?4:null,plannedDay:null,actualDay:null,outsideChart:true};if(notRequired){notRequiredOutside.push(id);notRequiredOutsideRecords.push(outside);}else{missing.push(id);missingRecords.push(outside);}}
   if(includeInferred&&!notRequired&&actualAbsent&&noPlan&&evidence.length)undatedInferred.push(id);
-  let chosen=dates.ActualDispatch,cat=0;
-  if(chosen.kind==='issue'){excluded.push(id);continue;}
-  if(chosen.kind==='blank'){chosen=dates.LatestDispatch;cat=1;if(chosen.kind==='issue'){excluded.push(id);continue;}if(chosen.kind==='blank')chosen=dates.OriginalDispatch;if(chosen.kind==='issue'){excluded.push(id);continue;}if(chosen.kind==='blank')continue;if(chosen.day<today)cat=2;if(includeInferred&&evidence.length)cat=3;}
+  let chosenField='ActualDispatch',chosen=dates.ActualDispatch,cat=0;
+  if(chosen.kind==='blank'){chosenField='LatestDispatch';chosen=dates.LatestDispatch;cat=1;if(chosen.kind==='blank'){chosenField='OriginalDispatch';chosen=dates.OriginalDispatch;}if(chosen.kind==='date'){if(chosen.day<today)cat=2;if(includeInferred&&evidence.length)cat=3;}}
+  const base={...record,month:null,category:null,chosenDay:chosen.kind==='date'?chosen.day:null,chosenField:chosen.kind==='blank'?null:chosenField,plannedDay:dates.ActualDispatch.kind!=='date'&&chosen.kind==='date'?chosen.day:null,actualDay:dates.ActualDispatch.kind==='date'?dates.ActualDispatch.day:null,outsideChart:true};
+  if(chosen.kind==='issue'){excluded.push(id);allRecords.push({...base,coverageBucket:'excluded'});continue;}
+  if(chosen.kind==='blank'){undated++;allRecords.push({...base,coverageBucket:'undated'});continue;}
   if(notRequired)cat=4;
-  const date=new Date(chosen.day);if(date.getUTCFullYear()!==year){outsideYear++;continue;}const month=date.getUTCMonth();months[month][cat]++;totals[cat]++;
+  const date=new Date(chosen.day);if(date.getUTCFullYear()!==year){outsideYear++;allRecords.push({...base,category:cat,coverageBucket:'outsideYear'});continue;}const month=date.getUTCMonth();months[month][cat]++;totals[cat]++;
   if(names.length>1)ambiguousSites.push({id,sites:names});
   if(!sites.has(siteKey))sites.set(siteKey,{key:siteKey,label:site,months:Array.from({length:12},zero),totals:zero(),total:0});
   const bucket=sites.get(siteKey);bucket.months[month][cat]++;bucket.totals[cat]++;bucket.total++;
-  records.push({...record,month,category:cat,plannedDay:dates.ActualDispatch.kind==='date'?null:chosen.day,actualDay:dates.ActualDispatch.kind==='date'?chosen.day:null});
+  const chartRecord={...base,month,category:cat,outsideChart:false,coverageBucket:'chart'};records.push(chartRecord);allRecords.push(chartRecord);
  }
  const total=totals.reduce((a,b)=>a+b,0);
- return {units,businessUnit,dispatchRequired:dispatchFilter,year,months,totals,total,average:total/12,percentages:totals.map(n=>total?n/total*100:0),missing,missingRecords,notRequiredOutside,notRequiredOutsideRecords,issues,excluded,outsideYear,missingIdRows,distinct:groups.size,today,records,sites:[...sites.values()].sort((a,b)=>a.label.localeCompare(b.label)),ambiguousSites,undatedInferred,includeInferred,mappedRoles};
+ // Each identified submission occupies exactly one coverage bucket. Date issues
+ // and cleanup panels can overlap these buckets; they are diagnostics, not sums.
+ const coverage={loadedDistinct:groups.size,chart:total,outsideYear,undated,excluded:excluded.length,missingIdRows};
+ return {units,businessUnit,dispatchRequired:dispatchFilter,year,years,referenceYear,siteFilter,siteOptions,coverage,months,totals,total,average:total/12,percentages:totals.map(n=>total?n/total*100:0),missing,missingRecords,notRequiredOutside,notRequiredOutsideRecords,issues,excluded,outsideYear,undated,missingIdRows,distinct:groups.size,today,records,allRecords,sites:[...sites.values()].sort((a,b)=>a.label.localeCompare(b.label)),ambiguousSites,undatedInferred,includeInferred,mappedRoles};
 }
 function statusCounts(records,field){
  const buckets=new Map();
@@ -84,12 +112,31 @@ function statusCounts(records,field){
 }
 // Facets are calculated before panel filters; the filtered counts remain a
 // mutually exclusive count of submissions, including for the RO-status column.
-export function selectStatusReview(summary,{scope='unconfirmed',site='*',subStatus='*',roStatus='*',query=''}={}){
+export const reviewSortColumns=['id','site','category','dispatchRequired','subStatus','roStatus','plannedDay','reviewPlannedDay','actualDay','originalDispatchDay','latestDispatchDay','actualDispatchDay','actualSubmissionDay','actualApprovalDay'];
+function sortValue(record,column){
+ if(column==='category')return record.category===null?null:categories[record.category];
+ if(['dispatchRequired','subStatus','roStatus'].includes(column))return record[column]?.label??null;
+ if(column==='plannedDay')return record.reviewPlannedDay;
+ return record[column]??null;
+}
+export function selectStatusReview(summary,{scope='unconfirmed',site='*',subStatus='*',roStatus='*',query='',month='*',category='*',sort={column:'site',direction:'asc'},columns}={}){
  const predicates={unconfirmed:r=>r.category===2,inferred:r=>r.category===3,'missing-dispatch':r=>r.missingActual,'not-required':r=>r.category===4,all:()=>true};
  if(!['missing-dates','not-required-outside'].includes(scope)&&!predicates[scope])scope='unconfirmed';
- const source=scope==='missing-dates'?summary.missingRecords||[]:scope==='not-required-outside'?summary.notRequiredOutsideRecords||[]:(summary.records||[]).filter(predicates[scope]);
+ const scoped=scope==='missing-dates'?summary.missingRecords||[]:scope==='not-required-outside'?summary.notRequiredOutsideRecords||[]:(summary.records||[]).filter(predicates[scope]);
+ month=month!==null&&month!==''&&month!=='*'&&Number.isInteger(Number(month))&&Number(month)>=0&&Number(month)<12?Number(month):'*';
+ category=category!==null&&category!==''&&category!=='*'&&Number.isInteger(Number(category))&&Number(category)>=0&&Number(category)<categories.length?Number(category):'*';
+ const source=scoped.filter(r=>(month==='*'||r.month===month)&&(category==='*'||r.category===category));
  const sites=[...new Map(source.map(r=>[r.siteKey,{key:r.siteKey,label:r.site}])).values()].sort((a,b)=>a.label.localeCompare(b.label));
  const normalized=String(query??'').trim().replace(/\s+/g,' ').toLowerCase();
- const records=source.filter(r=>(site==='*'||r.siteKey===site)&&(subStatus==='*'||r.subStatus.key===subStatus)&&(roStatus==='*'||r.roStatus.key===roStatus)&&(!normalized||[r.id,r.site,...r.sites,r.subStatus.label,...r.subStatus.values,r.roStatus.label,...r.roStatus.values].join(' ').replace(/\s+/g,' ').toLowerCase().includes(normalized))).sort((a,b)=>a.site.localeCompare(b.site)||a.id.localeCompare(b.id));
- return {scope,scopeTotal:source.length,total:records.length,records,sites,submissionStatuses:statusCounts(source,'subStatus'),roStatuses:statusCounts(source,'roStatus'),counts:{submissionStatuses:statusCounts(records,'subStatus'),roStatuses:statusCounts(records,'roStatus')}};
+ const sortDescriptor={column:reviewSortColumns.includes(sort?.column)?sort.column:'site',direction:sort?.direction==='desc'?'desc':'asc'};
+ const records=source.filter(r=>(site==='*'||r.siteKey===site)&&(subStatus==='*'||r.subStatus.key===subStatus)&&(roStatus==='*'||r.roStatus.key===roStatus)&&(!normalized||[r.id,r.site,...r.sites,r.subStatus.label,...r.subStatus.values,r.roStatus.label,...r.roStatus.values].join(' ').replace(/\s+/g,' ').toLowerCase().includes(normalized))).sort((a,b)=>{
+  const left=sortValue(a,sortDescriptor.column),right=sortValue(b,sortDescriptor.column);
+  // Missing dates always sort last, in either direction. Equal values use a
+  // stable ID fallback so source row order cannot change a reviewed worklist.
+  if(left===null&&right!==null)return 1;if(right===null&&left!==null)return -1;
+  const compared=left===null?0:typeof left==='number'&&typeof right==='number'?left-right:String(left).localeCompare(String(right));
+  return compared*(sortDescriptor.direction==='desc'?-1:1)||a.id.localeCompare(b.id);
+ });
+ return {scope,month,category,sort:sortDescriptor,...(Array.isArray(columns)?{columns:[...new Set(columns.filter(column=>reviewSortColumns.includes(column)))]}:{}),scopeTotal:source.length,total:records.length,records,sites,submissionStatuses:statusCounts(source,'subStatus'),roStatuses:statusCounts(source,'roStatus'),counts:{submissionStatuses:statusCounts(records,'subStatus'),roStatuses:statusCounts(records,'roStatus')}};
 }
+

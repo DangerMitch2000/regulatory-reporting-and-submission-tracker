@@ -1,92 +1,113 @@
-# Roadmap 1.4.0
+# Roadmap 1.5.0
 
-Separate from Regulatory Tracker. The release workflow publishes the installable preview only after calculation tests, host lifecycle tests, browser checks, type checking and Microsoft's package build succeed. Actual Power BI Desktop/Service import and tenant compatibility still require verification.
+A yearly dispatch outlook with shared filters and a submission worklist. This is a separate Power BI visual from Regulatory Tracker and Site Submission Outlook.
 
-[Interactive synthetic demo](https://DangerMitch2000.github.io/regulatory-timeline-demo/roadmap-preview.html) · [Roadmap 1.4.0 release](https://github.com/DangerMitch2000/regulatory-timeline-demo/releases/tag/roadmap-2026-v1.4.0)
+[Download the Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.5.0/roadmap-2026-1.5.0.0.pbiviz) · [Interactive synthetic demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap-preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/roadmap-2026-v1.5.0)
 
-Import `roadmap-2026-1.4.0.0.pbiviz` through **Visualizations → … → Import a visual from a file**. The visual GUID matches Roadmap 1.0 so it retains upgrade identity. Existing field mappings remain valid.
+## Install or update
 
-Version 1.4.0 adds the optional **Dispatch required** field and filter. An explicit False is shown separately as **Dispatch not required**. It is never classified as Unconfirmed, Inferred or Expected, and does not create a missing-dispatch cleanup item. Existing date evidence remains visible. Blank, unmapped, invalid and conflicting values never imply False.
+Import **roadmap-2026-1.5.0.0.pbiviz** using Power BI's **Visualizations → … → Import a visual from a file**. Replace the existing Roadmap when prompted. The visual GUID and all eleven field roles are unchanged, so existing field mappings carry over. No additional fields are required.
 
-## Fields
+**Business unit defaults to ID.** Choose All or another delivered unit when needed. If ID has no delivered records, the visual shows an empty result for ID; it does not silently switch to All. Selections survive ordinary updates, resizing and view changes within the same visual instance. They are not saved across reopening or report bookmarks.
 
-Map existing source columns to these field wells; renaming source columns is unnecessary. Use raw dates, not date hierarchies.
+**Dark is the default theme.** Use the Theme control to switch between Dark and Light. Theme changes preserve filters, expanded rows and scroll position. The selected theme remains in use through ordinary updates, resizing and Screenshot mode; reopening a new visual instance starts in Dark.
 
-| Role | Meaning |
-|---|---|
+## What's new
+
+- Dark and Light themes, with Dark selected initially to match the Regulatory Tracker.
+- A full-width monthly chart, compact controls and collapsible site breakdown, status summaries and explanations.
+- Click a month, category or site count to inspect the exact submissions behind it. Keyboard activation is supported.
+- A sortable worklist with Copy IDs and expandable rows showing original/latest/actual dispatch, actual submission and actual approval evidence.
+- Scroll position and control focus are retained when filtering, paging and expanding records.
+- A Year selector and shared Site filter across Overview and Status review, alongside Business unit, Dispatch required and inferred-dispatch controls.
+- Consistent dates such as **12 Nov 2026**, clearer category colours and readable site names in Screenshot mode.
+- Coverage counts distinguish records in the selected year's chart from other years, undated records and records excluded because the date required for classification is invalid or conflicting.
+
+These changes preserve dispatch classification. A workflow state does not invent a dispatch date, and an inferred dispatch remains distinct from a recorded actual dispatch.
+
+## Field mappings
+
+Map raw date columns, not date hierarchies. Source columns do not need renaming.
+
+| Field role | Source / purpose |
+| --- | --- |
 | SubID | Unique submission identifier; required |
-| OriginalDispatch | Baseline planned dispatch |
-| LatestDispatch | Latest planned dispatch |
-| ActualDispatch | Recorded actual dispatch |
-| ActualSubmission | Recorded actual submission; inference evidence |
-| ActualApproval | Recorded actual approval; inference evidence |
-| Site | Explicit site association; confirm the correct source with the data owner |
-| BusinessUnit | Business unit column; source name must be confirmed |
-| SubStatus | Optional submission status; map the submission's `state__v` field, e.g. `Submission[state__v]` |
-| DispatchRequired | Optional **Submission → Dispatch required** source field identified by the user; Boolean true, false or blank. No source renaming is necessary. |
-| ROStatus | Optional regulatory objective status; map the regulatory objective's `state__v` field from the corresponding table in your model |
+| OriginalDispatch | Original planned dispatch date |
+| LatestDispatch | Latest planned dispatch date |
+| ActualDispatch | Recorded actual dispatch date |
+| ActualSubmission | Recorded actual submission date; optional inference evidence |
+| ActualApproval | Recorded actual approval date; optional inference evidence |
+| Site | Explicit site association; this is not automatically the legal manufacturer |
+| BusinessUnit | Business unit membership; ID is the initial selection |
+| SubStatus | Submission state from the Submission table |
+| ROStatus | State of the regulatory objective linked to that submission |
+| DispatchRequired | Submission Dispatch required: True, False or blank |
 
-The status and Dispatch required fields are optional. Existing mappings continue to work after upgrading. Select the status column from the correct table: several source tables can contain a column named `state__v`. The RO status must describe the objective associated with each submission; do not substitute application state. Field-well labels may display **Submission status** and **RO status** rather than the role names above. No source columns need to be renamed.
+Select state fields from the correct source tables; several tables can contain a column named state__v. RO state must not be substituted with application state. Missing mappings, recorded blanks and conflicting values remain distinguishable.
 
-Site is not automatically legal manufacturer. Business unit options come from delivered data, not a hardcoded list. All is the default. Blank units appear as Unassigned. A selected unit matches submissions with that membership, and all delivered rows for those matched SubIDs are retained so other site associations or contradictory dates are not silently lost. Each submission counts once. A submission belonging to multiple units can appear in each separate unit view; those views must not be added together. Report filters apply before this local filter. Inference, unit selection and expanded sites survive ordinary updates/resizing, but are not saved as report settings across reloads.
+## Year, date and filter behaviour
 
-## Dispatch requirement
+The automatic year follows the viewer's local calendar. Select a specific year to keep reviewing it after January or to inspect future plans. Available years come from valid delivered dates plus the current year. Switching the chart year does **not** move the reference date used to determine whether a dispatch plan has passed. The as-of label is the viewer's current calendar day, not the source refresh time. Unlike Site Submission Outlook's agreed previous-day checks, Roadmap keeps its existing current-day rule.
 
-The top **Dispatch required** filter defaults to **All** and applies to the Overview, Status review and screenshot layouts. True, False and Blank are separate choices; unrecognised/conflicting values and an unmapped field have their own options. Use the Submission field, not an RO or application field. Source values are resolved across all delivered rows for each SubID before local BU filtering, so membership rows cannot hide contradictory evidence. Boolean values and case-insensitive text `true` / `false` are accepted; numeric 0/1, yes/no and other labels are not guessed. Blank joins do not override a consistent recorded Boolean.
+Dates remain calendar dates. ISO strings retain their written date and Power BI Date objects use UTC calendar components. Display formatting does not alter source values. Blank dates show a dash; invalid/conflicting dates show an issue and retain their source evidence in Details.
 
-**False with a usable dispatch date:** retain actual → latest → original date priority and the recorded current-year month, but place the record in the grey Dispatch not required category. Recorded actual dispatch remains available in the worklist. This category is a scope distinction, not a claim that the record was dispatched.
+Business unit, Site and Dispatch required apply to both views. Site and Business unit select distinct submission IDs, then retain all delivered associations for those IDs so another membership row cannot hide conflicting dates. A selected site can therefore include submissions also associated with other sites. Such records remain allocated to **Multiple sites (unallocated)** in the breakdown, keeping site totals reconcilable. A blank site appears as Unassigned. Separate membership views must not be added together.
 
-**False without an actual or usable planned dispatch date:** when actual submission or approval provides current-year evidence, count it separately as **Dispatch not required — outside chart**. Do not assign a fake dispatch month or include it in Missing Dates. Its Status review scope uses horizontal status bars and a paged evidence worklist. False records with no dated evidence cannot be assigned to the current year. Date conflicts are still flagged and never guessed.
-
-Blank/unmapped/conflicting/invalid requirement values retain the prior date classification. Map and validate this optional field to identify non-dispatch records; no flag is inferred from submission or RO statuses. Local selections survive ordinary data/resize updates but not reopening.
+Status review's scope, month, category, recorded-status and search filters narrow its worklist only. Their context remains visible. Clear review filters does not change the shared filters. Report-level Power BI filters apply before data reaches this visual; these local controls do not cross-filter other report visuals.
 
 ## Counting rules
 
-- Current year and as-of date follow the viewer's local calendar. The title, chart and annual total roll forward together. The date is checked every minute while open and on update. No extra data refresh scheduler is added.
-- Actual dispatch has priority. Otherwise use latest plan, falling back to original plan only if latest is blank.
-- For explicit False, the separate grey **Dispatch not required** category takes precedence over the following categories. For all other requirement values, blue: Dispatched. Orange: In Progress / Expected, planned today or later. Green: Unconfirmed, plan in the past without an actual dispatch.
-- **Include inferred dispatches** is off initially. When enabled, a blank actual dispatch plus valid actual submission or approval evidence moves the record into purple Inferred. Its month still comes from the planned dispatch, including future plans. It is not added a second time. Evidence dates appear in a collapsible list and the bar tooltip explains their use.
-- Inferred records without a usable plan remain outside the chart and annual total. Their separate undated count spans all filtered years.
-- **Missing Dates — current year** excludes explicit False and counts distinct submissions with blank actual dispatch and no usable plan, where actual submission OR actual approval falls in the current year. OR counts once. Creation dates are not used. This count is independent of the inference toggle. It may overlap undated inferred records and date issues; do not add these counts.
-- Percentages use the annual total; monthly average uses annual total / 12, including zero months.
-- Site table totals reconcile with the chart. Multiple nonblank sites are counted once under Multiple sites (unallocated); no site is Unassigned. Expand a site to show all twelve months. Ambiguous memberships are listed in Data checks.
-- Invalid or contradictory dates are flagged. A problem in a date needed for classification excludes the submission rather than guessing. An actual date can still classify a record with an issue in an unused planned field. Invalid/conflicting actual dispatch is not treated as blank for inference.
-- Dates use calendar days: ISO text uses its written date; Power BI Date values use UTC calendar parts. Only delivered rows are counted; incomplete delivery produces a warning.
+Each nonblank SubID counts once regardless of duplicate product or membership rows.
 
-## Understanding the categories
+1. Recorded actual dispatch has priority. Otherwise use latest planned dispatch, falling back to original plan only when latest is blank.
+2. Explicit **Dispatch required = False** is shown separately as **Dispatch not required**, retaining a usable recorded dispatch reference month. It is never classified as Unconfirmed, Inferred or Expected.
+3. For other requirement values, an actual dispatch is **Dispatched**. A plan dated today or later is **In Progress / Expected**. A past plan with no actual dispatch is **Unconfirmed**.
+4. **Include inferred dispatches** starts off. When enabled, a missing actual dispatch plus valid actual submission or approval evidence produces **Inferred**. Its month still comes from the dispatch plan, including future plans. The evidence does not establish the actual dispatch month.
+5. If a date needed for classification is invalid or contradictory, the record is excluded instead of guessed. A valid actual dispatch can still classify a record with an issue in an unused planned field.
 
-**Unconfirmed** means the planned dispatch date has passed and no actual dispatch date is recorded. It does not establish that the submission is unfinished: the dispatch may have happened without its date being entered, or the plan may need updating. With inference enabled, valid actual submission or approval evidence moves the record to Inferred instead.
+Unconfirmed means a past plan lacks a recorded actual dispatch. It may indicate an overdue action, a missing update or a plan that needs changing; it is not proof that work remains unfinished. Submission and RO statuses remain source evidence and do not change these categories.
 
-**Inferred** means an actual submission or actual approval date is recorded while the actual dispatch date is missing. It is evidence that later work has been recorded, not a confirmed dispatch date. The record remains in its planned dispatch month; the evidence date does not establish the dispatch month. Evidence can be outside the chart year, and inference can apply to a future planned dispatch. Inspect the evidence list if those dates disagree with the plan.
+Dispatch required accepts Boolean values and case-insensitive true/false text. Blank, unmapped, conflicting and unrecognised values never imply False. Numeric 0/1 or yes/no labels are not guessed. Blank association rows do not override a consistent recorded Boolean.
 
-**Missing Dates — current year** is a separate count outside the chart total: no actual dispatch date or usable planned dispatch date, with actual submission or approval evidence in the current year. Dividing this count by the chart total does not give the percentage of chart records missing actual dispatch dates. Expected future dispatches also legitimately have no actual dispatch date.
+The annual total includes chart records only. Category percentages use that total. **Average per calendar month** is the annual total divided by twelve, including zero months; it is not an elapsed-year throughput measure.
 
-The chart reports dispatch-date evidence, not workflow completion. The new Status review shows recorded submission and RO states separately from the dispatch classification. RO status describes the parent objective and does not automatically mark its child submissions complete. Neither status supplies a missing dispatch date, and status labels do not reclassify records as Dispatched or Inferred.
+## Coverage and records outside the chart
 
-## Status review
+Coverage uses the shared filters and counts distinct identified submissions. These four buckets are mutually exclusive and sum to the loaded distinct count:
 
-Choose **Status review** to inspect the source statuses and date evidence behind the counts. It initially focuses on **Unconfirmed** records. Other scopes cover Inferred records, all chart records missing an actual dispatch date, Missing Dates records outside the chart, Dispatch not required chart records, Dispatch not required outside-chart records, or all chart records. The selected Business unit, Dispatch required filter and inference setting still apply; enable **Include inferred dispatches** to populate the Inferred scope. Missing Dates remains independent of that checkbox. Changing a status-review scope or filter does not change the Overview's counting rules.
+- **Chart:** the chosen dispatch date falls in the selected year.
+- **Other years:** the chosen valid dispatch date belongs to another year.
+- **Undated:** no actual or planned dispatch date establishes a chart month.
+- **Excluded:** the date needed for classification is invalid or conflicting.
 
-Use the Site, Submission status and RO status filters together, or search for a record. The summaries and worklist reflect the same filtered records. Both status summaries count **distinct submissions**, including the summary grouped by RO status; they are not counts of distinct ROs. A submission is counted once even when multiple product or membership rows were delivered.
+Rows without SubID are reported separately as rows, not submissions. Date issues and remediation lists can overlap coverage buckets and must not be added to them.
 
-The Status review bar chart shows those same filtered submissions, split by recorded status. **Colour bars by** switches between Submission status (the default) and RO status. For chart-record scopes, monthly stacked bars use the existing dispatch month: actual dispatch when recorded, otherwise the selected latest/original dispatch plan. The status field determines the colour only; a Completed or approved status does not supply an actual dispatch date or move a record to a different month. The view initially shows Unconfirmed records coloured by submission status.
+**Missing Dates — selected year** contains records without an actual dispatch or usable planned dispatch date, with actual submission or approval evidence in the selected year. Either evidence date qualifies; a record counts once. Explicit False is excluded from this missing-dispatch check. The count is independent of the inference toggle and outside the chart total.
 
-**Missing Dates — outside chart** has no usable dispatch month. In that scope, horizontal bars compare status counts without assigning records to a month. The chart, both status summaries and paged worklist use the same scope and filters. Both chart colour modes count submissions, including when grouped by RO status.
+**Dispatch not required — outside chart** contains explicit False records with no dispatch month but actual submission or approval evidence in the selected year. No fake dispatch month is assigned. False records with no dated evidence cannot be assigned to a year.
 
-The worklist shows 25 records per page, with the submission ID, site, recorded submission and RO statuses, and planned/actual date evidence. Invalid or conflicting dates are marked **Date issue**, with the affected fields listed under **Check dates**; hover over that note to inspect the delivered values. Pagination changes the visible rows only; the summaries cover every match. This makes it possible to find submissions marked Completed whose dispatch dates still need checking, while retaining the actual source evidence.
+**Undated inferred** spans all filtered years and can overlap Missing Dates. Keep these diagnostic counts separate. Partial-delivery warnings mean only the rows Power BI delivered have been counted; source records omitted by report filters, permissions or delivery limits cannot be inferred.
 
-Unmapped status fields, mapped fields with blank values, and conflicting status values are separate cases. An unmapped field is not presented as a blank source value. Different nonblank status values across delivered rows for a submission are shown as a conflict rather than choosing one status. Differences in letter case or spacing are grouped together; blank association rows do not override a recorded status. Source status labels are retained rather than converted into a new completion classification. Report filters and data-delivery limits can hide source rows; review warnings before treating the result as a complete remediation list.
+## Worklist and Details
 
-## Local review and build
+Select a chart segment, monthly total, category count or site total to open its matching submissions. Sort using the worklist headings; missing dates remain last in either direction. Search by submission ID, site or recorded state. Paging changes only the visible rows; counts and Copy IDs refer to the full matching worklist.
 
-Open `roadmap-preview.html` in a browser for synthetic data only. `node test-next.cjs` runs calculation tests. `node test-render.cjs` runs DOM construction and event-callback tests (not a real browser).
+Expand a submission to inspect every date field, recorded states, dispatch requirement and date conflicts. Valid dates use day, three-letter month and four-digit year. Raw invalid or conflicting source evidence is retained for investigation.
 
-Run `node roadmap-2026.build.cjs` and `node roadmap-2026.verify.cjs` to generate the Power BI project, tests and browser harness. In the generated `roadmap-2026` folder: `npm install`, `npm test`, `npx tsc --noEmit`, then `npm run package`. Compile the harness with `npx esbuild verify/harness.ts --bundle --outfile=verify/harness.js --loader:.less=css`. Once Playwright Chromium is installed, run `node verify/run.cjs`. The browser suite includes `roadmap-dispatch.verify.cjs` for requirement filters, retained date evidence, five-way chart categories and outside-chart records, plus `roadmap-status.verify.cjs`, copied into the generated harness as `verify/status-tests.cjs`, to check the optional status mappings and existing reports without those mappings. The GitHub workflow also compiles the actual Visual and runs `test-host.cjs` to verify update/resize state handling. With pnpm, use the hoisted dependency layout required by Microsoft's packager (`--shamefully-hoist`).
+Copy IDs copies newline-separated submission identifiers. Where clipboard access is unavailable, a selected text box provides the same IDs for manual copying. No data is sent to an external service.
 
-The package version is 1.4.0.0. No work records or screenshots are embedded in the demo. Regulatory Tracker's files and release remain unchanged. The standalone demo exercises the shared UI; it is not a substitute for Power BI import testing. Local filter choices are not persisted across reopening and do not cross-filter other report visuals.
+Both status summaries count **submissions**, including the summary grouped by RO status. They are not counts of distinct ROs. Multiple nonblank statuses for one submission remain a conflict; differences only in case or spacing are grouped, and blank joined rows do not override a recorded state.
 
-## PowerPoint screenshot layout
+## Screenshot mode
 
-Choose your filters, then **Screenshot mode** at the bottom of the visual. The slide layout uses large labels and counts and scales proportionally with the visual. Both tables use collapsed site totals in this mode; your interactive expansion state is restored on exit. The selected filters, inference setting, as-of date, category definitions and partial-data warnings remain visible. The definitions travel with your screenshot so slide readers can interpret Unconfirmed and Inferred without hovering. Press **Escape** while focused to restore controls. Capture the white chart area and resize proportionally in PowerPoint. Review at final slide size; many sites or long names need more slide space. The screenshot uses exactly the same filtered counts as the interactive view.
+Screenshot mode presents the selected view and filter context without interactive controls. The same filtered counts are used. Site names remain readable rather than being shortened to eight characters. Press Escape while focused to return. Capture at an appropriate size for the number of sites/statuses and review the final slide before sharing. The demo and published preview screenshots contain synthetic data only.
 
-From **Status review**, Screenshot mode presents the status-coloured chart and both status summary tables with the selected scope, Business unit, Site, status filters, colour-by choice and search context. It omits the 25-row worklist to keep the slide readable. The chart and both tables count submissions, not ROs. Missing Dates uses status-count bars without months in this layout too. Exit Screenshot mode to return to the paged evidence list and its filters.
+## Development and verification
+
+The legacy test-host.cjs and test-render.cjs commands now invoke the shared browser suite against the actual Visual class after the harness is bundled.
+
+With Node 22, run **node roadmap-2026.build.cjs**, install the pinned dependencies in roadmap-2026, then run **node roadmap-2026.verify.cjs** and **node make-standalone.cjs**. Type-check the generated project with **npx tsc --noEmit** from roadmap-2026. Bundle verify/harness.ts with esbuild using the .less=css loader, install Playwright Chromium, then run **node roadmap-browser-run.cjs** from the repository root.
+
+Package from roadmap-2026 using **npm run package -- --no-stats**. Extract the PBIVIZ into package-check, then run **node roadmap-browser-run.cjs --package**. This tests the actual packaged plugin using the same interaction suite. Locally, ROADMAP_BROWSER_CHANNEL=msedge selects installed Edge.
+
+Checks cover existing classification regressions, selected year/reference-date separation, distinct counts and retained conflicting associations, coverage reconciliation, ID default, shared filters, chart drilldown, sorting/copy/expanded evidence, scroll/focus retention, empty/partial delivery, responsive layouts and synthetic volume. The workflow stages release assets as a draft, verifies uploaded bytes, then publishes. Power BI Desktop/Service import and tenant-specific compatibility still require verification in the target environment.

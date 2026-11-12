@@ -324,7 +324,7 @@ For the Tracker, Roadmap, IVDR, Key Submissions and Site Regulatory Plan, map yo
 | Site Regulatory Plan 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-plan-2026-v1.1.0/site-regulatory-plan-2026-1.1.0.0.pbiviz) | [Site plan](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-plan-preview.html) |
 | Site Submission Outlook 1.6.2 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.6.2/site-submission-outlook-1.6.2.0.pbiviz) | [Previous, current and next month](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) |
 
-Roadmap shows False separately as **Dispatch not required**, retaining recorded dispatch reference dates. Records without a usable dispatch month but with current-year actual submission/approval evidence are shown separately outside the monthly chart. Blanks remain unknown; they are not assumed to mean False. An unmapped field retains the earlier classification behavior.
+**Roadmap 1.5.0** defaults Business unit to **ID** and Theme to **Dark**, offers a Dark/Light toggle, and adds a year selector, shared Site filtering, a full-width chart and clickable month/category/site counts. Its compact sortable worklist supports Copy IDs and expandable date evidence, with scroll/focus retention and consistent day–month–year labels. Coverage counts reconcile chart, other-year, undated and excluded submissions. Existing dispatch classification and field mappings are unchanged. Explicit False remains **Dispatch not required**, including a separate outside-chart list when submission/approval evidence identifies the selected year. [Installation, mappings and counting rules](roadmap-2026.README.md).
 
 ## New in 1.9.1: Open-ended registration dates
 
@@ -449,3 +449,4 @@ Serve this directory with any static server; all runtime assets are local. GitHu
 Real Vega parsing/rendering and functional tests cover state grain, distinct counts, full memberships, search, comparison level/pins, Day 0, expiry domains, date conflicts/reversals, exact duration/variance, sorts, anchored expansion and 30,000 fictional membership rows. Drawn rows are capped at60; aggregation still processes all delivered data. Browser tests check genuine controls, copying, filters and responsive layout. Actual Power BI cannot be verified in the standalone browser.
 
 Vega 5.33.0 is bundled under BSD-3-Clause; see VEGA-LICENSE.txt.
+
