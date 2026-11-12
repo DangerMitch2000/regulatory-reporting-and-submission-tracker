@@ -2,6 +2,55 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const {dependency}=require('./test-tools.cjs');
 const artifacts=path.join(__dirname,'.test-artifacts');
 function harness(roles){window.dashboardHarness={instances:{},create(id){const element=document.createElement('section');element.id=id;document.body.append(element);const r={element,calls:[],events:[],exports:[],links:[],accept:true,allowed:0};const host={colorPalette:{isHighContrast:false},eventService:{renderingStarted:()=>r.events.push('start'),renderingFinished:()=>r.events.push('finish'),renderingFailed:(_o,m)=>r.events.push('failed: '+m)},fetchMoreData:aggregate=>{r.calls.push({aggregate,visible:element.querySelectorAll('.cd-metric').length});return r.accept;},launchUrl:url=>r.links.push(url),downloadService:{exportStatus:async()=>r.allowed,exportVisualsContent:async(...args)=>{r.exports.push(args);return true;}}};r.host=host;r.visual=window.dashboardFactory({element,host});this.instances[id]=r;},async send(id,rows,o={}){const r=this.instances[id],rs=roles.filter(f=>!(o.omit||[]).includes(f));r.visual.update({type:o.type||2,viewport:{width:o.width||1200,height:o.height||1000},dataViews:o.noDataView?[]:[{metadata:o.segment?{segment:{}}:{},table:{columns:rs.map(f=>({displayName:f,roles:{[f]:true}})),rows:rows.map(row=>rs.map(f=>row[f]??null))}}]});await r.visual.queue;},state(id){return this.instances[id].visual.app.getState();},metrics(id){return [...this.instances[id].element.querySelectorAll('.cd-metric strong')].map(n=>Number(n.textContent));}};}
+async function businessUnitChecks(page,demoRows){
+ await page.evaluate(()=>dashboardHarness.create('unit-default'));
+ const scope=page.locator('#unit-default'),unit=scope.locator('[data-filter=unit]');
+ const rows=['ID','Other'].map(bu=>({...demoRows[0],BusinessUnit:bu,ChangeID:'UNIT-CHANGE-'+bu,EventName:'UNIT-EVENT-'+bu,AppID:'UNIT-APP-'+bu,ROID:'UNIT-RO-'+bu,SubID:'UNIT-SUB-'+bu}));
+ const shown=()=>scope.locator('.cd-record[data-action=change]').allTextContents();
+ const assertUnit=async(expected,message)=>{assert.equal(await unit.inputValue(),expected,message);assert.equal(await page.evaluate(()=>dashboardHarness.state('unit-default').unit),expected,message);};
+ await page.evaluate(()=>dashboardHarness.send('unit-default',[],{noDataView:true}));
+ await assertUnit('ID','an empty initial delivery retains and visibly selects ID');
+ await page.evaluate(()=>dashboardHarness.send('unit-default',[]));
+ await assertUnit('ID','mapped empty data retains the startup selection');
+ await page.evaluate(rows=>dashboardHarness.send('unit-default',rows),rows.slice(1));
+ await assertUnit('ID','mapped data without ID must not broaden to All');assert.deepEqual(await shown(),[]);
+ await page.evaluate(rows=>dashboardHarness.send('unit-default',rows,{segment:true}),rows.slice(1));
+ await assertUnit('ID','a partial batch without ID retains the startup selection');assert.deepEqual(await shown(),[]);
+ await page.evaluate(rows=>dashboardHarness.send('unit-default',rows),rows);
+ await assertUnit('ID','accumulated rows keep ID selected');assert.deepEqual(await shown(),['UNIT-EVENT-ID']);
+ assert.equal(await scope.locator('[data-group]').inputValue(),'event');
+ assert.deepEqual(await page.evaluate(()=>dashboardHarness.metrics('unit-default')),[1,0,0],'summary counts use the default ID scope');
+ assert.match(await scope.locator('.cd-coverage').first().textContent(),/Events 1/);assert.match(await scope.locator('.cd-coverage').last().textContent(),/Events 2/);
+ const initial=await page.evaluate(()=>dashboardHarness.state('unit-default'));
+ await page.evaluate(()=>dashboardHarness.send('unit-default',[],{type:4,width:736,height:900,noDataView:true}));
+ assert.deepEqual(await page.evaluate(()=>dashboardHarness.state('unit-default')),initial,'resize preserves the ID filter and selection');
+ await scope.locator('[data-group]').selectOption('change');await assertUnit('ID','grouping preserves ID');assert.deepEqual(await shown(),['UNIT-CHANGE-ID']);
+ await scope.locator('[data-group]').selectOption('event');
+ await unit.selectOption('all');assert.deepEqual((await shown()).sort(),['UNIT-EVENT-ID','UNIT-EVENT-Other']);
+ await page.evaluate(rows=>dashboardHarness.send('unit-default',rows,{segment:true}),rows.slice(1));
+ await assertUnit('all','explicit All survives partial refresh');
+ await page.evaluate(rows=>dashboardHarness.send('unit-default',rows),rows);await assertUnit('all','explicit All survives full refresh');
+ await scope.locator('[data-group]').selectOption('application');await assertUnit('all','grouping preserves explicit All');
+ await page.evaluate(()=>dashboardHarness.send('unit-default',[],{type:4,width:1200,height:1000,noDataView:true}));await assertUnit('all','resize preserves explicit All');
+ await scope.locator('[data-group]').selectOption('event');await unit.selectOption('Other');
+ await page.evaluate(rows=>dashboardHarness.send('unit-default',rows),rows.slice(0,1));
+ await assertUnit('Other','a selected unit absent from refreshed options remains selected and visible');assert.deepEqual(await shown(),[]);
+ await page.evaluate(()=>dashboardHarness.send('unit-default',[]));await assertUnit('Other','empty refresh preserves an explicit unit');
+ await page.evaluate(rows=>dashboardHarness.send('unit-default',rows),rows);assert.deepEqual(await shown(),['UNIT-EVENT-Other']);
+ await scope.locator('[data-group]').selectOption('change');await assertUnit('Other','grouping preserves an explicit unit');
+ await page.evaluate(()=>dashboardHarness.send('unit-default',[],{type:4,width:736,height:900,noDataView:true}));await assertUnit('Other','resize preserves an explicit unit');
+ await scope.locator('[data-action=reset]').click();await assertUnit('all','Clear filters clears the startup unit restriction');
+ assert.deepEqual((await shown()).sort(),['UNIT-CHANGE-ID','UNIT-CHANGE-Other']);
+ await page.evaluate(rows=>dashboardHarness.send('unit-default',rows),rows);await assertUnit('all','refresh after Clear filters does not reapply ID');
+ await page.evaluate(()=>dashboardHarness.create('unit-unmapped'));
+ await page.evaluate(rows=>dashboardHarness.send('unit-unmapped',rows,{omit:['BusinessUnit']}),rows);
+ assert.equal(await page.locator('#unit-unmapped [data-filter=unit]').inputValue(),'all','nonempty data without a BusinessUnit mapping falls back to All');
+ assert.equal(await page.locator('#unit-unmapped .cd-record[data-action=change]').count(),2);
+ await page.evaluate(rows=>dashboardHarness.send('unit-unmapped',rows),rows);
+ assert.equal(await page.locator('#unit-unmapped [data-filter=unit]').inputValue(),'all','restoring the mapping preserves All');
+ await page.evaluate(async()=>{for(const id of ['unit-default','unit-unmapped']){dashboardHarness.instances[id].visual.destroy();await dashboardHarness.instances[id].visual.queue;}});
+ console.log('PASS business-unit defaults: visible ID startup, mixed/empty/no-ID/partial data, scoped counts, explicit selections, grouping/resize, Clear filters and unmapped fallback.');
+}
 async function countryDiagramChecks(page,demoRows){
  await page.evaluate(()=>dashboardHarness.create('countrylink'));
  const base={...demoRows[0],ChangeID:'LINK-CHANGE',EventName:'LINK-EVENT',ExpectedResponseID:'',ExpectedResponseCountry:'',AssessmentResponseID:'',AssessmentCountry:''};
@@ -148,6 +197,7 @@ async function run({packaged}={}){
  await page.evaluate(()=>{const p=dashboardHarness.instances.colour.host.colorPalette;p.isHighContrast=true;p.foreground={value:'#ffff00'};p.background={value:'#000000'};p.foregroundSelected={value:'#00ffff'};p.hyperlink={value:'#00ffff'};});await page.evaluate(()=>dashboardHarness.send('colour',[],{type:16,width:1280,noDataView:true}));
  assert.equal(await page.locator('#colour [data-node]').first().evaluate(n=>getComputedStyle(n).color),'rgb(255, 255, 0)');await page.getByRole('button',{name:'Select submission COLOUR-SUB',exact:true}).click();assert.match(await page.locator('#colour .cd-graph-selection').textContent(),/Conflicting states/);
  await page.evaluate(async()=>{dashboardHarness.instances.colour.visual.destroy();await dashboardHarness.instances.colour.visual.queue;});
+ await businessUnitChecks(page,demoRows);
  await countryDiagramChecks(page,demoRows);
  await require('./dual-date-browser-checks.cjs').runChecks(page,demoRows);
  await require('./related-space-browser-checks.cjs').runChecks(page,demoRows);

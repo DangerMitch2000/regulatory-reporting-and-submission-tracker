@@ -1,10 +1,18 @@
-# Change Dashboard 1.7.2
+# Change Dashboard 1.7.3
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.7.2/change-dashboard-1.7.2.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.7.2)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.7.3/change-dashboard-1.7.3.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.7.3)
 
 A separate daily worklist with **Event (default), Change ID and Application views**, preserving the Regulatory Tracker's existing **69 field roles** and adding one optional **Commercial region** role. Filter by manufacturing site, product, business unit, commercial region, country and record state. Select a summary count, an event/change/application, then a country to inspect the evidence and linked source records. The existing Tracker and Registration Coverage Map remain separate visuals.
 
-**Preview release:** package version **1.7.2.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
+**Preview release:** package version **1.7.3.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
+
+## Business unit default in 1.7.3
+
+The dashboard opens with **Business unit = ID**. Choose another unit or **All** when needed. Your choice survives refresh, resizing and changes between Event, Change ID and Application views. **Clear filters** still clears the business-unit filter to All; **Reset table** leaves it unchanged.
+
+An empty or partial delivery does not discard the ID selection. If a mapped dataset has no matching ID records, the selected filter stays visible with an empty worklist. When a nonempty delivery has no BusinessUnit field mapping, the dashboard uses All so unmapped records remain accessible.
+
+The visual identity, all 70 field roles and counting rules are unchanged. Import version **1.7.3.0** to apply the new startup default.
 
 ## More room for Related items in 1.7.2
 

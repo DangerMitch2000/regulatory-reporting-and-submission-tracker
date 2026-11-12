@@ -10,7 +10,7 @@ const {dependency} = require('./test-tools.cjs');
   const pkg = JSON.parse(await zip.file(resource.file).async('string'));
   const {roles} = await import('./logic.mjs');
   assert.equal(pkg.visual.guid, 'changeDashboardF91D534685234516AE47CF62295ED804');
-  assert.equal(pkg.visual.version, '1.7.2.0');
+  assert.equal(pkg.visual.version, '1.7.3.0');
   assert.equal(pkg.visual.displayName, 'Change Dashboard');
   assert.equal(pkg.apiVersion, '5.11.0');
   assert.deepEqual(pkg.capabilities.dataRoles.map(role => role.name), roles);
