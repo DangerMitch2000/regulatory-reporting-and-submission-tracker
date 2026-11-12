@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),path=require('node:path');
 module.exports=async function(page,{outputDir}){
- await page.goto('http://127.0.0.1:8771/index.html');await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
+ await page.goto('http://127.0.0.1:8771/index.html');await require('./tracker-browser-helpers.cjs').useAllRecords(page);await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
  const revision=await page.evaluate(()=>window.__qualityRevision);
  await page.evaluate(()=>{const base={...window.__dispatchRows[0],AppID:'APP-A',ROID:'RO-A',SubID:'SUB-A',Country:'Mexico',Product:'Product A',SubStatus:'Planned',LMPrepDuration:'2 months',DispatchRequired:true,LatestDispatch:'2026-11-30',ActualDispatch:null,EventName:'Event-2',EventState:'In Progress',EventPlannedStart:'2026-01-01',EventPlannedCompletion:'2026-12-31'};window.__dispatchSend([base,{...base,EventName:'Event-10'},{...base,AppID:'APP-B',ROID:'RO-B',SubID:'SUB-B',Country:'Canada',Product:'Product B'},{...base,ROID:'RO-C',SubID:'SUB-C',EventName:null},{...base,EventName:'Event-100',EventPlannedStart:null,EventPlannedCompletion:null}]);});
  await page.waitForFunction(n=>window.__qualityRevision>n,revision);

@@ -1,14 +1,14 @@
-# Registration Coverage Map 1.0.0
+# Registration Coverage Map 1.0.1
 
 A separate Power BI visual for exploring registration coverage by country. Filter products, legal or registration manufacturing sites, business units, registration states, countries and expiry dates. Select a country to inspect registrations, copy their IDs or export the filtered list.
 
-[Download the Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/registration-map-v1.0.0/registration-coverage-map-1.0.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/registration-map/preview.html) · [Release notes](RELEASE-NOTES.md)
+[Download the Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/registration-map-v1.0.1/registration-coverage-map-1.0.1.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/registration-map/preview.html) · [Release notes](RELEASE-NOTES.md)
 
 The demo uses fictional data. This is an uncertified preview, with a separate visual identity from the Regulatory Tracker and other repository visuals. Its world geometry is bundled; the map makes no runtime requests to a map provider and requires no API key.
 
 ## What the map counts
 
-- The default state selection is **Approved** and **Conditionally Approved**. A country’s colour represents distinct matching registration IDs, with numeric ranges in the legend. Change the state filter to inspect Planned, Expired, Canceled, Rejected, Withdrawn, missing or additional source states.
+- New visual instances start with business unit **ID** and the registration states **Approved** and **Conditionally Approved**. A country’s colour represents distinct matching registration IDs, with numeric ranges in the legend. Change the unit or state filters to inspect other records.
 - **Coverage follows the recorded registration state.** An Approved record with a past end date or future start date stays visible and is flagged for review. It is not silently reclassified. No matching records means none in the delivered and filtered data; it does not establish absence of legal registration or market authorization.
 - Duplicate product, site and catalog rows do not multiply registration totals. Combined product/site/business-unit filters must match a real source membership row; the visual does not invent combinations across joined rows.
 - Registration country takes priority. Secondary Country is used only when registration country is blank. Conflicting or unrecognized primary countries are withheld from map placement and remain in Review; they are not guessed from a secondary country.
@@ -17,7 +17,7 @@ The demo uses fictional data. This is an uncertified preview, with a separate vi
 
 ## Import and map fields
 
-1. Download **registration-coverage-map-1.0.0.0.pbiviz**.
+1. Download **registration-coverage-map-1.0.1.0.pbiviz**.
 2. In Power BI Desktop, use **Visualizations (…) → Import a visual from a file** and select the package. Add **Registration Coverage Map** to a report page.
 3. Map **Registration ID**, **Registration country** and **Registration state**. Map Product, Site and Business Unit fields to enable the requested filters. Use the source columns; their source names do not need changing.
 4. Add other fields from the table below as available. Date fields must use raw Date/DateTime columns, not automatic Date hierarchies. Use **Don’t summarize** for identifiers.
@@ -47,13 +47,13 @@ Use relationships that deliver real registration/product/site memberships. Do no
 ## Interactions
 
 - Select a country on the map or in the country table to list its registrations. Click a registration ID for Details, linked IDs, source memberships and review notes.
-- Search IDs, registration numbers, products, catalog numbers or countries. Filters support multiple selections and searchable choice lists. **All** removes a restriction; **Reset filters** restores the default approved states.
+- Search IDs, registration numbers, products, catalog numbers or countries. Filters support multiple selections and searchable choice lists. **All business units** removes the ID restriction; **Reset filters** clears the unit restriction and restores the default approved states.
 - Summary counts open their relevant list. **Expiring · 90 days** applies that expiry filter. **Needs review** opens the review list across all states.
 - Use **Copy IDs** or **CSV** for the whole filtered list, not only the visible page. If the host blocks clipboard/export, selectable text is provided. CSV protects formula-like values and includes product/catalog associations.
 - Use +/−, **World**, dragging, or Ctrl+wheel to move around the map. Tiny-country targets and the country table make small jurisdictions accessible. Country shapes also support keyboard focus and Enter/Space.
 - Dark and Light themes, high-contrast support and responsive layouts are included. At narrow sizes, the registration list moves below the map. Controls retain readable text rather than shrinking indefinitely.
 
-Local map selections affect this visual only; they do not cross-filter other report visuals. Power BI’s own report filters still feed the visual. Local filters and zoom survive resize/data refresh but are not saved in bookmarks or across reopening in this first version.
+Local map selections affect this visual only; they do not cross-filter other report visuals. Power BI’s own report filters still feed the visual. Local filters and zoom survive resize/data refresh but are not saved in bookmarks or across reopening. An ID or other unit selection remains visible through empty and partial deliveries, including mapped data with no matching unit. A nonempty delivery without a Business Unit field mapping falls back to All so its records remain accessible.
 
 ## Dates and loading
 

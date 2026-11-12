@@ -32,7 +32,7 @@ module.exports=async function verifyTrackerThemes(page,{outputDir}){
   await page.waitForFunction(previous=>window.__qualityRevision>previous,revision);
  };
 
- await page.goto('http://127.0.0.1:8771/index.html');
+ await page.goto('http://127.0.0.1:8771/index.html');await require('./tracker-browser-helpers.cjs').useAllRecords(page);
  await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
  assert.equal(await page.locator('#host #theme-select').inputValue(),'dark','A new visual starts in Dark');
  assert.equal(await root.getAttribute('data-theme'),'dark');

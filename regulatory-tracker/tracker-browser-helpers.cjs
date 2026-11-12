@@ -14,4 +14,5 @@ async function rowLocator(page,selector,key){
 async function setFilterDrawer(page,open){const drawer=page.locator('#host #filter-drawer');await drawer.waitFor({state:'attached'});if(await drawer.evaluate(node=>node.open)!==open)await drawer.locator(':scope > summary').click();}
 async function toggleFilter(page,filter){await setFilterDrawer(page,true);await filter.locator(':scope > summary').click();if(!await filter.evaluate(node=>node.open))await setFilterDrawer(page,false);}
 async function resetFilters(page){await setFilterDrawer(page,true);await page.locator('#host #reset-filters').click();await setFilterDrawer(page,false);}
-module.exports={registerRowSelector,rowLocator,setFilterDrawer,toggleFilter,resetFilters};
+async function useAllRecords(page){await page.waitForFunction(()=>window.__themeVisual?.app?.view);await page.evaluate(()=>window.__themeVisual.queue);await resetFilters(page);}
+module.exports={useAllRecords,registerRowSelector,rowLocator,setFilterDrawer,toggleFilter,resetFilters};

@@ -11,7 +11,7 @@ function button(label,fn,cls=''){const b=el('button',label,cls);b.type='button';
 function svg(tag,attrs={}){const n=document.createElementNS(NS,tag);for(const [k,v]of Object.entries(attrs))n.setAttribute(k,String(v));return n;}
 function safeUrl(value){try{const u=new URL(value);return /^https?:$/.test(u.protocol)&&!u.username&&!u.password?u.href:null;}catch{return null;}}
 export function mount(root,services={}){
- const state={...DEFAULT_STATE,states:[...DEFAULT_STATE.states],products:[],sites:[],units:[],countries:[],search:'',expiry:'all'};
+ const state={...DEFAULT_STATE,states:[...DEFAULT_STATE.states],products:[],sites:[],units:['ID'],countries:[],search:'',expiry:'all'};
  let model=null,result=null,selectedCountry=null,selectedRecord=null,scope='countries',page=0,theme='dark',palette=null,searchTimer=null,disposed=false;
  const PAGE=40,countryById=new Map(geography.countries.map(c=>[String(c.id),c])),shapes=new Map(),filterUIs=new Map();
  const app=el('section',null,'registration-map');app.dataset.theme=theme;root.append(app);
@@ -61,7 +61,7 @@ export function mount(root,services={}){
  async function copy(value,label='Copy IDs'){if(!value)return;try{if(services.onCopy){if(await services.onCopy(value)!==false)return;}else if(navigator.clipboard){await navigator.clipboard.writeText(value);return;}}catch{}manualCopy(value,label+' — select and copy');}
  async function exportRows(records){const csv=toCsv(records);try{if(services.onExport&&await services.onExport(csv,'registration-coverage.csv')!==false)return;}catch{}manualCopy(csv,'CSV — select and copy');}
  function applyTheme(){app.dataset.theme=theme;app.classList.toggle('map-high-contrast',!!palette);for(const [prop,value]of [['--map-hc-fg',palette?.foreground],['--map-hc-bg',palette?.background]]){if(value)app.style.setProperty(prop,value);else app.style.removeProperty(prop);}}
- function optionsFor(key){const value=result?.options?.[key]||model?.options?.[key]||[];return key==='countries'?value.map(c=>({value:String(c.id),label:c.name})):value.map(s=>({value:String(s),label:String(s)}));}
+ function optionsFor(key){let value=result?.options?.[key]||model?.options?.[key]||[];if(key==='units')value=[...new Set([...state.units,...value])];return key==='countries'?value.map(c=>({value:String(c.id),label:c.name})):value.map(s=>({value:String(s),label:String(s)}));}
  function drawChoices(key){const ui=filterUIs.get(key),query=ui.find.value.trim().toLowerCase(),values=optionsFor(key).filter(o=>o.label.toLowerCase().includes(query));ui.choices.replaceChildren();for(const o of values.slice(0,120)){const label=el('label'),box=el('input');box.type='checkbox';box.checked=state[key].includes(o.value);box.onchange=()=>{state[key]=box.checked?[...new Set([...state[key],o.value])]:state[key].filter(v=>v!==o.value);page=0;selectedRecord=null;renderData();};label.append(box,el('span',o.label));ui.choices.append(label);}if(values.length>120)ui.choices.append(el('p','Type to narrow '+fmt(values.length)+' choices.','map-muted'));if(!values.length)ui.choices.append(el('p','No matching values.','map-muted'));}
  function filteredRecords(){let values=scope==='review'?result.review:result.records;if(selectedCountry&&scope!=='review')values=values.filter(r=>r.countryIds?.map(String).includes(selectedCountry));return values;}
  function field(grid,label,value){const box=el('div',null,'map-detail-field');box.append(el('span',label),el('strong',value||'Not recorded'));grid.append(box);}
@@ -96,7 +96,7 @@ export function mount(root,services={}){
    ['Registrations',k.registrations,()=>{selectedCountry=null;selectedRecord=null;scope='registrations';page=0;renderData();},'Distinct registration IDs'],
    ['Expiring · 90 days',k.expiring,()=>{state.expiry='next90';expiry.value='next90';selectedCountry=null;selectedRecord=null;scope='registrations';page=0;renderData();},'End dates in the next 90 days'],
    ['Needs review',k.review,()=>{selectedCountry=null;selectedRecord=null;scope='review';page=0;renderData();},'All states; includes missing IDs and country issues']]){const b=button('',action,'map-metric');b.title=description;b.append(el('strong',fmt(value)),el('span',label));metrics.append(b);}
-  active.replaceChildren();const chips=[];for(const [key,label]of filters){const values=state[key];filterUIs.get(key).summary.textContent=label+(values.length?' · '+values.length:' · All');if(values.length)chips.push([key,label+': '+(key==='states'?values.join(', '):values.length+' selected')]);}
+  active.replaceChildren();const chips=[];for(const [key,label]of filters){const values=state[key],unit=key==='units'&&values.length===1;filterUIs.get(key).summary.textContent=label+(values.length?' · '+(unit?values[0]:values.length):' · All');if(values.length)chips.push([key,label+': '+(key==='states'||unit?values.join(', '):values.length+' selected')]);}
   for(const [key,label]of chips)active.append(button(label+' ×',()=>{state[key]=[];page=0;selectedRecord=null;renderData();},'map-chip'));
   const unplaced=k.unmappedRegistrations||0;active.append(el('span',unplaced?fmt(unplaced)+' matching registrations cannot be placed on the map':'Counts reflect delivered, filtered records.','map-muted'));
   const byCountry=new Map(result.countries.map(c=>[String(c.id),c])),counts=result.countries.map(c=>c.count).filter(n=>n>0).sort((a,b)=>a-b),bounds=[...new Set([.2,.4,.6,.8,1].map(q=>counts[Math.max(0,Math.ceil(counts.length*q)-1)]).filter(Boolean))];
@@ -106,7 +106,11 @@ export function mount(root,services={}){
   renderSide();
  }
  return {
-  update(rows,options={}){if(disposed)return;model=analyze(rows,{countries:geography.countries,now:options.now});palette=options.highContrast||null;notice.textContent=[options.notice,...(options.missing||[]).map(f=>'Map '+f+' to use registration coverage.')].filter(Boolean).join(' ');notice.hidden=!notice.textContent;applyTheme();selectedRecord=null;renderData();for(const [key,ui]of filterUIs)if(ui.d.open)drawChoices(key);},
+  update(rows,options={}){if(disposed)return;
+   // Empty/partial deliveries retain the unit choice, even before ID arrives.
+   // A populated table without the field mapped cannot apply this restriction.
+   if(rows.length&&!new Set(options.mappedFields||rows.flatMap(row=>Object.keys(row))).has('BusinessUnit'))state.units=[];
+   model=analyze(rows,{countries:geography.countries,now:options.now});palette=options.highContrast||null;notice.textContent=[options.notice,...(options.missing||[]).map(f=>'Map '+f+' to use registration coverage.')].filter(Boolean).join(' ');notice.hidden=!notice.textContent;applyTheme();selectedRecord=null;renderData();for(const [key,ui]of filterUIs)if(ui.d.open)drawChoices(key);},
   resize(width,height){app.style.width=Math.max(0,width)+'px';app.style.height=Math.max(0,height)+'px';app.classList.toggle('map-narrow',width<850);app.style.setProperty('--map-font',Math.max(13,Math.min(16,width/95))+'px');},
   setHighContrast(value){palette=value;applyTheme();renderData();},
   destroy(){disposed=true;clearTimeout(searchTimer);clearTimeout(suppressTimer);app.remove();},

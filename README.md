@@ -7,8 +7,8 @@
 | Visual | Download | Demo |
 | --- | --- | --- |
 | [Change Dashboard 1.7.3](change-dashboard/README.md) | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.7.3/change-dashboard-1.7.3.0.pbiviz) | [Change Dashboard](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) |
-| [Registration Coverage Map 1.0.0](registration-map/README.md) | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/registration-map-v1.0.0/registration-coverage-map-1.0.0.0.pbiviz) | [World map](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/registration-map/preview.html) |
-| [Regulatory Tracker 1.18.1](regulatory-tracker/README.md) | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.18.1/regulatory-tracker-1.18.1.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
+| [Registration Coverage Map 1.0.1](registration-map/README.md) | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/registration-map-v1.0.1/registration-coverage-map-1.0.1.0.pbiviz) | [World map](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/registration-map/preview.html) |
+| [Regulatory Tracker 1.18.2](regulatory-tracker/README.md) | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.18.2/regulatory-tracker-1.18.2.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
 | [Registration Overview / Roadmap 1.5.0](roadmap/README.md) | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.5.0/roadmap-2026-1.5.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap-preview.html) |
 | [IVDR Overview 1.2.0](ivdr-overview/README.md) | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |
 | [Key Submissions 1.1.0](key-submissions/README.md) | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/key-preview.html) |
@@ -24,7 +24,7 @@ Select a visual name for its setup guide, field mappings and build instructions.
 3. Follow that visual's field-mapping guide. Use Date/DateTime columns rather than automatic date hierarchies.
 4. Check the report, save it and republish to update Power BI Service.
 
-These packages are uncertified previews. Download links point to the existing versioned releases; this repository cleanup does not require importing a new package.
+These packages are uncertified previews. Download links point to versioned releases; import the updated package to receive changes to a visual.
 
 ## Repository layout
 

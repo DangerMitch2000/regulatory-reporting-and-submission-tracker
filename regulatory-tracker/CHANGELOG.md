@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.18.2 — 2026-11-12
+
+Power BI package: **1.18.2.0**. The visual GUID and all 69 field roles are unchanged; no field remapping is required.
+
+- Start new visual instances and the browser demo with Business Unit set to ID. Keep user selections through refresh, resize and grouping changes. Clear the Business Unit selection or use Reset filters to show All.
+- Retain ID through empty and partial deliveries, including mapped data with no matching ID records. Keep the selected ID visible while the chart is empty.
+- Fall back to All for a nonempty delivery without a BusinessUnit mapping so its records remain accessible. Preserve existing source identities, count and date rules.
+- Add focused startup and persistence checks to actual-host and browser-demo verification. Existing broad regression checks explicitly choose All where they require the complete sample.
+
 ## 1.18.1 — 2026-10-23
 
 Power BI package: **1.18.1.0**. The visual GUID and field roles are unchanged; no field remapping is required.

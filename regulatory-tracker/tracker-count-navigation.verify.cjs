@@ -86,7 +86,7 @@ async function verify(page,{url='http://127.0.0.1:8771/index.html',outputDir=__d
  };
 
  try{
-  await page.goto(url);await status.filter({hasText:'60 submissions'}).waitFor();
+  await page.goto(url);await require('./tracker-browser-helpers.cjs').useAllRecords(page);await status.filter({hasText:'60 submissions'}).waitFor();
   const revision=await page.evaluate(()=>window.__qualityRevision);await page.evaluate(rows=>window.__dispatchSend(rows),fixtures());await page.waitForFunction(n=>window.__qualityRevision>n,revision);await status.filter({hasText:'5 submissions'}).waitFor();
   await page.setViewportSize({width:1600,height:1150});await page.evaluate(()=>window.__resizeHost(1536,1050));await settle();
   assert.match(await status.innerText(),/6 registrations/,'Distinct source registrations include one unlinked record');

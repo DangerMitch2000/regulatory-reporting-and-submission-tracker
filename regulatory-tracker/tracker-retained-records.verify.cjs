@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),path=require('node:path'),rows=require('./retained-records-test.cjs');
 module.exports=async(page,{outputDir})=>{
- await page.goto('http://127.0.0.1:8771/index.html');await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
+ await page.goto('http://127.0.0.1:8771/index.html');await require('./tracker-browser-helpers.cjs').useAllRecords(page);await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
  await page.evaluate(rows=>window.__dispatchSend([...rows,...rows]),rows);
  await page.locator('#host #filter-status').filter({hasText:'3 change IDs · 4 events · 4 applications · 3 ROs · 3 submissions'}).waitFor();
  await page.locator('#host #selected-details').evaluate(e=>e.open=true);

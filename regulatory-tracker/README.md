@@ -1,12 +1,12 @@
-# Regulatory Tracker 1.18.1
+# Regulatory Tracker 1.18.2
 
-[Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.18.1/regulatory-tracker-1.18.1.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [All visuals](../README.md)
+[Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.18.2/regulatory-tracker-1.18.2.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [All visuals](../README.md)
 
 Explore linked **Change ID → Event → Application → RO → Submission → Registration** records, their workflow dates and source evidence. Public demo records are fictional.
 
 ## Install and map
 
-Import the package through **Visualizations (…) → Import a visual from a file** in Power BI Desktop. For an upgrade, replace the existing package and keep the existing visual instance; version 1.18.1 retains the visual ID and field roles.
+Import the package through **Visualizations (…) → Import a visual from a file** in Power BI Desktop. For an upgrade, replace the existing package and keep the existing visual instance; version 1.18.2 retains the visual ID and field roles.
 
 Map your source identifiers to `ChangeID`, `EventName`, `AppID`, `ROID`, `SubID` and `RegistrationID` where available. Map states separately for each record type. Dispatch, submission and approval each support Original, Latest and Actual dates. Use Date/DateTime columns rather than date hierarchies, with no summarization.
 
@@ -14,6 +14,8 @@ Optional fields cover sites, products, countries, business units, dispatch requi
 
 ## Current behaviour
 
+- New instances open with **Business Unit = ID**. Clear the Business Unit selection or use **Reset filters** for All; selections survive refresh, resizing and grouping changes in the current instance.
+- Empty or partial deliveries keep the selection. Mapped data with no ID records shows an empty chart with ID still selected. A nonempty delivery without a `BusinessUnit` mapping falls back to All so its records remain accessible.
 - The timeline opens around **Today**. **Fit all** uses workflow dates and excludes long registration-validity periods.
 - Names open Details; parent bars and plus/minus controls expand children. Linked-record counts reveal the corresponding records.
 - Columns can be resized. Products and sites stay compact, while hover and Details show full values.

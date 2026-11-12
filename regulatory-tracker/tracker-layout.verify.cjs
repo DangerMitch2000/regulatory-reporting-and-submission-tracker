@@ -17,7 +17,7 @@ async function verify(page,{outputDir=__dirname,url='http://127.0.0.1:8771/index
  const reveal=async key=>page.evaluate(async key=>{const v=window.__themeVisual.app.view,index=v.data('visible').findIndex(r=>r.key===key);if(index<0)throw Error('Collapsed target '+key);v.signal('rowRequest',{pos:index});await v.runAsync();},key);
  const select=async row=>{await reveal(row.key);const before=(await snapshot()).expanded;await click('#host .parentLabel text,#host .subLabel text,#host .registrationLabel text',row.key);await page.waitForFunction(key=>window.__themeVisual.app.view.signal('selectedKey')===key&&document.querySelector('#host #selected-details').open,row.key);assert.deepEqual((await snapshot()).expanded,before,'Record names select Details without changing hierarchy');};
  const resize=async width=>{await page.setViewportSize({width:Math.max(800,width+40),height:1150});await page.evaluate(width=>window.__resizeHost(width,1000),width);await page.waitForFunction(width=>Math.abs(document.querySelector('#host').getBoundingClientRect().width-width)<2,width);await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));};
- await page.goto(url);await count.filter({hasText:'60 submissions'}).waitFor();
+ await page.goto(url);await require('./tracker-browser-helpers.cjs').useAllRecords(page);await count.filter({hasText:'60 submissions'}).waitFor();
  assert.equal(await page.locator('#host #filter-drawer').evaluate(e=>e.open),false,'Filters are collapsed on initial load');
  assert.match(await page.locator('#host #active-filter-summary').innerText(),/All records/i);
  assert.equal(await page.locator('#host .rowDetailsText,#host .rowDetailsButton').count(),0,'Redundant per-row Details buttons are removed');

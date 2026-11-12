@@ -16,7 +16,7 @@ function parseCsv(content){
 }
 
 module.exports=async function verifyCalendarDays(page,{outputDir}={}){
- await page.goto('http://127.0.0.1:8771/index.html');
+ await page.goto('http://127.0.0.1:8771/index.html');await require('./tracker-browser-helpers.cjs').useAllRecords(page);
  await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
  const revision=await page.evaluate(()=>window.__qualityRevision);
  await page.evaluate(()=>{

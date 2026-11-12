@@ -54,7 +54,7 @@ async function verify(page,{outputDir=__dirname,url='http://127.0.0.1:8771/index
   return {text,result};
  };
  try{
-  await page.goto(url);await status.filter({hasText:'60 submissions'}).waitFor();await send();
+  await page.goto(url);await require('./tracker-browser-helpers.cjs').useAllRecords(page);await status.filter({hasText:'60 submissions'}).waitFor();await send();
   await page.locator('#host select[name=mode]').selectOption('Compare');await page.locator('#host select[name=axisMode]').selectOption('Calendar');
   const sourceBefore=await page.evaluate(()=>JSON.stringify(window.__themeVisual.app.view.data('dataset').map(row=>[row.SubID,row.OriginalDispatch,row.LatestDispatch,row.ActualDispatch])));
   let result=await assertWindow('PREP-ONE',day('2026-11-30'));assert.match(result.text,/01 Oct 2026/);assert.match(result.text,/30 Nov 2026/);

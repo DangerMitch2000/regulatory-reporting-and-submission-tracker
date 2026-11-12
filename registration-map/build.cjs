@@ -1,7 +1,7 @@
 /* Reproducible, separate Registration Coverage Map Power BI project. */
 const fs = require('node:fs'), path = require('node:path'), {pathToFileURL} = require('node:url');
 const root = __dirname, out = path.join(root, 'powerbi');
-const VERSION = '1.0.0', PACKAGE_VERSION = '1.0.0.0';
+const VERSION = '1.0.1', PACKAGE_VERSION = '1.0.1.0';
 const GUID = 'registrationCoverageMapC34DF5A6F82049BE968C22E8D9EF6031';
 function write(name, value) {
   const file = path.join(out, name);

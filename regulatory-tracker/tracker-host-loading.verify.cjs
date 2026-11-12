@@ -12,9 +12,9 @@ function fixtures(){
 
 async function verify(page,{url='http://127.0.0.1:8771/index.html',navigate=true}={}){
  const errors=[],onError=error=>errors.push(error.message);page.on('pageerror',onError);
- if(navigate)await page.goto(url);
+ if(navigate)await page.goto(url);await require('./tracker-browser-helpers.cjs').useAllRecords(page);
  await page.waitForFunction(()=>window.__themeVisual?.app?.view&&window.__qualityRevision>0);
- await page.evaluate(()=>window.__themeVisual.queue);
+ await page.evaluate(()=>window.__themeVisual.queue);await require('./tracker-browser-helpers.cjs').useAllRecords(page);
  const fields=['SubID','RegistrationID','CatalogNumber','Product','Country','LatestSubmission','ActualSubmission'];
  let installed=false,restored;
  try{

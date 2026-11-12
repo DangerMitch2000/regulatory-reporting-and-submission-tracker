@@ -41,6 +41,84 @@ const fixtures = () => {
   return [[first], [first, {...first, CatalogNumber: '002'}, second], [first, {...first, CatalogNumber: '002'}, second, third, {...first}]];
 };
 
+async function businessUnitStartupChecks(page) {
+  const base = fixtures()[0][0];
+  const rows = [base, {...base, CatalogNumber: '002'},
+    {...base, RegistrationID: 'START-CMI', BusinessUnit: 'CMI'},
+    {...base, RegistrationID: 'START-CORE', BusinessUnit: 'CoreLab'},
+    {...base, RegistrationID: 'START-CONDITIONAL', RegistrationState: 'Conditionally Approved'},
+    {...base, RegistrationID: 'START-PLANNED', RegistrationState: 'Planned'}];
+  const nonID = rows.filter(row => row.BusinessUnit !== 'ID');
+  await page.evaluate(() => coverageHarness.create('startup'));
+  const root = page.locator('#startup'), units = root.locator('details[data-filter="units"]');
+  const send = (data, options = {}) => page.evaluate(({data, options}) => coverageHarness.send('startup', data, options), {data, options});
+  const snapshot = () => page.evaluate(() => coverageHarness.snapshot('startup'));
+  async function assertUnits(expected, count, label) {
+    const current = await snapshot();
+    assert.deepEqual(current.state.filters.units, expected, label);
+    assert.equal(current.metrics[1], count, label);
+  }
+  async function chooseUnit(value) {
+    if (!await units.evaluate(node => node.open)) await units.locator('summary').click();
+    await units.getByRole('button', {name: 'All business units', exact: true}).click();
+    if (value) await units.getByRole('checkbox', {name: value, exact: true}).check();
+    await units.locator('summary').click();
+  }
+  await send([], {noDataView: true});
+  await assertUnits(['ID'], 0, 'A new empty instance retains the ID startup choice');
+  await send([], {omit: ['BusinessUnit'], segment: true});
+  await assertUnits(['ID'], 0, 'An empty partial delivery without a unit mapping retains ID');
+  await send(nonID, {segment: true});
+  await assertUnits(['ID'], 0, 'A mapped partial batch without ID stays restricted to ID');
+  await send(nonID);
+  await assertUnits(['ID'], 0, 'A completed mapped delivery without ID does not silently switch to All');
+  assert.equal(await units.locator('summary').textContent(), 'Business units · ID');
+  assert.equal(await root.getByRole('button', {name: 'Business units: ID ×', exact: true}).count(), 1);
+  await units.locator('summary').click();
+  assert.equal(await units.getByRole('checkbox', {name: 'ID', exact: true}).isChecked(), true, 'Selected ID stays available when absent from source values');
+  assert.equal(await units.getByRole('checkbox', {name: 'CMI', exact: true}).isChecked(), false);
+  await units.locator('summary').click();
+  await send(rows, {append: true});
+  await assertUnits(['ID'], 2, 'Mixed accumulated data counts distinct Approved/Conditionally Approved ID registrations');
+  assert.deepEqual((await snapshot()).state.filters.states, ['Approved', 'Conditionally Approved']);
+  await send(rows);
+  await send([], {type: 4, width: 760, height: 700});
+  await assertUnits(['ID'], 2, 'The startup ID choice survives refresh and resize');
+
+  await chooseUnit('CMI');
+  await assertUnits(['CMI'], 1, 'Users can choose another business unit');
+  await send([base]);
+  await assertUnits(['CMI'], 0, 'A selected other unit survives a refresh without matching values');
+  await units.locator('summary').click();
+  assert.equal(await units.getByRole('checkbox', {name: 'CMI', exact: true}).isChecked(), true);
+  await units.locator('summary').click();
+  await send(rows);
+  await send([], {type: 4});
+  await assertUnits(['CMI'], 1, 'Explicit other-unit choice survives refresh and resize');
+  await chooseUnit(null);
+  await send([], {noDataView: true});
+  await send(rows);
+  await send([], {type: 4});
+  await assertUnits([], 4, 'Explicit All survives an empty delivery, refresh and resize');
+
+  await chooseUnit('CoreLab');
+  await root.getByRole('button', {name: 'Registration state: Approved, Conditionally Approved ×', exact: true}).click();
+  await root.getByRole('button', {name: 'Reset filters', exact: true}).click();
+  await assertUnits([], 4, 'Reset clears the unit restriction');
+  assert.deepEqual((await snapshot()).state.filters.states, ['Approved', 'Conditionally Approved'], 'Reset retains the established approved-state defaults');
+  await send(rows);
+  await assertUnits([], 4, 'Reset choice survives refresh');
+
+  await page.evaluate(() => coverageHarness.create('unmapped-startup'));
+  await page.evaluate(rows => coverageHarness.send('unmapped-startup', rows, {omit: ['BusinessUnit']}), rows);
+  const unmapped = await page.evaluate(() => coverageHarness.snapshot('unmapped-startup'));
+  assert.deepEqual(unmapped.state.filters.units, [], 'A populated table without BusinessUnit mapping falls back to All');
+  assert.equal(unmapped.metrics[1], 4, 'Unmapped unit data remains accessible');
+  await page.evaluate(rows => coverageHarness.send('unmapped-startup', rows), rows);
+  assert.deepEqual((await page.evaluate(() => coverageHarness.snapshot('unmapped-startup'))).state.filters.units, [], 'Later mapped data does not overwrite the All fallback');
+  await page.evaluate(async () => {for (const id of ['startup', 'unmapped-startup']) {const r = coverageHarness.instances[id]; r.visual.destroy(); await r.visual.queue; r.element.remove();}});
+}
+
 async function run({packaged} = {}) {
   const {roles} = await import('./logic.mjs');
   fs.mkdirSync(artifacts, {recursive: true});
@@ -67,10 +145,12 @@ async function run({packaged} = {}) {
     page.on('request', request => {if (!request.url().startsWith('http://127.0.0.1:')) external.push(request.url());});
     await page.clock.setFixedTime(new Date('2026-11-04T12:00:00Z'));
     await page.goto('http://127.0.0.1:' + server.address().port + '/');
+    await businessUnitStartupChecks(page);
     await page.evaluate(() => coverageHarness.create('first'));
     const batches = fixtures();
     for (let i = 0; i < batches.length; i++) {
       await page.evaluate(async ({rows, segment, append}) => coverageHarness.send('first', rows, {segment, append}), {rows: batches[i], segment: i < 2, append: i > 0});
+      if (i === 0) await page.locator('#first').getByRole('button', {name: 'Reset filters', exact: true}).click(); // Independent host lifecycle checks span all units.
       const result = await page.evaluate(() => ({snapshot: coverageHarness.snapshot('first'), calls: coverageHarness.instances.first.calls}));
       assert.ok(result.snapshot.svg > 0, 'The real offline SVG map renders');
       assert.equal(result.snapshot.metrics[1], i + 1, 'Accumulated tables retain each distinct registration exactly once');
@@ -141,6 +221,7 @@ async function run({packaged} = {}) {
     assert.match(await page.locator('#first .host-notice').textContent(), /limited the delivered rows/);
     await page.evaluate(() => coverageHarness.create('second'));
     await page.evaluate(rows => coverageHarness.send('second', rows), batches[1]);
+    assert.deepEqual((await page.evaluate(() => coverageHarness.snapshot('second'))).state.filters.units, ['ID'], 'A second instance has its own ID startup choice');
     await page.evaluate(async () => {coverageHarness.instances.first.visual.destroy(); await coverageHarness.instances.first.visual.queue;});
     assert.equal(await page.locator('#first .registration-map-host').count(), 0);
     assert.equal(await page.locator('#second svg').count() > 0, true, 'Destroying one instance preserves its sibling');
@@ -151,7 +232,7 @@ async function run({packaged} = {}) {
     assert.deepEqual(errors, []); assert.deepEqual(external, [], 'The visual makes zero external runtime requests');
     const events = await page.evaluate(() => Object.values(coverageHarness.instances).flatMap(r => r.events));
     assert.equal(events.some(event => event.startsWith('failed:')), false, events.join('\n'));
-    console.log(`PASS ${packaged ? 'packaged' : 'actual'} Visual browser host: offline SVG, distinct accumulated batches, render-before-fetch, resize/data selection preservation, denied/allowed copy/export, explicit URL launch, high contrast, notices, two instances, destroy and empty data.`);
+    console.log(`PASS ${packaged ? 'packaged' : 'actual'} Visual browser host: ID startup, mixed/empty/partial/missing-unit batches, explicit other/All and Reset persistence, unmapped fallback, offline SVG, distinct accumulated batches, render-before-fetch, resize/data selection preservation, denied/allowed copy/export, explicit URL launch, high contrast, notices, two instances, destroy and empty data.`);
   } finally {await browser?.close(); await new Promise(resolve => server.close(resolve));}
 }
 module.exports = {run, fixtures};

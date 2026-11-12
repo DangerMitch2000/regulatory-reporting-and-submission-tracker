@@ -2,12 +2,16 @@
  'use strict';
  const $=id=>document.getElementById(id), chart=$('chart'),status=$('filter-status'),detail=$('selected-details');
  const fields={site:'Manufacturer',product:'Product',country:'Country',type:'SubmissionType',businessUnit:'BusinessUnit'},selected=Object.fromEntries(Object.keys(fields).map(k=>[k,new Set()]));
+ selected.businessUnit.add('ID');
  const norm=x=>x==null?'':String(x).trim(),el=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
  const presentation=window.regulatoryPresentation;let presentationIndex=new Map();
  const registrations=window.regulatoryRegistrations;let registrationAnalysis=null,catalogIndex=new Map(),orphanCatalogRows=new Map();
  let eventSource=[],relatedIndex=null,sourceRevision=0,hierarchyCache=null; const changes=window.regulatoryChanges;
  let view,rows,queue=Promise.resolve(),detailQuery='',detailPage=0,selectedKey='',timer;const filterBoxes=[];let predictionAnalysis;let predictionFieldsMissing=[];const predictions=window.regulatoryPredictions;
  const quality=window.regulatoryQuality; const qualityUI=window.regulatoryQualityUI; const exportWorklist=window.regulatoryExportWorklist; let qualityMappedFields=null,qualityAnalysis,qualityPanel;
+ // Empty/partial deliveries retain the choice. Populated unmapped tables cannot
+ // apply the unit filter, so keep their records accessible through All.
+ function reconcileBusinessUnit(){if(rows.length&&!(qualityMappedFields?qualityMappedFields.includes('BusinessUnit'):rows.some(row=>Object.prototype.hasOwnProperty.call(row,'BusinessUnit'))))selected.businessUnit.clear();}
  const submissionPeriod=window.regulatorySubmissionPeriod;let submissionDates=new Map(),unidentifiedDates=new Map();
  const dispatchRequired=window.regulatoryDispatchRequired;let dispatchRequirements=new Map();
  const dispatchDetails=window.regulatoryDispatchDetails;let dispatchSummaries=new Map();
@@ -18,7 +22,7 @@
  const duration=x=>x==null?'Not recorded / withheld':Math.round(x)+' days';
  document.body.dataset.theme='dark';
  try{
-  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.18.1');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;preparePredictions();prepareQuality();qualityPanel=qualityUI.mount($('quality-view'),{exportWorklist});
+  const [spec,data]=window.__demoBundle?[window.__demoBundle.spec,window.__demoBundle.rows]:await Promise.all(['timeline.json','sample.json'].map(async url=>{const r=await fetch(url+'?v=1.18.2');if(!r.ok)throw Error('Unable to load '+url);return r.json();}));rows=data;reconcileBusinessUnit();preparePredictions();prepareQuality();qualityPanel=qualityUI.mount($('quality-view'),{exportWorklist});
   for(const {key,label} of dispatchRequired.options){const option=el('option',label);option.value=key;$('dispatch-required').append(option);}$('dispatch-required').value='all';$('dispatch-required').onchange=()=>filter();
   const showQuality=enabled=>{$('quality-view').hidden=!enabled;$('timeline-view').hidden=enabled;$('bindings').hidden=enabled;requestLayout();$('timeline-tab').setAttribute('aria-pressed',String(!enabled));$('quality-tab').setAttribute('aria-pressed',String(enabled));$('tooltip').hidden=true;};
   $('quality-tab').onclick=()=>showQuality(true);$('timeline-tab').onclick=()=>showQuality(false);
@@ -43,8 +47,9 @@
   }
   $('theme-select').onchange=()=>{const mode=$('theme-select').value==='light'?'light':'dark';run(async()=>{document.body.dataset.theme=mode;view.signal('themeMode',mode);await view.runAsync();const colours=view.signal('themeStateColors');for(const sw of stateLegend.querySelectorAll('.state-swatch'))sw.style.background=colours[sw.dataset.stateColour]||sw.dataset.stateColour;const badge=$('detail-body').querySelector('.state-badge'),row=view.data('selectedRow')[0];if(badge&&row)badge.style.color=colours[row.StateColor]||row.StateColor;const title=$('detail-body').querySelector('h2');if(title&&row)title.style.color=colours[row.StateColor]||row.StateColor;});};
   const labelFor=kind=>kind==='site'?'Legal manufacturer site':kind==='businessUnit'?'Business Unit':kind[0].toUpperCase()+kind.slice(1);
+  const selectionLabel=kind=>selected[kind].size?(kind==='businessUnit'&&selected[kind].size===1?([...selected[kind]][0]||'(Missing)')+' (1 selected)':selected[kind].size+' selected'):'All';
   for(const [kind,field]of Object.entries(fields)){
-   const box=el('details',undefined,'filter'),summary=el('summary',labelFor(kind)+' · All'),panel=el('div',undefined,'panel'),search=el('input');box.dataset.kind=kind;search.type='search';search.placeholder=kind==='product'?'Type at least 2 characters…':'Search '+labelFor(kind);search.setAttribute('aria-label','Search '+labelFor(kind)+' options');
+   const box=el('details',undefined,'filter'),summary=el('summary',labelFor(kind)+' · '+selectionLabel(kind)),panel=el('div',undefined,'panel'),search=el('input');box.dataset.kind=kind;search.type='search';search.placeholder=kind==='product'?'Type at least 2 characters…':'Search '+labelFor(kind);search.setAttribute('aria-label','Search '+labelFor(kind)+' options');
    const choices=el('div',undefined,'options'),chosen=el('div',undefined,'chosen-options'),help=el('p',undefined,'filter-help'),actions=el('div',undefined,'filter-actions'),all=el('button','Select shown'),clear=el('button','Clear');actions.append(all,clear);panel.append(search,help,chosen,actions,choices);box.append(summary,panel);$('filters').prepend(box);
    let values=[],inputTimer;
    const candidates=()=>rows.filter(r=>kind!=='product'||['businessUnit','site'].every(k=>!selected[k].size||selected[k].has(norm(r[fields[k]]))));
@@ -53,11 +58,11 @@
    const shown=()=>matches().slice(0,50);
    const option=(value,target)=>{const label=el('label',undefined,'option'),cb=el('input');cb.type='checkbox';cb.checked=selected[kind].has(value);label.append(cb,el('span',value||'(Missing)'));target.append(label);cb.onchange=()=>{cb.checked?selected[kind].add(value):selected[kind].delete(value);update();draw();};};
    const draw=()=>{choices.replaceChildren();chosen.replaceChildren();if(!box.open)return;const found=matches(),visible=found.slice(0,50),picked=[...selected[kind]];help.textContent=kind==='product'&&search.value.trim().length<2?'Type at least 2 characters to find products.':('Showing '+visible.length+' of '+found.length+' matches. Refine your search for more.');if(picked.length){chosen.append(el('strong',picked.length+' selected'));picked.filter(v=>(v||'(Missing)').toLowerCase().includes(search.value.trim().toLowerCase())).slice(0,50).forEach(v=>option(v,chosen));if(picked.length>50)chosen.append(el('p','First 50 selected shown; search to find others.'));}visible.filter(v=>!selected[kind].has(v)).forEach(v=>option(v,choices));all.disabled=!visible.length;};
-   const update=()=>{summary.textContent=labelFor(kind)+' · '+(selected[kind].size?selected[kind].size+' selected':'All');if(kind==='businessUnit'||kind==='site')filterBoxes.filter(b=>b.kind==='product').forEach(b=>b.refresh());filter();};
+   const update=()=>{summary.textContent=labelFor(kind)+' · '+selectionLabel(kind);if(kind==='businessUnit'||kind==='site')filterBoxes.filter(b=>b.kind==='product').forEach(b=>b.refresh());filter();};
    search.oninput=()=>{clearTimeout(inputTimer);inputTimer=setTimeout(draw,140)};all.onclick=()=>{shown().forEach(x=>selected[kind].add(x));draw();update();};clear.onclick=()=>{selected[kind].clear();draw();update();};
    box.ontoggle=()=>{if(box.open){for(const other of $('filters').querySelectorAll('details'))if(other!==box)other.open=false;draw();}else{choices.replaceChildren();chosen.replaceChildren();}};
    box.reset=()=>{selected[kind].clear();search.value='';summary.textContent=labelFor(kind)+' · All';refreshValues();draw();};
-   filterBoxes.push({kind,refresh(){refreshValues();draw()},dispose(){clearTimeout(inputTimer)}});refreshValues();
+   filterBoxes.push({kind,refresh(){summary.textContent=labelFor(kind)+' · '+selectionLabel(kind);refreshValues();draw()},dispose(){clearTimeout(inputTimer)}});refreshValues();
   }
   const dateBox=$('submission-date-filter');dateBox.reset=()=>{$('submission-period').value='all';$('submission-from').value='';$('submission-to').value='';updateDateControl();};
   dateBox.ontoggle=()=>{if(dateBox.open)for(const other of $('filters').querySelectorAll('details'))if(other!==dateBox)other.open=false;};

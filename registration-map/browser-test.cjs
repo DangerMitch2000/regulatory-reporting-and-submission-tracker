@@ -147,7 +147,9 @@ async function main() {
       assert.equal(await page.getByRole('textbox',{name:'Copyable content',exact:true}).inputValue(), csv.replaceAll('\r\n','\n'), message);
     }
 
-    await assertMetricsAndMap('Demo distinct registrations and all 241 country counts');
+    assert.deepEqual((await page.evaluate(() => window.__registrationMap.getState())).filters.units, ['ID'], 'New demo instances start with ID');
+    await expect(page.locator('details[data-filter="units"] summary')).toHaveText('Business units · ID');
+    await assertMetricsAndMap('Demo starts with ID distinct registrations and all 241 country counts');
     await page.locator('.map-country[data-country="372"]').click();
     await expect(page.locator('.map-side-heading h2')).toHaveText('Ireland');
     assert.equal((await page.evaluate(() => window.__registrationMap.getState())).selectedCountry, '372');
@@ -192,6 +194,7 @@ async function main() {
       app.update(rows,{now}); app.resize(host.clientWidth,host.clientHeight);
     }, {rows:fixtures,now:initial.now});
     currentRows = fixtures;
+    await reset(); // These independent membership/date/export checks intentionally span every unit.
     await assertMetricsAndMap('Fixture deduplication, review and country placement');
     await selectFilter('products','Alpha');
     await selectFilter('sites','Site B');

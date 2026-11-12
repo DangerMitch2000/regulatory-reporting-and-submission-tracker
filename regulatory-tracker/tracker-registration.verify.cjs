@@ -24,7 +24,7 @@ async function verify(page,{outputDir=__dirname,url='http://127.0.0.1:8771/index
  const reveal=async key=>{await page.evaluate(async key=>{const v=window.__themeVisual.app.view,index=v.data('visible').findIndex(r=>r.key===key);if(index<0)throw Error('Row is not expanded: '+key);v.signal('rowRequest',{pos:index});await v.runAsync();},key);};
  const details=async key=>{await reveal(key);await clickMark('#host .parentLabel text,#host .subLabel text,#host .registrationLabel text',key);await page.waitForFunction(key=>window.__themeVisual.app.view.signal('selectedKey')===key,key);await page.locator('#host #selected-details').evaluate(e=>e.open=true);};
  const fit=async()=>{await page.locator('#host .timeText text').filter({hasText:/^Fit all$/}).click();return (await state()).range;};
- await page.goto(url);await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
+ await page.goto(url);await require('./tracker-browser-helpers.cjs').useAllRecords(page);await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
  const rows=fixtures();await send(rows);await page.locator('#host #filter-status').filter({hasText:'5 submissions'}).waitFor();
  assert.match(await page.locator('#host #filter-status').innerText(),/7 registrations/,'Catalog and join duplicates do not inflate registration totals');
  const expectedIDs=['REG-LONG','REG-8900','REG-NO-END','REG-CONFLICT','REG-UNLINKED','REG-NO-START','REG-REVERSED'];

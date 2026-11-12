@@ -1,17 +1,16 @@
-# Regulatory Tracker 1.18.1
+# Regulatory Tracker 1.18.2
 
-The estimated LM dossier preparation window now ends at a valid **actual dispatch date**. Its start is calculated backwards using the existing application standard duration. This is an estimated window, not a recorded preparation start or measured time spent.
+New visual instances and the browser demo start with **Business Unit = ID**.
 
-- If actual dispatch is blank or unmapped, use latest planned dispatch, then original planned dispatch only when latest is also blank or unmapped.
-- Invalid or conflicting higher-priority dates withhold the estimate. A future actual dispatch date also withholds it without plan fallback; future planned dates remain eligible. A valid actual dispatch date can still anchor it when dispatch plans are missing, invalid or conflicting; source-plan diagnostics remain available.
-- Keep one month equal to 30 calendar days and one week equal to 7 days. Invalid or conflicting preparation durations still withhold estimates. Dispatch required=False still suppresses the preparation bar.
-- Restore milestone dates correctly when switching Calendar → Elapsed days → Calendar, including repeated switches. Elapsed positions are recalculated from preserved source dates.
-- Keep all navigation and layout improvements from 1.18.0, with no new fields or field remapping.
+- Select another business unit, clear the selection to All, or use **Reset filters** to show all units. Your choice survives ordinary refresh, resize and grouping changes within the visual instance.
+- Keep ID selected during empty or partial deliveries. When BusinessUnit is mapped but no ID records are delivered, retain the visible ID selection and an empty chart.
+- Use All for a nonempty delivery without a BusinessUnit mapping, keeping those records accessible.
+- Preserve the visual GUID, all 69 field roles, source identities, counting rules and date calculations. No field remapping is required.
 
-The release workflow includes the preparation source tests and actual-visual browser checks before packaging. Power BI Desktop/Service import remains subject to the report's model and tenant settings.
+Focused browser and actual-host regression checks cover startup, mixed and missing ID data, partial deliveries, explicit selections, Reset filters and unmapped data alongside the existing tracker suites.
 
 ## Install the update
 
-Download **regulatory-tracker-1.18.1.0.pbiviz** from this release. In Power BI Desktop, import the file through the Visualizations menu and accept replacement of the existing visual. Save the report and republish it to update the browser report.
+Download **regulatory-tracker-1.18.2.0.pbiviz** from this release. In Power BI Desktop, import the file through the Visualizations menu and accept replacement of the existing visual. Save the report and republish it to update the browser report.
 
-The visual keeps its existing GUID and field roles. This remains an uncertified preview release.
+This remains an uncertified preview release. Power BI Desktop/Service import remains subject to the report's model and tenant settings.

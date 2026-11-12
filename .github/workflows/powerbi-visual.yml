@@ -70,6 +70,7 @@ jobs:
           npx playwright install --with-deps chromium
           node verify/run.cjs
           cd ..
+          TRACKER_BROWSER_CHANNEL=chromium node tracker-business-unit-test.cjs --demo
           TRACKER_BROWSER_CHANNEL=chromium node continuation-browser-test.cjs
           TRACKER_BROWSER_CHANNEL=chromium node tracker-column-layout.verify.cjs
       - name: Preserve verified interface previews
@@ -79,11 +80,13 @@ jobs:
           path: regulatory-tracker/powerbi-visual/verify/*.png
       - name: Build official Power BI package
         working-directory: regulatory-tracker/powerbi-visual
-        run: npm run package -- --verbose
+        run: |
+          npm run package -- --verbose
+          TRACKER_BROWSER_CHANNEL=chromium node ../tracker-business-unit-test.cjs --package
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.18.1.0.pbiviz
+          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.18.2.0.pbiviz
           cp powerbi-visual/README.md release/POWER-BI-INSTALL.md
           cp RELEASE-NOTES.md release/RELEASE-NOTES.md
           cp powerbi-visual/verify/preparation-light.png release/preparation-light.png
@@ -125,7 +128,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          tag=v1.18.1
+          tag=v1.18.2
           remote_tag=$(git ls-remote origin "refs/tags/$tag" "refs/tags/$tag^{}")
           if [ -n "$remote_tag" ]; then
             git fetch --no-tags origin "refs/tags/$tag"
@@ -139,7 +142,7 @@ jobs:
             git push origin "refs/tags/$tag"
           fi
           if ! gh release view "$tag" >/dev/null 2>&1; then
-            gh release create "$tag" --verify-tag --prerelease --title "Regulatory Tracker 1.18.1" --notes-file RELEASE-NOTES.md
+            gh release create "$tag" --verify-tag --prerelease --title "Regulatory Tracker 1.18.2" --notes-file RELEASE-NOTES.md
           fi
           existing_assets=$(gh release view "$tag" --json assets --jq '.assets[].name')
           asset_check=$(mktemp -d)

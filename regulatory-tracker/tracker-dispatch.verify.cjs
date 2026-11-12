@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),path=require('node:path');
 module.exports=async function verifyDispatch(page,{outputDir}){
- await page.goto('http://127.0.0.1:8771/index.html');
+ await page.goto('http://127.0.0.1:8771/index.html');await require('./tracker-browser-helpers.cjs').useAllRecords(page);
  await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
  const pick=async value=>{await require('./tracker-browser-helpers.cjs').setFilterDrawer(page,true);await page.locator('#host #dispatch-required').selectOption(value);await require('./tracker-browser-helpers.cjs').setFilterDrawer(page,false);};
  const waitCount=n=>page.waitForFunction(n=>document.querySelector('#host #filter-status').textContent.includes(n+' submissions'),n);

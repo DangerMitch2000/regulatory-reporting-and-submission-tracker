@@ -52,7 +52,7 @@ async function verify(page, {url,outputDir}) {
     return result;
   };
   const inspectArrow=locator=>locator.evaluate(node=>({key:node.__data__.datum.key,side:node.__data__.datum.continuationSide}));
-  await page.goto(url);
+  await page.goto(url);await require('./tracker-browser-helpers.cjs').useAllRecords(page);
   await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
   await page.evaluate(()=>{
     // Retain the realistic history needed by the approval estimate while ensuring

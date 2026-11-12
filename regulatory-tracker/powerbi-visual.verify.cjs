@@ -2,7 +2,7 @@
 const fs=require('fs'),path=require('path');const out=process.argv[2]||'powerbi-visual';
 fs.mkdirSync(path.join(out,'verify'),{recursive:true});
 fs.copyFileSync(path.join(__dirname,'date-format.js'),path.join(out,'verify','date-format.js'));
-for(const file of ['tracker-browser-helpers.cjs','tracker-layout.verify.cjs','tracker-host-loading.verify.cjs','tracker-column-layout.verify.cjs','tracker-count-navigation.verify.cjs'])fs.copyFileSync(path.join(__dirname,file),path.join(out,'verify',file));
+for(const file of ['tracker-browser-helpers.cjs','tracker-layout.verify.cjs','tracker-host-loading.verify.cjs','tracker-business-unit.verify.cjs','tracker-column-layout.verify.cjs','tracker-count-navigation.verify.cjs'])fs.copyFileSync(path.join(__dirname,file),path.join(out,'verify',file));
 for(const file of ['assessment-responses-test.cjs','tracker-assessment-progress.verify.cjs','assessment-responses.js','changes.js','events.js','states.js'])fs.copyFileSync(path.join(__dirname,file),path.join(out,'verify',file));
 for(const file of ['dispatch-details.js','quality.js'])fs.writeFileSync(path.join(out,'verify',file),fs.readFileSync(path.join(__dirname,file),'utf8').replaceAll("require('../shared/dispatch-required.js')","require('./dispatch-required.js')"));
 fs.copyFileSync(path.join(__dirname,'../shared/dispatch-required.js'),path.join(out,'verify','dispatch-required.js'));
@@ -54,7 +54,7 @@ fs.writeFileSync(path.join(out,'verify/index.html'),`<!doctype html><meta charse
 fs.writeFileSync(path.join(out,'verify/run.cjs'),`const {chromium}=require('@playwright/test'),assert=require('node:assert/strict'),http=require('http'),fs=require('fs'),path=require('path');
 (async()=>{await require('./tracker-browser-helpers.cjs').registerRowSelector();const server=http.createServer((req,res)=>{const p=path.join(__dirname,new URL(req.url,'http://localhost').pathname);if(!p.startsWith(__dirname+path.sep)){res.writeHead(403).end();return;}fs.readFile(p,(e,b)=>{if(e){res.writeHead(404).end();return;}res.setHeader('Content-Type',p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':'text/html');res.end(b);});}).listen(8771,'127.0.0.1');const browser=await chromium.launch({headless:true,...(process.env.TRACKER_BROWSER_CHANNEL?{channel:process.env.TRACKER_BROWSER_CHANNEL}:{})}),page=await browser.newPage({viewport:{width:1280,height:950}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
- await page.goto('http://127.0.0.1:8771/index.html');await page.waitForSelector('body[data-ready=true]');await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
+ await page.goto('http://127.0.0.1:8771/index.html');await require('./tracker-browser-helpers.cjs').useAllRecords(page);await page.waitForSelector('body[data-ready=true]');await page.locator('#host #filter-status').filter({hasText:'60 submissions'}).waitFor();
  assert.match(await page.locator('#host #filter-status').innerText(),/4 applications · 10 ROs · 60 submissions/);assert.equal(await page.locator('#host #state-legend details').count(),6);assert.equal(await page.locator('#host input[type=range]').count(),0);assert((await page.locator('#host h1').innerText()).includes('Regulatory Tracker'));
  assert.equal(await page.locator('#host .filter').count(),5);assert.equal(await page.locator('#host input[type=search]').count(),9);
  await page.locator('#host input[name=query]').fill('SUB-00002');await page.waitForFunction(()=>document.querySelector('#host #filter-status').textContent.includes('1 submissions'));
@@ -140,6 +140,7 @@ try{
  await sendQuality('Refresh host data');await page.waitForFunction(()=>document.querySelector('#host #filter-status')?.textContent.includes('60 submissions'));await require('./tracker-browser-helpers.cjs').resetFilters(page);await checkQualityTotals();await page.locator('#host .filter').evaluateAll(items=>items.forEach(e=>e.open=false));
  await page.locator('#host').screenshot({path:path.join(__dirname,'quality.png')});await page.locator('#host #timeline-tab').click();await page.locator('#host #chart').waitFor({state:'visible'});
 
+await require('./tracker-business-unit.verify.cjs')(page);
 await require('./tracker-theme.verify.cjs')(page,{outputDir:__dirname});
 await require('./tracker-dispatch.verify.cjs')(page,{outputDir:__dirname});
 await require('./tracker-calendar-day.verify.cjs')(page,{outputDir:__dirname});
