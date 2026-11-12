@@ -1,5 +1,20 @@
 # Regulatory Tracker 1.18.1
 
+<!-- README layout: Keep this visual downloads table directly below the title and above introductions, release notes and setup guidance. Update it in place for future releases; do not move it below the release history. -->
+
+## Updated visual downloads
+
+| Visual | Download | Demo |
+| --- | --- | --- |
+| Change Dashboard 1.7.2 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.7.2/change-dashboard-1.7.2.0.pbiviz) | [Change Dashboard](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) |
+| Registration Coverage Map 1.0.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/registration-map-v1.0.0/registration-coverage-map-1.0.0.0.pbiviz) | [World map](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/registration-map/preview.html) |
+| Regulatory Tracker 1.18.1 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.18.1/regulatory-tracker-1.18.1.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
+| Registration Overview / Roadmap 1.5.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.5.0/roadmap-2026-1.5.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap-preview.html) |
+| IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |
+| Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/key-preview.html) |
+| Site Regulatory Plan 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-plan-2026-v1.1.0/site-regulatory-plan-2026-1.1.0.0.pbiviz) | [Site plan](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-plan-preview.html) |
+| Site Submission Outlook 1.6.2 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.6.2/site-submission-outlook-1.6.2.0.pbiviz) | [Previous, current and next month](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) |
+
 [Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.18.1/regulatory-tracker-1.18.1.0.pbiviz) · [Version 1.18.1 release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/v1.18.1) · [Live demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/)
 
 Released **23 Oct 2026** · Power BI package **1.18.1.0**. This is an uncertified preview; public demo records are fictional.
@@ -310,19 +325,9 @@ Data quality compares the recorded calendar day for dispatch, submission and app
 
 Map the Submission Dispatch required field to the optional Dispatch required (DispatchRequired) role. True means required, False means not required, and blank remains unknown. A top All-default filter applies to Timeline and Data quality, including CSV export. Details and the worklist show the recorded requirement. Conflicting or invalid values never become False, and missing mappings stay explicit. Resolve the value across all delivered rows for each submission before local filters. Explicit False suppresses overdue dispatch-plan warnings only; source milestone dates, submission/approval checks and historical approval training remain unchanged. Unmapped visuals retain their previous behaviour.
 
-## Updated visual downloads
+## Dispatch requirements and Roadmap notes
 
 For the Tracker, Roadmap, IVDR, Key Submissions and Site Regulatory Plan, map your **Submission dispatch required c** source field to **Dispatch required**. Keep the True / False / blank values; no calculated replacement field is needed. Site Submission Outlook has its own mappings, including three optional dispatch fields; see its mapping guide above.
-
-| Visual | Download | Demo |
-| --- | --- | --- |
-| Registration Coverage Map 1.0.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/registration-map-v1.0.0/registration-coverage-map-1.0.0.0.pbiviz) | [World map](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/registration-map/preview.html) |
-| Regulatory Tracker 1.18.1 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.18.1/regulatory-tracker-1.18.1.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
-| Registration Overview / Roadmap 1.5.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.5.0/roadmap-2026-1.5.0.0.pbiviz) | [Roadmap](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap-preview.html) |
-| IVDR Overview 1.2.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/ivdr-overview-v1.2.0/ivdr-registration-overview-1.2.0.0.pbiviz) | [IVDR](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/ivdr-preview.html) |
-| Key Submissions 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/key-submissions-2026-v1.1.0/key-submissions-2026-1.1.0.0.pbiviz) | [Key submissions](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/key-preview.html) |
-| Site Regulatory Plan 1.1.0 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-plan-2026-v1.1.0/site-regulatory-plan-2026-1.1.0.0.pbiviz) | [Site plan](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-plan-preview.html) |
-| Site Submission Outlook 1.6.2 | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.6.2/site-submission-outlook-1.6.2.0.pbiviz) | [Previous, current and next month](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) |
 
 **Roadmap 1.5.0** defaults Business unit to **ID** and Theme to **Dark**, offers a Dark/Light toggle, and adds a year selector, shared Site filtering, a full-width chart and clickable month/category/site counts. Its compact sortable worklist supports Copy IDs and expandable date evidence, with scroll/focus retention and consistent day–month–year labels. Coverage counts reconcile chart, other-year, undated and excluded submissions. Existing dispatch classification and field mappings are unchanged. Explicit False remains **Dispatch not required**, including a separate outside-chart list when submission/approval evidence identifies the selected year. [Installation, mappings and counting rules](roadmap-2026.README.md).
 
