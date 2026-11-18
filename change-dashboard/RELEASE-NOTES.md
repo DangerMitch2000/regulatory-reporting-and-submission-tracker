@@ -1,4 +1,17 @@
-# Change Dashboard 1.8.0 — diagrams, anchored filters and consistent resizing
+# Change Dashboard 1.9.0 — search the dashboard
+
+- Compact **Search dashboard** bar beneath the title, with a clear button and keyboard controls.
+- Finds parent and linked IDs, products, catalog numbers, manufacturing sites, countries, business units, commercial regions, states and project/QMS references. Matching ignores letter case and supports partial text; every space-separated term must match the same parent record's searchable information.
+- Searches across all pages in Event, Change ID and Application views, combined with existing filters and queues. Matching parents retain their full country/region-scoped evidence and related diagram.
+- Summary cards, worklist counts, copied IDs and exports follow the query. Loaded totals and missing-parent review remain global so delivery gaps stay visible.
+- A brief typing pause updates results; Enter applies immediately and Escape clears. Refresh, resizing, grouping and Reset table preserve the query; Clear filters resets it.
+- Business unit still defaults to ID. Date, state, relationship and counting rules, all 70 field roles and the visual identity are unchanged.
+
+Import **change-dashboard-1.9.0.0.pbiviz**, replacing the existing visual. No field remapping is required.
+
+Validation passed for both the source and packaged visual: matching across linked records, country/region and other filters, distinct counts, immediate copy/export while typing, keyboard and composed text input, focus/caret retention, refresh, paging and narrow layouts. Search checks include 10,000 synthetic rows; the existing 64,000-row grouping checks, diagram checks, type checking and package verification also pass. These tests do not independently reconcile private Velocity data.
+
+## Change Dashboard 1.8.0 — diagrams, anchored filters and consistent resizing
 
 - Selecting an event, change or application by its main-list name or row opens Related items in Diagram view. Enter on a focused record name works too.
 - Diagram columns fill the available visual width, with aligned connecting lines after resizing. Narrow visuals scroll horizontally within the diagram and retain readable node sizes.

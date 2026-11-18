@@ -1,10 +1,22 @@
-# Change Dashboard 1.8.0
+# Change Dashboard 1.9.0
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.8.0/change-dashboard-1.8.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.8.0)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.9.0/change-dashboard-1.9.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.9.0)
 
 A separate daily worklist with **Event (default), Change ID and Application views**, preserving the Regulatory Tracker's existing **69 field roles** and adding one optional **Commercial region** role. Filter by manufacturing site, product, business unit, commercial region, country and record state. Select a summary count, an event/change/application, then a country to inspect the evidence and linked source records. The existing Tracker and Registration Coverage Map remain separate visuals.
 
-**Preview release:** package version **1.8.0.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
+**Preview release:** package version **1.9.0.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
+
+## Dashboard search in 1.9.0
+
+Use **Search dashboard** beneath the title to find events, changes or applications by their own or linked IDs, products, catalog numbers, manufacturing sites, countries, business units, commercial regions, states and project/QMS references. Partial text is supported without matching letter case. Multiple words must all occur within the same parent record's searchable information; for example, `France SUB-123` finds matching parents without requiring an exact full label.
+
+- Search works with the selected View by, top filters, table filters, Needs attention/All view and queue. It searches all matching records, not just the current page. Switch to All records if the item is outside the attention list.
+- A match selects the **whole event, change or application** within the current country/region scope. Searching a country or a linked submission does not remove its other countries or alter the evidence used to calculate that record's approval progress. Use the Country filter when you want to narrow country work.
+- Summary cards, worklist counts, copied parent IDs and exported details follow the search. **Loaded** counts and the missing-parent review still describe all delivered data.
+- Results update after a brief typing pause; Enter applies immediately. **Clear search** or Escape in the search box removes only the query. **Clear filters** also removes it. **Reset table** keeps the query while resetting table sorting and column filters.
+- Search text survives data refresh, resizing and switching View by. It starts blank on a fresh instance, with the existing **Business unit = ID** default. The header wraps on narrow visuals and retains readable text.
+
+Import **change-dashboard-1.9.0.0.pbiviz**, replacing the existing Change Dashboard. The visual identity and all 70 field roles are unchanged; no field remapping is required.
 
 ## Diagrams, filter menus and resizing in 1.8.0
 
@@ -173,9 +185,11 @@ npm install
 npx playwright install chromium
 cd ..
 node logic-test.mjs
+node search-logic-test.mjs
 node date-input-test.mjs
 node relationships-test.mjs
 node graph-browser-test.cjs
+node filter-menu-browser-test.cjs
 npm --prefix powerbi run typecheck
 node host-browser-test.cjs
 node prepare-preview.cjs

@@ -140,3 +140,17 @@
 .change-dashboard .cd-filter-empty{padding:10px;color:var(--cd-muted)}
 .change-dashboard[data-high-contrast=true] .cd-filter-menu{border-color:var(--cd-fg);box-shadow:none}
 @media(pointer:coarse){.change-dashboard .cd-filter-option,.change-dashboard .cd-filter-search{min-height:44px}}
+
+/* Search uses the title's existing header area, leaving the chart body compact. */
+.change-dashboard .cd-heading{flex:1 1 280px;min-width:0;max-width:460px}
+.change-dashboard .cd-search{display:flex;align-items:flex-end;gap:6px;margin-top:6px;max-width:100%}
+.change-dashboard .cd-search label{flex:1;min-width:0;font-size:11px}
+.change-dashboard .cd-search input{width:100%;min-width:0;min-height:32px;padding:5px 8px;border:1px solid var(--cd-line);border-radius:4px;background:var(--cd-bg);color:var(--cd-fg);font:inherit;font-size:13px}
+.change-dashboard .cd-search input::placeholder{color:var(--cd-muted);opacity:1}
+.change-dashboard .cd-search input:focus-visible{outline:2px solid var(--cd-focus);outline-offset:1px}
+.change-dashboard .cd-search button{min-height:32px;flex:none}
+.change-dashboard .cd-header>.cd-meta{flex:1 1 440px;min-width:0;max-width:none}
+.change-dashboard[data-compact=true] .cd-heading{flex-basis:230px}
+.change-dashboard[data-narrow=true] .cd-heading{flex:0 0 auto;width:100%;max-width:none}
+.change-dashboard[data-narrow=true] .cd-header>.cd-meta{flex:0 0 auto;width:100%}
+@media(pointer:coarse){.change-dashboard .cd-search input,.change-dashboard .cd-search button{min-height:44px;font-size:16px}}

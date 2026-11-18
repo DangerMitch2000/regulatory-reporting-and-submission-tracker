@@ -12,7 +12,7 @@ const inactive=new Set(['inactive','archived','withdrawn','canceled','cancelled'
 const approvedStates=new Set(['health authority approved','conditionally approved']);
 const submittedStates=new Set(['completed','ha received','sent to health authority','rejected']);
 export const GROUPINGS={change:{field:'ChangeID',state:'ChangeStatus',label:'Change ID',singular:'change',plural:'changes',created:'ChangeCreated'},event:{field:'EventName',state:'EventState',label:'Event',singular:'event',plural:'events',created:null},application:{field:'AppID',state:'AppStatus',label:'Application',singular:'application',plural:'applications',created:'AppCreated'}};
-export const DEFAULT_STATE={groupBy:'event',site:'all',product:'all',unit:'all',region:'all',country:'all',status:'all',view:'attention',queue:'all',includeInactive:false,sort:'due',direction:'desc',columnFilters:{}};
+export const DEFAULT_STATE={groupBy:'event',site:'all',product:'all',unit:'all',region:'all',country:'all',status:'all',search:'',view:'attention',queue:'all',includeInactive:false,sort:'due',direction:'desc',columnFilters:{}};
 export const MISSING_REGION='__not_recorded__';
 export const regionValue=row=>text(row.CommercialRegion)||MISSING_REGION;
 export const RECORD_FIELDS={change:'ChangeID',event:'EventName',application:'AppID',ro:'ROID',submission:'SubID',registration:'RegistrationID'};
@@ -194,8 +194,24 @@ function scopedRecordRows(change,countries,model,state){
  const countryKeys=new Set(countries.map(x=>x.key));
  return change.rows.filter(r=>(state.region==='all'||regionValue(r)===state.region)&&countryKeys.has(countryNorm(change.countryForRow(r))||'?')&&(state.includeInactive||!model.rowExcluded.get(r)));
 }
+// Search the delivered identity/context within the current country and region
+// scope. A match selects the whole parent; it never trims its country evidence.
+const SEARCH_FIELDS=['ChangeID','EventName','AppID','ROID','SubID','RegistrationID','RegistrationNumber','Product','Manufacturer','RegistrationManufacturingSite','CatalogNumber','RegistrationSKU','BusinessUnit','CommercialRegion','ChangeProjectID','ChangeQMS','EventQMS','ChangeStatus','EventState','AppStatus','ROStatus','SubStatus','RegistrationState'];
+const searchText=value=>norm(value).replace(/\s+/g,' ');
+function searchMatches(change,terms,model){
+ if(!terms.length)return true;
+ // Source rows remain stable between filter/typing operations. Each analyze()
+ // creates a new model, so refreshing in-place rows cannot reuse stale text.
+ const cache=model.searchRows||(model.searchRows=new WeakMap());
+ const values=[searchText(change.id),searchText(change.status),...change.countries.map(c=>searchText(c.name)),...change.scopedRows.map(row=>{
+  if(!cache.has(row))cache.set(row,SEARCH_FIELDS.map(field=>searchText(row[field])).filter(Boolean).join('\n'));
+  return cache.get(row);
+ })];
+ return terms.every(term=>values.some(value=>value.includes(term)));
+}
 export function derive(model,state={}){
  state={...DEFAULT_STATE,...state};
+ const searchTerms=unique(searchText(state.search).split(' ').filter(Boolean));
  const matched=model.changes.filter(c=>(state.status==='all'||c.status===state.status)&&c.rows.some(r=>(state.site==='all'||[text(r.Manufacturer),text(r.RegistrationManufacturingSite)].includes(state.site))&&(state.product==='all'||text(r.Product)===state.product)&&(state.unit==='all'||text(r.BusinessUnit)===state.unit)));
  const changes=filterRows(matched.map(c=>{
   const countries=c.countries.map(x=>regionCountry(x,c,model,state.region)).filter(x=>x&&(state.country==='all'||countryNorm(x.name)===countryNorm(state.country))&&(state.includeInactive||!x.excluded));
@@ -206,7 +222,7 @@ export function derive(model,state={}){
   const attention=c.issues.length>0||countries.some(x=>x.attention),done=countries.filter(x=>x.complete).length;
   const scopedRows=scopedRecordRows(c,countries,model,state),related=relatedItems(scopedRows);
   return {...c,countries,flags,next,attention,done,total:countries.length,scopedRows,related,scopeNote:'Country progress for the matching '+model.grouping.singular};
- }).filter(c=>c.total>0),mainColumns,state.columnFilters);
+ }).filter(c=>c.total>0&&searchMatches(c,searchTerms,model)),mainColumns,state.columnFilters);
  const counts=Object.fromEntries(queueDefinitions.map(([k])=>[k,changes.filter(c=>c.flags[k]).length]));
  const shown=changes.filter(c=>(state.view==='all'||c.attention)&&(state.queue==='all'||c.flags[state.queue]));
  const column=mainColumns.find(c=>c.key===state.sort)||mainColumns.find(c=>c.key==='due');

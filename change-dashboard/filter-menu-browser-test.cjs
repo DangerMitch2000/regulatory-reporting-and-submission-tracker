@@ -11,7 +11,10 @@ async function run(){
   const channel=process.env.CHANGE_BROWSER_CHANNEL||(process.platform==='win32'?'msedge':undefined);browser=await dependency('@playwright/test').chromium.launch({headless:true,...(channel?{channel}:{})});
   const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('http://127.0.0.1:'+server.address().port);
   const menu=page.locator('.cd-filter-menu'),country=page.locator('[data-filter=country]');
-  const open=async field=>{await page.locator('[data-filter='+field+']').click();await assert.doesNotReject(()=>menu.waitFor({state:'visible'}));};
+  // In short visuals Playwright may scroll a clipped filter into view before
+  // clicking it. Settle that scroll first: the menu deliberately closes when
+  // its visual scrolls, including a deferred automation-generated scroll event.
+  const open=async field=>{const trigger=page.locator('[data-filter='+field+']');await trigger.scrollIntoViewIfNeeded();await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));await trigger.click();await assert.doesNotReject(()=>menu.waitFor({state:'visible'}));};
   const geometry=()=>page.evaluate(()=>{const m=document.querySelector('.cd-filter-menu'),t=document.querySelector('select[aria-expanded=true]'),r=document.querySelector('#root'),a=m.getBoundingClientRect(),b=t.getBoundingClientRect(),c=r.getBoundingClientRect();return {menu:{left:a.left,top:a.top,right:a.right,bottom:a.bottom,width:a.width,height:a.height},trigger:{left:b.left,top:b.top,right:b.right,bottom:b.bottom},root:{left:c.left,top:c.top,right:c.right,bottom:c.bottom},direction:m.dataset.direction,hit:document.elementFromPoint(a.left+10,a.top+10)?.closest('.cd-filter-menu')===m};});
   for(const scale of [.67,1,1.25]){
    await page.evaluate(scale=>{controller.close();root.scrollTop=0;root.style.width='1000px';root.style.height='540px';root.dataset.compact='false';root.dataset.narrow='false';document.querySelector('#scaled').style.transform='scale('+scale+')';},scale);
