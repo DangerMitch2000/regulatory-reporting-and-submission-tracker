@@ -4,7 +4,7 @@
  if(root)root.regulatoryTextWrap=api;
 })(typeof globalThis==='object'?globalThis:this,function(){
  'use strict';
- const FONT='Segoe UI',ELLIPSIS='…';
+ const FONT="'Wallace Sans','Segoe UI',Arial,sans-serif",ELLIPSIS='…';
  let context=null,contextChecked=false,currentFont='';
  function canvasContext(){
   if(contextChecked)return context;
@@ -16,7 +16,7 @@
  function fallbackWidth(text,fontSize){return Array.from(text).length*fontSize*.8;}
  function measureText(text,fontSize,fontWeight=400){
   const ctx=canvasContext();if(!ctx)return fallbackWidth(text,fontSize);
-  const font=fontWeight+' '+fontSize+'px "'+FONT+'"';if(font!==currentFont){ctx.font=font;currentFont=font;}
+  const font=fontWeight+' '+fontSize+'px '+FONT;if(font!==currentFont){ctx.font=font;currentFont=font;}
   return ctx.measureText(text).width;
  }
  function bounded(value,fallback,maximum){const n=Number(value);return Number.isFinite(n)?Math.max(0,Math.min(maximum,Math.floor(n))):fallback;}

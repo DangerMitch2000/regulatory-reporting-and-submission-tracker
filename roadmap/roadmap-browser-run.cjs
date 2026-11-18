@@ -4,10 +4,10 @@ const root=__dirname,dir=path.join(root,'roadmap-2026/verify'),packaged=process.
 const guid='roadmap2026C61A02B948134819AE7073D8B9E5F604';let pkg;
 if(packaged){
  pkg=JSON.parse(fs.readFileSync(path.join(root,'package-check/resources',guid+'.pbiviz.json'),'utf8'));
- assert.equal(pkg.visual.version,'1.5.0.0');assert.equal(pkg.visual.guid,guid);assert.deepEqual(pkg.capabilities.privileges,[]);
+ assert.equal(pkg.visual.version,'1.5.1.0');assert.equal(pkg.visual.guid,guid);assert.deepEqual(pkg.capabilities.privileges,[]);
  assert.deepEqual(pkg.capabilities.dataRoles.map(r=>r.name),['SubID','OriginalDispatch','LatestDispatch','ActualDispatch','ActualSubmission','ActualApproval','Site','BusinessUnit','SubStatus','ROStatus','DispatchRequired']);
 }
-const packagedHTML=()=>`<!doctype html><html><meta charset="utf-8"><style>body{margin:0}${pkg.content.css}</style><div id="host"></div><button id="resize">Narrow visual</button><button id="reset">Reset host data / width</button><button id="filter">Report filter test</button><button id="empty">Empty data test</button><button id="partial">Partial data test</button><script>window.powerbi={};</script><script src="/package.js"></script><script>window.__createRoadmap=o=>window.powerbi.visuals.plugins[${JSON.stringify(guid)}].create(o);</script><script src="/boot.js"></script></html>`;
+const packagedHTML=()=>`<!doctype html><html><meta charset="utf-8"><style>body{margin:0;font:14px "Wallace Sans","Segoe UI",Arial,sans-serif}body>button{font:inherit}${pkg.content.css}</style><div id="host"></div><button id="resize">Narrow visual</button><button id="reset">Reset host data / width</button><button id="filter">Report filter test</button><button id="empty">Empty data test</button><button id="partial">Partial data test</button><script>window.powerbi={};</script><script src="/package.js"></script><script>window.__createRoadmap=o=>window.powerbi.visuals.plugins[${JSON.stringify(guid)}].create(o);</script><script src="/boot.js"></script></html>`;
 (async()=>{
  const server=http.createServer((req,res)=>{const route=new URL(req.url,'http://localhost').pathname;
  if(packaged&&route==='/package.js')return res.writeHead(200,{'Content-Type':'text/javascript'}).end(pkg.content.js);

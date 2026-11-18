@@ -1,12 +1,16 @@
-# Regulatory Tracker 1.18.2
+# Regulatory Tracker 1.18.3
 
-[Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.18.2/regulatory-tracker-1.18.2.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [All visuals](../README.md)
+[Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.18.3/regulatory-tracker-1.18.3.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) · [All visuals](../README.md)
 
 Explore linked **Change ID → Event → Application → RO → Submission → Registration** records, their workflow dates and source evidence. Public demo records are fictional.
 
+## Typography in 1.18.3
+
+Text, chart labels, filters and Details use **Wallace Sans**; the main title uses **Wallace Sans Light** at weight 300. Canvas text measurements use the same font family as the timeline so compact labels remain aligned. Fonts are taken from the viewer's device, with Segoe UI, Arial and sans-serif fallbacks. No font files are bundled or downloaded.
+
 ## Install and map
 
-Import the package through **Visualizations (…) → Import a visual from a file** in Power BI Desktop. For an upgrade, replace the existing package and keep the existing visual instance; version 1.18.2 retains the visual ID and field roles.
+Import the package through **Visualizations (…) → Import a visual from a file** in Power BI Desktop. For an upgrade, replace the existing package and keep the existing visual instance; version 1.18.3 retains the visual ID and field roles.
 
 Map your source identifiers to `ChangeID`, `EventName`, `AppID`, `ROID`, `SubID` and `RegistrationID` where available. Map states separately for each record type. Dispatch, submission and approval each support Original, Latest and Actual dates. Use Date/DateTime columns rather than date hierarchies, with no summarization.
 

@@ -7,14 +7,14 @@
     "signal": "themePalette.background"
   },
   "config": {
-    "font": "Segoe UI",
+    "font": "'Wallace Sans','Segoe UI',Arial,sans-serif",
     "text": {
-      "font": "Segoe UI",
+      "font": "'Wallace Sans','Segoe UI',Arial,sans-serif",
       "fontSize": 11
     },
     "style": {
       "guide-label": {
-        "font": "Segoe UI"
+        "font": "'Wallace Sans','Segoe UI',Arial,sans-serif"
       }
     }
   },
@@ -6563,6 +6563,44 @@
     },
     {
       "type": "text",
+      "name": "pin",
+      "from": {
+        "data": "pageRows"
+      },
+      "encode": {
+        "update": {
+          "fontSize": {
+            "signal": "bodyFont"
+          },
+          "fill": {
+            "signal": "themePalette.pinText"
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "x": {
+            "signal": "width-29"
+          },
+          "y": {
+            "signal": "datum.y+datum.rowHeight-12"
+          },
+          "text": {
+            "signal": "indata('pinned','pinKey',datum.baseKey || datum.key) ? '◆' : '◇'"
+          },
+          "cursor": {
+            "signal": "datum.level<0 || datum.level===3 || datum.registrationContainer ? 'default' : 'pointer'"
+          },
+          "tooltip": {
+            "value": "Pin/unpin this row for comparison"
+          },
+          "opacity": {
+            "signal": "datum.level<0 || datum.level===3 || datum.registrationContainer ? 0 : 1"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
       "name": "compareContext",
       "from": {
         "data": "pageRows"
@@ -6589,44 +6627,6 @@
           },
           "limit": {
             "signal": "width-left-42"
-          }
-        }
-      }
-    },
-    {
-      "type": "text",
-      "name": "pin",
-      "from": {
-        "data": "pageRows"
-      },
-      "encode": {
-        "update": {
-          "fontSize": {
-            "signal": "bodyFont"
-          },
-          "fill": {
-            "signal": "themePalette.pinText"
-          },
-          "baseline": {
-            "value": "middle"
-          },
-          "x": {
-            "signal": "width-29"
-          },
-          "y": {
-            "signal": "datum.y+10"
-          },
-          "text": {
-            "signal": "indata('pinned','pinKey',datum.baseKey || datum.key) ? '◆' : '◇'"
-          },
-          "cursor": {
-            "signal": "datum.level<0 || datum.level===3 || datum.registrationContainer ? 'default' : 'pointer'"
-          },
-          "tooltip": {
-            "value": "Pin/unpin this row for comparison"
-          },
-          "opacity": {
-            "signal": "datum.level<0 || datum.level===3 || datum.registrationContainer ? 0 : 1"
           }
         }
       }

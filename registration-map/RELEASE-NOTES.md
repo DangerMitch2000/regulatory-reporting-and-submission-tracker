@@ -1,4 +1,13 @@
-# Registration Coverage Map 1.0.1
+# Registration Coverage Map 1.0.2 — Wallace Sans typography
+
+- Main title uses Wallace Sans Light at weight 300, followed by Wallace Sans.
+- Body text, map labels, controls, notices, details and copy/export panels use Wallace Sans.
+- Segoe UI, Arial and sans-serif remain fallback fonts. No font files are bundled or downloaded; the selected font must be available in the viewing environment.
+- Visual identity, field roles, data calculations and interactions are unchanged.
+
+Import **registration-coverage-map-1.0.2.0.pbiviz**, replacing the existing visual. No field remapping is required.
+
+## Registration Coverage Map 1.0.1
 
 New visual instances now start with business unit **ID**, alongside the existing **Approved** and **Conditionally Approved** registration states.
 

@@ -1,10 +1,14 @@
-# Registration Coverage Map 1.0.1
+# Registration Coverage Map 1.0.2
 
 A separate Power BI visual for exploring registration coverage by country. Filter products, legal or registration manufacturing sites, business units, registration states, countries and expiry dates. Select a country to inspect registrations, copy their IDs or export the filtered list.
 
-[Download the Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/registration-map-v1.0.1/registration-coverage-map-1.0.1.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/registration-map/preview.html) · [Release notes](RELEASE-NOTES.md)
+[Download the Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/registration-map-v1.0.2/registration-coverage-map-1.0.2.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/registration-map/preview.html) · [Release notes](RELEASE-NOTES.md)
 
 The demo uses fictional data. This is an uncertified preview, with a separate visual identity from the Regulatory Tracker and other repository visuals. Its world geometry is bundled; the map makes no runtime requests to a map provider and requires no API key.
+
+## Typography in 1.0.2
+
+The main title uses **Wallace Sans Light** at weight 300. Body text, map labels, controls, notices, details and copy panels use **Wallace Sans**, matching Site Submission Outlook. Fonts fall back to **Segoe UI**, Arial and sans-serif; the title tries Wallace Sans after Wallace Sans Light. No font files are bundled or downloaded. Wallace Sans must be available in the viewing environment to display it.
 
 ## What the map counts
 
@@ -17,7 +21,7 @@ The demo uses fictional data. This is an uncertified preview, with a separate vi
 
 ## Import and map fields
 
-1. Download **registration-coverage-map-1.0.1.0.pbiviz**.
+1. Download **registration-coverage-map-1.0.2.0.pbiviz**.
 2. In Power BI Desktop, use **Visualizations (…) → Import a visual from a file** and select the package. Add **Registration Coverage Map** to a report page.
 3. Map **Registration ID**, **Registration country** and **Registration state**. Map Product, Site and Business Unit fields to enable the requested filters. Use the source columns; their source names do not need changing.
 4. Add other fields from the table below as available. Date fields must use raw Date/DateTime columns, not automatic Date hierarchies. Use **Don’t summarize** for identifiers.

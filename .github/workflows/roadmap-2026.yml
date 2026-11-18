@@ -69,7 +69,7 @@ jobs:
       - name: Prepare release assets
         run: |
           mkdir -p roadmap-release
-          cp roadmap-2026/dist/*.pbiviz roadmap-release/roadmap-2026-1.5.0.0.pbiviz
+          cp roadmap-2026/dist/*.pbiviz roadmap-release/roadmap-2026-1.5.1.0.pbiviz
           cp README.md roadmap-release/ROADMAP-INSTALL.md
           cp roadmap-2026/verify/roadmap-preview-package.png roadmap-release/roadmap-preview.png
           cp roadmap-preview.html roadmap-release/roadmap-demo.html
@@ -78,13 +78,13 @@ jobs:
           sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: roadmap-2026-1.5.0
+          name: roadmap-2026-1.5.1
           path: roadmap/roadmap-release/
       - name: Stage all assets in a draft, then publish the preview
         if: github.event_name == 'workflow_dispatch' && inputs.publish
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: roadmap-2026-v1.5.0
+          RELEASE_TAG: roadmap-2026-v1.5.1
         run: |
           set -euo pipefail
           # Retry transient GitHub failures. Draft discovery uses the complete
@@ -136,7 +136,7 @@ jobs:
           if [ -z "$release_id" ]; then
             # If GitHub accepted creation but lost the response, rediscover the
             # existing draft before treating a retry's duplicate error as failure.
-            if ! retry_gh release create "$tag" --verify-tag --target "$tag_commit" --draft --prerelease --title 'Roadmap 1.5.0' --notes-file RELEASE-NOTES.md; then
+            if ! retry_gh release create "$tag" --verify-tag --target "$tag_commit" --draft --prerelease --title 'Roadmap 1.5.1' --notes-file RELEASE-NOTES.md; then
               release_id=$(find_release)
               if [ -z "$release_id" ]; then
                 echo "Draft creation failed and the complete release list contains no matching draft." >&2

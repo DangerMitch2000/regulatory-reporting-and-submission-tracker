@@ -2,9 +2,11 @@
 
 A separate installable Power BI visual with ten records per page, native search and selectable record details. It does not replace Regulatory Tracker, Roadmap or IVDR Registration Overview.
 
+Typography matches Site Submission Outlook: Wallace Sans for body text, controls, details and chart labels, with Wallace Sans Light at weight 300 for the main visual title. Locally installed fonts are used; Segoe UI, Arial and sans-serif provide fallbacks. No font files are bundled or downloaded.
+
 ## Import
 
-Download `key-submissions-2026-1.1.0.0.pbiviz`, choose **Import a visual from a file** in Power BI, and add the new visual to your report. Map these field wells; your source columns do not need renaming.
+Download `key-submissions-2026-1.1.1.0.pbiviz`, choose **Import a visual from a file** in Power BI, and add the new visual to your report. Map these field wells; your source columns do not need renaming.
 
 | Field | Source |
 |---|---|

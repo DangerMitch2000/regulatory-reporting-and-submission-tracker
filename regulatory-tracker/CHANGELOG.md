@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.18.3 — Wallace Sans typography
+
+- Apply Wallace Sans across controls, Details, copy panels and timeline labels, with Wallace Sans Light for the main title.
+- Keep comparison pins clear of continuation arrows when surveyed intervals extend beyond the visible dates.
+- Keep measured wrapping aligned with the rendered font stack. Use local fonts with Segoe UI/Arial fallbacks; no font downloads.
+- Preserve all field roles, visual identity, counts, dates and filtering behavior.
+
 ## 1.18.2 — 2026-11-12
 
 Power BI package: **1.18.2.0**. The visual GUID and all 69 field roles are unchanged; no field remapping is required.

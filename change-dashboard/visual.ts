@@ -39,7 +39,7 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
     this.notice = document.createElement('div');
     this.notice.className = 'host-notice';
     this.notice.setAttribute('role', 'status');
-    this.notice.style.cssText = 'flex:none;padding:8px 14px;font:12px/1.5 Segoe UI,sans-serif;';
+    this.notice.style.cssText = 'flex:none;padding:8px 14px;font:12px/1.5 "Wallace Sans","Segoe UI",Arial,sans-serif;';
     this.notice.hidden = true;
     this.content = document.createElement('div');
     this.content.className = 'change-dashboard-content';

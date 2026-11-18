@@ -1,12 +1,16 @@
-# IVDR Registration Overview 1.2.0
+# IVDR Registration Overview 1.2.1
 
 A separate Power BI visual for a new report page named **IVDR Registration Overview**. It does not replace or modify the 2026 Roadmap or Regulatory Tracker. The new visual has its own GUID.
 
 The left table shows sites with IVDR, Non-IVDR and Total columns. Expand a site (or click its bar) to show Dispatched, In Progress / Expected, Unconfirmed, optional Inferred, and Dispatch not required progress rows. Horizontal bars on the right show each site's volume split into IVDR and Non-IVDR, with its IVDR percentage. Text is larger and totals are emphasized. Narrow visuals stack the two panels.
 
+## What's new in 1.2.1
+
+Typography matches Site Submission Outlook: Wallace Sans throughout the visual and Wallace Sans Light at weight 300 for the main title, including Screenshot mode. Fonts must be available on the viewing device; Segoe UI, Arial and sans-serif are the fallbacks. No font files are embedded or downloaded. The visual GUID, field roles and calculation rules are unchanged.
+
 ## Import and field mapping
 
-Import `ivdr-registration-overview-1.2.0.0.pbiviz` using **Visualizations → … → Import a visual from a file**, then add it to a new report page. This package cannot create report pages itself.
+Import `ivdr-registration-overview-1.2.1.0.pbiviz` using **Visualizations → … → Import a visual from a file**, then add it to a new report page. This package cannot create report pages itself.
 
 | Field well | Map to |
 |---|---|

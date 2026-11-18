@@ -132,7 +132,7 @@ async function run({packaged} = {}) {
     css = fs.readFileSync(path.join(artifacts, 'harness.css'), 'utf8');
   }
   script += '\n(' + installHarness.toString() + ')(' + JSON.stringify(roles) + ');';
-  const html = '<!doctype html><html><meta charset="utf-8"><title>Actual Power BI Registration Coverage Map host verification</title><style>body{margin:0;font-family:Segoe UI,sans-serif}section{margin:0}'+css+'</style><script src="/harness.js"></script></html>';
+  const html = '<!doctype html><html><meta charset="utf-8"><title>Actual Power BI Registration Coverage Map host verification</title><style>body{margin:0;font-family:"Wallace Sans","Segoe UI",Arial,sans-serif}section{margin:0}'+css+'</style><script src="/harness.js"></script></html>';
   const server = http.createServer((req, res) => {if (req.url === '/harness.js') res.writeHead(200, {'Content-Type': 'text/javascript'}).end(script); else if (req.url === '/') res.writeHead(200, {'Content-Type': 'text/html'}).end(html); else res.writeHead(404).end();});
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const {chromium} = dependency('@playwright/test'); let browser;

@@ -51,7 +51,7 @@ function slideCanvas(root,title,subtitle,height,exit){
  const shape=(tag,a={},value)=>{const n=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const [k,v]of Object.entries(a))n.setAttribute(k,String(v));if(value!==undefined)n.textContent=String(value);if(a['font-size'])n.style.fontSize=a['font-size']+'px';if(a.fill)n.style.fill=a.fill;canvas.append(n);return n};
  const text=(x,y,t,size=22,fill='#24364b',anchor='start',weight=400)=>shape('text',{x,y,'font-size':size,fill,'text-anchor':anchor,'font-weight':weight},t);
  const rect=(x,y,w,h,fill)=>shape('rect',{x,y,width:w,height:h,fill});
- rect(0,0,1200,height,'white');text(24,44,title,34,'#122c49','start',650);text(24,79,subtitle,20);
+ rect(0,0,1200,height,'white');text(24,44,title,34,'#122c49','start',300).setAttribute('class','capture-title');text(24,79,subtitle,20);
  return {text,rect,shape};
 }
 function slideButton(root,draw){const b=el('button','Screenshot mode');b.className='captureButton';b.title='Slide-ready layout. Press Escape to return to controls.';b.onclick=()=>{root._slide=true;draw();root.focus?.()};root.append(b)}

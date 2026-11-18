@@ -2,9 +2,11 @@
 
 Separate Power BI visual for compact site-update slides: **H1 and H2 side by side**, three milestone rows, coloured latest-estimate bars and outlined original plans. Selected site name is always visible. No changes to Tracker, Roadmap, IVDR or Key Submissions.
 
+Typography matches Site Submission Outlook: Wallace Sans for body text, controls, details and chart labels, with Wallace Sans Light at weight 300 for the main visual title. Locally installed fonts are used; Segoe UI, Arial and sans-serif provide fallbacks. No font files are bundled or downloaded.
+
 ## Install and map
 
-Import `site-regulatory-plan-2026-1.1.0.0.pbiviz` as a custom visual. Add to a report page and map the following raw columns (not date hierarchies):
+Import `site-regulatory-plan-2026-1.1.1.0.pbiviz` as a custom visual. Add to a report page and map the following raw columns (not date hierarchies):
 
 | Field well | Source |
 |---|---|

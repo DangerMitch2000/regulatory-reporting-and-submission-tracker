@@ -23,7 +23,7 @@ async function packageRuntime(){
  const dir=path.join(__dirname,'powerbi-visual/dist'),names=fs.readdirSync(dir).filter(name=>name.endsWith('.pbiviz'));assert.equal(names.length,1);
  const zip=await require('./powerbi-visual/node_modules/jszip').loadAsync(fs.readFileSync(path.join(dir,names[0]))),manifest=JSON.parse(await zip.file('package.json').async('string'));
  const pkg=JSON.parse(await zip.file(manifest.resources.find(resource=>resource.file.endsWith('.pbiviz.json')).file).async('string'));
- assert.equal(pkg.visual.guid,'regulatoryTimelineA2C514A9F58240B5A313F650E136F4F0');assert.equal(pkg.visual.version,'1.18.2.0');assert.equal(pkg.apiVersion,'5.11.0');
+ assert.equal(pkg.visual.guid,'regulatoryTimelineA2C514A9F58240B5A313F650E136F4F0');assert.equal(pkg.visual.version,'1.18.3.0');assert.equal(pkg.apiVersion,'5.11.0');
  const caps=JSON.parse(fs.readFileSync(path.join(__dirname,'powerbi-visual/capabilities.json'),'utf8'));assert.deepEqual(pkg.capabilities,caps,'Packaged capabilities retain every role and mapping rule');assert.equal(caps.dataRoles.length,69);
  const bootstrap=`window.__roles=${JSON.stringify(caps.dataRoles.map(role=>role.name))};window.__qualityRevision=0;const host={eventService:{renderingStarted(){},renderingFinished(){window.__qualityRevision++},renderingFailed(o,e){throw Error(e)}},fetchMoreData(){return false}};window.__themeVisual=window.powerbi.visuals.plugins[${JSON.stringify(pkg.visual.guid)}].create({element:document.getElementById('host'),host});window.__themeVisual.update({type:2,viewport:{width:1280,height:850},dataViews:[]});`;
  return {js:'window.powerbi={};\n'+pkg.content.js+'\n'+bootstrap,css:pkg.content.css};
@@ -36,6 +36,6 @@ async function packageRuntime(){
  });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));let browser;
  try{browser=await chromium.launch({headless:true,...(process.env.TRACKER_BROWSER_CHANNEL?{channel:process.env.TRACKER_BROWSER_CHANNEL}:{})});const page=await browser.newPage({viewport:{width:1500,height:1000}});page.on('pageerror',error=>errors.push(error.message));const base='http://127.0.0.1:'+server.address().port;
   if(!process.argv.includes('--demo')){await page.goto(base+(packaged?'/package.html':'/regulatory-tracker/powerbi-visual/verify/index.html'));await require('./tracker-business-unit.verify.cjs')(page);}
-  if(!packaged)await demoChecks(page,base);assert.deepEqual(errors,[]);if(packaged)console.log('PASS: final .pbiviz runtime, version 1.18.2.0, original GUID, 69 roles and unchanged capabilities.');
+  if(!packaged)await demoChecks(page,base);assert.deepEqual(errors,[]);if(packaged)console.log('PASS: final .pbiviz runtime, version 1.18.3.0, original GUID, 69 roles and unchanged capabilities.');
  }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(error=>{console.error(error);process.exitCode=1;});

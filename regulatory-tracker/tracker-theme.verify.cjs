@@ -51,6 +51,10 @@ module.exports=async function verifyTrackerThemes(page,{outputDir}){
  await page.locator('#host svg .predictionApproval path').first().click();
  await page.locator('#host #selected-details').evaluate(node=>node.open=true);
  await page.locator('#host .prediction-date').waitFor();
+ // Keep a surveyed interval clipped at the right edge, regardless of today's
+ // date. Its continuation arrow must leave the adjacent pin control clickable.
+ await page.evaluate(async()=>{const view=window.__themeVisual.app.view,windowRecord=view.data('surveyWindows')[0];if(!windowRecord)throw Error('Missing surveyed interval fixture');view.signal('range',[windowRecord.start-86400000,windowRecord.end-86400000]);await view.runAsync();});
+ await page.locator('#host svg .surveyRangeContinuation path').first().waitFor();
  await page.locator('#host svg .pin text').first().click();
  await require('./tracker-browser-helpers.cjs').toggleFilter(page,page.locator('#host .state-filter[data-field=SubStatus]'));await page.locator('#host .state-filter[data-field=SubStatus] input[value=rejected]').uncheck();await require('./tracker-browser-helpers.cjs').toggleFilter(page,page.locator('#host .state-filter[data-field=SubStatus]'));
  await page.waitForFunction(()=>!document.querySelector('#host .state-filter[data-field=SubStatus] input[value=rejected]').checked);

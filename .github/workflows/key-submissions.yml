@@ -51,7 +51,7 @@ jobs:
       - name: Prepare separate release
         run: |
           mkdir -p key-release
-          cp key-submissions/dist/*.pbiviz key-release/key-submissions-2026-1.1.0.0.pbiviz
+          cp key-submissions/dist/*.pbiviz key-release/key-submissions-2026-1.1.1.0.pbiviz
           cp README.md key-release/KEY-SUBMISSIONS-INSTALL.md
           cp key-preview.html key-release/key-demo.html
           cp key-submissions/verify/key-preview.png key-release/key-preview.png
@@ -67,6 +67,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create key-submissions-2026-v1.1.0 --target "$GITHUB_SHA" --prerelease --title "Key Submissions — 2026 (ID) 1.1.0" --notes "Adds optional Submission Dispatch required mapping and an All-default filter. Explicit False skips the pending dispatch step; when all dispatch dates are blank, a clearly labelled submission/approval date can qualify a key ID record for 2026. Invalid higher-priority dates still block fallback. Blanks, conflicts, invalid values and unmapped fields remain distinct. Real date values stay intact. Scope, optional mapping, conflict, compiled-host and browser checks passed. See KEY-SUBMISSIONS-INSTALL.md."
-          gh release upload key-submissions-2026-v1.1.0 key-release/*
+          gh release create key-submissions-2026-v1.1.1 --target "$GITHUB_SHA" --prerelease --title "Key Submissions — 2026 (ID) 1.1.1" --notes "Uses Wallace Sans throughout the visual and Wallace Sans Light at weight 300 for the main title, matching Site Submission Outlook. Segoe UI, Arial and sans-serif remain local fallbacks; no fonts are bundled or downloaded. Visual identity, field roles and calculations are unchanged. See KEY-SUBMISSIONS-INSTALL.md."
+          gh release upload key-submissions-2026-v1.1.1 key-release/*
 

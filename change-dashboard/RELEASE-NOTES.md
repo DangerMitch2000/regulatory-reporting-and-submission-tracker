@@ -1,4 +1,13 @@
-# Change Dashboard 1.9.0 — search the dashboard
+# Change Dashboard 1.9.1 — Wallace Sans typography
+
+- Main title uses Wallace Sans Light at weight 300, followed by Wallace Sans.
+- Body text, diagrams, controls, notices, details and copy/export panels use Wallace Sans.
+- Segoe UI, Arial and sans-serif remain fallback fonts. No font files are bundled or downloaded; the selected font must be available in the viewing environment.
+- Visual identity, field roles, data calculations and interactions are unchanged.
+
+Import **change-dashboard-1.9.1.0.pbiviz**, replacing the existing visual. No field remapping is required.
+
+## Change Dashboard 1.9.0 — search the dashboard
 
 - Compact **Search dashboard** bar beneath the title, with a clear button and keyboard controls.
 - Finds parent and linked IDs, products, catalog numbers, manufacturing sites, countries, business units, commercial regions, states and project/QMS references. Matching ignores letter case and supports partial text; every space-separated term must match the same parent record's searchable information.

@@ -1,16 +1,12 @@
-# Regulatory Tracker 1.18.2
+# Regulatory Tracker 1.18.3
 
-New visual instances and the browser demo start with **Business Unit = ID**.
+Uses Wallace Sans across chart labels, filters, Details and copy panels, matching Site Submission Outlook. The main title uses Wallace Sans Light at weight 300.
 
-- Select another business unit, clear the selection to All, or use **Reset filters** to show all units. Your choice survives ordinary refresh, resize and grouping changes within the visual instance.
-- Keep ID selected during empty or partial deliveries. When BusinessUnit is mapped but no ID records are delivered, retain the visible ID selection and an empty chart.
-- Use All for a nonempty delivery without a BusinessUnit mapping, keeping those records accessible.
-- Preserve the visual GUID, all 69 field roles, source identities, counting rules and date calculations. No field remapping is required.
+- Keeps comparison pins clear of continuation arrows when a surveyed interval extends beyond the visible dates.
+- Keeps text measurement aligned with the font used by timeline labels.
+- Uses fonts installed on the viewer's device, with Segoe UI, Arial and sans-serif fallbacks. No font assets are bundled or downloaded.
+- Preserves all 69 field roles, the visual GUID, default Business Unit = ID, record identities, counts and date calculations.
 
-Focused browser and actual-host regression checks cover startup, mixed and missing ID data, partial deliveries, explicit selections, Reset filters and unmapped data alongside the existing tracker suites.
+Import **regulatory-tracker-1.18.3.0.pbiviz** to replace the existing visual. Save and republish your report to update Power BI Service. No remapping is required.
 
-## Install the update
-
-Download **regulatory-tracker-1.18.2.0.pbiviz** from this release. In Power BI Desktop, import the file through the Visualizations menu and accept replacement of the existing visual. Save the report and republish it to update the browser report.
-
-This remains an uncertified preview release. Power BI Desktop/Service import remains subject to the report's model and tenant settings.
+This remains an uncertified preview release.

@@ -1,10 +1,14 @@
-# Change Dashboard 1.9.0
+# Change Dashboard 1.9.1
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.9.0/change-dashboard-1.9.0.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.9.0)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.9.1/change-dashboard-1.9.1.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/change-dashboard-v1.9.1)
 
 A separate daily worklist with **Event (default), Change ID and Application views**, preserving the Regulatory Tracker's existing **69 field roles** and adding one optional **Commercial region** role. Filter by manufacturing site, product, business unit, commercial region, country and record state. Select a summary count, an event/change/application, then a country to inspect the evidence and linked source records. The existing Tracker and Registration Coverage Map remain separate visuals.
 
-**Preview release:** package version **1.9.0.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
+**Preview release:** package version **1.9.1.0**, API 5.11.0. This visual is not Microsoft-certified. The demo and screenshots use fictional records, fixed as of 09 Nov 2026. Production uses the previous calendar day in Europe/Dublin. This is an as-of reference, **not a measurement of source refresh time**.
+
+## Typography in 1.9.1
+
+The main title uses **Wallace Sans Light** at weight 300. Body text, diagrams, controls, notices, details and copy panels use **Wallace Sans**, matching Site Submission Outlook. Fonts fall back to **Segoe UI**, Arial and sans-serif; the title tries Wallace Sans after Wallace Sans Light. No font files are bundled or downloaded. Wallace Sans must be available in the viewing environment to display it.
 
 ## Dashboard search in 1.9.0
 
@@ -16,7 +20,7 @@ Use **Search dashboard** beneath the title to find events, changes or applicatio
 - Results update after a brief typing pause; Enter applies immediately. **Clear search** or Escape in the search box removes only the query. **Clear filters** also removes it. **Reset table** keeps the query while resetting table sorting and column filters.
 - Search text survives data refresh, resizing and switching View by. It starts blank on a fresh instance, with the existing **Business unit = ID** default. The header wraps on narrow visuals and retains readable text.
 
-Import **change-dashboard-1.9.0.0.pbiviz**, replacing the existing Change Dashboard. The visual identity and all 70 field roles are unchanged; no field remapping is required.
+Import **change-dashboard-1.9.1.0.pbiviz**, replacing the existing Change Dashboard. The visual identity and all 70 field roles are unchanged; no field remapping is required.
 
 ## Diagrams, filter menus and resizing in 1.8.0
 

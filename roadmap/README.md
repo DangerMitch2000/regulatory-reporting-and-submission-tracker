@@ -1,12 +1,12 @@
-# Roadmap 1.5.0
+# Roadmap 1.5.1
 
 A yearly dispatch outlook with shared filters and a submission worklist. This is a separate Power BI visual from Regulatory Tracker and Site Submission Outlook.
 
-[Download the Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.5.0/roadmap-2026-1.5.0.0.pbiviz) · [Interactive synthetic demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap/roadmap-preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/roadmap-2026-v1.5.0)
+[Download the Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/roadmap-2026-v1.5.1/roadmap-2026-1.5.1.0.pbiviz) · [Interactive synthetic demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/roadmap/roadmap-preview.html) · [Release](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/roadmap-2026-v1.5.1)
 
 ## Install or update
 
-Import **roadmap-2026-1.5.0.0.pbiviz** using Power BI's **Visualizations → … → Import a visual from a file**. Replace the existing Roadmap when prompted. The visual GUID and all eleven field roles are unchanged, so existing field mappings carry over. No additional fields are required.
+Import **roadmap-2026-1.5.1.0.pbiviz** using Power BI's **Visualizations → … → Import a visual from a file**. Replace the existing Roadmap when prompted. The visual GUID and all eleven field roles are unchanged, so existing field mappings carry over. No additional fields are required.
 
 **Business unit defaults to ID.** Choose All or another delivered unit when needed. If ID has no delivered records, the visual shows an empty result for ID; it does not silently switch to All. Selections survive ordinary updates, resizing and view changes within the same visual instance. They are not saved across reopening or report bookmarks.
 
@@ -14,6 +14,7 @@ Import **roadmap-2026-1.5.0.0.pbiviz** using Power BI's **Visualizations → …
 
 ## What's new
 
+- Typography matches Site Submission Outlook: Wallace Sans throughout the visual and Wallace Sans Light at weight 300 for the main title, including Screenshot mode. Fonts must be available on the viewing device; Segoe UI, Arial and sans-serif are the fallbacks. No font files are embedded or downloaded.
 - Dark and Light themes, with Dark selected initially to match the Regulatory Tracker.
 - A full-width monthly chart, compact controls and collapsible site breakdown, status summaries and explanations.
 - Click a month, category or site count to inspect the exact submissions behind it. Keyboard activation is supported.

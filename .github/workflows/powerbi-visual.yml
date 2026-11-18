@@ -86,7 +86,7 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.18.2.0.pbiviz
+          cp powerbi-visual/dist/*.pbiviz release/regulatory-tracker-1.18.3.0.pbiviz
           cp powerbi-visual/README.md release/POWER-BI-INSTALL.md
           cp RELEASE-NOTES.md release/RELEASE-NOTES.md
           cp powerbi-visual/verify/preparation-light.png release/preparation-light.png
@@ -128,7 +128,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          tag=v1.18.2
+          tag=v1.18.3
           remote_tag=$(git ls-remote origin "refs/tags/$tag" "refs/tags/$tag^{}")
           if [ -n "$remote_tag" ]; then
             git fetch --no-tags origin "refs/tags/$tag"
@@ -142,7 +142,7 @@ jobs:
             git push origin "refs/tags/$tag"
           fi
           if ! gh release view "$tag" >/dev/null 2>&1; then
-            gh release create "$tag" --verify-tag --prerelease --title "Regulatory Tracker 1.18.2" --notes-file RELEASE-NOTES.md
+            gh release create "$tag" --verify-tag --prerelease --title "Regulatory Tracker 1.18.3" --notes-file RELEASE-NOTES.md
           fi
           existing_assets=$(gh release view "$tag" --json assets --jq '.assets[].name')
           asset_check=$(mktemp -d)
