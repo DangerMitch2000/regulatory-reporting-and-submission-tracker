@@ -1,16 +1,17 @@
-# Site Submission Outlook 1.6.4
+# Site Submission Outlook 1.6.5
 
-Makes the existing site filter searchable and adds compact statistics for the current calendar year's plan.
+Opens with a clean chart for PDF exports and presentation captures, makes **Abbott Diagnostics Scarborough, Inc.** one of the default sites, and fits its full name in the chart.
 
-- Search full delivered names in **Site / manufacturer**, with up to six selections.
-- See the mapped source column and selected values that have no delivered rows.
-- Use **Clear sites** or restore the main six site codes.
-- Search narrows the picker choices; chart counts change only when the site selection changes.
-- A clickable annual summary shows Planned, In process, Submitted, Submitted percentage and Overdue in plan for January–December of the current calendar year.
-- Annual statistics use the same filters, distinct Submission IDs and previous-day checks as the three-month chart.
+- A newly loaded visual starts in **Screenshot mode** with controls hidden. Click inside the visual, such as a blank chart area, and press **Escape** to restore them; clicking a chart count or summary statistic exits the mode and opens Details.
+- Preserves the chosen mode during data updates and resizing. Revisiting a report page may preserve the existing visual instance and its chosen mode. Loading and partial-data notices stay visible.
+- Replaces the literal **SCR** value in the six-site default with the full Scarborough manufacturer name.
+- Wraps the chart label across up to three measured lines; keeps the full name in the tooltip, filter and Details.
+- Upgrades saved selections containing exactly the old main six values to the new preset when loaded.
+- Preserves other custom selections, including an empty selection or **SCR** on its own.
+- **Use main six sites** restores the updated default.
 
-`SCR` and `Abbott Diagnostics Scarborough, Inc.` are separate values. To select the full name, search **Scarborough**, remove **SCR** or clear the selection if six slots are occupied, then select the delivered manufacturer name. No alias or relationship is inferred. The picker cannot recover data excluded by report filters or correct an incorrect source field or model relationship.
+Source matching remains exact apart from case and surrounding spaces. **SCR** and **Abbott Diagnostics Scarborough, Inc.** are separate values, not aliases. The full name must be present in the mapped field's delivered data to contribute records. If the source contains only **SCR**, select it manually in **Site / manufacturer**.
 
-Annual statistics are grouped by the mapped planned submission date. Submitted reflects the latest delivered completion evidence for that planned cohort, not actual authority filings made during the calendar year. The annual and three-month counts overlap.
+The Screenshot mode default prepares the visual's layout; end-to-end Power BI PDF export has not been tested.
 
-Import `site-submission-outlook-1.6.4.0.pbiviz` to replace the existing Site Submission Outlook. The visual identity and all 21 field roles are unchanged. Wallace Sans typography from 1.6.3 and the Details scroll-position fix from 1.6.2 are retained.
+Import `site-submission-outlook-1.6.5.0.pbiviz` to replace the existing Site Submission Outlook. The visual identity and all 21 field roles are unchanged. The searchable site filter, calendar-year statistics, Wallace Sans typography and Details scroll-position fix are retained.

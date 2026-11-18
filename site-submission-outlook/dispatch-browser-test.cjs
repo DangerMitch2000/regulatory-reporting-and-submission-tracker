@@ -7,7 +7,8 @@ const checkDispatch=require('./dispatch-browser-check.cjs');
    browser=await chromium.launch({headless:true,...(process.env.TRACKER_BROWSER_CHANNEL?{channel:process.env.TRACKER_BROWSER_CHANNEL}:{})});
    const page=await browser.newPage({viewport:{width:1490,height:1100},timezoneId:'Europe/Dublin'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.clock.setFixedTime(new Date('2026-10-07T12:00:00Z'));await page.goto('http://127.0.0.1:'+server.address().port+'/verify/harness.html');
-   await page.waitForSelector('body[data-ready=true]');const main=page.locator('#host');await checkDispatch(page,main);
+   await page.waitForSelector('body[data-ready=true]');const main=page.locator('#host');
+   await main.locator('.siteSubmissions').focus();await page.keyboard.press('Escape');await checkDispatch(page,main);
    await page.evaluate(()=>{testApi.resize(760,800);testApi.send(testApi.sample())});
    for(const theme of ['dark','light']) {
      await main.getByRole('combobox',{name:'Theme'}).selectOption(theme);await main.getByRole('button',{name:'Screenshot mode'}).click();

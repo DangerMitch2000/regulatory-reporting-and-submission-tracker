@@ -1,17 +1,31 @@
-# Site Submission Outlook — 1.6.4
+# Site Submission Outlook — 1.6.5
 
-A separate Power BI visual showing **last month, this month and next month** for up to six selected sites or manufacturers, initially **ABO, ADJ, ADK, AJG, ARDG and SCR**. Each month's planned submissions are split by their latest delivered progress. The visual has its own identity and does not replace the Regulatory Tracker.
+A separate Power BI visual showing **last month, this month and next month** for up to six selected sites or manufacturers, initially **ABO, ADJ, ADK, AJG, ARDG and Abbott Diagnostics Scarborough, Inc.** Each month's planned submissions are split by their latest delivered progress. The visual has its own identity and does not replace the Regulatory Tracker.
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.6.4/site-submission-outlook-1.6.4.0.pbiviz) · [Interactive fictional preview](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.6.4)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.6.5/site-submission-outlook-1.6.5.0.pbiviz) · [Interactive fictional preview](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.6.5)
+
+## Screenshot mode by default in 1.6.5
+
+The visual opens in **Screenshot mode**, hiding its controls to give PDF exports and presentation captures a clean chart. Click inside the visual, such as a blank chart area, and press **Escape** to restore the controls. Clicking a chart count or summary statistic exits Screenshot mode and opens the matching Details. Loading and partial-data notices remain visible.
+
+Data updates and resizing preserve the mode chosen during the current session. A newly loaded visual starts in Screenshot mode. Revisiting a report page may preserve the existing visual instance and its chosen mode. This default prepares the visual's layout; end-to-end Power BI PDF export has not been tested.
+
+## Scarborough default and full-name label in 1.6.5
+
+**Abbott Diagnostics Scarborough, Inc.** replaces the literal **SCR** value in the default six-site selection. Its full name wraps across up to three measured lines in the chart lane instead of being shortened to “Abbott Diagno…”. The full source value remains available in the tooltip, filter and Details.
+
+An existing saved selection containing exactly the old main six values (**ABO, ADJ, ADK, AJG, ARDG, SCR**) upgrades to the new preset when loaded. Other custom selections, including an empty selection or **SCR** on its own, are preserved. Choose **Use main six sites** in **Site / manufacturer** to restore the new default explicitly.
+
+This changes the default selection, not source matching. **SCR** and the full Scarborough manufacturer name remain different values; they are not merged. If your mapped field contains only **SCR**, select that delivered value manually. The manufacturer name must be present in the delivered data to contribute records.
 
 ## Searchable Site / manufacturer filter in 1.6.4
 
-The site picker now searches the full values delivered from the mapped **Site (legal manufacturer)** field and shows that source column's name. Select up to six values, clear the selection, or restore the main six site codes. Selected values with no delivered rows remain visible so an absent code or incorrect field mapping is easier to spot. Search narrows the picker choices; it does not change the chart until a selection changes.
+The site picker searches the full values delivered from the mapped **Site (legal manufacturer)** field and shows that source column's name. Select up to six values, clear the selection, or restore the main six sites. Selected values with no delivered rows remain visible so an absent code or incorrect field mapping is easier to spot. Search narrows the picker choices; it does not change the chart until a selection changes.
 
-**SCR** and **Abbott Diagnostics Scarborough, Inc.** are different source values. The visual does not infer aliases or merge them. To use the full manufacturer name when that is what your source field contains:
+To replace a site in a custom selection with the full Scarborough manufacturer name:
 
 1. Open **Site / manufacturer** and search for **Scarborough**.
-2. Remove **SCR**, or use **Clear sites** if all six slots are occupied.
+2. Remove the value you want to replace, or use **Clear sites** if all six slots are occupied.
 3. Select **Abbott Diagnostics Scarborough, Inc.** from the delivered values.
 
 The filter can only show values Power BI has delivered. If the expected value is absent, check the displayed source column and your report filters, then compare a standard Power BI table using the same fields. The picker cannot correct an incorrect source field or model relationship. Long names remain available in the picker and chart tooltips.
@@ -49,7 +63,7 @@ The chart now uses the available vertical space instead of stopping at a fixed h
 
 ## Import and map
 
-Import `site-submission-outlook-1.6.4.0.pbiviz` through **Visualizations → … → Import a visual from a file**. Replace the existing Site Submission Outlook visual when prompted. The visual GUID and all 21 roles are unchanged from 1.6.0. The Product and Commercial region roles added in 1.6.0 remain optional.
+Import `site-submission-outlook-1.6.5.0.pbiviz` through **Visualizations → … → Import a visual from a file**. Replace the existing Site Submission Outlook visual when prompted. The visual GUID and all 21 roles are unchanged from 1.6.0. The Product and Commercial region roles added in 1.6.0 remain optional.
 
 | Field well | Source column |
 |---|---|
@@ -135,7 +149,7 @@ Details provides search, column sorting/filtering and pagination. Days overdue u
 
 **Copy IDs**, **Copy RO IDs** and **Copy application IDs** operate on all matching pages after Details filters. They copy only real recorded IDs of the named type. IDs are also selectable for manual copying; a selectable text fallback is available if the host blocks clipboard access.
 
-The chart has three bars per selected site. At narrow widths, its chart area scrolls horizontally to preserve readable text. **How counts work** holds the longer explanation below the concise as-of/filter/coverage line. Screenshot mode hides the controls; press **Escape** to return. Clicking a count exits Screenshot mode and opens Details. Partial-data notices are not hidden.
+The chart has three bars per selected site. At narrow widths, its chart area scrolls horizontally to preserve readable text. **How counts work** holds the longer explanation below the concise as-of/filter/coverage line. A newly loaded visual starts in Screenshot mode with controls hidden; click inside the visual, such as a blank chart area, and press **Escape** to restore them. Clicking a chart count or summary statistic exits Screenshot mode and opens Details. The current mode survives data updates and resizing. A page revisit may preserve the existing instance and its mode. Partial-data notices are not hidden.
 
 ## Build and verification
 
@@ -151,6 +165,7 @@ npx playwright install chromium
 cd ..
 node logic-test.mjs
 node calendar-year-test.mjs
+node scarborough-test.mjs
 node dispatch-test.mjs
 node attention-test.mjs
 node registration-test.mjs
@@ -163,13 +178,13 @@ node metrics-browser-test.cjs
 node registration-browser-test.cjs
 node identity-browser-test.cjs
 npm --prefix powerbi run package -- --no-stats
-unzip -o 'powerbi/dist/*1.6.4.0.pbiviz' -d package-check
+unzip -o 'powerbi/dist/*1.6.5.0.pbiviz' -d package-check
 node package-test.cjs
 ```
 
 On Windows, extract the PBIVIZ as ZIP with an archive tool and set `TRACKER_BROWSER_CHANNEL=msedge` to use installed Edge. GitHub Actions runs source calculations, type checks, browser interactions and the **actual packaged runtime**. Manual runs with **publish** enabled then publish a separate prerelease with the package, demo, preview, source archive and SHA-256 checksums.
 
-Checks include three-month and calendar-year plan boundaries, yesterday cutoffs, planned/backlog separation, duplicate joins, all completion rules, mutually exclusive evidence counts, missing IDs, optional and unmapped filters, registration conflicts, state selections, site/manufacturer search and selection, annual summary Details, copying across pages, keyboard controls, resize behavior, 10,000-submission data, and packaged field mappings. The preview uses fictional data. Local/browser tests do not validate your actual Power BI relationships or your organization's import policy. This is an uncertified custom visual and requests no network or export privileges.
+Checks include three-month and calendar-year plan boundaries, yesterday cutoffs, planned/backlog separation, duplicate joins, all completion rules, mutually exclusive evidence counts, missing IDs, optional and unmapped filters, registration conflicts, state selections, site/manufacturer search and selection, Scarborough defaults and saved-preset migration, wrapped chart labels, annual summary Details, copying across pages, keyboard controls, resize behavior, 10,000-submission data, and packaged field mappings. The preview uses fictional data. Local/browser tests do not validate your actual Power BI relationships or your organization's import policy. This is an uncertified custom visual and requests no network or export privileges.
 
 
 

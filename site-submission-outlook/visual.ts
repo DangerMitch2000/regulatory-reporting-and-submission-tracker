@@ -1,5 +1,5 @@
 import powerbi from 'powerbi-visuals-api';
-import {mapTable, normalizeSites, normalizeStateFilters, DEFAULT_SITES} from './submissions.logic.mjs';
+import {mapTable, normalizeSavedSites, normalizeStateFilters, DEFAULT_SITES} from './submissions.logic.mjs';
 import {render} from './submissions.ui.mjs';
 import '../style/visual.less';
 
@@ -17,7 +17,7 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
   private identifierMapped: any = {};
   private scopeMapped: any = {};
   private notice = '';
-  private state: any = {sites: [...DEFAULT_SITES], unit: '*', product: '*', region: '*', country: '*', theme: 'dark', capture: false};
+  private state: any = {sites: [...DEFAULT_SITES], unit: '*', product: '*', region: '*', country: '*', theme: 'dark', capture: true};
   private preferenceText: string | undefined;
   private timer: ReturnType<typeof setInterval>;
   private day = new Date().toDateString();
@@ -65,7 +65,7 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
           this.preferenceText = saved;
           try {
             const parsed = JSON.parse(saved);
-            this.state = {...this.state, sites: normalizeSites(parsed.sites), unit: typeof parsed.unit === 'string' ? parsed.unit : '*', product: typeof parsed.product === 'string' ? parsed.product : '*', region: typeof parsed.region === 'string' ? parsed.region : '*', country: typeof parsed.country === 'string' ? parsed.country : '*', theme: parsed.theme === 'light' ? 'light' : 'dark', stateFilters: normalizeStateFilters(parsed.stateFilters)};
+            this.state = {...this.state, sites: normalizeSavedSites(parsed.sites), unit: typeof parsed.unit === 'string' ? parsed.unit : '*', product: typeof parsed.product === 'string' ? parsed.product : '*', region: typeof parsed.region === 'string' ? parsed.region : '*', country: typeof parsed.country === 'string' ? parsed.country : '*', theme: parsed.theme === 'light' ? 'light' : 'dark', stateFilters: normalizeStateFilters(parsed.stateFilters)};
           } catch { /* Keep the existing selections if report preferences are malformed. */ }
         }
         this.notice = '';

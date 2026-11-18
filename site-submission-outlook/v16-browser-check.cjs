@@ -85,7 +85,7 @@ module.exports=async function checkV16(page,scope=page){
  // A country/site with no delivered work still has usable zero-count drilldown.
  await scope.locator('.ssHit[data-site=ADK][data-month="2026-09"]').click();await expectIds([]);assert.equal(await scope.getByRole('button',{name:'Copy IDs',exact:true}).isDisabled(),true);await close();
  await scope.locator('.ssSites summary').click();
- for(const [i,site] of ['ABO','ADJ','ADK','AJG','ARDG','SCR'].entries()){await scope.getByRole('checkbox',{name:'Include '+site,exact:true}).click();assert.equal(await scope.locator('.ssHit').count(),(5-i)*3);}
+ for(const [i,site] of ['ABO','ADJ','ADK','AJG','ARDG','Abbott Diagnostics Scarborough, Inc.'].entries()){await scope.getByRole('checkbox',{name:'Include '+site,exact:true}).click();assert.equal(await scope.locator('.ssHit').count(),(5-i)*3);}
  assert.equal(await scope.locator('.ssHit').count(),0);assert.match(await scope.locator('svg').textContent(),/Choose up to six sites/);
  await scope.getByRole('button',{name:'Use main six sites',exact:true}).click();await scope.locator('.ssSites summary').click();
  for(const [width,height] of [[1440,820],[1800,1100],[2560,1400],[760,820],[520,820]]){
@@ -123,7 +123,7 @@ module.exports=async function checkV16(page,scope=page){
  // filtering to zero sites must still produce a finite, usable empty chart.
  await page.evaluate(()=>{const v=window.visual||testApi.visual;v.update({type:4,viewport:{width:1440,height:1000}})});
  await scope.locator('.ssSites summary').click();
- for(const site of ['ADJ','ADK','AJG','ARDG','SCR'])await scope.getByRole('checkbox',{name:'Include '+site,exact:true}).click();
+ for(const site of ['ADJ','ADK','AJG','ARDG','Abbott Diagnostics Scarborough, Inc.'])await scope.getByRole('checkbox',{name:'Include '+site,exact:true}).click();
  assert.equal(await scope.locator('.ssHit').count(),3);
  const singleSite=await scope.locator('svg').evaluate(svg=>{
   const hits=[...svg.querySelectorAll('.ssHit')].map(n=>({x:+n.getAttribute('x'),width:+n.getAttribute('width')}));

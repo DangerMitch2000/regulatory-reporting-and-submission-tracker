@@ -1,4 +1,5 @@
-export const DEFAULT_SITES = ['ABO', 'ADJ', 'ADK', 'AJG', 'ARDG', 'SCR'];
+export const SCARBOROUGH_SITE = 'Abbott Diagnostics Scarborough, Inc.';
+export const DEFAULT_SITES = ['ABO', 'ADJ', 'ADK', 'AJG', 'ARDG', SCARBOROUGH_SITE];
 export const STATE_FIELDS = [{role:'SubStatus',label:'Submission state'}, {role:'ROStatus',label:'RO state'}, {role:'AppStatus',label:'Application state'}];
 export const DISPATCH_ROLES = ['DispatchRequired', 'PlannedDispatch', 'ActualDispatch'];
 export const REGISTRATION_ROLES = ['RegistrationID', 'RegistrationCountry', 'RegistrationStatus', 'RegistrationStart', 'RegistrationEnd'];
@@ -186,6 +187,16 @@ export function normalizeSites(sites) {
     if (result.length === 6) break;
   }
   return result;
+}
+export function normalizeSavedSites(sites) {
+  const normalized = normalizeSites(sites);
+  const keys = new Set(Array.isArray(sites) ? sites.map(siteKey).filter(Boolean) : []);
+  const legacy = ['ABO', 'ADJ', 'ADK', 'AJG', 'ARDG', 'SCR'];
+  // Upgrade only the old six-site preset. Custom choices still match literal
+  // source values, including reports deliberately selecting the SCR code.
+  return keys.size === legacy.length && legacy.every(key => keys.has(key))
+    ? normalized.map(site => siteKey(site) === 'SCR' ? SCARBOROUGH_SITE : site)
+    : normalized;
 }
 export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', product='*', region='*', country='*', now = new Date(), reference='previousDay', stateFilters = {}, stateMapped, dispatchMapped, registrationMapped, fallbackCountryMapped, identifierMapped, scopeMapped} = {}) {
   const dates = calendar(now,reference), selectedSites = normalizeSites(sites), grouped = new Map(), units = new Set(), availableSites = new Map(), products=new Set(), regions=new Set(), countries=new Map();

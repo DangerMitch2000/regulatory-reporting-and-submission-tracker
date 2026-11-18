@@ -10,6 +10,7 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test'),assert=requi
   const page=await browser.newPage({viewport:{width:1490,height:1100},timezoneId:'Europe/Dublin'}),errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.clock.setFixedTime(new Date('2026-10-09T12:00:00Z'));await page.goto('http://127.0.0.1:'+server.address().port+'/verify/harness.html');await page.waitForSelector('body[data-ready=true]');
   const scope=page.locator('#host');
+  await scope.locator('.siteSubmissions').focus();await page.keyboard.press('Escape');
   const baseline=await scope.locator('svg').getAttribute('aria-label');
   await require('./identity-browser-check.cjs')(page,scope);
   assert.equal(await scope.locator('svg').getAttribute('aria-label'),baseline,'helper restores the caller data and state');

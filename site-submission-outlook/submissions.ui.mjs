@@ -134,10 +134,33 @@ export function render(root, rows, options = {}) {
   const W=Math.max(1000,Math.min(1800,options.width||root.clientWidth||1200));
   const stage=el('div',undefined,'ssStage'),svg=svgEl('svg',{viewBox:`0 0 ${W} 416`,role:'img','aria-label':`Submissions planned for ${r.label}: ${r.totals.planned} planned, ${r.totals.inProcess} in process, ${r.totals.submitted} submitted, ${r.totals.review} check date. Earlier overdue backlog: ${r.backlog.count}.`});stage.append(svg);root.append(stage);
   function drawChart(H) {
-  const left=54,right=W-24,top=39,bottom=H-123,chartHeight=bottom-top;
+  const left=54,right=W-24,top=39,groupWidth=(right-left)/Math.max(sites.length,1);
   svg.replaceChildren();svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.append(svgEl('rect',{width:W,height:H,fill:colors.bg}));
   const text=(x,y,value,size=16,fill=colors.ink,extra={})=>{const n=svgEl('text',{x,y,'font-size':size,fill,...extra},value);svg.append(n);return n;};
   const bold={'font-weight':650},centered={'text-anchor':'middle'};
+  // Measure labels in the chart's actual font. Reserve their height before
+  // drawing bars so wrapped names cannot overlap the backlog row.
+  const probe=text(0,0,'',18,colors.ink,{...bold,visibility:'hidden'}),labelWidth=Math.max(40,groupWidth-18);
+  const measuredWidth=value=>{probe.textContent=value;return probe.getComputedTextLength();};
+  const siteLabels=r.buckets.map(site=>{
+    let lines=[],size=18;
+    for(const candidate of [18,16,14]){
+      size=candidate;probe.setAttribute('font-size',String(size));lines=[];let line='';
+      for(const word of site.site.split(/\s+/)){
+        const next=line?line+' '+word:word;
+        if(line&&measuredWidth(next)>labelWidth){lines.push(line);line=word;}else line=next;
+      }
+      if(line)lines.push(line);
+      if(lines.length<=3&&lines.every(value=>measuredWidth(value)<=labelWidth))break;
+    }
+    if(lines.length>3)lines=[...lines.slice(0,2),lines.slice(2).join(' ')];
+    lines=lines.map(line=>{
+      if(measuredWidth(line)<=labelWidth)return line;
+      const chars=Array.from(line);while(chars.length&&measuredWidth(chars.join('')+'…')>labelWidth)chars.pop();return chars.join('')+'…';
+    });
+    return {lines,size,lineHeight:Math.ceil(size*1.2)};
+  });probe.remove();
+  const labelExtra=Math.max(22,...siteLabels.map(label=>label.lines.length*label.lineHeight))-22,bottom=H-123-labelExtra,chartHeight=bottom-top;
   function metricHit(x,y,width,height,detail,count,label,cls='ssMetricHit') {
     const hit=svgEl('rect',{x,y,width,height,rx:4,fill:'transparent',stroke:JSON.stringify(state.detail)===JSON.stringify(detail)?colors.ink:'none','stroke-width':2,tabindex:0,role:'button',class:cls,'data-metric':detail.metric||detail.kind,'data-scope':detail.kind||'month',...(detail.site?{'data-site':detail.site}:{}),...(detail.month?{'data-month':detail.month}:{}),'aria-label':`${label}: ${count}. View matching details.`});
     hit.append(svgEl('title',{},`${label}: ${count}\nClick to view records and copy IDs.`));hit.onclick=()=>openDetails(detail);hit.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDetails(detail);}};svg.append(hit);return hit;
@@ -147,10 +170,10 @@ export function render(root, rows, options = {}) {
   text(left,20,'Submissions',14,colors.muted);
   // Use most of each site's lane for its three months. The old fixed 42px cap
   // left half of a wide visual empty between groups.
-  const groupWidth=(right-left)/Math.max(sites.length,1),barGap=Math.max(8,Math.min(14,groupWidth*.04)),barWidth=Math.min(96,(groupWidth*.78-2*barGap)/3),currentKey=r.currentMonth;
+  const barGap=Math.max(8,Math.min(14,groupWidth*.04)),barWidth=Math.min(96,(groupWidth*.78-2*barGap)/3),currentKey=r.currentMonth;
   r.buckets.forEach((site,i)=>{
     const cx=left+groupWidth*(i+.5),start=cx-(site.months.length*barWidth+(site.months.length-1)*barGap)/2;
-    if(i)svg.append(svgEl('line',{x1:left+groupWidth*i,x2:left+groupWidth*i,y1:bottom+12,y2:bottom+66,stroke:colors.border}));
+    if(i)svg.append(svgEl('line',{x1:left+groupWidth*i,x2:left+groupWidth*i,y1:bottom+12,y2:bottom+66+labelExtra,stroke:colors.border}));
     site.months.forEach((month,mi)=>{
       const x=start+mi*(barWidth+barGap),segments=[];let y=bottom;
       for(const [key,count] of [['inProcess',month.inProcess],['submitted',month.submitted],['review',month.review]]) {
@@ -166,14 +189,16 @@ export function render(root, rows, options = {}) {
       hit.querySelector('title').textContent=`${site.site} · ${month.label}\nPlanned: ${month.planned}\nIn process: ${month.inProcess}\nSubmitted: ${month.submitted}\nOverdue: ${month.overdue}\nGrouped by planned submission month; actual submission may be in another month.`;
       for(const segment of segments)metricHit(x,segment.y,barWidth,segment.height,{site:site.key,month:month.key,metric:segment.key},segment.count,`${site.site} · ${month.label} · ${metricLabels[segment.key]}`,'ssSegmentHit');
     });
-    text(cx,bottom+57,site.site.length>14?site.site.slice(0,13)+'…':site.site,18,colors.ink,{...centered,...bold}).append(svgEl('title',{},site.site));
-    const width=Math.min(groupWidth-16,3*barWidth+2*barGap),x=cx-width/2,y=bottom+80;
+    const label=siteLabels[i],name=text(cx,bottom+40+label.size,undefined,label.size,colors.ink,{...centered,...bold,class:'ssSiteLabel','data-site':site.key,'aria-label':site.site});
+    label.lines.forEach((line,index)=>name.append(svgEl('tspan',{x:cx,dy:index?label.lineHeight:0},line)));
+    name.append(svgEl('title',{},site.site));
+    const width=Math.min(groupWidth-16,3*barWidth+2*barGap),x=cx-width/2,y=bottom+80+labelExtra;
     svg.append(svgEl('rect',{x,y,width,height:32,rx:5,fill:colors.backlogBg,stroke:highContrast?colors.ink:'none'}));
     text(cx,y+22,String(site.backlog.count),18,colors.backlog,{...centered,...bold});metricHit(x,y,width,32,{kind:'backlog',site:site.key},site.backlog.count,`${site.site} · Earlier overdue backlog`,'ssBacklogHit');
   });
-  text(left,bottom+76,`Earlier backlog · before ${dateText(r.backlog.cutoff)}`,13,colors.muted);
-  if(!sites.length)text((left+right)/2,top+100,'Choose up to six sites to start.',20,colors.muted,centered);
-  else if(!r.totals.planned)text((left+right)/2,top+100,'No planned submissions in these three months',20,colors.muted,centered);
+  text(left,bottom+76+labelExtra,`Earlier backlog · before ${dateText(r.backlog.cutoff)}`,13,colors.muted);
+  if(!sites.length)text((left+right)/2,top+chartHeight/2,'Choose up to six sites to start.',20,colors.muted,centered);
+  else if(!r.totals.planned)text((left+right)/2,top+chartHeight/2,'No planned submissions in these three months',20,colors.muted,centered);
   }
   drawChart(416);
   const overdue=el('div',undefined,'ssOverdueStrip');

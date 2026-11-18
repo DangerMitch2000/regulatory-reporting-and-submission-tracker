@@ -30,7 +30,7 @@ assert.equal(parseDay('2026-02-29').kind, 'invalid'); assert.equal(parseDay('202
 assert.equal(parseDay('2026-13-01').kind, 'invalid'); assert.equal(parseDay('2026-10-01Tgarbage').kind, 'invalid');
 assert.equal(parseDay('2026-10-01T23:45:00-05:00').day, Date.UTC(2026,9,1));
 assert.equal(parseDay(new Date('2026-10-01T00:00:00Z')).day, Date.UTC(2026,9,1));
-assert.deepEqual(normalizeSites(['ABO','abo','ADJ','ADK','AJG','ARDG','SCR','OTHER']), DEFAULT_SITES);
+assert.deepEqual(normalizeSites(['ABO','abo','ADJ','ADK','AJG','ARDG','SCR','OTHER']), ['ABO','ADJ','ADK','AJG','ARDG','SCR']);
 const columns = ROLES.map(k => ({roles: {[k]: true}}));
 assert.deepEqual(mapTable({columns, rows: [['A','ABO','2026-10-01',null,'ID']]}).missing, []);
 assert.equal(mapTable({columns: columns.slice(0,4), rows: []}).unitMapped, false);

@@ -7,6 +7,7 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test'),assert=requi
    const page=await browser.newPage({viewport:{width:1490,height:1100},timezoneId:'Europe/Dublin'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.clock.setFixedTime(new Date('2026-10-09T12:00:00Z'));await page.goto('http://127.0.0.1:'+server.address().port+'/verify/harness.html');await page.waitForSelector('body[data-ready=true]');
    const scope=page.locator('#host');
+   await scope.locator('.siteSubmissions').focus();await page.keyboard.press('Escape');
    await require('./registration-browser-check.cjs')(page,scope);
    await scope.locator('.ssMetricHit[data-scope=plan][data-metric=submitted]').click();
    await scope.locator('.ssTableWrap').evaluate(node=>node.scrollLeft=node.scrollWidth);
