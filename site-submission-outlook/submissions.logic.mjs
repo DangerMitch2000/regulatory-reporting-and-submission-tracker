@@ -121,6 +121,13 @@ export function resolveRequired(values, mapped = true) {
 }
 const overdueGroup = () => ({count: 0, internal: 0, authority: 0, unclassified: 0, rows: []});
 const addOverdue = (group, record) => {group.count++; group[record.overdueStage]++; group.rows.push(record);};
+const plannedTotals = () => ({planned: 0, inProcess: 0, submitted: 0, review: 0, overdue: 0});
+const addPlanned = (totals, rows, record) => {
+  totals.planned++;
+  totals[record.status === 'Submitted' ? 'submitted' : record.status === 'Check date' ? 'review' : 'inProcess']++;
+  if (record.overdue) totals.overdue++;
+  rows.push(record);
+};
 function dispatchProgress(record, today) {
   const d = record.dispatch, notes = [], required = d.required, actual = d.actual, plan = d.planned;
   if (required.kind === 'issue') notes.push(required.reason);
@@ -167,7 +174,8 @@ export function mapTable(table) {
     if (found.length) index[role] = found[0];
     else if (REQUIRED.includes(role)) missing.push(role);
   }
-  return {missing, unitMapped: index.BusinessUnit !== undefined, scopeMapped:Object.fromEntries(SCOPE_ROLES.map(role=>[role,index[role]!==undefined])), identifierMapped:Object.fromEntries(IDENTIFIER_FIELDS.map(({role})=>[role,index[role]!==undefined])), fallbackCountryMapped:index.FallbackCountry!==undefined, registrationMapped: Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,index[role] !== undefined])), dispatchMapped: Object.fromEntries(DISPATCH_ROLES.map(role=>[role,index[role] !== undefined])), stateMapped: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,index[role] !== undefined])),
+  const siteColumn = columns[index.Site];
+  return {missing, siteFieldLabel: clean(siteColumn?.displayName) || clean(siteColumn?.queryName) || 'Site (legal manufacturer)', unitMapped: index.BusinessUnit !== undefined, scopeMapped:Object.fromEntries(SCOPE_ROLES.map(role=>[role,index[role]!==undefined])), identifierMapped:Object.fromEntries(IDENTIFIER_FIELDS.map(({role})=>[role,index[role]!==undefined])), fallbackCountryMapped:index.FallbackCountry!==undefined, registrationMapped: Object.fromEntries(REGISTRATION_ROLES.map(role=>[role,index[role] !== undefined])), dispatchMapped: Object.fromEntries(DISPATCH_ROLES.map(role=>[role,index[role] !== undefined])), stateMapped: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,index[role] !== undefined])),
     rows: (table?.rows || []).map(row => Object.fromEntries(ROLES.map(role => [role, index[role] === undefined ? null : row[index[role]]])))};
 }
 export function normalizeSites(sites) {
@@ -219,6 +227,8 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', product='*',
     grouped.get(id).push(row);
   }
   const backlog = {cutoff: dates.months[0].start, ...overdueGroup()}, overdue = overdueGroup();
+  const year = new Date(dates.today).getUTCFullYear();
+  const yearSummary = {year, start: Date.UTC(year, 0, 1), end: Date.UTC(year + 1, 0, 1), label: `Calendar year ${year}`, totals: plannedTotals(), completion: 0, rows: []};
   const buckets = selectedSites.map(site => ({site, key: siteKey(site), delivered: 0, backlog: overdueGroup(), overdue: overdueGroup(), months: dates.months.map(month => ({
     ...month, site, planned: 0, inProcess: 0, submitted: 0, review: 0, overdue: 0, rows: []}))}));
   const lookup = new Map(buckets.map(b => [b.key, b]));
@@ -284,6 +294,9 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', product='*',
       continue;
     }
     if (actualIssue || dispatchIssue || registrationIssue) issues.push({...record});
+    // Calendar-year plans use the same classified records as the monthly chart,
+    // including earlier and future months without changing backlog/coverage rules.
+    if (plan.day >= yearSummary.start && plan.day < yearSummary.end) addPlanned(yearSummary.totals, yearSummary.rows, record);
     const month = bucket.months.find(m => plan.day >= m.start && plan.day < m.end);
     if (!month) {
       if (plan.day < backlog.cutoff && record.overdue) {
@@ -291,16 +304,15 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', product='*',
       } else {checks.outsideMonths++;coverage.outsideMonths.push(record);}
       continue;
     }
-    month.planned++;
-    month[record.status === 'Submitted' ? 'submitted' : record.status === 'Check date' ? 'review' : 'inProcess']++;
-    if (record.overdue) month.overdue++;
-    month.rows.push(record);
+    addPlanned(month, month.rows, record);
   }
-  const totals = {planned: 0, inProcess: 0, submitted: 0, review: 0, overdue: 0};
+  const totals = plannedTotals();
   const evidenceCounts={actual:0,state:0,registration:0};
   const monthTotals = dates.months.map(m => ({...m, ...totals}));
   const oldestFirst = (a, b) => a.plan.day - b.plan.day || a.id.localeCompare(b.id, undefined, {numeric: true});
   const overdueFirst = (a,b) => a.overdueDate - b.overdueDate || a.id.localeCompare(b.id, undefined, {numeric:true});
+  yearSummary.rows.sort(oldestFirst);
+  yearSummary.completion = yearSummary.totals.planned ? Math.round(yearSummary.totals.submitted / yearSummary.totals.planned * 100) : 0;
   overdue.rows.sort(overdueFirst);
   backlog.rows.sort(oldestFirst);
   for (const site of buckets) {
@@ -316,7 +328,7 @@ export function summarize(rows, {sites = DEFAULT_SITES, unit = '*', product='*',
   const rawStep = peak / 5, magnitude = 10 ** Math.floor(Math.log10(rawStep));
   const step = Math.max(1, ([1, 2, 5, 10].find(s => s * magnitude >= rawStep) || 10) * magnitude);
   const axisMax = Math.max(5, Math.ceil(peak / step) * step);
-  return {...dates, buckets, totals, evidenceCounts, monthTotals, backlog, overdue, checks, issues, coverage, axisMax, step, scopedRecords, scopeMapped:scopes, identifierMapped:identifiers, identifiersEnabled:IDENTIFIER_FIELDS.some(({role})=>identifiers[role]), dispatchMapped: dispatchMappings, dispatchEnabled, registrationMapped:registrationMappings, registrationEnabled, countryEnabled, fallbackCountryMapped:fallbackMapped,
+  return {...dates, buckets, totals, yearSummary, evidenceCounts, monthTotals, backlog, overdue, checks, issues, coverage, axisMax, step, scopedRecords, scopeMapped:scopes, identifierMapped:identifiers, identifiersEnabled:IDENTIFIER_FIELDS.some(({role})=>identifiers[role]), dispatchMapped: dispatchMappings, dispatchEnabled, registrationMapped:registrationMappings, registrationEnabled, countryEnabled, fallbackCountryMapped:fallbackMapped,
     stateMapped: mappings, stateFilters: filters, stateChoices: Object.fromEntries(STATE_FIELDS.map(({role})=>[role,[...choices[role]].sort((a,b)=>stateLabel(a).localeCompare(stateLabel(b)))])),
     units: [...units].sort(), products:[...products].sort(), regions:[...regions].sort(), countries:[...countries.values()].sort(), availableSites: [...availableSites.values()].sort(),
     issueCount: issues.length + missingIds, completion: totals.planned ? Math.round(totals.submitted / totals.planned * 100) : 0};

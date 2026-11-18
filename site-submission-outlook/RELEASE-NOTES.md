@@ -1,12 +1,16 @@
-# Site Submission Outlook 1.6.3
+# Site Submission Outlook 1.6.4
 
-Updates the visual's typography to prefer Wallace Sans.
+Makes the existing site filter searchable and adds compact statistics for the current calendar year's plan.
 
-- The title prefers **Wallace Sans Light** at weight **300**.
-- Chart labels, filters, buttons, Details and the selectable copy-text panel use **Wallace Sans**.
-- Segoe UI, Arial and the browser's sans-serif font remain fallbacks when Wallace Sans is unavailable.
-- The fictional preview uses the same font choices.
+- Search full delivered names in **Site / manufacturer**, with up to six selections.
+- See the mapped source column and selected values that have no delivered rows.
+- Use **Clear sites** or restore the main six site codes.
+- Search narrows the picker choices; chart counts change only when the site selection changes.
+- A clickable annual summary shows Planned, In process, Submitted, Submitted percentage and Overdue in plan for January–December of the current calendar year.
+- Annual statistics use the same filters, distinct Submission IDs and previous-day checks as the three-month chart.
 
-Fonts are resolved from the viewer's device. No font files are bundled and no external font service is contacted, so each viewer's font availability determines whether Wallace Sans or a fallback is shown.
+`SCR` and `Abbott Diagnostics Scarborough, Inc.` are separate values. To select the full name, search **Scarborough**, remove **SCR** or clear the selection if six slots are occupied, then select the delivered manufacturer name. No alias or relationship is inferred. The picker cannot recover data excluded by report filters or correct an incorrect source field or model relationship.
 
-Import `site-submission-outlook-1.6.3.0.pbiviz` to replace the existing Site Submission Outlook. The visual identity and field mappings are unchanged; the Details scroll-position fix from 1.6.2 is retained.
+Annual statistics are grouped by the mapped planned submission date. Submitted reflects the latest delivered completion evidence for that planned cohort, not actual authority filings made during the calendar year. The annual and three-month counts overlap.
+
+Import `site-submission-outlook-1.6.4.0.pbiviz` to replace the existing Site Submission Outlook. The visual identity and all 21 field roles are unchanged. Wallace Sans typography from 1.6.3 and the Details scroll-position fix from 1.6.2 are retained.

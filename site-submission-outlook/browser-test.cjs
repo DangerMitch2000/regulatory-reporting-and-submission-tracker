@@ -184,6 +184,7 @@ const {chromium}=require('./powerbi/node_modules/@playwright/test'),assert=requi
   }
   assert.deepEqual(await page.evaluate(()=>testApi.errors),[]);assert.deepEqual(errors,[]);
   await require('./v16-browser-check.cjs')(page,main);
+  await require('./site-filter-browser-check.cjs')(page,main);
   await page.goto(url+'/preview.html');await page.locator('svg').waitFor();assert.match(await page.locator('.ssScopeSummary').textContent(),/ILLUSTRATIVE DATA/);assert.equal(await page.locator('.ssHit').count(),18);
   await page.getByRole('button',{name:'Data checks example'}).click();assert.match(await page.locator('svg').textContent(),/Check date/);
   assert.deepEqual(errors,[]);

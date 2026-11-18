@@ -30,16 +30,43 @@ export function render(root, rows, options = {}) {
   }
   const controls = el('div', undefined, 'ssControls');
   const siteControl = el('details', undefined, 'ssSites'); siteControl.open = Boolean(state.sitesOpen);
-  siteControl.append(el('summary', `Sites · ${sites.length}`));
-  const panel = el('div', undefined, 'ssSitePanel'); panel.append(el('p', 'Choose up to six sites.'));
-  const choices = [...new Map([...sites, ...r.availableSites].map(name => [siteKey(name), name])).values()];
-  choices.forEach(name => {
+  const siteSummary=el('summary', `Site / manufacturer · ${sites.length}`);siteSummary.title=sites.join(', ')||'No sites selected';siteControl.append(siteSummary);
+  siteControl.ontoggle=()=>{state.sitesOpen=siteControl.open;};
+  const panel = el('div', undefined, 'ssSitePanel ssSitePicker');panel.style.width=Math.max(120,Math.min(370,width-32))+'px';
+  panel.append(el('p',`Mapped field: ${options.siteFieldLabel||'Site (legal manufacturer)'}`,'ssSiteSource'));
+  const siteSearch=el('input',undefined,'ssSiteSearch');siteSearch.type='search';siteSearch.placeholder='Search sites or manufacturers';siteSearch.setAttribute('aria-label','Search sites or manufacturers');siteSearch.value=state.siteSearch||'';panel.append(siteSearch);
+  const siteActions=el('div',undefined,'ssSiteActions'),clearSites=el('button','Clear sites'),reset=el('button','Use main six sites');clearSites.disabled=!sites.length;siteActions.append(clearSites,reset);panel.append(siteActions);
+  panel.append(el('p',`${sites.length} of 6 selected${sites.length===6?' · Remove one to add another.':'.'}`,'ssSiteLimit'));
+  const selectedGroup=el('div',undefined,'ssSiteSelected');selectedGroup.append(el('strong','Selected'));
+  const availableGroup=el('div',undefined,'ssSiteOptions');availableGroup.append(el('strong','Available in delivered data'));
+  const selectedKeys=new Set(sites.map(siteKey)),availableKeys=new Set(r.availableSites.map(siteKey));
+  function updateSites(nextSites,focusName) {
+    const scrollTop=root.scrollTop,scrollLeft=root.scrollLeft,menuScroll=panel.scrollTop;
+    onChange({sites:nextSites,sitesOpen:true,siteSearch:siteSearch.value,stateOpen:null,detail:null,page:0});
+    const nextPanel=root.querySelector('.ssSitePicker');if(nextPanel)nextPanel.scrollTop=menuScroll;
+    root.scrollTop=scrollTop;root.scrollLeft=scrollLeft;
+    const target=(focusName?[...root.querySelectorAll('.ssSites input[type=checkbox]')].find(input=>input.dataset.siteKey===siteKey(focusName)):null)||root.querySelector('.ssSiteSearch');
+    target?.focus({preventScroll:true});
+  }
+  function siteChoice(name,parent) {
     const label = el('label'), box = el('input'); box.type = 'checkbox'; box.checked = sites.some(s => siteKey(s) === siteKey(name)); box.setAttribute('aria-label', `Include ${name}`);
+    box.dataset.siteKey=siteKey(name);
     box.disabled = !box.checked && sites.length >= 6;
-    box.onchange = () => onChange({sites: box.checked ? [...sites, name] : sites.filter(s => siteKey(s) !== siteKey(name)), sitesOpen: true, detail: null});
-    label.append(box, el('span', name)); if (!r.availableSites.some(s => siteKey(s) === siteKey(name))) label.append(el('small', 'No delivered rows')); panel.append(label);
-  });
-  const reset = el('button', 'Use main six sites'); reset.onclick = () => onChange({sites: [...DEFAULT_SITES], sitesOpen: true, detail: null}); panel.append(reset); siteControl.append(panel); controls.append(siteControl);
+    box.onchange = () => updateSites(box.checked ? [...sites,name] : sites.filter(s => siteKey(s)!==siteKey(name)),name);
+    const nameText=el('span',name);nameText.title=name;label.append(box,nameText);
+    if(!availableKeys.has(siteKey(name)))label.append(el('small','No delivered rows'));
+    parent.append(label);return label;
+  }
+  sites.forEach(name=>siteChoice(name,selectedGroup));if(!sites.length)selectedGroup.append(el('p','No sites selected.'));
+  const availableChoices=r.availableSites.filter(name=>!selectedKeys.has(siteKey(name))).map(name=>({name,line:siteChoice(name,availableGroup)}));
+  const noMatches=el('p','No matching site values.','ssSiteEmpty');availableGroup.append(noMatches);
+  function filterSites(){const query=siteSearch.value.trim().toLocaleLowerCase('en-GB');state.siteSearch=siteSearch.value;let visible=0;for(const {name,line} of availableChoices){line.hidden=!name.toLocaleLowerCase('en-GB').includes(query);if(!line.hidden)visible++;}noMatches.hidden=visible>0;}
+  siteSearch.oninput=filterSites;filterSites();panel.append(selectedGroup,availableGroup);
+  clearSites.onclick=()=>updateSites([]);reset.onclick=()=>{siteSearch.value='';updateSites([...DEFAULT_SITES]);};
+  panel.append(el('p','Values come from the mapped field, before other visual filters. SCR and a full manufacturer name are different values. Missing a name? Check the mapped field and report filters.','ssSiteHelp'));
+  const closeSites=el('button','Close site filter');closeSites.onclick=()=>{siteControl.open=false;state.sitesOpen=false;siteSummary.focus({preventScroll:true});};panel.append(closeSites);
+  panel.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeSites.click();}};
+  siteControl.append(panel);controls.append(siteControl);
   function select(label, value, opts, key, disabled = false) {
     const wrap = el('label', label), input = el('select'); input.setAttribute('aria-label', label);
     if (!opts.some(o => o.value === value)) opts.push({value, label: `${value || 'Blank'} (no records)`});
@@ -91,6 +118,16 @@ export function render(root, rows, options = {}) {
   const summary=el('div',undefined,'ssSummary');
   for(const [metric,label,count] of [['planned','Planned',r.totals.planned],['inProcess','In process',r.totals.inProcess],['submitted','Submitted',r.totals.submitted],['completion','Submitted',`${r.completion}%`],['overdue','Overdue in plan',r.totals.overdue],...(r.totals.review?[['review','Check date',r.totals.review]]:[])])addButton(summary,label,count,{kind:'plan',metric});
   root.append(summary);
+  if(r.yearSummary){
+    const year=r.yearSummary,yearSummary=el('div',undefined,'ssYearSummary');
+    root.append(el('p',`Calendar year ${year.year}`,'ssYearHeading'));
+    for(const [metric,label,count] of [['planned','Planned',year.totals.planned],['inProcess','In process',year.totals.inProcess],['submitted','Submitted',year.totals.submitted],['completion','Submitted',`${year.completion}%`],['overdue','Overdue in plan',year.totals.overdue],...(year.totals.review?[['review','Check date',year.totals.review]]:[])]){
+      const button=addButton(yearSummary,label,count,{kind:'year',metric},'ssYearMetricHit');
+      button.setAttribute('aria-label',`Calendar year ${year.year} · ${metricLabels[metric]}: ${count}. View matching details.`);
+      button.title=`Calendar year ${year.year}: submissions planned from January through December, using the same filters and previous-day reference. Click for matching Details.`;
+    }
+    root.append(yearSummary);
+  }
   const evidence=el('div',undefined,'ssEvidenceStrip');evidence.append(el('span','Submitted evidence:'));
   for(const source of ['actual','state','registration']) {const b=addButton(evidence,evidenceLabels[source],r.evidenceCounts?.[source]||0,{kind:'evidence',source},'ssEvidenceHit');b.title='One evidence group per submitted record: actual date first, then submission state, then registration approval.';}root.append(evidence);
   const W=Math.max(1000,Math.min(1800,options.width||root.clientWidth||1200));
@@ -171,10 +208,10 @@ export function render(root, rows, options = {}) {
 }
 
 function renderDetails(root, result, state, onChange) {
-  const issues=state.detail.kind==='issues',isBacklog=state.detail.kind==='backlog',isOverdue=state.detail.kind==='overdue',isPlan=state.detail.kind==='plan',isCoverage=state.detail.kind==='coverage',isEvidence=state.detail.kind==='evidence',site=result.buckets.find(b=>b.key===state.detail.site);
-  const month=issues||isBacklog||isOverdue||isPlan||isCoverage||isEvidence?null:site?.months.find(m=>m.key===state.detail.month);
+  const issues=state.detail.kind==='issues',isBacklog=state.detail.kind==='backlog',isOverdue=state.detail.kind==='overdue',isPlan=state.detail.kind==='plan',isYear=state.detail.kind==='year',isCoverage=state.detail.kind==='coverage',isEvidence=state.detail.kind==='evidence',site=result.buckets.find(b=>b.key===state.detail.site);
+  const month=issues||isBacklog||isOverdue||isPlan||isYear||isCoverage||isEvidence?null:site?.months.find(m=>m.key===state.detail.month);
   const planRecords=result.buckets.flatMap(b=>b.months.flatMap(m=>m.rows));
-  const records=issues?[...result.issues,...result.coverage.missingIds]:isCoverage?result.coverage[state.detail.group]||[]:isEvidence?planRecords.filter(r=>r.evidenceSource===state.detail.source):isPlan?planRecords.filter(r=>matchesMetric(r,state.detail.metric)):isOverdue?result.overdue.rows.filter(r=>state.detail.group==='all'||r.overdueStage===state.detail.group):isBacklog?(state.detail.site?site?.backlog.rows||[]:result.backlog.rows):(month?.rows||[]).filter(r=>matchesMetric(r,state.detail.metric));
+  const records=issues?[...result.issues,...result.coverage.missingIds]:isCoverage?result.coverage[state.detail.group]||[]:isEvidence?planRecords.filter(r=>r.evidenceSource===state.detail.source):isYear?(result.yearSummary?.rows||[]).filter(r=>matchesMetric(r,state.detail.metric)):isPlan?planRecords.filter(r=>matchesMetric(r,state.detail.metric)):isOverdue?result.overdue.rows.filter(r=>state.detail.group==='all'||r.overdueStage===state.detail.group):isBacklog?(state.detail.site?site?.backlog.rows||[]:result.backlog.rows):(month?.rows||[]).filter(r=>matchesMetric(r,state.detail.metric));
   const query=String(state.query||'').toLowerCase(),columnFilters=state.columnFilters||{};
   const dueFor=record=>Number.isFinite(record.overdueDate)?record.overdueDate:record.dispatchStage==='Pending internal dispatch'?(record.dispatch?.planned?.kind==='date'?record.dispatch.planned.day:null):['Awaiting authority submission','Check dispatch data'].includes(record.dispatchStage)&&record.plan?.kind==='date'?record.plan.day:null;
   const columns=[
@@ -187,24 +224,24 @@ function renderDetails(root, result, state, onChange) {
     {key:'due',label:'Due date',value:r=>Number.isFinite(r.detailDue)?dateText(r.detailDue):'—',sort:r=>r.detailDue},
     {key:'days',label:'Days overdue',value:r=>r.daysOverdue===null?'—':String(r.daysOverdue),sort:r=>r.daysOverdue}
   ];
-  const overdueContext=isBacklog||isOverdue||isPlan&&state.detail.metric==='overdue';
+  const overdueContext=isBacklog||isOverdue||(isPlan||isYear)&&state.detail.metric==='overdue';
   const detailSort=state.detailSort||{key:overdueContext?'due':'plan',direction:overdueContext?'desc':'asc'};
   const compareText=(a,b)=>String(a??'').localeCompare(String(b??''),undefined,{numeric:true,sensitivity:'base'});
   const filtered=records.map((r,i)=>{const detailDue=dueFor(r);return {...r,recordKey:r.id||`missing-row-${i}`,attention:attentionFor(r),detailDue,daysOverdue:r.overdue&&Number.isFinite(r.overdueDate)?Math.max(0,Math.floor((result.asOf-r.overdueDate)/86400000)):null};}).filter(r=>{
     const haystack=`${r.id} ${r.site} ${IDENTIFIER_FIELDS.flatMap(({role})=>r.relatedIds?.[role]||[]).join(' ')} ${(r.country?.values||[]).join(' ')} ${r.country?.source||''} ${r.reason} ${r.dispatchStage} ${r.attention.title} ${r.attention.reason} ${r.attention.action} ${STATE_FIELDS.map(f=>formatStates(r.states?.[f.role])).join(' ')} ${(r.registration?.records||[]).map(reg=>[reg.id,reg.country,reg.state,reg.rawStart,reg.rawEnd,formatDate(reg.start),formatDate(reg.end)].join(' ')).join(' ')}`.toLowerCase();
-    return (!query||haystack.includes(query))&&(issues||isCoverage||!state.status||state.status==='all'||r.status===state.status)&&(issues||isCoverage||!state.dispatchStage||state.dispatchStage==='all'||r.dispatchStage===state.dispatchStage)&&(!(isOverdue||isPlan||isEvidence)||!state.detailSite||state.detailSite==='*'||siteKey(r.site)===state.detailSite)&&columns.every(column=>!columnFilters[column.key]||String(column.value(r)).toLowerCase().includes(String(columnFilters[column.key]).toLowerCase()));
+    return (!query||haystack.includes(query))&&(issues||isCoverage||!state.status||state.status==='all'||r.status===state.status)&&(issues||isCoverage||!state.dispatchStage||state.dispatchStage==='all'||r.dispatchStage===state.dispatchStage)&&(!(isOverdue||isPlan||isYear||isEvidence)||!state.detailSite||state.detailSite==='*'||siteKey(r.site)===state.detailSite)&&columns.every(column=>!columnFilters[column.key]||String(column.value(r)).toLowerCase().includes(String(columnFilters[column.key]).toLowerCase()));
   }).sort((a,b)=>{const column=columns.find(c=>c.key===detailSort.key)||columns[0],av=(column.sort||column.value)(a),bv=(column.sort||column.value)(b);if(av===null||av===undefined)return bv===null||bv===undefined?compareText(a.recordKey,b.recordKey):1;if(bv===null||bv===undefined)return -1;return (typeof av==='number'&&typeof bv==='number'?av-bv:compareText(av,bv))*(detailSort.direction==='desc'?-1:1)||compareText(a.recordKey,b.recordKey);});
   const pageSize=50,page=Math.min(Math.max(0,state.page||0),Math.max(0,Math.ceil(filtered.length/pageSize)-1));
   const section=el('section',undefined,'ssDetails');
-  const heading=el('h3',issues?'Data checks':isCoverage?coverageLabels[state.detail.group]:isEvidence?`Submitted · ${evidenceLabels[state.detail.source]}`:isPlan?`Three-month plan · ${metricLabels[state.detail.metric]}`:isOverdue?overdueLabels[state.detail.group]:isBacklog?`${site?.site||(state.detail.site?state.detail.site:'All selected sites')} · Earlier overdue backlog`:`${month?.site||state.detail.site} · ${month?.label||state.detail.month}${state.detail.metric?' · '+metricLabels[state.detail.metric]:''}`);heading.tabIndex=-1;section.append(heading);
-  const scopeNote=issues?'Includes missing-ID source rows, which are not counted as distinct submissions.':isCoverage?(state.detail.group==='missingIds'?'Every delivered missing-ID row is retained; use RO or application IDs to follow up.':state.detail.group==='outsideSites'?'Outside the selected sites, across all delivered dates matching your filters.':'Outside the three-month plan and earlier backlog, within the selected sites and filters.'):isEvidence?'Exclusive evidence group within the displayed plan. Actual date takes precedence, then state, then registration.':isOverdue?'All delivered dates. Internal dispatch and authority submission use their own planned dates.':isBacklog?`Planned before ${dateText(result.backlog.cutoff)} and still overdue; included in All overdue.`:`Planned-month scope: ${isPlan?result.label:month?.label||result.label}.`;
+  const heading=el('h3',issues?'Data checks':isCoverage?coverageLabels[state.detail.group]:isEvidence?`Submitted · ${evidenceLabels[state.detail.source]}`:isYear?`Calendar year ${result.yearSummary.year} · ${metricLabels[state.detail.metric]}`:isPlan?`Three-month plan · ${metricLabels[state.detail.metric]}`:isOverdue?overdueLabels[state.detail.group]:isBacklog?`${site?.site||(state.detail.site?state.detail.site:'All selected sites')} · Earlier overdue backlog`:`${month?.site||state.detail.site} · ${month?.label||state.detail.month}${state.detail.metric?' · '+metricLabels[state.detail.metric]:''}`);heading.tabIndex=-1;section.append(heading);
+  const scopeNote=issues?'Includes missing-ID source rows, which are not counted as distinct submissions.':isCoverage?(state.detail.group==='missingIds'?'Every delivered missing-ID row is retained; use RO or application IDs to follow up.':state.detail.group==='outsideSites'?'Outside the selected sites, across all delivered dates matching your filters.':'Outside the three-month plan and earlier backlog, within the selected sites and filters.'):isYear?`Planned-year scope: January–December ${result.yearSummary.year}. Progress and overdue checks use the previous-day reference.`:isEvidence?'Exclusive evidence group within the displayed plan. Actual date takes precedence, then state, then registration.':isOverdue?'All delivered dates. Internal dispatch and authority submission use their own planned dates.':isBacklog?`Planned before ${dateText(result.backlog.cutoff)} and still overdue; included in All overdue.`:`Planned-month scope: ${isPlan?result.label:month?.label||result.label}.`;
   section.append(el('p',`${scopeNote} Select an ID to copy it; expand a row for its recorded evidence.`,'ssDetailNote'));
   const controls=el('div',undefined,'ssDetailTools'),search=el('input');search.type='search';search.placeholder='Find submission';search.setAttribute('aria-label','Find submission');search.value=state.query||'';search.onchange=()=>onChange({query:search.value,page:0});controls.append(search);
   if(!issues&&!isCoverage&&!isEvidence&&!isBacklog&&!isOverdue&&(!state.detail.metric||state.detail.metric==='planned')) {
     const statuses=el('select');statuses.setAttribute('aria-label','Submission progress');for(const value of ['all','In process','Submitted','Check date']){const option=el('option',value==='all'?'All progress':value);option.value=value;statuses.append(option);}statuses.value=state.status||'all';statuses.onchange=()=>onChange({status:statuses.value,page:0});controls.append(statuses);
   }
   if(!issues&&!isCoverage){const stages=el('select');stages.setAttribute('aria-label','Dispatch stage');for(const value of ['all',...dispatchStages]){const option=el('option',value==='all'?'All dispatch stages':value);option.value=value;stages.append(option);}stages.value=state.dispatchStage||'all';stages.onchange=()=>onChange({dispatchStage:stages.value,page:0});controls.append(stages);}
-  if(isOverdue||isPlan||isEvidence){const sites=el('select');sites.setAttribute('aria-label','Details site');for(const item of [{key:'*',site:'All selected sites'},...result.buckets]){const option=el('option',item.site);option.value=item.key;sites.append(option);}sites.value=state.detailSite||'*';sites.onchange=()=>onChange({detailSite:sites.value,page:0});controls.append(sites);}
+  if(isOverdue||isPlan||isYear||isEvidence){const sites=el('select');sites.setAttribute('aria-label','Details site');for(const item of [{key:'*',site:'All selected sites'},...result.buckets]){const option=el('option',item.site);option.value=item.key;sites.append(option);}sites.value=state.detailSite||'*';sites.onchange=()=>onChange({detailSite:sites.value,page:0});controls.append(sites);}
   const order=el('select');order.setAttribute('aria-label','Details order');
   for(const [value,label] of [['due:desc','Newest due first'],['due:asc','Oldest due first'],['plan:asc','Earliest plan first'],['plan:desc','Latest plan first'],['id:asc','Submission ID A–Z']]){const option=el('option',label);option.value=value;order.append(option);}
   const orderValue=detailSort.key+':'+detailSort.direction;if(![...order.options].some(o=>o.value===orderValue)){const option=el('option','Sorted by '+(columns.find(c=>c.key===detailSort.key)?.label||detailSort.key));option.value=orderValue;order.append(option);}order.value=orderValue;order.onchange=()=>{const [key,direction]=order.value.split(':');onChange({detailSort:{key,direction},page:0});};controls.append(order);

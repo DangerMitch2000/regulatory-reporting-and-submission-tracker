@@ -1,8 +1,26 @@
-# Site Submission Outlook — 1.6.3
+# Site Submission Outlook — 1.6.4
 
-A separate Power BI visual showing **last month, this month and next month** for **ABO, ADJ, ADK, AJG, ARDG and SCR**. Each month's planned submissions are split by their latest delivered progress. The visual has its own identity and does not replace the Regulatory Tracker.
+A separate Power BI visual showing **last month, this month and next month** for up to six selected sites or manufacturers, initially **ABO, ADJ, ADK, AJG, ARDG and SCR**. Each month's planned submissions are split by their latest delivered progress. The visual has its own identity and does not replace the Regulatory Tracker.
 
-[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.6.3/site-submission-outlook-1.6.3.0.pbiviz) · [Interactive fictional preview](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.6.3)
+[Download the Power BI visual](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/site-submission-outlook-v1.6.4/site-submission-outlook-1.6.4.0.pbiviz) · [Interactive fictional preview](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/site-submission-outlook/preview.html) · [Release files](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/tag/site-submission-outlook-v1.6.4)
+
+## Searchable Site / manufacturer filter in 1.6.4
+
+The site picker now searches the full values delivered from the mapped **Site (legal manufacturer)** field and shows that source column's name. Select up to six values, clear the selection, or restore the main six site codes. Selected values with no delivered rows remain visible so an absent code or incorrect field mapping is easier to spot. Search narrows the picker choices; it does not change the chart until a selection changes.
+
+**SCR** and **Abbott Diagnostics Scarborough, Inc.** are different source values. The visual does not infer aliases or merge them. To use the full manufacturer name when that is what your source field contains:
+
+1. Open **Site / manufacturer** and search for **Scarborough**.
+2. Remove **SCR**, or use **Clear sites** if all six slots are occupied.
+3. Select **Abbott Diagnostics Scarborough, Inc.** from the delivered values.
+
+The filter can only show values Power BI has delivered. If the expected value is absent, check the displayed source column and your report filters, then compare a standard Power BI table using the same fields. The picker cannot correct an incorrect source field or model relationship. Long names remain available in the picker and chart tooltips.
+
+## Calendar-year plan in 1.6.4
+
+A compact annual summary shows **Planned**, **In process**, **Submitted**, **Submitted percentage** and **Overdue in plan** for submissions whose mapped planned submission date falls within January–December of the viewer's current calendar year. Select a count or percentage to open the matching Details.
+
+The annual summary uses the same selected sites, business unit, products, countries, commercial region, lifecycle states and previous-day checks as the three-month chart. Each distinct Submission ID is counted once within that year's planned cohort. Submitted uses the latest delivered completion evidence; it is not the number of authority filings actually made during the year. Annual and three-month counts overlap and should not be added together.
 
 ## Wallace Sans typography in 1.6.3
 
@@ -21,6 +39,7 @@ The chart now uses the available vertical space instead of stopping at a fixed h
 ## Three-month outlook features
 
 - Three months in a full-width chart, with a compact summary strip instead of a tall side panel.
+- Clickable current-calendar-year plan statistics using the same filters and completion rules.
 - Shorter text beneath the chart; detailed rules are in **How counts work**. Data checks and incomplete-delivery notices remain accessible.
 - **Yesterday** drives both the As of label and date-based checks. Months still follow the viewer's current calendar month.
 - Optional **Product** and **Commercial region** filters, plus **Country** using the existing country mappings.
@@ -30,12 +49,12 @@ The chart now uses the available vertical space instead of stopping at a fixed h
 
 ## Import and map
 
-Import `site-submission-outlook-1.6.3.0.pbiviz` through **Visualizations → … → Import a visual from a file**. Replace the existing Site Submission Outlook visual when prompted. The visual GUID and all 21 roles are unchanged from 1.6.0. The Product and Commercial region roles added in 1.6.0 remain optional.
+Import `site-submission-outlook-1.6.4.0.pbiviz` through **Visualizations → … → Import a visual from a file**. Replace the existing Site Submission Outlook visual when prompted. The visual GUID and all 21 roles are unchanged from 1.6.0. The Product and Commercial region roles added in 1.6.0 remain optional.
 
 | Field well | Source column |
 |---|---|
 | **Submission ID** | The unique submission ID used in the tracker; blank values are allowed |
-| **Site (legal manufacturer)** | The field containing the site codes |
+| **Site (legal manufacturer)** | The field containing the site codes or full manufacturer names to select in the chart |
 | **Planned submission date** | Initial/original planned submission date, matching the reference slide |
 | **Actual submission date** | Actual authority submission date, not dispatch or approval |
 | Business unit (optional) | Existing business-unit field |
@@ -98,7 +117,7 @@ Submitted records and Health Authority Approved ROs are excluded from all overdu
 
 ## Filters, distinct IDs and coverage
 
-Sites, business unit, product, commercial region, country and lifecycle-state filters affect this visual only. Report/page/visual filters also restrict which rows Power BI delivers. The initial site list is the confirmed six; up to six delivered site codes can be selected. Zero-count selected sites remain visible. Dark is the default for a new visual; existing saved Light selections remain respected.
+Sites, business unit, product, commercial region, country and lifecycle-state filters affect this visual only. Report/page/visual filters also restrict which rows Power BI delivers. The initial site list is the main six codes; up to six delivered site or manufacturer values can be selected. Matching ignores case and outer spaces, but does not translate a code into a full name. Picker choices come from all delivered rows, before the visual's business unit, product, region, country and state filters. A delivered value may therefore have no submissions matching the current chart filters. Zero-count selected sites remain visible. Dark is the default for a new visual; existing saved Light selections remain respected.
 
 Each nonblank Submission ID counts once. Business unit, product, commercial region and lifecycle selections must match together on a delivered source row, preventing artificial combinations across unrelated joins. Completion evidence, dates and related identifiers are resolved across **all delivered rows for that Submission ID before local selections**, so a filter cannot conceal an approval or a conflicting date. Country matches the resolved country set. Site conflicts are unallocated for review rather than duplicated into several sites.
 
@@ -131,6 +150,7 @@ cd powerbi
 npx playwright install chromium
 cd ..
 node logic-test.mjs
+node calendar-year-test.mjs
 node dispatch-test.mjs
 node attention-test.mjs
 node registration-test.mjs
@@ -143,13 +163,13 @@ node metrics-browser-test.cjs
 node registration-browser-test.cjs
 node identity-browser-test.cjs
 npm --prefix powerbi run package -- --no-stats
-unzip -o 'powerbi/dist/*1.6.3.0.pbiviz' -d package-check
+unzip -o 'powerbi/dist/*1.6.4.0.pbiviz' -d package-check
 node package-test.cjs
 ```
 
 On Windows, extract the PBIVIZ as ZIP with an archive tool and set `TRACKER_BROWSER_CHANNEL=msedge` to use installed Edge. GitHub Actions runs source calculations, type checks, browser interactions and the **actual packaged runtime**. Manual runs with **publish** enabled then publish a separate prerelease with the package, demo, preview, source archive and SHA-256 checksums.
 
-Checks include three-month/year boundaries, yesterday cutoffs, planned/backlog separation, duplicate joins, all completion rules, mutually exclusive evidence counts, missing IDs, optional and unmapped filters, registration conflicts, state selections, copying across pages, keyboard controls, resize behavior, 10,000-submission data, and packaged field mappings. The preview uses fictional data. Local/browser tests do not validate your actual Power BI relationships or your organization's import policy. This is an uncertified custom visual and requests no network or export privileges.
+Checks include three-month and calendar-year plan boundaries, yesterday cutoffs, planned/backlog separation, duplicate joins, all completion rules, mutually exclusive evidence counts, missing IDs, optional and unmapped filters, registration conflicts, state selections, site/manufacturer search and selection, annual summary Details, copying across pages, keyboard controls, resize behavior, 10,000-submission data, and packaged field mappings. The preview uses fictional data. Local/browser tests do not validate your actual Power BI relationships or your organization's import policy. This is an uncertified custom visual and requests no network or export privileges.
 
 
 

@@ -46,6 +46,7 @@ jobs:
       - name: Verify calculations and visual interactions
         run: |
           node logic-test.mjs
+          node calendar-year-test.mjs
           node dispatch-test.mjs
           node attention-test.mjs
           node registration-test.mjs
@@ -68,22 +69,22 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi/dist/*.pbiviz release/site-submission-outlook-1.6.3.0.pbiviz
+          cp powerbi/dist/*.pbiviz release/site-submission-outlook-1.6.4.0.pbiviz
           cp README.md release/SITE-SUBMISSION-OUTLOOK-INSTALL.md
           cp preview.html release/site-submission-outlook-demo.html
           cp site-submission-outlook-preview.png release/site-submission-outlook-preview.png
-          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf release/site-submission-outlook-source.tar.gz powerbi submissions.logic.mjs submissions.ui.mjs submissions.css visual.ts build.cjs demo.mjs preview-entry.mjs prepare-preview.cjs preview.html prepare-tests.cjs logic-test.mjs browser-test.cjs copy-test.cjs dispatch-test.mjs dispatch-browser-test.cjs dispatch-browser-check.cjs metrics-browser-test.cjs metrics-browser-check.cjs attention-test.mjs registration-test.mjs registration-browser-test.cjs registration-browser-check.cjs identity-test.mjs identity-browser-test.cjs identity-browser-check.cjs v16-browser-check.cjs package-test.cjs serve.cjs README.md RELEASE-NOTES.md
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf release/site-submission-outlook-source.tar.gz powerbi submissions.logic.mjs submissions.ui.mjs submissions.css visual.ts build.cjs demo.mjs preview-entry.mjs prepare-preview.cjs preview.html prepare-tests.cjs logic-test.mjs calendar-year-test.mjs browser-test.cjs copy-test.cjs dispatch-test.mjs dispatch-browser-test.cjs dispatch-browser-check.cjs metrics-browser-test.cjs metrics-browser-check.cjs attention-test.mjs registration-test.mjs registration-browser-test.cjs registration-browser-check.cjs identity-test.mjs identity-browser-test.cjs identity-browser-check.cjs v16-browser-check.cjs site-filter-browser-check.cjs package-test.cjs serve.cjs README.md RELEASE-NOTES.md
           cd release
           sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: site-submission-outlook-1.6.3
+          name: site-submission-outlook-1.6.4
           path: site-submission-outlook/release/
       - name: Stage all assets in a draft, then publish the preview
         if: github.event_name == 'workflow_dispatch' && inputs.publish
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: site-submission-outlook-v1.6.3
+          RELEASE_TAG: site-submission-outlook-v1.6.4
         run: |
           set -euo pipefail
           # Retry transient GitHub failures. Draft discovery uses the complete
@@ -145,7 +146,7 @@ jobs:
           if [ -z "$release_id" ]; then
             # If GitHub accepted creation but lost the response, rediscover the
             # existing draft before treating a retry's duplicate error as failure.
-            if ! retry_gh release create "$tag" --verify-tag --target "$tag_commit" --draft --prerelease --title 'Site Submission Outlook 1.6.3' --notes-file RELEASE-NOTES.md; then
+            if ! retry_gh release create "$tag" --verify-tag --target "$tag_commit" --draft --prerelease --title 'Site Submission Outlook 1.6.4' --notes-file RELEASE-NOTES.md; then
               release_id=$(find_release)
               if [ -z "$release_id" ]; then
                 echo "Draft creation failed and the complete release list contains no matching draft." >&2

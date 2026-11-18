@@ -9,6 +9,7 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
   private rows: any[] = [];
   private missing = ['SubID', 'Site', 'PlannedSubmission', 'ActualSubmission'];
   private unitMapped = false;
+  private siteFieldLabel = 'Site (legal manufacturer)';
   private stateMapped: any = {};
   private dispatchMapped: any = {};
   private registrationMapped: any = {};
@@ -33,7 +34,7 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
   }
   private draw() {
     render(this.root, this.rows, {state: this.state, width: this.width, missing: this.missing, unitMapped: this.unitMapped, stateMapped: this.stateMapped, dispatchMapped: this.dispatchMapped, registrationMapped:this.registrationMapped, fallbackCountryMapped:this.fallbackCountryMapped, identifierMapped:this.identifierMapped, scopeMapped:this.scopeMapped,
-      notice: this.notice, highContrast: this.highContrast, onChange: (patch: any) => {
+      notice: this.notice, siteFieldLabel: this.siteFieldLabel, highContrast: this.highContrast, onChange: (patch: any) => {
         this.state = {...this.state, ...patch};
         if (['sites', 'unit', 'product', 'region', 'country', 'theme', 'stateFilters'].some(k => k in patch)) {
           const value = JSON.stringify({sites: this.state.sites, unit: this.state.unit, product: this.state.product, region: this.state.region, country: this.state.country, theme: this.state.theme, stateFilters: normalizeStateFilters(this.state.stateFilters)});
@@ -53,6 +54,7 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
       if (options.dataViews?.[0] || (options.type & 2)) {
         const view = options.dataViews?.[0], mapped = mapTable(view?.table);
         this.rows = mapped.rows; this.missing = mapped.missing; this.unitMapped = mapped.unitMapped; this.stateMapped = mapped.stateMapped;
+        this.siteFieldLabel = mapped.siteFieldLabel;
         this.dispatchMapped = mapped.dispatchMapped;
         this.registrationMapped = mapped.registrationMapped;
         this.fallbackCountryMapped = mapped.fallbackCountryMapped;
