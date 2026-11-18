@@ -70,6 +70,16 @@ module.exports = async function checkSiteFilter(page, scope = page) {
     await annualPlanned.click();
     assert.deepEqual((await scope.locator('.ssRecordRow .ssSubmissionId').allTextContents()).sort(), ['ABO-1', 'ADJ-1', 'ADK-1', 'AJG-1', 'ARDG-1', 'SCARBOROUGH-1', 'SCARBOROUGH-2', 'YEAR-JAN', 'YEAR-DEC'].sort(), 'annual Details include distinct selected-site submissions from Jan through Dec only');
     await closeDetails();
+    const annualOverdue = scope.locator('.ssYearMetricHit[data-metric=overdue]');
+    const annualOverdueLabel = await annualOverdue.getAttribute('aria-label');
+    assert.match(annualOverdueLabel, /Overdue in calendar-year plan.*8/, 'annual overdue has its own scope label and count');
+    assert.doesNotMatch(annualOverdueLabel, /three.month/i);
+    await annualOverdue.click();
+    const annualOverdueHeading = await scope.locator('.ssDetails h3').textContent();
+    assert.match(annualOverdueHeading, /Calendar year 2026.*Overdue in calendar-year plan/);
+    assert.doesNotMatch(annualOverdueHeading, /three.month/i);
+    assert.deepEqual((await scope.locator('.ssRecordRow .ssSubmissionId').allTextContents()).sort(), ['ABO-1', 'ADJ-1', 'ADK-1', 'AJG-1', 'ARDG-1', 'SCARBOROUGH-1', 'SCARBOROUGH-2', 'YEAR-JAN'].sort(), 'annual overdue includes earlier months but excludes future dates and other years');
+    await closeDetails();
 
     await open();
     await search().fill('[Review]');
