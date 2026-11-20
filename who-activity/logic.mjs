@@ -1,7 +1,7 @@
 // Historical WHO activity: a submission belongs to SubID; an approval belongs to ROID.
 // Resolve identity dates before local filters, and allocate each activity only once.
 export const DEFAULT_SITES = Object.freeze(['ABO', 'ADJ', 'ADK', 'AJG', 'ARDG', 'Abbott Diagnostics Scarborough, Inc.']);
-export const ROLES = Object.freeze(['SubID', 'ROID', 'AppID', 'RegistrationID', 'Site', 'BusinessUnit', 'CommercialRegion', 'Product', 'SubmissionType', 'ActualSubmission', 'ActualApproval', 'AsOfDate', 'SubmissionURL', 'RegulatoryObjectiveURL', 'RegistrationURL', 'AppStatus', 'ROStatus', 'SubStatus', 'OriginalSubmission', 'LatestSubmission', 'OriginalApproval', 'LatestApproval', 'Country']);
+export const ROLES = Object.freeze(['SubID', 'ROID', 'AppID', 'RegistrationID', 'Site', 'BusinessUnit', 'CommercialRegion', 'Product', 'SubmissionType', 'ActualSubmission', 'ActualApproval', 'SubmissionURL', 'RegulatoryObjectiveURL', 'RegistrationURL', 'AppStatus', 'ROStatus', 'SubStatus', 'OriginalSubmission', 'LatestSubmission', 'OriginalApproval', 'LatestApproval', 'Country']);
 export const REQUIRED = Object.freeze(['CommercialRegion', 'Site']);
 export const STATE_ROLES = Object.freeze(['AppStatus', 'ROStatus', 'SubStatus']);
 const STATE_IDS = Object.freeze({AppStatus:'AppID', ROStatus:'ROID', SubStatus:'SubID'});
@@ -11,7 +11,7 @@ const DATE_BASES = Object.freeze({
   initial:{label:'Initial plan',submissions:'OriginalSubmission',approvals:'OriginalApproval'},
   lbe:{label:'LBE plan',submissions:'LatestSubmission',approvals:'LatestApproval'}
 });
-const DATE_LABELS = Object.freeze({ActualSubmission:'Actual submission date',ActualApproval:'Actual RO approval date',OriginalSubmission:'Initial planned submission date',OriginalApproval:'Initial planned RO approval date',LatestSubmission:'LBE planned submission date',LatestApproval:'LBE planned RO approval date',AsOfDate:'Data as-of date'});
+const DATE_LABELS = Object.freeze({ActualSubmission:'Actual submission date',ActualApproval:'Actual RO approval date',OriginalSubmission:'Initial planned submission date',OriginalApproval:'Initial planned RO approval date',LatestSubmission:'LBE planned submission date',LatestApproval:'LBE planned RO approval date'});
 // Exact states already used by the tracker/change dashboard. Unknown custom
 // states are retained, not classified as invalid or assumed to be complete.
 const MILESTONE_STATES = Object.freeze({submissions:new Set(['completed','ha received','sent to health authority','rejected']),approvals:new Set(['health authority approved','conditionally approved'])});
@@ -187,29 +187,21 @@ export function summarize(inputRows,options={}) {
       subIds:unique([row.SubID]),roIds:unique([row.ROID]),appIds:unique([row.AppID]),registrationIds:unique([row.RegistrationID]),products:unique([row.Product]),sites:unique([row.Site]),regions:unique([row.CommercialRegion]),
       site:clean(row.Site)||'Unassigned site',region:clean(row.CommercialRegion)||'Not recorded',rawSite:clean(row.Site),rawCommercialRegion:clean(row.CommercialRegion)},key);
   };
-  const previousDay=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())-DAY;
-  const suppliedAsOf=resolveDate(rows.map(row=>row.AsOfDate),mapped.AsOfDate,'data as-of');
-  const asOf=suppliedAsOf.kind==='date'?suppliedAsOf.day:previousDay;
-  const referenceSource=suppliedAsOf.kind==='date'?'Supplied extract date':'Previous-day reference (not source refresh time)';
-  const checkCoverage=[...Object.entries(DATE_BASES).flatMap(([,basis])=>['submissions','approvals'].map(metric=>({field:basis[metric],label:DATE_LABELS[basis[metric]],type:'date',mapped:mapped[basis[metric]],identityMapped:mapped[metric==='submissions'?'SubID':'ROID']}))),{field:'AsOfDate',label:DATE_LABELS.AsOfDate,type:'date',mapped:mapped.AsOfDate,identityMapped:true},...STATE_ROLES.map(field=>({field,label:STATE_LABELS[field],type:'state',mapped:mapped[field],identityMapped:mapped[STATE_IDS[field]]}))];
-  if(rows.length&&mapped.AsOfDate&&(suppliedAsOf.kind!=='date'||suppliedAsOf.day>previousDay+DAY)) {
-    const rawValues=rawDates(rows,'AsOfDate'),metadata={id:'Dataset',recordType:'dataset',field:'AsOfDate',rawValues:rawValues.slice(0,20),rawValueCount:rawValues.length};
-    if(suppliedAsOf.kind==='blank') addIssue({...metadata,kind:'missingDate',severity:'info',checkGroup:'notRecorded',message:'Data as-of date not recorded. Yesterday is used as a reference, not a source refresh timestamp.'});
-    else if(suppliedAsOf.kind==='issue') addIssue({...metadata,kind:'invalidDate',message:`${suppliedAsOf.reason}: data as-of date. Yesterday is used as a reference; verify the extract date.`});
-    else if(suppliedAsOf.day>previousDay+DAY) addIssue({...metadata,kind:'futureDate',date:suppliedAsOf.day,message:'Data as-of date is after today. The supplied cutoff is retained; verify that this is the intended reference date.'});
-  }
-  if(suppliedAsOf.kind==='issue') notices.push('The supplied as-of field has invalid or conflicting dates. Using yesterday as a reference, not an extract date.');
-  else if(suppliedAsOf.kind==='blank'||suppliedAsOf.kind==='unmapped') notices.push('No usable extract date supplied. As of yesterday is a reference, not source refresh time.');
+  // Convert the local calendar date before subtracting a day so DST changes
+  // cannot shift this reference. Legacy source as-of fields are ignored.
+  const asOf=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())-DAY;
+  const referenceSource='Previous-day reference (not source refresh time)';
+  const checkCoverage=[...Object.entries(DATE_BASES).flatMap(([,basis])=>['submissions','approvals'].map(metric=>({field:basis[metric],label:DATE_LABELS[basis[metric]],type:'date',mapped:mapped[basis[metric]],identityMapped:mapped[metric==='submissions'?'SubID':'ROID']}))),...STATE_ROLES.map(field=>({field,label:STATE_LABELS[field],type:'state',mapped:mapped[field],identityMapped:mapped[STATE_IDS[field]]}))];
   const unavailableMetrics={submissions:!mapped.SubID||!mapped[basisDateRoles.submissions],approvals:!mapped.ROID||!mapped[basisDateRoles.approvals]};
   const dateLabel=metric=>`${dateBasisLabel} ${metric==='submissions'?'submission':'RO approval'} date`;
   if(unavailableMetrics.submissions) notices.push(`Submissions unavailable: map Submission ID and ${dateLabel('submissions')} (${basisDateRoles.submissions}).`);
   if(unavailableMetrics.approvals) notices.push(`Approvals unavailable: map RO ID and ${dateLabel('approvals')} (${basisDateRoles.approvals}).`);
   const scopeUnavailable=REQUIRED.some(role=>!mapped[role]);
   for(const coverage of checkCoverage) {
-    const idRole=coverage.type==='state'?STATE_IDS[coverage.field]:coverage.field==='AsOfDate'?null:coverage.field.endsWith('Submission')?'SubID':'ROID';
-    const identityPresent=!idRole||rows.some(row=>clean(row[idRole]));
-    coverage.checked=coverage.mapped&&coverage.identityMapped&&rows.length>0&&identityPresent&&(!idRole||!scopeUnavailable);
-    coverage.reason=coverage.checked?'':!coverage.mapped?'Field not mapped':!coverage.identityMapped?'Owning ID field not mapped':!rows.length?'No data delivered':idRole&&scopeUnavailable?'Map required scope fields':!identityPresent?'No owning IDs delivered':'Not checked';
+    const idRole=coverage.type==='state'?STATE_IDS[coverage.field]:coverage.field.endsWith('Submission')?'SubID':'ROID';
+    const identityPresent=rows.some(row=>clean(row[idRole]));
+    coverage.checked=coverage.mapped&&coverage.identityMapped&&rows.length>0&&identityPresent&&!scopeUnavailable;
+    coverage.reason=coverage.checked?'':!coverage.mapped?'Field not mapped':!coverage.identityMapped?'Owning ID field not mapped':!rows.length?'No data delivered':scopeUnavailable?'Map required scope fields':!identityPresent?'No owning IDs delivered':'Not checked';
   }
   if(!mapped.CommercialRegion) notices.push('Map Commercial region. WHO is identified by its explicit commercial-region value; missing regions are not inferred to be WHO.');
   if(!mapped.Site) notices.push('Map the manufacturing site field before viewing activity by the six sites.');

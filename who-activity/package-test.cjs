@@ -6,10 +6,15 @@ const {boot}=require('./prepare-tests.cjs'),{runSuite}=require('./browser-test.c
   const metadata=JSON.parse(fs.readFileSync(path.join(__dirname,'powerbi','pbiviz.json'),'utf8'));
   const guid=metadata.visual.guid;
   const pkg=JSON.parse(fs.readFileSync(path.join(__dirname,'package-check','resources',guid+'.pbiviz.json'),'utf8'));
-  assert.equal(pkg.visual.guid,guid);assert.equal(pkg.visual.version,'1.1.1.0');
+  assert.equal(pkg.visual.guid,guid);assert.equal(pkg.visual.version,'1.1.2.0');
   assert.deepEqual(pkg.capabilities.privileges,[]);
   const {ROLES}=await import('./logic.mjs'),{sample,sixSiteSample}=await import('./demo.mjs');
   assert.deepEqual([...pkg.capabilities.dataRoles.map(role=>role.name)].sort(),[...ROLES].sort());
+  assert.equal(pkg.capabilities.dataRoles.some(role=>role.name==='AsOfDate'),false,'removed reference field is absent from the field well');
+  for(const mapping of pkg.capabilities.dataViewMappings){
+    assert.equal(mapping.table.rows.select.some(selection=>selection.for?.in==='AsOfDate'),false,'removed reference field is absent from table selections');
+    assert.equal(mapping.conditions.some(condition=>Object.hasOwn(condition,'AsOfDate')),false,'removed reference field is absent from mapping conditions');
+  }
   const harness=`const ROLES=${JSON.stringify(ROLES)};const sample=()=>${JSON.stringify(sample())};const sixSiteSample=()=>${JSON.stringify(sixSiteSample())};const Visual=function(options){return window.powerbi.visuals.plugins[${JSON.stringify(guid)}].create(options)};${boot()}`;
   const html='<!doctype html><html lang="en"><meta charset="utf-8"><title>WHO packaged runtime</title><style>body{margin:0;background:#171d23}#host{width:1440px;height:820px}#second{width:900px;height:650px}'+pkg.content.css+'</style><div id="host"></div><div id="second"></div><script>window.powerbi={};</script><script src="/package.js"></script><script>'+harness.replaceAll('</script','<\\/script')+'</script></html>';
   const server=http.createServer((req,res)=>{if(req.url==='/package.js')return res.writeHead(200,{'Content-Type':'text/javascript'}).end(pkg.content.js);if(req.url==='/')return res.writeHead(200,{'Content-Type':'text/html'}).end(html);res.writeHead(404).end()});

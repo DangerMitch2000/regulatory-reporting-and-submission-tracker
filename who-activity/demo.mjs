@@ -1,6 +1,5 @@
 // Entirely fictional fixtures. Dates stay fixed so preview screenshots are reproducible.
 export const DEMO_NOW = '2026-11-20T12:00:00Z';
-export const DEMO_AS_OF = '2026-11-18';
 export const DEMO_YEARS = [2025, 2026];
 export const SCARBOROUGH = 'Abbott Diagnostics Scarborough, Inc.';
 
@@ -26,7 +25,6 @@ function makeSite(site, code, submissions, approvals) {
         OriginalApproval: `${year}-${month}-15`, LatestApproval: `${year}-${month}-20`,
         ActualSubmission: i < submissions[yi] ? `${year}-${month}-05` : null,
         ActualApproval: i < approvals[yi] ? `${year}-${month}-21` : null,
-        AsOfDate: DEMO_AS_OF,
         SubmissionURL: `https://example.com/fictional/submissions/${suffix}`,
         RegulatoryObjectiveURL: `https://example.com/fictional/ros/${suffix}`,
         RegistrationURL: `https://example.com/fictional/registrations/${suffix}`
@@ -48,7 +46,7 @@ export function sample() {
   const inactive = ['ADJ', 'AJG', 'ARDG'].map(site => ({
     SubID: `DEMO-SUB-${site}-UNDATED`, ROID: `DEMO-RO-${site}-UNDATED`,
     Site: site, BusinessUnit: 'ID', CommercialRegion: 'WHO', Country: '',
-    ActualSubmission: null, ActualApproval: null, AsOfDate: DEMO_AS_OF,
+    ActualSubmission: null, ActualApproval: null,
     AppStatus: 'Active', ROStatus: 'Planned', SubStatus: 'Planned',
     OriginalSubmission: null, LatestSubmission: null, OriginalApproval: null, LatestApproval: null,
     Product: 'Fictional assay Alpha', SubmissionType: 'Initial application'

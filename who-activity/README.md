@@ -1,8 +1,8 @@
-# Submissions & Approvals 1.1.1
+# Submissions & Approvals 1.1.2
 
-Compare submissions and RO approvals across two calendar years using **Actual**, **Initial plan**, or **LBE plan** dates. LBE means Latest Best Estimate for both submissions and approvals. Previously named WHO Submissions & Approvals; version 1.1.1 keeps the same visual identity and existing field mappings so it replaces the earlier visual on import. The visual opens on **Actuals**, **Commercial region = WHO**, **Business unit = ID**, the six standard sites and unassigned sites. Country and current-state filters default to All. Years default to the previous and current calendar years; Actuals use year-to-date activity, while plan views cover the full selected years.
+Compare submissions and RO approvals across two calendar years using **Actual**, **Initial plan**, or **LBE plan** dates. LBE means Latest Best Estimate for both submissions and approvals. Previously named WHO Submissions & Approvals; version 1.1.2 keeps the same visual identity and remaining field mappings so it replaces the earlier visual on import. The visual opens on **Actuals**, **Commercial region = WHO**, **Business unit = ID**, the six standard sites and unassigned sites. Country and current-state filters default to All. Years default to the previous and current calendar years; Actuals use year-to-date activity, while plan views cover the full selected years.
 
-[Download the Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/who-activity-v1.1.1/submissions-approvals-1.1.1.0.pbiviz) · [Interactive demo with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/who-activity/preview.html) · [All visuals](../README.md)
+[Download the Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/who-activity-v1.1.2/submissions-approvals-1.1.2.0.pbiviz) · [Interactive demo with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/who-activity/preview.html) · [All visuals](../README.md)
 
 ## Install and map fields
 
@@ -28,11 +28,10 @@ Import the `.pbiviz` through **Visualizations → Import a visual from a file** 
 | Country | The tracker's Country field: application's lead-market country | Optional filter and Details; separate from Commercial region. |
 | Submission type | Submission type | Optional filter. |
 | Application ID / Registration ID | Linked record IDs | Optional Details and reconciliation. |
-| Data as-of date | One consistent extraction/reference date | Optional; otherwise yesterday is clearly labelled as a reference date, not a refresh timestamp. |
 | Submission URL / RO URL | Corresponding platform URLs | Optional HTTPS links opened by clicking the submission or RO ID in Details. |
 | Registration URL | Registration platform URL | Retained as an optional mapping for compatibility; the activity table opens submission and RO records. |
 
-An unmapped ID or selected date field makes its metric **Unavailable**, rather than presenting a misleading zero. Map the ID and date for each metric/basis you want to measure. The other metric can work independently. Existing reports can keep their current mappings; add the eight optional country, state and planned-date fields to enable the new controls and Details values.
+An unmapped ID or selected date field makes its metric **Unavailable**, rather than presenting a misleading zero. Map the ID and date for each metric/basis you want to measure. The other metric can work independently. Existing reports can keep the mappings for retained fields; add the eight optional country, state and planned-date fields to enable the new controls and Details values.
 
 ## What is counted in Actuals
 
@@ -42,7 +41,8 @@ An unmapped ID or selected date field makes its metric **Unavailable**, rather t
 - Existing actual dates remain historical evidence even when a record is now closed or archived. States never manufacture an approval date or year.
 - Dates are resolved across all delivered rows for each identity before local filters are applied. Conflicting or invalid actual dates are excluded from that metric and listed for review; an independent valid metric can still count.
 - A RO can legitimately have several child submissions. Different dates on those submissions do not invalidate its approval.
-- Actual dates after the reference date are excluded and flagged. Dates display as `20 Nov 2026`; day-first source text and ISO dates are supported without guessing ambiguous month-first input.
+- Yesterday is always the reference date. Actual dates after yesterday are excluded and flagged. The footer labels this as a previous-day reference, not a source refresh timestamp. No Data as-of date field needs to be mapped; this optional field was removed in 1.1.2, and legacy values do not override the reference.
+- Dates display as `20 Nov 2026`; day-first source text and ISO dates are supported without guessing ambiguous month-first input.
 
 ## Initial plan and LBE plan
 
@@ -78,9 +78,9 @@ Data checks expose missing links/IDs, blank site/region values, unusable dates a
 
 ## Review all dates and states
 
-Data checks examine all mapped Actual, Initial plan and LBE dates for submissions and RO approvals, plus Data as-of date and the three current-state fields. Changing the chart's Date basis does not hide checks for the other date fields. Field coverage shows which dates and states can actually be checked; unmapped fields or missing identity mappings are identified explicitly.
+Data checks examine all six mapped Actual, Initial plan and LBE dates for submissions and RO approvals, plus the three current-state fields. Changing the chart's Date basis does not hide checks for the other date fields. Field coverage shows which dates and states can actually be checked; unmapped fields or missing identity mappings are identified explicitly. There is no check or mapping requirement for a Data as-of date field.
 
-**Needs review** includes invalid or conflicting dates, actual dates after the as-of cutoff, conflicting states for the same record ID, and supported state/date inconsistencies. A clearly completed submission or approved RO without its actual date needs review. **Information** includes missing plans or states and missing actual dates without conclusive completion evidence. Clearly pending work is labelled as such. These checks never invent dates, replace missing values, or change the activity-counting rules. Future planned dates are valid. Closed or archived records can legitimately retain historical actual dates.
+**Needs review** includes invalid or conflicting dates, actual dates after the previous-day reference, conflicting states for the same record ID, and supported state/date inconsistencies. A clearly completed submission or approved RO without its actual date needs review. **Information** includes missing plans or states and missing actual dates without conclusive completion evidence. Clearly pending work is labelled as such. These checks never invent dates, replace missing values, or change the activity-counting rules. Future planned dates are valid. Closed or archived records can legitimately retain historical actual dates.
 
 The totals distinguish **check entries** from **distinct identified records**. One record can have several checks, and anonymous source rows cannot establish distinct records. Checks cover delivered data in the applicable filter scope across all years, including undated records; they are not a count of excluded records from the two chart years. Blank region and site coverage checks can also remain visible separately from the chart's counted groups.
 

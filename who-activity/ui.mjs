@@ -4,9 +4,9 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 const METRICS = { submissions: 'Submissions', approvals: 'Approvals' };
 const UI_DATE_BASES = { actual: 'Actual', initial: 'Initial plan', lbe: 'LBE plan' };
 const STATE_FIELDS = [['AppStatus', 'Application state', 'App'], ['ROStatus', 'RO state', 'RO'], ['SubStatus', 'Submission state', 'Sub']];
-const UI_CHECK_FIELDS = { ActualSubmission: 'Actual submission date', ActualApproval: 'Actual RO approval date', OriginalSubmission: 'Initial planned submission date', LatestSubmission: 'LBE planned submission date', OriginalApproval: 'Initial planned RO approval date', LatestApproval: 'LBE planned RO approval date', AsOfDate: 'Data as-of date', AppStatus: 'Application state', ROStatus: 'RO state', SubStatus: 'Submission state', Site: 'Manufacturing site', CommercialRegion: 'Commercial region', SubID: 'Submission ID', ROID: 'RO ID', AppID: 'Application ID' };
+const UI_CHECK_FIELDS = { ActualSubmission: 'Actual submission date', ActualApproval: 'Actual RO approval date', OriginalSubmission: 'Initial planned submission date', LatestSubmission: 'LBE planned submission date', OriginalApproval: 'Initial planned RO approval date', LatestApproval: 'LBE planned RO approval date', AppStatus: 'Application state', ROStatus: 'RO state', SubStatus: 'Submission state', Site: 'Manufacturing site', CommercialRegion: 'Commercial region', SubID: 'Submission ID', ROID: 'RO ID', AppID: 'Application ID' };
 const UI_CHECK_KINDS = { missingDate: 'Date not recorded', invalidDate: 'Date needs review', invalidPlanDate: 'Plan date needs review', futureDate: 'Actual date after reference', conflictingState: 'Conflicting states', missingState: 'State not recorded', stateDateMismatch: 'State and date differ', unclassifiedRegion: 'Commercial region not recorded', missingRegion: 'Commercial region not recorded', missingSite: 'Manufacturing site blank', missingID: 'Record ID not recorded', multipleSites: 'Multiple manufacturing sites', multipleRegions: 'Multiple commercial regions' };
-const uiCheckLabel = record => record.field === 'AsOfDate' && record.kind === 'futureDate' ? 'Reference date after today' : record.checkGroup === 'expectedPending' ? 'Expected pending date' : UI_CHECK_KINDS[record.kind] || String(record.kind || 'Check').replace(/([a-z])([A-Z])/g, '$1 $2');
+const uiCheckLabel = record => record.checkGroup === 'expectedPending' ? 'Expected pending date' : UI_CHECK_KINDS[record.kind] || String(record.kind || 'Check').replace(/([a-z])([A-Z])/g, '$1 $2');
 const uiCheckType = record => ({ submission: 'Submission', ro: 'RO', application: 'Application', dataset: 'Dataset', source: 'Source row' }[record.recordType] || METRICS[record.metric] || 'Record');
 const uiCheckSeverity = record => record.severity === 'info' ? 'info' : 'review';
 const uiCheckPriority = record => uiCheckSeverity(record) === 'info' ? 'Information' : 'Needs review';
@@ -464,7 +464,7 @@ export function render(root, rows, options = {}) {
         };
         if (record.field || record.rawValues) {
           if (record.field) evidenceField('Source field', record.field);
-          evidenceField(STATE_FIELDS.some(([role]) => role === record.field) ? 'Raw state values' : /Submission|Approval|AsOfDate/.test(record.field || '') ? 'Raw date values' : 'Raw values', record.rawValues || [], record.rawValueCount);
+          evidenceField(STATE_FIELDS.some(([role]) => role === record.field) ? 'Raw state values' : /Submission|Approval/.test(record.field || '') ? 'Raw date values' : 'Raw values', record.rawValues || [], record.rawValueCount);
         }
         if (record.stateValues) evidenceField('Current states', record.stateValues);
         if (record.dateBasis) evidenceField('Date basis', UI_DATE_BASES[record.dateBasis] || record.dateBasis);

@@ -4,7 +4,7 @@ import {DEFAULT_SITES,ROLES,REQUIRED,defaultState,normalizeState,mapTable,summar
 
 const now=new Date('2026-11-20T12:00:00Z');
 const mapped=Object.fromEntries(ROLES.map(role=>[role,true]));
-const row=(overrides={})=>({...Object.fromEntries(ROLES.map(role=>[role,null])),SubID:'SUB-1',ROID:'RO-1',AppID:'APP-1',RegistrationID:'REG-1',Site:'ABO',BusinessUnit:'ID',CommercialRegion:'WHO',Product:'Product A',SubmissionType:'Initial',ActualSubmission:'2025-03-01',ActualApproval:'2026-02-01',AsOfDate:'2026-11-18',...overrides});
+const row=(overrides={})=>({...Object.fromEntries(ROLES.map(role=>[role,null])),SubID:'SUB-1',ROID:'RO-1',AppID:'APP-1',RegistrationID:'REG-1',Site:'ABO',BusinessUnit:'ID',CommercialRegion:'WHO',Product:'Product A',SubmissionType:'Initial',ActualSubmission:'2025-03-01',ActualApproval:'2026-02-01',...overrides});
 const summary=(rows,options={})=>summarize(rows,{now,mapped,...options});
 const sum=values=>values.reduce((a,b)=>a+b,0);
 function reconciles(result) {
@@ -169,23 +169,27 @@ test('a blank repeated dimension does not override a usable linked site/region',
   assert.ok(bothBlank.issues.some(issue=>issue.kind==='unclassifiedRegion'));
 });
 
-test('supplied extract cutoff excludes future actuals independently',()=>{
-  const result=summary([row({ActualSubmission:'2026-11-19',ActualApproval:'2026-11-18'})]);
-  assert.equal(result.asOfLabel,'18 Nov 2026'); assert.equal(result.referenceSource,'Supplied extract date');
+test('previous-day reference includes yesterday and excludes later actuals independently',()=>{
+  const result=summary([row({ActualSubmission:'2026-11-20',ActualApproval:'2026-11-19'})]);
+  assert.equal(result.asOfLabel,'19 Nov 2026'); assert.equal(result.referenceSource,'Previous-day reference (not source refresh time)');
   assert.deepEqual(result.totals,{submissions:[0,0],approvals:[0,1]});
   assert.ok(result.issues.some(issue=>issue.metric==='submissions'&&issue.kind==='futureDate'));
+  const reverse=summary([row({ActualSubmission:'2026-11-19',ActualApproval:'2026-11-21'})]);
+  assert.deepEqual(reverse.totals,{submissions:[0,1],approvals:[0,0]});
+  assert.ok(reverse.issues.some(issue=>issue.metric==='approvals'&&issue.kind==='futureDate'));
 });
 
-test('missing or invalid/conflicting extract date explicitly uses yesterday reference',()=>{
-  for(const rows of [[row({AsOfDate:null})],[row({AsOfDate:'bad'})],[row(),row({AsOfDate:'2026-11-17'})]]) {
-    const result=summary(rows); assert.equal(result.asOfLabel,'19 Nov 2026');
-    assert.equal(result.referenceSource,'Previous-day reference (not source refresh time)');
-    assert.ok(result.notices.some(value=>/reference|extract date/.test(value)));
+test('previous-day reference follows local calendar boundaries without subtracting local elapsed hours',()=>{
+  for(const [localNow,expected,actual] of [
+    [new Date(2027,0,1,0,30),'31 Dec 2026','2026-12-31'],
+    [new Date(2026,2,30,0,30),'29 Mar 2026','2026-03-29'],
+    [new Date(2026,9,26,0,30),'25 Oct 2026','2026-10-25']
+  ]) {
+    const result=summarize([row({ActualSubmission:actual,ActualApproval:null})],{now:localNow,mapped});
+    assert.equal(result.asOfLabel,expected); assert.equal(result.asOf,parseDay(actual).day);
+    assert.equal(sum(result.totals.submissions),1);
+    assert.equal(result.issues.some(issue=>issue.field==='ActualSubmission'),false);
   }
-  const noMapped=summary([row()],{mapped:{...mapped,AsOfDate:false}});
-  assert.equal(noMapped.asOfLabel,'19 Nov 2026');
-  const yearTurn=summarize([row({ActualSubmission:'2026-12-31',ActualApproval:null,AsOfDate:null})],{now:new Date('2027-01-01T12:00:00Z'),mapped});
-  assert.equal(yearTurn.asOfLabel,'31 Dec 2026'); assert.deepEqual(yearTurn.totals.submissions,[1,0]);
 });
 
 test('required mappings fail closed; unavailable independent metric shown explicitly',()=>{
@@ -232,6 +236,20 @@ test('mapTable maps exact roles and reports missing requirements; duplicate role
   assert.deepEqual(mapTable({columns:[],rows:[]}).missing,REQUIRED);
   assert.throws(()=>mapTable({...table,columns:[...table.columns,{roles:{Site:true}}]}),/only one field/);
   assert.equal(summary([row()],{mapped:new Set(ROLES)}).events.length,2);
+});
+
+test('mapTable ignores a legacy as-of column without shifting any current role',()=>{
+  const record=row({ActualSubmission:'2026-11-19',ActualApproval:'2026-11-18',OriginalSubmission:'2026-08-01',LatestSubmission:'2026-11-01',OriginalApproval:'2026-10-01',LatestApproval:'2026-11-17',Country:'Ireland',SubStatus:'Completed',ROStatus:'Health Authority Approved',AppStatus:'Active'});
+  const columns=ROLES.map(role=>({displayName:`Source ${role}`,roles:{[role]:true}}));
+  const values=ROLES.map(role=>record[role]);
+  const expected=mapTable({columns,rows:[values]});
+  const legacy=mapTable({columns:[{displayName:'Old reference',roles:{AsOfDate:true}},...columns],rows:[['invalid legacy value',...values]]});
+  assert.deepEqual(legacy,expected);
+  assert.deepEqual(legacy.rows[0],record);
+  assert.equal(Object.hasOwn(legacy.rows[0],'AsOfDate'),false);
+  assert.equal(Object.hasOwn(legacy.mapped,'AsOfDate'),false);
+  assert.equal(Object.hasOwn(legacy.labels,'AsOfDate'),false);
+  assert.deepEqual(summary(legacy.rows,{mapped:legacy.mapped}).totals,{submissions:[0,1],approvals:[0,1]});
 });
 
 test('planning and state controls default to actual history and all current states',()=>{
@@ -380,14 +398,14 @@ test('country filters coexist with dimensions and distinguish unknown from known
 });
 
 test('all mapped milestone dates are audited independently of the selected chart basis',()=>{
-  const rows=[row({ActualSubmission:'2026-11-19',OriginalSubmission:'bad baseline',LatestSubmission:'',ActualApproval:'2026-02-30',OriginalApproval:'',LatestApproval:'2026-12-01',AppStatus:'Active',ROStatus:'Health Authority Approved',SubStatus:'Completed'})];
+  const rows=[row({ActualSubmission:'2026-11-20',OriginalSubmission:'bad baseline',LatestSubmission:'',ActualApproval:'2026-02-30',OriginalApproval:'',LatestApproval:'2026-12-01',AppStatus:'Active',ROStatus:'Health Authority Approved',SubStatus:'Completed'})];
   const results=['actual','initial','lbe'].map(dateBasis=>summary(rows,{dateBasis}));
   const signature=result=>result.issues.map(issue=>[issue.id,issue.kind,issue.field,issue.severity,issue.checkGroup,issue.message]);
   assert.deepEqual(signature(results[0]),signature(results[1])); assert.deepEqual(signature(results[0]),signature(results[2]));
   assert.equal(results[0].issues.length,5);
   assert.deepEqual(results[0].issues.filter(issue=>issue.severity==='review').map(issue=>issue.field).sort(),['ActualApproval','ActualSubmission','OriginalSubmission']);
   assert.deepEqual(results[2].totals,{submissions:[0,0],approvals:[0,1]},'future plan still counts independently');
-  assert.ok(results[0].checkCoverage.every(field=>field.checked)); assert.equal(results[0].checkCoverage.length,10);
+  assert.ok(results[0].checkCoverage.every(field=>field.checked)); assert.equal(results[0].checkCoverage.length,9);
   for(const result of results) reconciles(result);
 });
 
@@ -422,20 +440,25 @@ test('current planned states with actual dates are reviewable without discarding
   assert.deepEqual(historical.totals,result.totals);
 });
 
-test('as-of checks are global once and excluded from identified or unidentified record totals',()=>{
-  for(const value of [null,'bad']) {
-    const result=summary([row({AsOfDate:value}),row({AsOfDate:value})],{mapped:{...mapped,ActualSubmission:false,ActualApproval:false},dateBasis:'actual'});
-    const checks=result.issues.filter(issue=>issue.field==='AsOfDate');
-    assert.equal(checks.length,1); assert.equal(checks[0].recordType,'dataset');
-    assert.equal(checks[0].severity,value==null?'info':'review'); assert.equal(result.issuesSummary.datasetCount,1);
-    assert.equal(result.issuesSummary.unidentifiedCount,0); assert.equal(result.issuesSummary.recordCount,3);
+test('legacy as-of values and mappings never alter the cutoff, activity or checks',()=>{
+  assert.equal(ROLES.includes('AsOfDate'),false);
+  const base=row({ActualSubmission:'2026-11-19',ActualApproval:'2026-11-20'});
+  const expected=summary([base,base]);
+  for(const values of [[null,null],['bad','bad'],['2026-11-21','2026-11-21'],['2026-11-17','2026-11-18']]) {
+    for(const legacyMapped of [true,false]) {
+      const result=summary(values.map(AsOfDate=>({...base,AsOfDate})),{mapped:{...mapped,AsOfDate:legacyMapped}});
+      for(const field of ['asOf','asOfLabel','referenceSource','totals','events','issues','issuesSummary','checkCoverage','notices','mapped']) {
+        assert.deepEqual(result[field],expected[field],`obsolete source fields must not affect ${field}`);
+      }
+    }
   }
-  const conflict=summary([row(),row({AsOfDate:'2026-11-17'})]);
-  assert.equal(conflict.issues.filter(issue=>issue.field==='AsOfDate').length,1);
-  assert.match(conflict.issues.find(issue=>issue.field==='AsOfDate').message,/Conflicting data as-of dates/);
-  assert.equal(conflict.asOfLabel,'19 Nov 2026');
-  const future=summary([row({AsOfDate:'2026-11-21'})]);
-  assert.equal(future.issues.find(issue=>issue.field==='AsOfDate').kind,'futureDate'); assert.equal(future.asOfLabel,'21 Nov 2026','audit does not silently change supplied cutoff');
+  assert.equal(expected.asOfLabel,'19 Nov 2026');
+  assert.deepEqual(expected.totals,{submissions:[0,1],approvals:[0,0]});
+  assert.equal(expected.issues.some(issue=>issue.field==='AsOfDate'||issue.recordType==='dataset'),false);
+  assert.equal(expected.issuesSummary.datasetCount,0);
+  assert.equal(expected.notices.some(value=>/as.of|extract date|source refresh/i.test(value)),false);
+  assert.equal(expected.checkCoverage.filter(field=>field.type==='date').length,6);
+  assert.equal(expected.checkCoverage.filter(field=>field.type==='state').length,3);
 });
 
 test('lone application and RO states are checked without requiring a selected milestone date',()=>{
@@ -448,11 +471,11 @@ test('lone application and RO states are checked without requiring a selected mi
 });
 
 test('typed issue counts deduplicate joined evidence while preserving all checked fields',()=>{
-  const base=row({SubID:'SAME',ROID:'SAME',AppID:'SAME',ActualSubmission:null,ActualApproval:null,AsOfDate:null});
+  const base=row({SubID:'SAME',ROID:'SAME',AppID:'SAME',ActualSubmission:null,ActualApproval:null});
   const result=summary([base,{...base,RegistrationID:'REG-2'},base]);
   assert.equal(result.issuesSummary.recordCount,3,'typed identities prevent one text ID merging three record types');
-  assert.equal(result.issuesSummary.total,10,'six date blanks, three state blanks and one global reference blank');
-  assert.equal(result.issuesSummary.review,0);assert.equal(result.issuesSummary.info,10);assert.equal(result.issuesSummary.datasetCount,1);
+  assert.equal(result.issuesSummary.total,9,'six date blanks and three state blanks');
+  assert.equal(result.issuesSummary.review,0);assert.equal(result.issuesSummary.info,9);assert.equal(result.issuesSummary.datasetCount,0);
   const known=summary([row({AppStatus:'Active',SubStatus:'Completed',ROStatus:'Health Authority Approved',OriginalSubmission:'2025-01-01',LatestSubmission:'2025-02-01',OriginalApproval:'2026-01-01',LatestApproval:'2026-01-15'}),row()]);
   assert.equal(known.issues.filter(issue=>issue.kind==='missingState'||issue.kind==='conflictingState'||issue.kind==='missingDate').length,0,'blank repeat joins do not conceal recorded identity evidence');
 });
@@ -471,7 +494,7 @@ test('missing owner IDs retain bounded raw source date/state examples without fa
 
 test('coverage distinguishes unmapped fields, missing identities, unavailable scope and no delivered data',()=>{
   const noScope=summary([row()],{mapped:{...mapped,Site:false}});
-  assert.equal(noScope.checkCoverage.filter(field=>field.checked).length,1);assert.equal(noScope.checkCoverage.find(field=>field.checked).field,'AsOfDate');
+  assert.equal(noScope.checkCoverage.filter(field=>field.checked).length,0);
   assert.equal(noScope.checkCoverage.find(field=>field.field==='AppStatus').reason,'Map required scope fields');
   const noID=summary([row()],{mapped:{...mapped,AppID:false}});
   assert.equal(noID.checkCoverage.find(field=>field.field==='AppStatus').reason,'Owning ID field not mapped');

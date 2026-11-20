@@ -1,14 +1,12 @@
-# Submissions & Approvals 1.1.1
+# Submissions & Approvals 1.1.2
 
-Data checks now review every mapped date and current state, independently of the chart's selected date basis.
+Removes the optional Data as-of date field from the Power BI field wells and data mapping.
 
-- Checks all six Actual, Initial and LBE milestone dates, Data as-of date, and Application/RO/Submission states.
-- Separates Needs review from Information, including expected pending work and unrecorded optional information.
-- Shows field coverage and distinguishes check entries from distinct identified records.
-- Preserves actual-date evidence, valid future plans and existing distinct submission/RO totals.
-- Adds a filtered Copy checks table for reviewing all pages in a spreadsheet, alongside raw source evidence and Copy IDs.
-- Clarifies that checks cover delivered records across all years, not just the chart's two-year totals.
+- Yesterday is always the reference date, clearly labelled as a reference rather than a source refresh timestamp.
+- Removed extract-date checks and field-coverage entries. Data checks continue to cover the six milestone date fields and three current states.
+- Legacy as-of values cannot override the cutoff. Actual dates after yesterday remain excluded; valid future Initial and LBE plans remain eligible.
+- Other field wells, the visual identity, filtering and distinct Submission/RO counting rules remain unchanged.
 
-Import this package to replace the existing visual. No new field wells are required; the visual identity and existing mappings are retained. Map the optional dates and states to include them in the checks. These are review prompts, not automatic changes to Velocity data.
+Import this package to replace the existing visual. The removed field no longer needs to be mapped. The README explains the reference-date behavior.
 
 The demo uses fictional data. This remains an uncertified preview; screenshot mode does not enable native Power BI PowerPoint/PDF export.

@@ -1,6 +1,7 @@
 const assert=require('node:assert/strict'),http=require('node:http'),fs=require('node:fs'),path=require('node:path');
 
 async function runSuite(page,url,{screenshots=false,label='source'}={}) {
+  const {ROLES}=await import('./logic.mjs');
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.clock.setFixedTime(new Date('2026-11-20T12:00:00Z'));
   await page.goto(url);await page.waitForSelector('body[data-ready=true]').catch(error=>{throw new Error(`${error.message}\nPage errors: ${errors.join('\n')}`)});
@@ -92,7 +93,7 @@ async function runSuite(page,url,{screenshots=false,label='source'}={}) {
 
   // Dates, identity and assignment: status-only records never create historical milestones.
   await page.evaluate(()=>{
-    const base={Site:'ABO',BusinessUnit:'ID',CommercialRegion:'WHO',AsOfDate:'2026-11-18'};
+    const base={Site:'ABO',BusinessUnit:'ID',CommercialRegion:'WHO'};
     const rows=[
       {...base,SubID:'CROSS-YEAR',ROID:'RO-CROSS-YEAR',ActualSubmission:'2025-03-04',ActualApproval:'2026-04-05'},
       {...base,SubID:'OLDER-SUB',ROID:'RO-OLDER-SUB',ActualSubmission:'2024-12-05',ActualApproval:'2026-05-06'},
@@ -135,7 +136,7 @@ async function runSuite(page,url,{screenshots=false,label='source'}={}) {
   assert.equal(await card('approvals',2026).isDisabled(),true);assert.equal(await card('submissions',2026).isDisabled(),false);
   await page.evaluate(()=>testApi.reset(testApi.sample(),{omit:['ActualSubmission']}));
   assert.equal(await card('submissions',2026).isDisabled(),true);assert.equal(await card('approvals',2026).isDisabled(),false);
-  await page.evaluate(()=>testApi.reset([{SubID:'CUSTOM-REGION',ROID:'RO-CUSTOM-REGION',Site:'ADK',BusinessUnit:'ID',CommercialRegion:'WHO regional programme',ActualSubmission:'2026-03-01',ActualApproval:'2026-04-01',AsOfDate:'2026-11-18'}]));
+  await page.evaluate(()=>testApi.reset([{SubID:'CUSTOM-REGION',ROID:'RO-CUSTOM-REGION',Site:'ADK',BusinessUnit:'ID',CommercialRegion:'WHO regional programme',ActualSubmission:'2026-03-01',ActualApproval:'2026-04-01'}]));
   await counts([0,0],[0,0]);
   await main.getByTestId('filter-region').selectOption('WHO regional programme');
   await counts([0,1],[0,1]);
@@ -143,7 +144,7 @@ async function runSuite(page,url,{screenshots=false,label='source'}={}) {
   // Optional planning fields do not redefine the actual milestone history. Each
   // metric selects its own dates, deduplicates its own ID and retains provenance.
   await page.evaluate(()=>{
-    const base={Site:'ABO',BusinessUnit:'ID',CommercialRegion:'WHO',AsOfDate:'2026-11-18',Country:'Ireland'};
+    const base={Site:'ABO',BusinessUnit:'ID',CommercialRegion:'WHO',Country:'Ireland'};
     const rows=[
       {...base,SubID:'PLAN-A',ROID:'RO-PLAN-A',AppID:'APP-PLAN-A',AppStatus:'Archived',ROStatus:'Closed',SubStatus:'Completed',ActualSubmission:'2026-02-03',ActualApproval:'2026-04-05',OriginalSubmission:'2025-11-01',LatestSubmission:'2026-01-15',OriginalApproval:'2025-12-01',LatestApproval:'2026-03-01'},
       {...base,SubID:'PLAN-B',ROID:'RO-PLAN-B',AppID:'APP-PLAN-B',AppStatus:'Active',ROStatus:'In Progress',SubStatus:'Planned',ActualSubmission:null,ActualApproval:null,OriginalSubmission:'2026-12-01',LatestSubmission:'2026-12-20',OriginalApproval:'2026-12-05',LatestApproval:'2026-12-25',Country:'France'},
@@ -228,7 +229,7 @@ async function runSuite(page,url,{screenshots=false,label='source'}={}) {
   // Data checks audit every mapped date/state independently of the chosen chart
   // basis. The review table makes informational blanks distinct from exclusions.
   await page.evaluate(()=>{
-    const good=id=>({SubID:id,ROID:'RO-'+id,AppID:'APP-'+id,Site:'ABO',BusinessUnit:'ID',CommercialRegion:'WHO',Country:'Ireland',AsOfDate:'2026-11-18',AppStatus:'Active',ROStatus:'Health Authority Approved',SubStatus:'Completed',ActualSubmission:'2026-02-01',ActualApproval:'2026-03-01',OriginalSubmission:'2026-01-10',LatestSubmission:'2026-01-20',OriginalApproval:'2026-02-10',LatestApproval:'2026-02-20'});
+    const good=id=>({SubID:id,ROID:'RO-'+id,AppID:'APP-'+id,Site:'ABO',BusinessUnit:'ID',CommercialRegion:'WHO',Country:'Ireland',AppStatus:'Active',ROStatus:'Health Authority Approved',SubStatus:'Completed',ActualSubmission:'2026-02-01',ActualApproval:'2026-03-01',OriginalSubmission:'2026-01-10',LatestSubmission:'2026-01-20',OriginalApproval:'2026-02-10',LatestApproval:'2026-02-20'});
     const rows=[
       {...good('AUDIT-ACTUAL'),ActualSubmission:'31/02/2026'},
       {...good('AUDIT-INITIAL'),OriginalSubmission:'31/02/2026'},
@@ -240,7 +241,7 @@ async function runSuite(page,url,{screenshots=false,label='source'}={}) {
       {...good('AUDIT-CONFLICT'),SubStatus:'Completed'},
       {...good('AUDIT-CONFLICT'),SubStatus:'Planned'},
       {...good('AUDIT-BLANK-STATES'),AppStatus:null,ROStatus:null,SubStatus:null},
-      {AppID:'APP-AUDIT-LONE',AppStatus:null,Site:'ABO',BusinessUnit:'ID',CommercialRegion:'WHO',Country:'Ireland',AsOfDate:'2026-11-18'},
+      {AppID:'APP-AUDIT-LONE',AppStatus:null,Site:'ABO',BusinessUnit:'ID',CommercialRegion:'WHO',Country:'Ireland'},
       {...good('AUDIT-LONE-RO'),SubID:null,SubStatus:null,ROStatus:null,ActualSubmission:null,OriginalSubmission:null,LatestSubmission:null},
       {...good('AUDIT-CUSTOM'),AppStatus:'Custom active',ROStatus:'Regional handoff',SubStatus:'Sponsor review'},
       ...Array.from({length:25},(_,i)=>({...good((i===0?'=':'')+'COPY-'+String(i).padStart(2,'0')),OriginalSubmission:null,...(i===1?{SubStatus:'=Custom state'}:{})}))
@@ -324,7 +325,7 @@ async function runSuite(page,url,{screenshots=false,label='source'}={}) {
   assert.equal(await detail.locator('[data-check-field="OriginalSubmission"][data-check-kind="invalidPlanDate"]').count(),1,'unmapped actual metric does not disable mapped plan checks');
   assert.match(await detail.getByTestId('check-coverage').textContent(),/not mapped|unmapped/i);
   await page.evaluate(()=>{
-    const pending={SubID:'COUNT-SUB',ROID:'COUNT-RO',AppID:'COUNT-APP',SubStatus:'Planned',ROStatus:'Planned',AppStatus:'Active',Site:'ABO',BusinessUnit:'ID',CommercialRegion:'WHO',AsOfDate:'2026-11-18'};
+    const pending={SubID:'COUNT-SUB',ROID:'COUNT-RO',AppID:'COUNT-APP',SubStatus:'Planned',ROStatus:'Planned',AppStatus:'Active',Site:'ABO',BusinessUnit:'ID',CommercialRegion:'WHO'};
     testApi.reset(Array.from({length:30},()=>({...pending})));
   });
   await main.getByTestId('data-checks').click();
@@ -332,15 +333,32 @@ async function runSuite(page,url,{screenshots=false,label='source'}={}) {
   assert.match(await detail.getByTestId('check-summary').textContent(),/0 need review/);
   assert.match(await detail.getByTestId('check-summary').textContent(),/6 information/);
   assert.match(await detail.getByTestId('check-summary').textContent(),/2 identified records/,'six missing-date check entries refer to two distinct owning records');
-  await page.evaluate(()=>testApi.reset(window.auditRows.map(row=>({...row,AsOfDate:'bad date'}))));
-  await main.getByTestId('data-checks').click();await checkSearch.fill('AsOfDate');
-  assert.equal(await detail.locator('[data-check-field="AsOfDate"]').count(),1,'extract-date validation is a single dataset check, not one per row');
-  await page.evaluate(()=>testApi.reset(window.auditRows.map(row=>({...row,AsOfDate:'2026-12-01'}))));
-  await main.getByTestId('data-checks').click();await checkSearch.fill('AsOfDate');
-  assert.equal(await detail.locator('[data-check-field="AsOfDate"][data-check-kind="futureDate"]').count(),1,'future reference date is reviewed separately from actual milestone dates');
-  await page.evaluate(()=>testApi.reset(window.auditRows,{omit:['AppStatus','ROStatus','SubStatus','AsOfDate']}));
+  // A report upgraded from the old package can still deliver the removed role.
+  // Use a real legacy DataView column so the host mapping, not just the fixture,
+  // proves those values cannot influence counts, reference date or checks.
+  await page.evaluate(roles=>{
+    testApi.reset(window.auditRows);
+    const legacyValues=['bad date','2026-12-01','2025-01-01',null];
+    const columns=[...roles.map(role=>({displayName:role,queryName:role,roles:{[role]:true}})),{displayName:'Data as-of date (optional)',queryName:'legacy.AsOfDate',roles:{AsOfDate:true}}];
+    const rows=window.auditRows.map((row,index)=>[...roles.map(role=>row[role]??null),legacyValues[index%legacyValues.length]]);
+    testApi.visual.update({type:2,viewport:{width:1440,height:820},dataViews:[{metadata:{},table:{columns,rows}}]});
+  },ROLES);
+  await counts([0,30],[0,33]);
+  assert.match(await main.locator('.who-scope').textContent(),/19 Nov 2026/,'legacy source values cannot override yesterday');
+  assert.match(await main.locator('.who-scope').textContent(),/previous.day reference.*not (?:a )?source refresh/i);
+  assert.doesNotMatch(await main.textContent(),/data as.of|extract date|AsOfDate/i,'the removed field creates no source-date warning');
   await main.getByTestId('data-checks').click();
-  for(const field of ['AppStatus','ROStatus','SubStatus','AsOfDate'])assert.equal(await detail.locator('[data-check-field="'+field+'"]').count(),0,'an unmapped optional field is unavailable, not a per-record blank: '+field);
+  assert.match(await detail.getByTestId('check-coverage').textContent(),/Dates 6\/6.*States 3\/3/);
+  const legacyChecks=await copyChecks();
+  assert.deepEqual(fingerprint(legacyChecks.lines),fingerprint(allChecks.lines),'legacy column does not create checks or alter current checks');
+  assert.doesNotMatch(legacyChecks.raw,/Data as.of|AsOfDate|Dataset/);
+  await checkSearch.fill('AsOfDate');
+  assert.equal(await detail.locator('[data-check-field="AsOfDate"]').count(),0);
+  assert.match(await detail.textContent(),/No matching data checks/);
+  await page.evaluate(()=>testApi.reset(window.auditRows,{omit:['AppStatus','ROStatus','SubStatus']}));
+  await main.getByTestId('data-checks').click();
+  for(const field of ['AppStatus','ROStatus','SubStatus'])assert.equal(await detail.locator('[data-check-field="'+field+'"]').count(),0,'an unmapped optional field is unavailable, not a per-record blank: '+field);
+  assert.match(await detail.getByTestId('check-coverage').textContent(),/Dates 6\/6.*States 0\/3/);
   assert.match(await detail.getByTestId('check-coverage').textContent(),/not mapped/i);
 
   await reset();
@@ -370,7 +388,7 @@ async function runSuite(page,url,{screenshots=false,label='source'}={}) {
 
   const elapsed=await page.evaluate(()=>{
     const sites=['ABO','ADJ','ADK','AJG','ARDG','Abbott Diagnostics Scarborough, Inc.'];
-    const rows=Array.from({length:10000},(_,i)=>({SubID:'LOAD-SUB-'+i,ROID:'LOAD-RO-'+i,AppID:'LOAD-APP-'+i,Site:sites[i%6],CommercialRegion:'WHO',Country:i%2?'Ireland':'France',BusinessUnit:'ID',AppStatus:i%5?'Active':'Archived',ROStatus:i%3?'Approved':'Planned',SubStatus:'Completed',ActualSubmission:i%2?'2025-04-01':'2026-04-01',ActualApproval:i%3?'2026-05-01':null,OriginalSubmission:i%2?'2025-03-01':'2026-03-01',LatestSubmission:i%2?'2025-03-15':'2026-03-15',OriginalApproval:'2026-04-01',LatestApproval:'2026-04-15',AsOfDate:'2026-11-18'}));
+    const rows=Array.from({length:10000},(_,i)=>({SubID:'LOAD-SUB-'+i,ROID:'LOAD-RO-'+i,AppID:'LOAD-APP-'+i,Site:sites[i%6],CommercialRegion:'WHO',Country:i%2?'Ireland':'France',BusinessUnit:'ID',AppStatus:i%5?'Active':'Archived',ROStatus:i%3?'Approved':'Planned',SubStatus:'Completed',ActualSubmission:i%2?'2025-04-01':'2026-04-01',ActualApproval:i%3?'2026-05-01':null,OriginalSubmission:i%2?'2025-03-01':'2026-03-01',LatestSubmission:i%2?'2025-03-15':'2026-03-15',OriginalApproval:'2026-04-01',LatestApproval:'2026-04-15'}));
     const started=performance.now();testApi.reset(rows.flatMap(row=>[row,{...row},{...row}]));return performance.now()-started;
   });
   await counts([5000,5000],[0,6666]);
