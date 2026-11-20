@@ -1,12 +1,12 @@
-# WHO Submissions & Approvals 1.0.0
+# Submissions & Approvals 1.0.1
 
-Compare actual submissions and RO approvals across two calendar years. The visual opens with **Commercial region = WHO**, **Business unit = ID**, the six standard sites and unassigned sites. Years default to the previous and current calendar years; the current year is year to date.
+Compare actual submissions and RO approvals across two calendar years. Previously named WHO Submissions & Approvals; version 1.0.1 keeps the same visual identity and field mappings so it replaces the existing visual on import. The visual opens with **Commercial region = WHO**, **Business unit = ID**, the six standard sites and unassigned sites. Years default to the previous and current calendar years; the current year is year to date.
 
-[Download the Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/who-activity-v1.0.0/who-submissions-approvals-1.0.0.0.pbiviz) · [Interactive demo with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/who-activity/preview.html) · [All visuals](../README.md)
+[Download the Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/who-activity-v1.0.1/submissions-approvals-1.0.1.0.pbiviz) · [Interactive demo with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/who-activity/preview.html) · [All visuals](../README.md)
 
 ## Install and map fields
 
-Import the `.pbiviz` through **Visualizations → Import a visual from a file** in Power BI Desktop. This is a new visual with its own identity; existing trackers are unchanged. Map raw columns, not automatic date hierarchies, and use **Do not summarize**.
+Import the `.pbiviz` through **Visualizations → Import a visual from a file** in Power BI Desktop. Confirm replacement when updating the original WHO visual. Map raw columns, not automatic date hierarchies, and use **Do not summarize**.
 
 | Field well | Map this source column | Purpose |
 | --- | --- | --- |
@@ -49,7 +49,7 @@ Only sites with actual activity in either selected year are drawn. Three active 
 
 Four cards show previous/current-year submissions and approvals. Paired horizontal bars compare years, with a common numeric scale across the two charts. Select a card or bar to inspect its matching record IDs and dates. Search Details, copy IDs, and open supplied platform links to reconcile the number in Velocity.
 
-Switch grouping between Site and Commercial region. Filters apply to scope, business unit, sites, products and submission type. Selecting multiple dimensions requires matching evidence on a delivered source row; unrelated joined values are not treated as a valid combination. Filter selections persist in the report. The title and scope label make non-WHO selections explicit.
+Switch grouping between Site and Commercial region. Filters apply to scope, business unit, sites, products and submission type. Selecting multiple dimensions requires matching evidence on a delivered source row; unrelated joined values are not treated as a valid combination. Filter selections persist in the report. The subtitle shows the selected commercial-region scope beneath the fixed Submissions & Approvals title.
 
 Data checks expose missing links/IDs, blank site/region values, unusable dates and conflicting assignments. Loading messages remain visible while Power BI supplies additional rows; partial counts are not presented as complete.
 

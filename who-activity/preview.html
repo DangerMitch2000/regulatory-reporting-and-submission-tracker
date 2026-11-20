@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WHO activity — fictional preview</title><style>.who-activity{--who-bg:#19252b;--who-panel:#213139;--who-panel-2:#283b44;--who-text:#edf2f4;--who-muted:#b5c4cc;--who-border:#44565f;--who-older:#7da6c4;--who-newer:#76b8a7;--who-warning:#ead09a;--who-font-size:14px;box-sizing:border-box;position:relative;width:100%;height:100%;overflow:auto;background:var(--who-bg);color:var(--who-text);font-family:'Wallace Sans','Segoe UI',Arial,sans-serif;font-size:var(--who-font-size);line-height:1.35;padding:18px 22px;scrollbar-color:var(--who-border) var(--who-bg);color-scheme:dark;isolation:isolate}
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Submissions & Approvals — fictional preview</title><style>.who-activity{--who-bg:#19252b;--who-panel:#213139;--who-panel-2:#283b44;--who-text:#edf2f4;--who-muted:#b5c4cc;--who-border:#44565f;--who-older:#7da6c4;--who-newer:#76b8a7;--who-warning:#ead09a;--who-font-size:14px;box-sizing:border-box;position:relative;width:100%;height:100%;overflow:auto;background:var(--who-bg);color:var(--who-text);font-family:'Wallace Sans','Segoe UI',Arial,sans-serif;font-size:var(--who-font-size);line-height:1.35;padding:18px 22px;scrollbar-color:var(--who-border) var(--who-bg);color-scheme:dark;isolation:isolate}
 .who-activity *, .who-activity *::before,.who-activity *::after{box-sizing:border-box}
 .who-activity.who-light{--who-bg:#fafbfc;--who-panel:#f0f4f6;--who-panel-2:#e5edf1;--who-text:#233640;--who-muted:#50636d;--who-border:#bccad1;--who-older:#477c9f;--who-newer:#318572;--who-warning:#735215;color-scheme:light}
 .who-activity h1,.who-activity h2,.who-activity p{margin:0}
@@ -394,7 +394,7 @@ function render(root, rows, options = {}) {
   root.className = `who-activity ${state.theme === 'light' ? 'who-light' : 'who-dark'}${state.capture ? ' who-capture' : ''}${width <= 950 ? ' who-compact' : ''}${width <= 540 ? ' who-narrow' : ''}`;
   root.tabIndex = 0;
   root.setAttribute('data-detail', detailSignature);
-  root.setAttribute('aria-label', 'WHO submissions and approvals');
+  root.setAttribute('aria-label', 'Submissions and approvals');
   root.onkeydown = event => {
     if (event.key === 'Escape' && (state.capture || state.detail)) {
       event.preventDefault();
@@ -415,11 +415,11 @@ function render(root, rows, options = {}) {
   const header = node('header', null, 'who-header');
   const heading = node('div');
   const scopeLabel = result.scopeLabel || (state.whoValue === '@who' ? 'WHO' : state.whoValue === '*' ? 'All commercial regions' : state.whoValue || 'Commercial region not recorded');
-  heading.append(node('h1', `${scopeLabel} Submissions & Approvals`));
+  heading.append(node('h1', 'Submissions & Approvals'));
   const years = result.years;
   const currentYear = new Date(result.asOf).getUTCFullYear();
   const yearLabel = year => `${year}${year === currentYear ? ' YTD' : ''}`;
-  heading.append(node('p', `${yearLabel(years[0])} / ${yearLabel(years[1])} · Actual milestones · ${!isMapped('BusinessUnit') ? 'All delivered business units' : state.unit === '*' ? 'All business units' : state.unit}`, 'who-subtitle'));
+  heading.append(node('p', `${yearLabel(years[0])} / ${yearLabel(years[1])} · ${scopeLabel} · Actual milestones · ${!isMapped('BusinessUnit') ? 'All delivered business units' : state.unit === '*' ? 'All business units' : state.unit}`, 'who-subtitle'));
   header.append(heading);
   const actions = node('div', null, 'who-actions');
   const captureButton = focusKey(button(state.capture ? 'Interactive mode' : 'Screenshot mode', () => change({ capture: !state.capture }), 'who-button', state.capture ? 'Return to interactive mode' : 'Use screenshot layout'), 'capture');

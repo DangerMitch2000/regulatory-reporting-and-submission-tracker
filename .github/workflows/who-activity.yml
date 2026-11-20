@@ -1,4 +1,4 @@
-name: Build WHO Submissions & Approvals
+name: Build Submissions & Approvals
 on:
   workflow_dispatch:
     inputs:
@@ -59,7 +59,7 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp powerbi/dist/*.pbiviz release/who-submissions-approvals-1.0.0.0.pbiviz
+          cp powerbi/dist/*.pbiviz release/submissions-approvals-1.0.1.0.pbiviz
           cp README.md release/WHO-ACTIVITY-INSTALL.md
           cp preview.html release/who-activity-demo.html
           cp RELEASE-NOTES.md release/RELEASE-NOTES.md
@@ -68,13 +68,13 @@ jobs:
           sha256sum * > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: who-activity-1.0.0
+          name: who-activity-1.0.1
           path: who-activity/release/
       - name: Stage all assets in a draft, then publish the preview
         if: github.event_name == 'workflow_dispatch' && inputs.publish
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: who-activity-v1.0.0
+          RELEASE_TAG: who-activity-v1.0.1
         run: |
           set -euo pipefail
           # Retry transient GitHub failures. Draft discovery uses the complete
@@ -117,7 +117,7 @@ jobs:
                 exit 1
               fi
               if ! git diff --quiet "$tag_commit" "$GITHUB_SHA" -- ':(top)who-activity' ':(top,exclude)who-activity/publish-workflow.yml'; then
-                echo "WHO Submissions & Approvals sources changed after $tag. Use a new version; the existing tag will not move." >&2
+                echo "Submissions & Approvals sources changed after $tag. Use a new version; the existing tag will not move." >&2
                 exit 1
               fi
               echo "Reusing immutable $tag at $tag_commit; who-activity sources match $GITHUB_SHA."
@@ -136,7 +136,7 @@ jobs:
           if [ -z "$release_id" ]; then
             # If GitHub accepted creation but lost the response, rediscover the
             # existing draft before treating a retry's duplicate error as failure.
-            if ! retry_gh release create "$tag" --verify-tag --target "$tag_commit" --draft --prerelease --title 'WHO Submissions & Approvals 1.0.0' --notes-file RELEASE-NOTES.md; then
+            if ! retry_gh release create "$tag" --verify-tag --target "$tag_commit" --draft --prerelease --title 'Submissions & Approvals 1.0.1' --notes-file RELEASE-NOTES.md; then
               release_id=$(find_release)
               if [ -z "$release_id" ]; then
                 echo "Draft creation failed and the complete release list contains no matching draft." >&2

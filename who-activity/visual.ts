@@ -80,7 +80,7 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
       }
       this.host.eventService?.renderingFinished(options);
     } catch(error:any) {
-      this.root.textContent='Unable to display WHO activity: '+error.message;
+      this.root.textContent='Unable to display submissions and approvals: '+error.message;
       this.host.eventService?.renderingFailed(options,error.message);
     }
   }

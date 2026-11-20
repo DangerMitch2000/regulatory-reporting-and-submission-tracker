@@ -65,7 +65,7 @@ export function render(root, rows, options = {}) {
   root.className = `who-activity ${state.theme === 'light' ? 'who-light' : 'who-dark'}${state.capture ? ' who-capture' : ''}${width <= 950 ? ' who-compact' : ''}${width <= 540 ? ' who-narrow' : ''}`;
   root.tabIndex = 0;
   root.setAttribute('data-detail', detailSignature);
-  root.setAttribute('aria-label', 'WHO submissions and approvals');
+  root.setAttribute('aria-label', 'Submissions and approvals');
   root.onkeydown = event => {
     if (event.key === 'Escape' && (state.capture || state.detail)) {
       event.preventDefault();
@@ -86,11 +86,11 @@ export function render(root, rows, options = {}) {
   const header = node('header', null, 'who-header');
   const heading = node('div');
   const scopeLabel = result.scopeLabel || (state.whoValue === '@who' ? 'WHO' : state.whoValue === '*' ? 'All commercial regions' : state.whoValue || 'Commercial region not recorded');
-  heading.append(node('h1', `${scopeLabel} Submissions & Approvals`));
+  heading.append(node('h1', 'Submissions & Approvals'));
   const years = result.years;
   const currentYear = new Date(result.asOf).getUTCFullYear();
   const yearLabel = year => `${year}${year === currentYear ? ' YTD' : ''}`;
-  heading.append(node('p', `${yearLabel(years[0])} / ${yearLabel(years[1])} · Actual milestones · ${!isMapped('BusinessUnit') ? 'All delivered business units' : state.unit === '*' ? 'All business units' : state.unit}`, 'who-subtitle'));
+  heading.append(node('p', `${yearLabel(years[0])} / ${yearLabel(years[1])} · ${scopeLabel} · Actual milestones · ${!isMapped('BusinessUnit') ? 'All delivered business units' : state.unit === '*' ? 'All business units' : state.unit}`, 'who-subtitle'));
   header.append(heading);
   const actions = node('div', null, 'who-actions');
   const captureButton = focusKey(button(state.capture ? 'Interactive mode' : 'Screenshot mode', () => change({ capture: !state.capture }), 'who-button', state.capture ? 'Return to interactive mode' : 'Use screenshot layout'), 'capture');
