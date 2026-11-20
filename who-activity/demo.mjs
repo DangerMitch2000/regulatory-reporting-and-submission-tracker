@@ -16,8 +16,14 @@ function makeSite(site, code, submissions, approvals) {
         AppID: `DEMO-APP-${code}-${String(1 + i % 4).padStart(2, '0')}`,
         RegistrationID: `DEMO-REG-${suffix}`,
         Site: site, BusinessUnit: 'ID', CommercialRegion: 'WHO',
+        Country: ['Ireland', 'France', 'WHO (Multi-country)', ''][i % 4],
         Product: ['Fictional assay Alpha', 'Fictional assay Beta', 'Fictional assay Gamma'][i % 3],
         SubmissionType: i % 3 ? 'Variation' : 'Initial application',
+        AppStatus: i % 4 === 3 ? 'Archived' : 'Active',
+        ROStatus: i < approvals[yi] ? 'Approved' : 'In Progress',
+        SubStatus: i < submissions[yi] ? 'Completed' : 'Planned',
+        OriginalSubmission: `${year}-${month}-01`, LatestSubmission: `${year}-${month}-03`,
+        OriginalApproval: `${year}-${month}-15`, LatestApproval: `${year}-${month}-20`,
         ActualSubmission: i < submissions[yi] ? `${year}-${month}-05` : null,
         ActualApproval: i < approvals[yi] ? `${year}-${month}-21` : null,
         AsOfDate: DEMO_AS_OF,
@@ -41,8 +47,10 @@ export function sample() {
   ];
   const inactive = ['ADJ', 'AJG', 'ARDG'].map(site => ({
     SubID: `DEMO-SUB-${site}-UNDATED`, ROID: `DEMO-RO-${site}-UNDATED`,
-    Site: site, BusinessUnit: 'ID', CommercialRegion: 'WHO',
+    Site: site, BusinessUnit: 'ID', CommercialRegion: 'WHO', Country: '',
     ActualSubmission: null, ActualApproval: null, AsOfDate: DEMO_AS_OF,
+    AppStatus: 'Active', ROStatus: 'Planned', SubStatus: 'Planned',
+    OriginalSubmission: null, LatestSubmission: null, OriginalApproval: null, LatestApproval: null,
     Product: 'Fictional assay Alpha', SubmissionType: 'Initial application'
   }));
   // These remain in filter choices, but are outside the initial ID / WHO scope.

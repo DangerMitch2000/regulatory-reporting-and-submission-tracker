@@ -36,7 +36,7 @@ export class Visual implements powerbi.extensibility.visual.IVisual {
       onLaunchUrl:(url:string)=>{if(/^https:\/\//i.test(url))this.host.launchUrl?.(url);},
       onChange:(patch:any)=>{
         this.state = {...this.state,...patch};
-        const savedKeys = ['sites','unit','product','region','whoValue','submissionType','years','groupBy','theme','capture'];
+        const savedKeys = ['sites','unit','product','country','region','whoValue','submissionType','stateFilters','dateBasis','years','groupBy','theme','capture'];
         if(savedKeys.some(key=>key in patch)) {
           const value = JSON.stringify(Object.fromEntries(savedKeys.map(key=>[key,this.state[key]])));
           this.pendingPreferences.add(value);

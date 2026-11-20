@@ -16,15 +16,16 @@
 .who-button,.who-site-commands button,.who-paging button,.who-checks{border:1px solid var(--who-border);background:var(--who-panel);padding:6px 10px;border-radius:4px;white-space:nowrap}
 .who-notices{border:1px solid var(--who-warning);border-left:3px solid var(--who-warning);background:var(--who-panel);padding:8px 12px;margin-bottom:12px;color:var(--who-warning);font-size:max(13px,.92em)}
 .who-notices p+p{margin-top:5px}
-.who-filters{display:grid;grid-template-columns:.8fr 1fr 1.4fr 1.2fr .7fr .7fr;gap:10px;align-items:start;margin-bottom:7px}
+.who-filters{display:grid;grid-template-columns:.8fr 1fr 1.3fr 1.1fr 1fr .7fr .7fr;gap:10px;align-items:start;margin-bottom:7px}
 .who-field{display:flex;flex-direction:column;gap:4px;min-width:0;color:var(--who-muted);font-size:max(13px,.9em)}
 .who-field>span{white-space:nowrap}
-.who-field select,.who-sites>summary,.who-activity input[type=search]{width:100%;min-width:0;min-height:34px;padding:6px 8px;border:1px solid var(--who-border);border-radius:4px;background:var(--who-panel);color:var(--who-text)}
+.who-field select,.who-sites>summary,.who-state-picker>summary,.who-activity input[type=search]{width:100%;min-width:0;min-height:34px;padding:6px 8px;border:1px solid var(--who-border);border-radius:4px;background:var(--who-panel);color:var(--who-text)}
 .who-field select{overflow:hidden;text-overflow:ellipsis}
 .who-field select:disabled{opacity:.55}
-.who-sites{min-width:0}
-.who-sites>summary{cursor:pointer;list-style-position:inside}
-.who-sites[open]{background:var(--who-panel);border-radius:4px}
+.who-sites,.who-state-picker{min-width:0}
+.who-sites>summary,.who-state-picker>summary{cursor:pointer;list-style-position:inside}
+.who-sites[open],.who-state-picker[open]{background:var(--who-panel);border-radius:4px}
+.who-state-picker>summary[aria-disabled=true]{opacity:.55;cursor:default}
 .who-site-options{max-height:205px;overflow:auto;padding:5px 7px}
 .who-site-option{display:flex;align-items:flex-start;gap:7px;padding:5px 1px;overflow-wrap:anywhere;color:var(--who-text)}
 .who-site-option[hidden]{display:none}
@@ -33,8 +34,9 @@
 .who-site-commands button{padding:4px 7px;font-size:max(13px,.9em)}
 .who-sites input[type=search]{width:calc(100% - 10px);margin:0 5px}
 .who-more{margin:0 0 12px;font-size:max(13px,.9em);color:var(--who-muted)}
-.who-more summary{cursor:pointer;width:fit-content;padding:2px 0}
-.who-more-fields{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:10px;padding:8px 0 5px}
+.who-more>summary{cursor:pointer;width:fit-content;padding:2px 0}
+.who-more-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:start;gap:10px;padding:8px 0 5px}
+.who-applied-states{font-size:max(13px,.87em);color:var(--who-muted);padding:0 0 10px;overflow-wrap:anywhere}
 .who-note{font-size:max(13px,.87em);color:var(--who-muted);margin-top:4px!important}
 .who-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
 .who-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;border:1px solid var(--who-border);border-top:3px solid var(--who-older);background:var(--who-panel);padding:12px 15px 10px;border-radius:5px;gap:4px;min-height:90px}
@@ -43,6 +45,10 @@
 .who-card-label{color:var(--who-muted);font-size:max(13px,.94em)}
 .who-card-value{font-size:2.1em;line-height:1.1;font-weight:600;font-variant-numeric:tabular-nums}
 .who-chart-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:9px}
+.who-chart-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;min-width:0}
+.who-chart-controls .who-field{flex-direction:row;align-items:center;gap:7px}
+.who-chart-controls .who-field select{width:150px}
+.who-basis-label{font-size:max(13px,.92em);color:var(--who-muted)}
 .who-segment{display:flex;border:1px solid var(--who-border);border-radius:4px;overflow:hidden}
 .who-segment button{border:0;border-right:1px solid var(--who-border);background:transparent;padding:6px 12px;font-size:max(13px,.92em)}
 .who-segment button:last-child{border-right:0}
@@ -83,8 +89,18 @@
 .who-table th button{border:0;background:transparent;padding:0;text-align:left;white-space:nowrap;font-weight:inherit}
 .who-table td{padding:8px 10px;border-bottom:1px solid var(--who-border);vertical-align:top;max-width:260px;overflow-wrap:anywhere}
 .who-table tbody tr:last-child td{border-bottom:0}
-.who-date{white-space:nowrap;font-variant-numeric:tabular-nums}
+.who-date{min-width:175px;font-variant-numeric:tabular-nums}
+.who-date .who-value-line{grid-template-columns:3.5em minmax(0,1fr)}
+.who-value-line{display:grid;grid-template-columns:37px minmax(0,1fr);align-items:start;gap:6px;line-height:1.4}
+.who-value-line+.who-value-line{margin-top:3px}
+.who-value-label{color:var(--who-muted);font-weight:400;white-space:nowrap}
+.who-table td:nth-child(4){min-width:65px}
+.who-value-line.is-selected-basis{font-weight:600}
+.who-value-line.is-selected-basis .who-value-label{font-weight:600;color:var(--who-text)}
+.who-current-states{min-width:160px;max-width:200px!important}
+.who-current-states .who-value-line>span:last-child{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
 .who-record-id{min-width:125px}
+.who-record-id .who-text-button{text-align:left;white-space:normal;overflow-wrap:anywhere}
 .who-source-evidence{margin-top:6px}
 .who-source-evidence summary{cursor:pointer;width:fit-content;color:var(--who-muted);font-size:13px}
 .who-source-fields{max-height:200px;overflow:auto;overscroll-behavior:contain;padding:6px 0 2px;line-height:1.4}
@@ -97,6 +113,7 @@
 .who-copy-status:empty{display:none}
 .who-copy-fallback{margin:8px 12px;width:calc(100% - 24px);height:85px;background:var(--who-bg);border:1px solid var(--who-border);padding:8px}
 .who-compact .who-filters{grid-template-columns:repeat(3,minmax(0,1fr))}
+.who-compact .who-more-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
 .who-compact .who-charts{grid-template-columns:1fr}
 .who-compact .who-chart-axis,.who-compact .who-chart-group{grid-template-columns:minmax(145px,25%) minmax(0,1fr)}
 .who-compact .who-chart-group{min-height:68px}
@@ -126,8 +143,16 @@ body{margin:0;padding:16px;background:#151b21;color:#e6ebf0;font:14px 'Wallace S
 // Historical WHO activity: a submission belongs to SubID; an approval belongs to ROID.
 // Resolve identity dates before local filters, and allocate each activity only once.
 const DEFAULT_SITES = Object.freeze(['ABO', 'ADJ', 'ADK', 'AJG', 'ARDG', 'Abbott Diagnostics Scarborough, Inc.']);
-const ROLES = Object.freeze(['SubID', 'ROID', 'AppID', 'RegistrationID', 'Site', 'BusinessUnit', 'CommercialRegion', 'Product', 'SubmissionType', 'ActualSubmission', 'ActualApproval', 'AsOfDate', 'SubmissionURL', 'RegulatoryObjectiveURL', 'RegistrationURL']);
+const ROLES = Object.freeze(['SubID', 'ROID', 'AppID', 'RegistrationID', 'Site', 'BusinessUnit', 'CommercialRegion', 'Product', 'SubmissionType', 'ActualSubmission', 'ActualApproval', 'AsOfDate', 'SubmissionURL', 'RegulatoryObjectiveURL', 'RegistrationURL', 'AppStatus', 'ROStatus', 'SubStatus', 'OriginalSubmission', 'LatestSubmission', 'OriginalApproval', 'LatestApproval', 'Country']);
 const REQUIRED = Object.freeze(['CommercialRegion', 'Site']);
+const STATE_ROLES = Object.freeze(['AppStatus', 'ROStatus', 'SubStatus']);
+const STATE_IDS = Object.freeze({AppStatus:'AppID', ROStatus:'ROID', SubStatus:'SubID'});
+const STATE_LABELS = Object.freeze({AppStatus:'Application state', ROStatus:'RO state', SubStatus:'Submission state'});
+const DATE_BASES = Object.freeze({
+  actual:{label:'Actual',submissions:'ActualSubmission',approvals:'ActualApproval'},
+  initial:{label:'Initial plan',submissions:'OriginalSubmission',approvals:'OriginalApproval'},
+  lbe:{label:'LBE plan',submissions:'LatestSubmission',approvals:'LatestApproval'}
+});
 const clean = value => String(value ?? '').trim().replace(/\s+/g, ' ');
 const norm = value => clean(value).toLocaleLowerCase('en-GB');
 const DAY = 86400000;
@@ -161,11 +186,11 @@ function parseDay(value) {
     ? {kind:'date',day:+check} : {kind:'invalid'};
 }
 
-function resolveDate(values, mapped=true) {
+function resolveDate(values, mapped=true, label='actual') {
   if (!mapped) return {kind:'unmapped'};
   const parsed=values.map(parseDay), days=[...new Set(parsed.filter(value=>value.kind==='date').map(value=>value.day))];
   if (parsed.some(value=>value.kind==='invalid')) return {kind:'issue',reason:'Invalid / outside 1900–2100'};
-  if (days.length>1) return {kind:'issue',reason:'Conflicting actual dates'};
+  if (days.length>1) return {kind:'issue',reason:`Conflicting ${label} dates`};
   return days.length ? {kind:'date',day:days[0]} : {kind:'blank'};
 }
 
@@ -183,14 +208,16 @@ function formatDate(value) {
 function validNow(now) { const result=now instanceof Date ? now : now==null ? new Date() : new Date(now); return Number.isFinite(+result)?result:new Date(); }
 function defaultState(now) {
   const year=validNow(now).getFullYear();
-  return {sites:[...DEFAULT_SITES,''],unit:'ID',product:'*',region:'*',submissionType:'*',whoValue:'@who',approvalBasis:'ro',groupBy:'site',years:[year-1,year],theme:'dark',capture:false};
+  return {sites:[...DEFAULT_SITES,''],unit:'ID',product:'*',region:'*',country:'*',submissionType:'*',whoValue:'@who',approvalBasis:'ro',dateBasis:'actual',stateFilters:Object.fromEntries(STATE_ROLES.map(role=>[role,'*'])),groupBy:'site',years:[year-1,year],theme:'dark',capture:false};
 }
 function normalizeState(saved={},now) {
   const defaults=defaultState(now), state=saved&&typeof saved==='object'?saved:{};
   const years=Array.isArray(state.years)?[...new Set(state.years.map(Number).filter(year=>Number.isInteger(year)&&year>=1900&&year<=2100))].sort((a,b)=>a-b):[];
   return {...defaults,...state,
     sites:state.sites==='*'?'*':Array.isArray(state.sites)?uniqueLabels(state.sites.filter(value=>typeof value==='string')):defaults.sites,
-    ...Object.fromEntries(['unit','product','region','submissionType','whoValue'].map(key=>[key,typeof state[key]==='string'?clean(state[key]):defaults[key]])),
+    ...Object.fromEntries(['unit','product','region','country','submissionType','whoValue'].map(key=>[key,typeof state[key]==='string'?clean(state[key]):defaults[key]])),
+    dateBasis:Object.hasOwn(DATE_BASES,state.dateBasis)?state.dateBasis:'actual',
+    stateFilters:Object.fromEntries(STATE_ROLES.map(role=>[role,Array.isArray(state.stateFilters?.[role])?uniqueLabels(state.stateFilters[role].filter(value=>typeof value==='string')):'*'])),
     years:years.length===2?years:defaults.years, approvalBasis:'ro', groupBy:state.groupBy==='region'?'region':'site',
     theme:state.theme==='light'?'light':'dark', capture:state.capture===true};
 }
@@ -226,10 +253,53 @@ function companionSubmissionDates(rows,mapped) {
 }
 const predicateValue=(row,role,value,mapped)=>!mapped[role] || value==='*' || norm(row[role])===norm(value);
 
+// States belong to their own IDs, not to a flattened join row. A blank repeat
+// cannot hide a known state, and different child states are not parent conflicts.
+function stateIndex(rows,mapped) {
+  const indices=Object.fromEntries(STATE_ROLES.map(role=>[role,new Map()]));
+  for(const role of STATE_ROLES) {
+    if(!mapped[role]) continue;
+    for(const row of rows) {
+      const id=clean(row[STATE_IDS[role]]);
+      if(!id) continue;
+      if(!indices[role].has(id)) indices[role].set(id,new Map());
+      const value=clean(row[role]);
+      if(value) indices[role].get(id).set(norm(value),value);
+    }
+    for(const [id,values] of indices[role]) indices[role].set(id,{id,values:uniqueLabels([...values.values()])});
+  }
+  const record=(row,role)=>indices[role].get(clean(row[STATE_IDS[role]]))||{id:'',values:clean(row[role])?[clean(row[role])]:[]};
+  const matches=(row,role,selection)=>{
+    if(!mapped[role]||selection==='*') return true;
+    const values=record(row,role).values;
+    return selection.some(selected=>selected===''?!values.length:values.some(value=>norm(value)===norm(selected)));
+  };
+  const aggregate=(identityRows,role)=>{
+    if(!mapped[role]) return {kind:'unmapped',values:[],label:'Field not mapped',records:[]};
+    const records=[...new Map(identityRows.map(row=>{
+      const item=record(row,role);
+      // Anonymous states remain evidence from that row, never a fabricated ID.
+      return [item.id?`id:${item.id}`:`anonymous:${item.values.map(norm).join('|')}`,item];
+    })).values()];
+    const values=uniqueLabels(records.flatMap(item=>item.values)),conflicting=records.some(item=>item.id&&item.values.length>1),hasBlank=records.some(item=>!item.values.length);
+    const kind=conflicting?'issue':values.length>1||(values.length&&hasBlank)?'multiple':values.length?'value':'blank';
+    const labels=[...values,...(hasBlank?['Not recorded']:[])];
+    return {kind,values,label:conflicting?`Conflicting states: ${labels.join(' / ')}`:labels.join(' · ')||'Not recorded',records};
+  };
+  return {matches,aggregate};
+}
+
+function rawDates(rows,role) {
+  return unique(rows.map(row=>row[role] instanceof Date?Number.isFinite(+row[role])?row[role].toISOString():'Invalid Date':row[role]));
+}
+
 function summarize(inputRows,options={}) {
   const rows=Array.isArray(inputRows)?inputRows:[], now=validNow(options.now), state=normalizeState(options,now);
   const mapped=Object.fromEntries(ROLES.map(role=>[role,options.mapped instanceof Set?options.mapped.has(role):Array.isArray(options.mapped)?options.mapped.includes(role):options.mapped&&Object.hasOwn(options.mapped,role)?options.mapped[role]===true:rows.some(row=>Object.hasOwn(row,role))]));
   const notices=[],issues=[],events=[],issueKeys=new Map(), years=state.years;
+  const dateBasis=state.dateBasis,dateBasisLabel=DATE_BASES[dateBasis].label;
+  const basisDateRoles={submissions:DATE_BASES[dateBasis].submissions,approvals:DATE_BASES[dateBasis].approvals};
+  const resolvedStates=stateIndex(rows,mapped);
   const addIssue=(issue,key=JSON.stringify([issue.kind,issue.metric,issue.id,issue.sourceRow]))=>{
     const existing=issueKeys.get(key);
     if(!existing){issueKeys.set(key,issue);issues.push(issue);return;}
@@ -252,20 +322,23 @@ function summarize(inputRows,options={}) {
   const referenceSource=suppliedAsOf.kind==='date'?'Supplied extract date':'Previous-day reference (not source refresh time)';
   if(suppliedAsOf.kind==='issue') notices.push('The supplied as-of field has invalid or conflicting dates. Using yesterday as a reference, not an extract date.');
   else if(suppliedAsOf.kind==='blank'||suppliedAsOf.kind==='unmapped') notices.push('No usable extract date supplied. As of yesterday is a reference, not source refresh time.');
-  const unavailableMetrics={submissions:!mapped.SubID||!mapped.ActualSubmission,approvals:!mapped.ROID||!mapped.ActualApproval};
-  if(unavailableMetrics.submissions) notices.push('Submissions unavailable: map Submission ID and Actual submission date.');
-  if(unavailableMetrics.approvals) notices.push('Approvals unavailable: map RO ID and Actual RO approval date.');
+  const unavailableMetrics={submissions:!mapped.SubID||!mapped[basisDateRoles.submissions],approvals:!mapped.ROID||!mapped[basisDateRoles.approvals]};
+  const dateLabel=metric=>`${dateBasisLabel} ${metric==='submissions'?'submission':'RO approval'} date`;
+  if(unavailableMetrics.submissions) notices.push(`Submissions unavailable: map Submission ID and ${dateLabel('submissions')} (${basisDateRoles.submissions}).`);
+  if(unavailableMetrics.approvals) notices.push(`Approvals unavailable: map RO ID and ${dateLabel('approvals')} (${basisDateRoles.approvals}).`);
   const scopeUnavailable=REQUIRED.some(role=>!mapped[role]);
   if(!mapped.CommercialRegion) notices.push('Map Commercial region. WHO is identified by its explicit commercial-region value; missing regions are not inferred to be WHO.');
   if(!mapped.Site) notices.push('Map the manufacturing site field before viewing activity by the six sites.');
   if(!mapped.BusinessUnit&&state.unit!=='*') notices.push('Business unit is not mapped. The ID/unit filter cannot be applied; counts include all delivered business units.');
-  const choices={sites:uniqueLabels(rows.map(row=>row.Site)),units:uniqueLabels(rows.map(row=>row.BusinessUnit)),products:uniqueLabels(rows.map(row=>row.Product)),regions:uniqueLabels(rows.map(row=>row.CommercialRegion)),whoValues:uniqueLabels(rows.map(row=>row.CommercialRegion)),submissionTypes:uniqueLabels(rows.map(row=>row.SubmissionType)),years:[...new Set([...years,...rows.flatMap(row=>[row.ActualSubmission,row.ActualApproval]).map(parseDay).filter(value=>value.kind==='date').map(value=>new Date(value.day).getUTCFullYear())])].sort((a,b)=>a-b)};
+  if(!mapped.Country&&state.country!=='*') notices.push('Country is not mapped. The country filter cannot be applied; counts include all delivered countries.');
+  for(const role of STATE_ROLES) if(!mapped[role]&&state.stateFilters[role]!=='*') notices.push(`${STATE_LABELS[role]} is not mapped. Its state filter cannot be applied; counts include all delivered states.`);
+  const choices={sites:uniqueLabels(rows.map(row=>row.Site)),units:uniqueLabels(rows.map(row=>row.BusinessUnit)),products:uniqueLabels(rows.map(row=>row.Product)),regions:uniqueLabels(rows.map(row=>row.CommercialRegion)),countries:uniqueLabels(rows.map(row=>row.Country)),whoValues:uniqueLabels(rows.map(row=>row.CommercialRegion)),submissionTypes:uniqueLabels(rows.map(row=>row.SubmissionType)),stateFilters:Object.fromEntries(STATE_ROLES.map(role=>[role,uniqueLabels(rows.map(row=>row[role]))])),years:[...new Set([...years,...rows.flatMap(row=>Object.values(DATE_BASES).flatMap(basis=>[row[basis.submissions],row[basis.approvals]])).map(parseDay).filter(value=>value.kind==='date').map(value=>new Date(value.day).getUTCFullYear())])].sort((a,b)=>a-b)};
   const whoMatch=row=>state.whoValue==='*'||(state.whoValue==='@who'?isWHO(row.CommercialRegion):norm(row.CommercialRegion)===norm(state.whoValue));
-  const dimensionMatch=row=>predicateValue(row,'BusinessUnit',state.unit,mapped) && predicateValue(row,'Product',state.product,mapped) && predicateValue(row,'SubmissionType',state.submissionType,mapped);
+  const dimensionMatch=row=>predicateValue(row,'BusinessUnit',state.unit,mapped) && predicateValue(row,'Product',state.product,mapped) && predicateValue(row,'SubmissionType',state.submissionType,mapped) && predicateValue(row,'Country',state.country,mapped) && STATE_ROLES.every(role=>resolvedStates.matches(row,role,state.stateFilters[role]));
   const baseMatch=row=>whoMatch(row) && dimensionMatch(row);
   const siteMatch=(row,site)=>state.sites==='*'||state.sites.some(value=>value===''?!clean(row.Site)&&(!site||site.kind==='blank'):norm(value)===norm(row.Site));
   const regionMatch=(row,region)=>!mapped.CommercialRegion||state.region==='*'||(state.region===''?region.kind==='blank':norm(row.CommercialRegion)===norm(state.region));
-  const allMatch=(row,region,site)=>baseMatch(row)&&(state.whoValue!==''||region.kind==='blank')&&siteMatch(row,site)&&regionMatch(row,region);
+  const allMatch=(row,region,site,countries)=>baseMatch(row)&&(state.whoValue!==''||region.kind==='blank')&&siteMatch(row,site)&&regionMatch(row,region)&&(!mapped.Country||state.country!==''||!countries.length);
   if(mapped.CommercialRegion && rows.length && !rows.some(whoMatch)) notices.push('No rows match the selected commercial region. Select the exact WHO region value supplied in your source.');
   if(mapped.BusinessUnit && rows.length && !rows.some(row=>predicateValue(row,'BusinessUnit',state.unit,mapped))) notices.push(`No delivered rows match business unit ${state.unit || 'Not recorded'}.`);
   if(scopeUnavailable) unavailableMetrics.submissions=unavailableMetrics.approvals=true;
@@ -287,28 +360,38 @@ function summarize(inputRows,options={}) {
     });
     for(const metric of ['submissions','approvals']) {
       if(unavailableMetrics[metric]) continue;
-      const idRole=metric==='submissions'?'SubID':'ROID',dateRole=metric==='submissions'?'ActualSubmission':'ActualApproval', byID=new Map();
+      const idRole=metric==='submissions'?'SubID':'ROID',dateRole=basisDateRoles[metric], byID=new Map();
       for(const row of rows) { const id=clean(row[idRole]); if(id){if(!byID.has(id))byID.set(id,[]);byID.get(id).push(row);} }
       for(const [id,identityRows] of byID) {
-        const date=resolveDate(identityRows.map(row=>row[dateRole]));
+        const dates=Object.fromEntries(Object.entries(DATE_BASES).map(([basis,roles])=>[basis,resolveDate(identityRows.map(row=>row[roles[metric]]),mapped[roles[metric]],basis==='actual'?'actual':roles.label.toLowerCase())]));
+        const date=dates[dateBasis];
         const site=allocation(identityRows,'Site','site'), region=allocation(identityRows,'CommercialRegion','region');
+        const countries=uniqueLabels(identityRows.map(row=>row.Country)).filter(Boolean);
         // All scope dimensions must coexist in a delivered row. Identity dates and
         // allocation still use all joins, so filtering cannot conceal conflicts.
-        if(!identityRows.some(row=>allMatch(row,region,site))) continue;
-        const metadata={id,metric,subIds:unique(identityRows.map(row=>row.SubID)),roIds:unique(identityRows.map(row=>row.ROID)),appIds:unique(identityRows.map(row=>row.AppID)),registrationIds:unique(identityRows.map(row=>row.RegistrationID)),products:unique(identityRows.map(row=>row.Product)),site:site.label,region:region.label,sites:site.values,regions:region.values};
+        if(!identityRows.some(row=>allMatch(row,region,site,countries))) continue;
+        const states=Object.fromEntries(STATE_ROLES.map(role=>[role,resolvedStates.aggregate(identityRows,role)]));
+        const metadata={id,metric,subIds:unique(identityRows.map(row=>row.SubID)),roIds:unique(identityRows.map(row=>row.ROID)),appIds:unique(identityRows.map(row=>row.AppID)),registrationIds:unique(identityRows.map(row=>row.RegistrationID)),products:unique(identityRows.map(row=>row.Product)),site:site.label,region:region.label,sites:site.values,regions:region.values,countries,country:countries.join(' · ')||'Not recorded'};
         if(site.kind==='multiple') addIssue({...metadata,kind:'multipleSites',message:'This record has multiple manufacturing sites. It is counted once in Multiple sites — review, not once per site.'});
         if(region.kind==='multiple') addIssue({...metadata,kind:'multipleRegions',message:'This record has multiple commercial regions. It is counted once in Multiple regions — review, not once per region.'});
         if(region.kind==='blank'&&mapped.CommercialRegion) addIssue({...metadata,kind:'missingRegion',message:'Commercial region not recorded. The record remains included.'});
+        for(const role of STATE_ROLES) for(const record of states[role].records) if(record.id&&record.values.length>1) {
+          addIssue({...metadata,id:record.id,kind:'conflictingState',field:role,rawValues:record.values,rawValueCount:record.values.length,message:`Conflicting ${STATE_LABELS[role].toLowerCase()} values for the same ${STATE_IDS[role]}. Date-based activity remains counted; review the source state.`},JSON.stringify(['conflictingState',role,record.id]));
+        }
+        for(const basis of ['initial','lbe']) if(basis!==dateBasis&&dates[basis].kind==='issue') {
+          const field=DATE_BASES[basis][metric],rawValues=rawDates(identityRows,field);
+          addIssue({...metadata,kind:'invalidPlanDate',field,rawValues:rawValues.slice(0,20),rawValueCount:rawValues.length,message:`${dates[basis].reason}: ${DATE_BASES[basis].label.toLowerCase()} ${metric==='submissions'?'submission':'RO approval'} date. This does not change the selected ${dateBasisLabel.toLowerCase()} count.`},JSON.stringify(['invalidPlanDate',metric,id,field]));
+        }
         if(date.kind!=='date') {
-          const rawValues=unique(identityRows.map(row=>row[dateRole] instanceof Date?Number.isFinite(+row[dateRole])?row[dateRole].toISOString():'Invalid Date':row[dateRole]));
-          addIssue({...metadata,kind:date.kind==='issue'?'invalidDate':'missingDate',rawValues:rawValues.slice(0,20),rawValueCount:rawValues.length,field:dateRole,message:date.kind==='issue'?`${date.reason}: ${metric==='submissions'?'actual submission':'actual RO approval'} date. Excluded from this metric.`:`Actual ${metric==='submissions'?'submission':'RO approval'} date not recorded; year cannot be assigned.`});
+          const rawValues=rawDates(identityRows,dateRole);
+          addIssue({...metadata,kind:date.kind==='issue'?'invalidDate':'missingDate',rawValues:rawValues.slice(0,20),rawValueCount:rawValues.length,field:dateRole,message:date.kind==='issue'?`${date.reason}: ${dateLabel(metric).toLowerCase()}. Excluded from this metric.`:`${dateLabel(metric)} not recorded; year cannot be assigned. No other date basis is substituted.`});
           continue;
         }
-        if(date.day>asOf) {addIssue({...metadata,kind:'futureDate',date:date.day,message:'Actual date is after the as-of reference. Excluded from this metric.'});continue;}
+        if(dateBasis==='actual'&&date.day>asOf) {addIssue({...metadata,kind:'futureDate',date:date.day,message:'Actual date is after the as-of reference. Excluded from this metric.'});continue;}
         const year=new Date(date.day).getUTCFullYear();
         if(!years.includes(year)) continue;
         const group=state.groupBy==='region'?region:site;
-        events.push({...metadata,key:`${metric}:${encodeURIComponent(id)}`,date:date.day,year,groupKey:group.key,groupLabel:group.label,siteKey:site.key,regionKey:region.key,submissionDate:metric==='submissions'?date:companionSubmissionDates(identityRows,mapped),approvalDate:metric==='approvals'?date:resolveDate(identityRows.map(row=>row.ActualApproval),mapped.ActualApproval),url:safeURL(identityRows,metric==='submissions'?'SubmissionURL':'RegulatoryObjectiveURL'),source:'Velocity'});
+        events.push({...metadata,key:`${metric}:${encodeURIComponent(id)}`,date:date.day,year,dateBasis,initialDate:dates.initial,lbeDate:dates.lbe,actualDate:dates.actual,states,groupKey:group.key,groupLabel:group.label,siteKey:site.key,regionKey:region.key,submissionDate:metric==='submissions'?dates.actual:companionSubmissionDates(identityRows,mapped),approvalDate:metric==='approvals'?dates.actual:resolveDate(identityRows.map(row=>row.ActualApproval),mapped.ActualApproval),url:safeURL(identityRows,metric==='submissions'?'SubmissionURL':'RegulatoryObjectiveURL'),source:'Velocity'});
       }
     }
   }
@@ -325,12 +408,15 @@ function summarize(inputRows,options={}) {
   const unassignedSiteActivity={submissions:[0,0],approvals:[0,0]};
   for(const event of events) if(event.siteKey==='site:blank') unassignedSiteActivity[event.metric][years.indexOf(event.year)]++;
   const scopeLabel=state.whoValue==='@who'?'WHO':state.whoValue==='*'?'All commercial regions':state.whoValue||'Commercial region not recorded';
-  return {years,asOf,asOfLabel:formatDate(asOf),referenceSource,totals,groups,events,issues,choices,notices,unavailableMetrics,scopeUnavailable,mapped,scopeLabel,visibleSites:activeSites.filter(site=>defaultOrder.includes(norm(site))).length,visibleSiteLabels:activeSites,unassignedSiteActivity,totalDefaultSites:DEFAULT_SITES.length,approvalBasisLabel:'Distinct ROs with actual approval dates',source:'Velocity',sourceRowCount:rows.length,state};
+  const approvalBasisLabel=dateBasis==='actual'?'Distinct ROs with actual approval dates':`Distinct ROs with ${dateBasisLabel.toLowerCase()} approval dates`;
+  return {years,asOf,asOfLabel:formatDate(asOf),referenceSource,dateBasis,dateBasisLabel,basisDateRoles,totals,groups,events,issues,choices,notices,unavailableMetrics,scopeUnavailable,mapped,scopeLabel,visibleSites:activeSites.filter(site=>defaultOrder.includes(norm(site))).length,visibleSiteLabels:activeSites,unassignedSiteActivity,totalDefaultSites:DEFAULT_SITES.length,approvalBasisLabel,source:'Velocity',sourceRowCount:rows.length,state};
 }
 
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const METRICS = { submissions: 'Submissions', approvals: 'Approvals' };
+const UI_DATE_BASES = { actual: 'Actual', initial: 'Initial plan', lbe: 'LBE plan' };
+const STATE_FIELDS = [['AppStatus', 'Application state', 'App'], ['ROStatus', 'RO state', 'RO'], ['SubStatus', 'Submission state', 'Sub']];
 const PAGE_SIZE = 20;
 const NOT_RECORDED = 'Not recorded';
 const number = value => new Intl.NumberFormat('en-GB').format(value || 0);
@@ -375,6 +461,7 @@ function render(root, rows, options = {}) {
   const detailsScroll = oldDetails?.scrollTop || 0;
   const oldSitesOpen = !!root.querySelector('.who-sites')?.open;
   const oldMoreOpen = !!root.querySelector('.who-more')?.open;
+  const oldStateOpen = new Set([...root.querySelectorAll('.who-state-picker[open]')].map(item => item.dataset.role));
   const previousDetail = root.getAttribute('data-detail');
   const detailSignature = JSON.stringify(state.detail || null);
   const change = patch => options.onChange?.(patch);
@@ -417,9 +504,13 @@ function render(root, rows, options = {}) {
   const scopeLabel = result.scopeLabel || (state.whoValue === '@who' ? 'WHO' : state.whoValue === '*' ? 'All commercial regions' : state.whoValue || 'Commercial region not recorded');
   heading.append(node('h1', 'Submissions & Approvals'));
   const years = result.years;
+  const dateBasis = result.dateBasis || (Object.hasOwn(UI_DATE_BASES, state.dateBasis) ? state.dateBasis : 'actual');
+  const dateBasisLabel = result.dateBasisLabel || UI_DATE_BASES[dateBasis];
+  const basisSuffix = dateBasis === 'actual' ? '' : ` · ${dateBasisLabel}`;
+  const stateFilters = state.stateFilters || {};
   const currentYear = new Date(result.asOf).getUTCFullYear();
-  const yearLabel = year => `${year}${year === currentYear ? ' YTD' : ''}`;
-  heading.append(node('p', `${yearLabel(years[0])} / ${yearLabel(years[1])} · ${scopeLabel} · Actual milestones · ${!isMapped('BusinessUnit') ? 'All delivered business units' : state.unit === '*' ? 'All business units' : state.unit}`, 'who-subtitle'));
+  const yearLabel = year => `${year}${dateBasis === 'actual' && year === currentYear ? ' YTD' : ''}`;
+  heading.append(node('p', `${yearLabel(years[0])} / ${yearLabel(years[1])} · ${scopeLabel} · ${dateBasis === 'actual' ? 'Actual milestones' : `${dateBasisLabel} dates · Full calendar years`} · ${!isMapped('BusinessUnit') ? 'All delivered business units' : state.unit === '*' ? 'All business units' : state.unit}`, 'who-subtitle'));
   header.append(heading);
   const actions = node('div', null, 'who-actions');
   const captureButton = focusKey(button(state.capture ? 'Interactive mode' : 'Screenshot mode', () => change({ capture: !state.capture }), 'who-button', state.capture ? 'Return to interactive mode' : 'Use screenshot layout'), 'capture');
@@ -503,6 +594,7 @@ function render(root, rows, options = {}) {
     sites.append(siteOptions); siteField.append(sites); filters.append(siteField);
     makeSelect(filters, 'Product', 'product', state.product, choices.products, value => filterChange({ product: value }), { disabled: !isMapped('Product') });
     makeSelect(filters, 'Commercial region', 'region', state.whoValue, list(choices.regions).filter(value => value === state.whoValue || String(value).trim().toLowerCase() !== 'who'), value => filterChange({ whoValue: value, region: '*' }), { disabled: !isMapped('CommercialRegion'), extra: [{ key: '@who', label: 'WHO' }] });
+    makeSelect(filters, 'Country', 'country', state.country ?? '*', choices.countries, value => filterChange({ country: value }), { disabled: !isMapped('Country') });
     const availableYears = [...new Set([...list(choices.years), ...years])].sort((a, b) => a - b);
     makeSelect(filters, 'Earlier year', 'older-year', years[0], availableYears.filter(value => value !== years[1]), value => filterChange({ years: [Number(value), years[1]].sort((a, b) => a - b) }), { all: false });
     makeSelect(filters, 'Later year', 'newer-year', years[1], availableYears.filter(value => value !== years[0]), value => filterChange({ years: [years[0], Number(value)].sort((a, b) => a - b) }), { all: false });
@@ -511,8 +603,48 @@ function render(root, rows, options = {}) {
     more.append(focusKey(node('summary', 'More options'), 'more-options'));
     const moreFields = node('div', null, 'who-more-fields');
     makeSelect(moreFields, 'Submission type', 'submission-type', state.submissionType, choices.submissionTypes, value => filterChange({ submissionType: value }), { disabled: !isMapped('SubmissionType') });
-    more.append(moreFields, node('p', 'WHO is identified by the Commercial region value. Blank regions are available in Data checks; they are not assumed to be WHO.', 'who-note'));
+    for (const [role, label] of STATE_FIELDS) {
+      const field = node('div', null, 'who-field'); field.append(node('span', label));
+      const selected = stateFilters[role] === '*' || stateFilters[role] == null ? null : new Set(list(stateFilters[role]));
+      const picker = node('details', null, 'who-state-picker'); picker.dataset.role = role; picker.setAttribute('data-testid', `filter-state-${role}`); picker.open = oldStateOpen.has(role);
+      const summary = focusKey(node('summary', !isMapped(role) ? 'Field not mapped' : selected === null ? 'All' : selected.size ? `${selected.size} selected` : 'None'), `state-${role}`);
+      summary.setAttribute('aria-label', `Select ${label.replace(/state$/, 'states')}`);
+      picker.append(summary);
+      if (!isMapped(role)) {
+        summary.setAttribute('aria-disabled', 'true');
+        summary.addEventListener('click', event => event.preventDefault());
+      } else {
+        const allValues = [...new Set([...list(choices.stateFilters?.[role]), ...list(stateFilters[role] === '*' ? [] : stateFilters[role])])];
+        const setValues = values => filterChange({ stateFilters: { ...stateFilters, [role]: values } });
+        const commands = node('div', null, 'who-site-commands');
+        commands.append(button('All', () => setValues('*')), button('Clear', () => setValues([])));
+        picker.append(commands);
+        const values = node('div', null, 'who-site-options');
+        for (const value of allValues) {
+          const option = node('label', null, 'who-site-option');
+          const input = focusKey(node('input'), `state-${role}-${value}`); input.type = 'checkbox'; input.checked = selected === null || selected.has(value);
+          input.setAttribute('aria-label', `${label}: ${value || NOT_RECORDED}`);
+          input.addEventListener('change', () => {
+            const next = selected === null ? new Set(allValues) : new Set(selected);
+            if (input.checked) next.add(value); else next.delete(value);
+            setValues([...next]);
+          });
+          option.append(input, node('span', value || NOT_RECORDED)); values.append(option);
+        }
+        if (!allValues.length) values.append(node('span', 'No states in delivered data', 'who-note'));
+        picker.append(values);
+      }
+      field.append(picker); moreFields.append(field);
+    }
+    more.append(moreFields, node('p', 'State filters use the current recorded state. WHO is the Commercial region value; blank regions are not assumed to be WHO.', 'who-note'));
     root.append(more);
+  }
+
+  const appliedStates = STATE_FIELDS.filter(([role]) => isMapped(role) && stateFilters[role] != null && stateFilters[role] !== '*')
+    .map(([role, label]) => `${label}: ${list(stateFilters[role]).map(value => value || NOT_RECORDED).join(', ') || 'None'}`);
+  if (appliedStates.length) {
+    const summary = node('p', `Current-state filters · ${appliedStates.join(' · ')}`, 'who-applied-states');
+    summary.setAttribute('data-testid', 'applied-state-filters'); root.append(summary);
   }
 
   const cards = node('section', null, 'who-cards'); cards.setAttribute('aria-label', 'Milestone totals');
@@ -520,12 +652,12 @@ function render(root, rows, options = {}) {
     for (const metric of ['submissions', 'approvals']) {
       const unavailable = !!result.scopeUnavailable || !!result.unavailableMetrics?.[metric];
       const count = result.totals?.[metric]?.[yearIndex] || 0;
-      const card = button('', () => choose(metric, year), `who-card who-year-${yearIndex}`, `${yearLabel(year)} ${METRICS[metric]}: ${unavailable ? 'Unavailable' : number(count)}. Show records.`);
+      const card = button('', () => choose(metric, year), `who-card who-year-${yearIndex}`, `${yearLabel(year)} ${METRICS[metric]}${basisSuffix}: ${unavailable ? 'Unavailable' : number(count)}. Show records.`);
       card.setAttribute('data-testid', 'metric-card'); card.dataset.metric = metric; card.dataset.year = year;
       card.setAttribute('aria-pressed', String(state.detail?.metric === metric && state.detail?.year === year && state.detail?.groupKey == null));
       card.disabled = unavailable;
-      card.append(node('span', `${yearLabel(year)} ${METRICS[metric]}`, 'who-card-label'), node('strong', unavailable ? '—' : number(count), 'who-card-value'));
-      if (unavailable) card.append(node('span', result.scopeUnavailable ? 'Map required fields' : 'Map ID and actual date', 'who-note'));
+      card.append(node('span', `${yearLabel(year)} ${METRICS[metric]}${basisSuffix}`, 'who-card-label'), node('strong', unavailable ? '—' : number(count), 'who-card-value'));
+      if (unavailable) card.append(node('span', result.scopeUnavailable ? 'Map required fields' : `Map ID and ${dateBasisLabel.toLowerCase()} date`, 'who-note'));
       cards.append(card);
     }
   });
@@ -537,7 +669,14 @@ function render(root, rows, options = {}) {
     const item = focusKey(button(label, () => filterChange({ groupBy: key }), state.groupBy === key ? 'is-active' : ''), `group-${key}`);
     item.setAttribute('aria-pressed', String(state.groupBy === key)); groupButtons.append(item);
   }
-  chartTop.append(state.capture ? node('span', state.groupBy === 'site' ? 'By site' : 'By commercial region', 'who-chart-grouping-label') : groupButtons);
+  const chartControls = node('div', null, 'who-chart-controls');
+  chartControls.append(state.capture ? node('span', state.groupBy === 'site' ? 'By site' : 'By commercial region', 'who-chart-grouping-label') : groupButtons);
+  if (state.capture) chartControls.append(node('span', `Date basis: ${dateBasisLabel}`, 'who-basis-label'));
+  else {
+    const basis = makeSelect(chartControls, 'Date basis', 'date-basis', dateBasis, Object.entries(UI_DATE_BASES).map(([key, label]) => ({ key, label })), value => filterChange({ dateBasis: value }), { all: false });
+    basis.title = 'Count each submission or RO once in the year of its selected date. LBE means latest best estimate.';
+  }
+  chartTop.append(chartControls);
   const legend = node('div', null, 'who-legend'); legend.setAttribute('aria-label', 'Year colours');
   years.forEach((year, index) => { const item = node('span', null, `who-legend-item who-year-${index}`); item.append(node('i'), doc.createTextNode(yearLabel(year))); legend.append(item); });
   chartTop.append(legend); root.append(chartTop);
@@ -548,14 +687,15 @@ function render(root, rows, options = {}) {
   for (const metric of ['submissions', 'approvals']) {
     const panel = node('section', null, 'who-chart-panel'); panel.dataset.metric = metric;
     panel.setAttribute('data-testid', `chart-${metric}`);
-    panel.append(node('h2', METRICS[metric]));
+    panel.append(node('h2', `${METRICS[metric]}${basisSuffix}`));
     if (result.scopeUnavailable) {
       panel.append(node('p', 'Map Commercial region and Site to identify the records in this view.', 'who-empty'));
     } else if (result.unavailableMetrics?.[metric]) {
-      const empty = node('p', `Map the ${metric === 'submissions' ? 'Submission ID and Actual submission date' : `${result.approvalBasisLabel || 'approval record ID'} and Actual approval date`} fields to show this chart.`, 'who-empty');
+      const dateName = `${dateBasisLabel} ${metric === 'submissions' ? 'submission' : 'approval'} date`;
+      const empty = node('p', `Map the ${metric === 'submissions' ? 'Submission ID' : 'RO ID'} and ${dateName} fields to show this chart.`, 'who-empty');
       panel.append(empty);
     } else if (!groups.length) {
-      panel.append(node('p', 'No matching actual activity in the selected years. Check the filters and Commercial region mapping.', 'who-empty'));
+      panel.append(node('p', `No matching ${dateBasis === 'actual' ? 'actual activity' : `${dateBasisLabel.toLowerCase()} records`} in the selected years. Check the filters and Commercial region mapping.`, 'who-empty'));
     } else {
       const axisRow = node('div', null, 'who-chart-axis'); axisRow.append(node('span'));
       const axis = svg('svg', { 'aria-hidden': 'true' });
@@ -571,9 +711,9 @@ function render(root, rows, options = {}) {
           const count = group[metric]?.[index] || 0;
           const barWidth = 84 * count / max;
           const y = index * 25 + 5;
-          const bar = svg('g', { class: `who-bar who-year-${index}`, tabindex: '0', role: 'button', 'aria-label': `${group.label}, ${yearLabel(year)} ${METRICS[metric]}: ${number(count)}. Show records.`, 'data-metric': metric, 'data-year': year, 'data-group': group.key, 'data-testid': 'chart-bar', 'data-focus-key': `bar-${metric}-${year}-${group.key}` });
+          const bar = svg('g', { class: `who-bar who-year-${index}`, tabindex: '0', role: 'button', 'aria-label': `${group.label}, ${yearLabel(year)} ${METRICS[metric]}${basisSuffix}: ${number(count)}. Show records.`, 'data-metric': metric, 'data-year': year, 'data-group': group.key, 'data-testid': 'chart-bar', 'data-focus-key': `bar-${metric}-${year}-${group.key}` });
           bar.setAttribute('aria-pressed', String(state.detail?.metric === metric && state.detail?.year === year && state.detail?.groupKey === group.key));
-          bar.append(svg('title', {}, `${group.label} · ${yearLabel(year)} · ${number(count)} ${METRICS[metric].toLowerCase()}\nSelect to review IDs and actual dates.`));
+          bar.append(svg('title', {}, `${group.label} · ${yearLabel(year)} · ${number(count)} ${METRICS[metric].toLowerCase()} · ${dateBasisLabel}\nSelect to review IDs, dates and current states.`));
           bar.append(svg('rect', { x: '1%', y, width: '99%', height: 21, class: 'who-bar-target' }));
           if (count) bar.append(svg('rect', { x: '1%', y: y + 2, width: `${barWidth}%`, height: 17, rx: 2, class: 'who-bar-fill' }));
           bar.append(svg('text', { x: `${1 + barWidth}%`, dx: 6, y: y + 15, class: 'who-bar-value' }, number(count)));
@@ -592,7 +732,7 @@ function render(root, rows, options = {}) {
 
   const footer = node('div', null, 'who-footer');
   const scope = node('div', null, 'who-scope');
-  scope.append(node('span', `${number(result.visibleSites)} of ${result.totalDefaultSites || 6} sites with actual activity · Unassigned sites shown separately.`));
+  scope.append(node('span', `${number(result.visibleSites)} of ${result.totalDefaultSites || 6} sites with ${dateBasis === 'actual' ? 'actual activity' : `${dateBasisLabel.toLowerCase()} dates`} · Unassigned sites shown separately.`));
   scope.append(node('span', `Approvals: ${result.approvalBasisLabel || 'distinct ROs with actual approval dates'}.`));
   scope.append(node('span', `As of ${result.asOfLabel} · ${result.referenceSource || 'Reference date; not a source refresh timestamp'}.`));
   footer.append(scope);
@@ -603,6 +743,7 @@ function render(root, rows, options = {}) {
     const selections = [];
     if (state.product !== '*') selections.push(`Product: ${state.product}`);
     selections.push(`Commercial region: ${scopeLabel}`);
+    if (state.country != null && state.country !== '*') selections.push(`Country: ${state.country || NOT_RECORDED}`);
     if (state.submissionType !== '*') selections.push(`Type: ${state.submissionType}`);
     if (state.sites !== '*') selections.push(`Selected sites: ${list(state.sites).map(site => site || 'Unassigned site').join(', ') || 'None'}`);
     if (selections.length) root.append(node('p', selections.join(' · '), 'who-capture-filters'));
@@ -613,14 +754,14 @@ function render(root, rows, options = {}) {
     const isIssues = detail.type === 'issues';
     const panel = node('section', null, 'who-details'); panel.setAttribute('data-testid', 'details');
     const group = groups.find(item => item.key === detail.groupKey);
-    const title = isIssues ? 'Data checks' : `${detail.year} ${METRICS[detail.metric] || 'Records'}${group ? ` · ${group.label}` : ''}`;
+    const title = isIssues ? 'Data checks' : `${detail.year} ${METRICS[detail.metric] || 'Records'}${basisSuffix}${group ? ` · ${group.label}` : ''}`;
     const top = node('div', null, 'who-details-top'); top.append(node('h2', title));
     const detailActions = node('div', null, 'who-actions');
     const search = focusKey(node('input'), 'detail-search'); search.type = 'search'; search.value = state.detailSearch || ''; search.placeholder = 'Search IDs, products or sites'; search.setAttribute('aria-label', 'Search details');
     search.addEventListener('input', () => change({ detailSearch: search.value, page: 0 })); detailActions.append(search);
     const query = String(state.detailSearch || '').trim().toLowerCase();
     let records = isIssues ? [...(result.issues || [])] : (result.events || []).filter(event => event.metric === detail.metric && event.year === detail.year && (detail.groupKey == null || event.groupKey === detail.groupKey));
-    if (query) records = records.filter(record => Object.values(record).flat().filter(value => typeof value !== 'object').join(' ').toLowerCase().includes(query));
+    if (query) records = records.filter(record => [...Object.values(record).flat().filter(value => typeof value !== 'object'), ...Object.values(record.states || {}).map(value => value.label)].join(' ').toLowerCase().includes(query));
     const sort = state.sort || { field: isIssues ? 'id' : 'date', direction: 'desc' };
     records.sort((a, b) => {
       const av = sort.field === 'date' ? (typeof a.date === 'number' ? a.date : a.date?.day || 0) : String(a[sort.field] || '');
@@ -642,7 +783,7 @@ function render(root, rows, options = {}) {
     const scroll = node('div', null, 'who-detail-scroll');
     const table = node('table', null, 'who-table');
     const head = node('thead'); const headingRow = node('tr');
-    const columns = isIssues ? [['id', 'Record ID'], ['kind', 'Check'], ['metric', 'Metric'], ['message', 'Details']] : [['date', 'Actual date'], ['id', 'Record ID'], ['site', 'Site'], ['region', 'Commercial region'], [null, 'Related records'], ['products', 'Product'], ['source', 'Source'], [null, 'Platform']];
+    const columns = isIssues ? [['id', 'Record ID'], ['kind', 'Check'], ['metric', 'Metric'], ['message', 'Details']] : [['date', `Dates · ${dateBasisLabel}`], ['id', 'Record ID'], [null, 'Current states'], ['site', 'Site'], ['region', 'Commercial region'], ['country', 'Country'], [null, 'Related records'], ['products', 'Product']];
     for (const [field, label] of columns) {
       const th = node('th'); th.scope = 'col';
       if (field) {
@@ -678,7 +819,7 @@ function render(root, rows, options = {}) {
         };
         if (record.field || record.rawValues) {
           if (record.field) evidenceField('Source field', record.field);
-          evidenceField('Raw date values', record.rawValues || [], record.rawValueCount);
+          evidenceField(STATE_FIELDS.some(([role]) => role === record.field) ? 'Raw state values' : 'Raw date values', record.rawValues || [], record.rawValueCount);
         }
         for (const [label, values] of [['Submission IDs', record.subIds], ['RO IDs', record.roIds], ['Application IDs', record.appIds], ['Registration IDs', record.registrationIds]]) {
           if (list(values).length) evidenceField(label, values);
@@ -691,18 +832,33 @@ function render(root, rows, options = {}) {
         if (evidenceBody.childNodes.length) { evidence.append(evidenceBody); message.append(evidence); }
         tr.append(message);
       } else {
-        const date = formatDate(record.date);
-        tr.append(node('td', date, 'who-date'), node('td', record.id, 'who-record-id'), node('td', record.site || NOT_RECORDED), node('td', record.region || NOT_RECORDED));
+        const recordCell = node('td', null, 'who-record-id');
+        const url = safeUrl(record.url);
+        if (url && options.onLaunchUrl) {
+          const open = focusKey(button(record.id, () => options.onLaunchUrl(url), 'who-text-button', `Open ${record.id} in platform`), `record-${record.key}`);
+          open.title = `Open ${record.id} in platform`;
+          recordCell.append(open);
+        } else recordCell.textContent = record.id;
+        const dateCell = node('td', null, 'who-date'); dateCell.setAttribute('data-testid', 'record-dates');
+        for (const [basis, label, value] of [['initial', 'Initial', record.initialDate], ['lbe', 'LBE', record.lbeDate], ['actual', 'Actual', record.actualDate]]) {
+          const line = node('div', null, `who-value-line${dateBasis === basis ? ' is-selected-basis' : ''}`); line.dataset.dateBasis = basis;
+          line.append(node('span', label, 'who-value-label'), node('span', formatDate(value)));
+          line.title = `${UI_DATE_BASES[basis]} ${record.metric === 'approvals' ? 'RO approval' : 'submission'} date: ${formatDate(value)}`;
+          dateCell.append(line);
+        }
+        const stateCell = node('td', null, 'who-current-states'); stateCell.setAttribute('data-testid', 'record-states');
+        for (const [role, label, shortLabel] of STATE_FIELDS) {
+          const value = record.states?.[role];
+          const stateLabel = value?.label || (isMapped(role) ? NOT_RECORDED : 'Field not mapped');
+          const line = node('div', null, 'who-value-line'); line.append(node('span', shortLabel, 'who-value-label'), node('span', stateLabel));
+          line.title = `${label}: ${stateLabel}${value?.records?.length ? `\n${value.records.map(item => `${item.id}: ${textList(item.values)}`).join('\n')}` : ''}`;
+          stateCell.append(line);
+        }
+        tr.append(dateCell, recordCell, stateCell, node('td', record.site || NOT_RECORDED), node('td', record.region || NOT_RECORDED), node('td', isMapped('Country') ? textList(record.countries) : 'Field not mapped'));
         const related = node('td');
         for (const [label, values] of [['App', record.appIds], ['RO', record.roIds], ['Sub', record.subIds], ['Reg', record.registrationIds]]) if (list(values).length) related.append(node('div', `${label}: ${textList(values)}`));
         if (!related.childNodes.length) related.textContent = NOT_RECORDED;
-        const source = node('td', record.source || 'Velocity');
-        source.title = `Submission: ${formatDate(record.submissionDate)}\nApproval: ${formatDate(record.approvalDate)}`;
-        tr.append(related, node('td', textList(record.products)), source);
-        const link = node('td'); const url = safeUrl(record.url);
-        if (url && options.onLaunchUrl) { const open = button('Open ↗', () => options.onLaunchUrl(url), 'who-text-button', `Open ${record.id} in platform`); open.title = url; link.append(open); }
-        else link.textContent = '—';
-        tr.append(link);
+        tr.append(related, node('td', textList(record.products)));
       }
       body.append(tr);
     }
@@ -754,8 +910,14 @@ function makeSite(site, code, submissions, approvals) {
         AppID: `DEMO-APP-${code}-${String(1 + i % 4).padStart(2, '0')}`,
         RegistrationID: `DEMO-REG-${suffix}`,
         Site: site, BusinessUnit: 'ID', CommercialRegion: 'WHO',
+        Country: ['Ireland', 'France', 'WHO (Multi-country)', ''][i % 4],
         Product: ['Fictional assay Alpha', 'Fictional assay Beta', 'Fictional assay Gamma'][i % 3],
         SubmissionType: i % 3 ? 'Variation' : 'Initial application',
+        AppStatus: i % 4 === 3 ? 'Archived' : 'Active',
+        ROStatus: i < approvals[yi] ? 'Approved' : 'In Progress',
+        SubStatus: i < submissions[yi] ? 'Completed' : 'Planned',
+        OriginalSubmission: `${year}-${month}-01`, LatestSubmission: `${year}-${month}-03`,
+        OriginalApproval: `${year}-${month}-15`, LatestApproval: `${year}-${month}-20`,
         ActualSubmission: i < submissions[yi] ? `${year}-${month}-05` : null,
         ActualApproval: i < approvals[yi] ? `${year}-${month}-21` : null,
         AsOfDate: DEMO_AS_OF,
@@ -779,8 +941,10 @@ function sample() {
   ];
   const inactive = ['ADJ', 'AJG', 'ARDG'].map(site => ({
     SubID: `DEMO-SUB-${site}-UNDATED`, ROID: `DEMO-RO-${site}-UNDATED`,
-    Site: site, BusinessUnit: 'ID', CommercialRegion: 'WHO',
+    Site: site, BusinessUnit: 'ID', CommercialRegion: 'WHO', Country: '',
     ActualSubmission: null, ActualApproval: null, AsOfDate: DEMO_AS_OF,
+    AppStatus: 'Active', ROStatus: 'Planned', SubStatus: 'Planned',
+    OriginalSubmission: null, LatestSubmission: null, OriginalApproval: null, LatestApproval: null,
     Product: 'Fictional assay Alpha', SubmissionType: 'Initial application'
   }));
   // These remain in filter choices, but are outside the initial ID / WHO scope.

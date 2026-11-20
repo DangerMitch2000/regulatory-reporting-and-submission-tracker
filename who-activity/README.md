@@ -1,8 +1,8 @@
-# Submissions & Approvals 1.0.1
+# Submissions & Approvals 1.1.0
 
-Compare actual submissions and RO approvals across two calendar years. Previously named WHO Submissions & Approvals; version 1.0.1 keeps the same visual identity and field mappings so it replaces the existing visual on import. The visual opens with **Commercial region = WHO**, **Business unit = ID**, the six standard sites and unassigned sites. Years default to the previous and current calendar years; the current year is year to date.
+Compare submissions and RO approvals across two calendar years using **Actual**, **Initial plan**, or **LBE plan** dates. LBE means Latest Best Estimate for both submissions and approvals. Previously named WHO Submissions & Approvals; version 1.1.0 keeps the same visual identity and existing field mappings so it replaces the earlier visual on import. The visual opens on **Actuals**, **Commercial region = WHO**, **Business unit = ID**, the six standard sites and unassigned sites. Country and current-state filters default to All. Years default to the previous and current calendar years; Actuals use year-to-date activity, while plan views cover the full selected years.
 
-[Download the Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/who-activity-v1.0.1/submissions-approvals-1.0.1.0.pbiviz) · [Interactive demo with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/who-activity/preview.html) · [All visuals](../README.md)
+[Download the Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/who-activity-v1.1.0/submissions-approvals-1.1.0.0.pbiviz) · [Interactive demo with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/who-activity/preview.html) · [All visuals](../README.md)
 
 ## Install and map fields
 
@@ -16,16 +16,25 @@ Import the `.pbiviz` through **Visualizations → Import a visual from a file** 
 | Actual submission date | Actual authority submission date | Determines the submission year. |
 | Regulatory Objective (RO) ID | Unique RO ID | Distinct approval count. |
 | Actual RO approval date | Actual approval date for that RO | Determines the approval year. Do not use planned approval or registration start. |
+| Initial planned submission date | Original/initial planned submission date | Optional; tracker role `OriginalSubmission`. |
+| LBE planned submission date | Latest Best Estimate submission date | Optional; tracker role `LatestSubmission`. |
+| Initial planned RO approval date | Original/initial planned approval date for the RO | Optional; tracker role `OriginalApproval`. |
+| LBE planned RO approval date | Latest Best Estimate approval date for the RO | Optional; tracker role `LatestApproval`. |
+| Submission state | Current submission state | Optional multi-select filter and Details; tracker role `SubStatus`. |
+| RO state | Current RO state | Optional multi-select filter and Details; tracker role `ROStatus`. |
+| Application state | Current application state | Optional multi-select filter and Details; tracker role `AppStatus`. |
 | Business unit | Business unit | Defaults to ID when mapped. |
 | Product | Product name | Optional filter and Details. |
+| Country | The tracker's Country field: application's lead-market country | Optional filter and Details; separate from Commercial region. |
 | Submission type | Submission type | Optional filter. |
 | Application ID / Registration ID | Linked record IDs | Optional Details and reconciliation. |
 | Data as-of date | One consistent extraction/reference date | Optional; otherwise yesterday is clearly labelled as a reference date, not a refresh timestamp. |
-| Submission URL / RO URL / Registration URL | Corresponding platform URLs | Optional HTTPS links in Details. |
+| Submission URL / RO URL | Corresponding platform URLs | Optional HTTPS links opened by clicking the submission or RO ID in Details. |
+| Registration URL | Registration platform URL | Retained as an optional mapping for compatibility; the activity table opens submission and RO records. |
 
-An unmapped ID or date makes its metric **Unavailable**, rather than presenting a misleading zero. Map the ID and actual date for each metric you want to measure. The other metric can work independently.
+An unmapped ID or selected date field makes its metric **Unavailable**, rather than presenting a misleading zero. Map the ID and date for each metric/basis you want to measure. The other metric can work independently. Existing reports can keep their current mappings; add the eight optional country, state and planned-date fields to enable the new controls and Details values.
 
-## What is counted
+## What is counted in Actuals
 
 - **Submissions:** distinct Submission IDs with usable actual submission dates in the selected year.
 - **Approvals:** distinct RO IDs with usable actual approval dates in the selected year. Joined registrations, products and submission rows do not multiply approvals.
@@ -35,6 +44,20 @@ An unmapped ID or date makes its metric **Unavailable**, rather than presenting 
 - A RO can legitimately have several child submissions. Different dates on those submissions do not invalidate its approval.
 - Actual dates after the reference date are excluded and flagged. Dates display as `20 Nov 2026`; day-first source text and ISO dates are supported without guessing ambiguous month-first input.
 
+## Initial plan and LBE plan
+
+The **Date basis** selector switches the cards, charts and matching Details records between Actual, Initial plan and LBE plan. Initial plan uses the original baseline; LBE uses the latest best estimate. Each selected field determines its own calendar year, with no fallback between fields. A blank LBE stays unrecorded even when Initial plan exists. Invalid or conflicting plans stay reviewable and do not invalidate an independent usable actual date.
+
+Submission plans count distinct Submission IDs. Approval plans count distinct RO IDs, even when several submissions are linked to the same RO. Plans after the reference date remain eligible within the selected calendar years; only Actuals are restricted to recorded dates through that reference. Planned-only records therefore appear in the appropriate plan view. Details shows **Initial**, **LBE**, and **Actual** together for the selected milestone.
+
+The views compare annual volumes, not a fixed completion cohort: a record can be planned for one year and completed in another. No completion percentage is inferred by dividing actual-year totals by planned-year totals.
+
+## Current-state and country filters
+
+Open **More options** for Application state, RO state and Submission state. Each filter supports several values, All, and Not recorded. They describe current delivered states, not the states those records held in the reporting year. All is the default, so completed historical activity remains visible even when records are now closed, inactive or archived. Missing state mappings do not silently apply a saved state restriction.
+
+The three states remain independent: a completed submission does not establish an approved RO. Multiple linked child records can legitimately have different states; conflicting states for one identity are reviewable. Country defaults to All and includes Not recorded. The Country field remains separate from WHO classification in Commercial region.
+
 ## WHO scope, missing sites and regions
 
 The default recognises explicit WHO commercial-region values, including `WHO`, `WHO (Multi-country)` and `World Health Organization`. Other source values can be selected explicitly. Selecting another region or all regions changes the scope label; it does not silently call those records WHO.
@@ -43,13 +66,13 @@ The default recognises explicit WHO commercial-region values, including `WHO`, `
 
 **Blank sites on identified WHO records remain included by default**, in a separate **Unassigned site** group and in Data checks. No site is inferred from a product, country or similar name. The standard six sites remain available in the picker: ABO, ADJ, ADK, AJG, ARDG and Abbott Diagnostics Scarborough, Inc. Conflicting multiple assignments use a separate review bucket so totals remain additive.
 
-Only sites with actual activity in either selected year are drawn. Three active sites produce three rows; the matching site order is retained on both charts, including zero bars for the other metric. The coverage label counts the standard sites separately from unassigned activity. **All delivered sites** includes other source sites too.
+Only sites with activity under the selected date basis in either selected year are drawn. Three active sites produce three rows; the matching site order is retained on both charts, including zero bars for the other metric. The coverage label counts the standard sites separately from unassigned activity. **Sites → All** includes other source sites too.
 
 ## Use the visual
 
-Four cards show previous/current-year submissions and approvals. Paired horizontal bars compare years, with a common numeric scale across the two charts. Select a card or bar to inspect its matching record IDs and dates. Search Details, copy IDs, and open supplied platform links to reconcile the number in Velocity.
+Four cards show previous/current-year submissions and approvals. Paired horizontal bars compare years, with a common numeric scale across the two charts. Select a card or bar to inspect its matching record IDs and dates. Search Details, copy IDs, or click a record ID to open its supplied platform page. IDs without a usable link remain plain text. The compact Details table has no Source or Platform columns.
 
-Switch grouping between Site and Commercial region. Filters apply to scope, business unit, sites, products and submission type. Selecting multiple dimensions requires matching evidence on a delivered source row; unrelated joined values are not treated as a valid combination. Filter selections persist in the report. The subtitle shows the selected commercial-region scope beneath the fixed Submissions & Approvals title.
+Switch grouping between Site and Commercial region. Filters apply to commercial-region scope, business unit, sites, products, country, submission type and current states. Selecting multiple dimensions requires matching evidence on a delivered source row; unrelated joined values are not treated as a valid combination. Filter selections and date basis persist in the report. The subtitle shows the selected scope and date basis beneath the fixed Submissions & Approvals title.
 
 Data checks expose missing links/IDs, blank site/region values, unusable dates and conflicting assignments. Loading messages remain visible while Power BI supplies additional rows; partial counts are not presented as complete.
 

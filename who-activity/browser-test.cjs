@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),http=require('node:http'),fs=require(
 async function runSuite(page,url,{screenshots=false,label='source'}={}) {
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.clock.setFixedTime(new Date('2026-11-20T12:00:00Z'));
-  await page.goto(url);await page.waitForSelector('body[data-ready=true]');
+  await page.goto(url);await page.waitForSelector('body[data-ready=true]').catch(error=>{throw new Error(`${error.message}\nPage errors: ${errors.join('\n')}`)});
   const main=page.locator('#host'),card=(metric,year)=>main.locator(`[data-testid="metric-card"][data-metric="${metric}"][data-year="${year}"]`);
   const counts=async(subs,approvals)=>{
     for(const [i,year] of [2025,2026].entries())for(const [metric,values] of [['submissions',subs],['approvals',approvals]])assert.equal(Number((await card(metric,year).locator('.who-card-value').textContent()).replaceAll(',','')),values[i],`${label}: ${year} ${metric}`);
@@ -46,6 +46,8 @@ async function runSuite(page,url,{screenshots=false,label='source'}={}) {
   const detail=main.getByTestId('details');
   assert.match(await detail.locator('.who-paging').textContent(),/1–20 of 46 records/);
   assert.equal(await detail.locator('tbody tr[data-record-id]').count(),20);
+  assert.equal(await detail.getByRole('columnheader',{name:/\bSource\b/}).count(),0);
+  assert.equal(await detail.getByRole('columnheader',{name:/\bPlatform\b/}).count(),0);
   await detail.getByRole('button',{name:'Next',exact:true}).click();assert.match(await detail.locator('.who-paging').textContent(),/21–40 of 46/);
   await detail.getByRole('button',{name:'Next',exact:true}).click();assert.match(await detail.locator('.who-paging').textContent(),/41–46 of 46/);
   assert.equal(await detail.getByRole('button',{name:'Next',exact:true}).isDisabled(),true);
@@ -57,11 +59,20 @@ async function runSuite(page,url,{screenshots=false,label='source'}={}) {
   assert.equal(await detail.getByRole('textbox',{name:'IDs to copy'}).evaluate(e=>e.value.slice(e.selectionStart,e.selectionEnd).split('\n').length),46);
   await detail.getByRole('searchbox',{name:'Search details'}).fill('DEMO-SUB-ADK-2026-001');
   assert.equal(await detail.locator('tbody tr[data-record-id]').count(),1);
-  await detail.getByRole('button',{name:'Open DEMO-SUB-ADK-2026-001 in platform'}).click();
+  const recordLink=detail.getByRole('button',{name:'Open DEMO-SUB-ADK-2026-001 in platform'});
+  assert.equal(await recordLink.textContent(),'DEMO-SUB-ADK-2026-001');
+  await recordLink.click();
   assert.match(await page.evaluate(()=>testApi.launches.at(-1)),/^https:\/\/example\.com\/fictional\/submissions\//);
   await detail.getByRole('button',{name:'Close details'}).click();
   await scar.locator('[data-year="2025"]').focus();await page.keyboard.press('Enter');
   assert.match(await detail.textContent(),/0 records/);await detail.getByRole('button',{name:'Close details'}).click();
+  await card('approvals',2026).click();
+  await detail.getByRole('searchbox',{name:'Search details'}).fill('DEMO-RO-ADK-2026-001');
+  const roLink=detail.getByRole('button',{name:'Open DEMO-RO-ADK-2026-001 in platform'});
+  assert.equal(await roLink.textContent(),'DEMO-RO-ADK-2026-001');
+  await roLink.focus();await page.keyboard.press('Enter');
+  assert.match(await page.evaluate(()=>testApi.launches.at(-1)),/^https:\/\/example\.com\/fictional\/ros\//);
+  await detail.getByRole('button',{name:'Close details'}).click();
 
   await page.evaluate(()=>testApi.reset(testApi.sixSiteSample()));
   assert.equal(await main.getByTestId('chart-submissions').getByTestId('chart-group').count(),6);await screenshot('dark-six-sites');
@@ -126,6 +137,91 @@ async function runSuite(page,url,{screenshots=false,label='source'}={}) {
   await main.getByTestId('filter-region').selectOption('WHO regional programme');
   await counts([0,1],[0,1]);
 
+  // Optional planning fields do not redefine the actual milestone history. Each
+  // metric selects its own dates, deduplicates its own ID and retains provenance.
+  await page.evaluate(()=>{
+    const base={Site:'ABO',BusinessUnit:'ID',CommercialRegion:'WHO',AsOfDate:'2026-11-18',Country:'Ireland'};
+    const rows=[
+      {...base,SubID:'PLAN-A',ROID:'RO-PLAN-A',AppID:'APP-PLAN-A',AppStatus:'Archived',ROStatus:'Closed',SubStatus:'Completed',ActualSubmission:'2026-02-03',ActualApproval:'2026-04-05',OriginalSubmission:'2025-11-01',LatestSubmission:'2026-01-15',OriginalApproval:'2025-12-01',LatestApproval:'2026-03-01'},
+      {...base,SubID:'PLAN-B',ROID:'RO-PLAN-B',AppID:'APP-PLAN-B',AppStatus:'Active',ROStatus:'In Progress',SubStatus:'Planned',ActualSubmission:null,ActualApproval:null,OriginalSubmission:'2026-12-01',LatestSubmission:'2026-12-20',OriginalApproval:'2026-12-05',LatestApproval:'2026-12-25',Country:'France'},
+      {...base,SubID:'PLAN-C1',ROID:'RO-PLAN-C',AppID:'APP-PLAN-C',AppStatus:'Active',ROStatus:'Approved',SubStatus:'Completed',ActualSubmission:'2025-10-10',ActualApproval:'2026-02-02',OriginalSubmission:'2025-09-01',LatestSubmission:'2025-10-01',OriginalApproval:'2026-01-01',LatestApproval:'2026-02-01',Country:'France'},
+      {...base,SubID:'PLAN-C2',ROID:'RO-PLAN-C',AppID:'APP-PLAN-C',AppStatus:'Active',ROStatus:'Approved',SubStatus:'Distributed',ActualSubmission:'2026-01-12',ActualApproval:'2026-02-02',OriginalSubmission:'2026-01-01',LatestSubmission:'2026-01-10',OriginalApproval:'2026-01-01',LatestApproval:'2026-02-01',Country:'France'},
+      {...base,SubID:'PLAN-D',ROID:'RO-PLAN-D',AppID:'APP-PLAN-D',AppStatus:'',ROStatus:'',SubStatus:'',ActualSubmission:'2026-04-02',ActualApproval:'2026-05-03',OriginalSubmission:'31/02/2026',LatestSubmission:'2026-04-01',OriginalApproval:'31/02/2026',LatestApproval:'2026-05-01',Country:''},
+      {...base,SubID:'PLAN-E',ROID:'RO-PLAN-E',AppID:'APP-PLAN-E',AppStatus:'Active',ROStatus:'Planned',SubStatus:'Planned',ActualSubmission:null,ActualApproval:null,OriginalSubmission:'2026-08-01',LatestSubmission:null,OriginalApproval:'2026-09-01',LatestApproval:null},
+      {...base,SubID:'PLAN-F',ROID:'RO-PLAN-F',AppID:'APP-PLAN-F',AppStatus:'Active',ROStatus:'Pending',SubStatus:'Review',ActualSubmission:'2026-08-02',ActualApproval:'2026-10-02',OriginalSubmission:'2026-06-01',LatestSubmission:'2026-08-01',OriginalApproval:'2026-09-01',LatestApproval:'2026-10-01'}
+    ];rows.push({...rows.at(-1),OriginalSubmission:'2026-07-01'});
+    window.planningRows=rows.flatMap(row=>[row,{...row},{...row}]);testApi.reset(window.planningRows);
+  });
+  const basis=main.getByTestId('filter-date-basis');
+  const statePicker=role=>main.getByTestId('filter-state-'+role);
+  const setState=async(role,values)=>{
+    const picker=statePicker(role);
+    if(!await picker.isVisible())await main.locator('.who-more > summary').click();
+    if(await picker.getAttribute('open')===null)await picker.locator('summary').click();
+    await picker.getByRole('button',{name:values==='*'?'All':'Clear',exact:true}).click();
+    if(values!=='*')for(const value of values)await picker.getByRole('checkbox',{name:({AppStatus:'Application',ROStatus:'RO',SubStatus:'Submission'}[role])+' state: '+(value||'Not recorded'),exact:true}).check();
+    if(await picker.getAttribute('open')!==null)await picker.locator('summary').click();
+  };
+  assert.equal(await basis.inputValue(),'actual');
+  await counts([1,4],[0,4]);
+  await screenshot('planning-main');
+  await card('submissions',2026).click();
+  const plannedRow=detail.locator('tr[data-record-id="PLAN-A"]');
+  assert.match(await plannedRow.getByTestId('record-dates').textContent(),/Initial[\s\S]*1 Nov 2025[\s\S]*LBE[\s\S]*15 Jan 2026[\s\S]*Actual[\s\S]*3 Feb 2026/);
+  assert.match(await plannedRow.textContent(),/Archived/);assert.match(await plannedRow.textContent(),/Closed/);assert.match(await plannedRow.textContent(),/Completed/);
+  assert.equal(await detail.getByRole('button',{name:'Sort by Country',exact:true}).count(),1);
+  await screenshot('planning-details');
+  await detail.getByRole('button',{name:'Close details'}).click();
+  await card('approvals',2026).click();
+  assert.match(await detail.locator('tr[data-record-id="RO-PLAN-A"]').getByTestId('record-dates').textContent(),/Initial[\s\S]*1 Dec 2025[\s\S]*LBE[\s\S]*1 Mar 2026[\s\S]*Actual[\s\S]*5 Apr 2026/);
+  await detail.getByRole('button',{name:'Close details'}).click();
+  await basis.selectOption('initial');await counts([2,3],[1,4]);
+  await basis.selectOption('lbe');await counts([1,5],[0,5]);
+  assert.match(await main.getByTestId('chart-submissions').textContent(),/LBE/i);
+  await card('submissions',2026).click();
+  assert.equal(await detail.locator('tr[data-record-id="PLAN-B"]').count(),1,'future LBE plans remain visible before their target date');
+  assert.equal(await detail.locator('tr[data-record-id="PLAN-E"]').count(),0,'missing LBE is not replaced by initial plan');
+  await detail.getByRole('button',{name:'Close details'}).click();
+  await basis.selectOption('actual');await setState('AppStatus',['Archived']);await counts([0,1],[0,1]);
+  await screenshot('planning-options');
+  await main.getByRole('button',{name:'Use screenshot layout'}).click();
+  assert.match(await main.textContent(),/Application state: Archived/,'screenshot layout discloses active state filters');
+  await main.locator('.who-activity').focus();await page.keyboard.press('Escape');
+  await setState('AppStatus',['']);await counts([0,1],[0,1]);
+  await setState('AppStatus',['Active','Archived']);await counts([1,3],[0,3]);
+  await setState('AppStatus','*');await setState('ROStatus',['Approved']);await setState('SubStatus',['Planned']);await counts([0,0],[0,0]);
+  await setState('ROStatus','*');await setState('SubStatus',['Distributed']);await counts([0,1],[0,1]);
+  await setState('SubStatus',['Completed']);await counts([1,1],[0,2]);
+  await setState('SubStatus','*');await counts([1,4],[0,4]);
+  const country=main.getByTestId('filter-country');
+  await country.selectOption('France');await counts([1,1],[0,1]);
+  assert.equal(await main.getByTestId('filter-region').inputValue(),'@who','Country does not replace the independent WHO classification filter');
+  await setState('AppStatus',['Archived']);await counts([0,0],[0,0]);
+  await setState('AppStatus','*');await country.selectOption('');await counts([0,1],[0,1]);
+  await country.selectOption('*');await basis.selectOption('initial');await setState('AppStatus',['Archived']);await counts([1,0],[1,0]);
+  await page.evaluate(()=>{window.planningPreferences=JSON.parse(testApi.persisted.at(-1).merge[0].properties.state);testApi.reset(window.planningRows,{preferences:window.planningPreferences});testApi.resize(700,700);testApi.send(window.planningRows)});
+  assert.equal(await basis.inputValue(),'initial');await counts([1,0],[1,0]);
+  assert.deepEqual(await page.evaluate(()=>window.planningPreferences.stateFilters.AppStatus),['Archived']);
+  assert.equal(await main.locator('.who-activity').evaluate(e=>e.scrollWidth<=e.clientWidth+1),true,'planning controls fit a compact visual');
+  await page.setViewportSize({width:700,height:700});await screenshot('compact-planning');
+  await card('submissions',2025).click();await screenshot('compact-planning-details');await detail.getByRole('button',{name:'Close details'}).click();
+  await page.setViewportSize({width:1440,height:900});await page.evaluate(()=>testApi.resize(1440,820));
+  await setState('AppStatus','*');await basis.selectOption('lbe');await country.selectOption('France');
+  await page.evaluate(()=>{testApi.resize(1000,700);testApi.send(window.planningRows)});
+  assert.equal(await basis.inputValue(),'lbe');assert.equal(await country.inputValue(),'France');await counts([1,2],[0,2]);
+  assert.equal(await page.evaluate(()=>JSON.parse(testApi.persisted.at(-1).merge[0].properties.state).country),'France');
+  await page.evaluate(()=>testApi.reset(window.planningRows,{preferences:JSON.parse(testApi.persisted.at(-1).merge[0].properties.state)}));
+  assert.equal(await basis.inputValue(),'lbe');assert.equal(await country.inputValue(),'France');await counts([1,2],[0,2]);
+  await page.evaluate(()=>testApi.reset(window.planningRows,{omit:['LatestSubmission'],preferences:{dateBasis:'lbe'}}));
+  assert.equal(await card('submissions',2026).isDisabled(),true);assert.equal(await card('approvals',2026).isDisabled(),false);
+  await page.evaluate(()=>testApi.reset(testApi.sample(),{omit:['AppStatus','ROStatus','SubStatus','OriginalSubmission','LatestSubmission','OriginalApproval','LatestApproval','Country']}));
+  await counts([32,46],[20,34]);
+  assert.equal(await country.isDisabled(),true);
+  await main.locator('.who-more > summary').click();
+  for(const role of ['AppStatus','ROStatus','SubStatus'])assert.equal(await statePicker(role).locator('summary').getAttribute('aria-disabled'),'true');
+  await basis.selectOption('initial');assert.equal(await card('submissions',2026).isDisabled(),true);assert.equal(await card('approvals',2026).isDisabled(),true);
+  await page.evaluate(()=>testApi.resize(1440,820));
+
   await page.evaluate(()=>{testApi.setAllowFetch(true);testApi.fetchRequests.length=0;testApi.reset(testApi.sample().filter(r=>r.Site==='ABO'),{partial:true})});
   assert.match(await main.getByTestId('notices').textContent(),/partial/i);
   const request=await page.evaluate(()=>testApi.fetchRequests.at(-1));assert.equal(request.aggregate,true);assert.match(request.text,/Submissions/);assert.match(request.text,/14/,'first batch is rendered before fetching more');
@@ -151,10 +247,12 @@ async function runSuite(page,url,{screenshots=false,label='source'}={}) {
 
   const elapsed=await page.evaluate(()=>{
     const sites=['ABO','ADJ','ADK','AJG','ARDG','Abbott Diagnostics Scarborough, Inc.'];
-    const rows=Array.from({length:10000},(_,i)=>({SubID:'LOAD-SUB-'+i,ROID:'LOAD-RO-'+i,Site:sites[i%6],CommercialRegion:'WHO',BusinessUnit:'ID',ActualSubmission:i%2?'2025-04-01':'2026-04-01',ActualApproval:i%3?'2026-05-01':null,AsOfDate:'2026-11-18'}));
+    const rows=Array.from({length:10000},(_,i)=>({SubID:'LOAD-SUB-'+i,ROID:'LOAD-RO-'+i,AppID:'LOAD-APP-'+i,Site:sites[i%6],CommercialRegion:'WHO',Country:i%2?'Ireland':'France',BusinessUnit:'ID',AppStatus:i%5?'Active':'Archived',ROStatus:i%3?'Approved':'Planned',SubStatus:'Completed',ActualSubmission:i%2?'2025-04-01':'2026-04-01',ActualApproval:i%3?'2026-05-01':null,OriginalSubmission:i%2?'2025-03-01':'2026-03-01',LatestSubmission:i%2?'2025-03-15':'2026-03-15',OriginalApproval:'2026-04-01',LatestApproval:'2026-04-15',AsOfDate:'2026-11-18'}));
     const started=performance.now();testApi.reset(rows.flatMap(row=>[row,{...row},{...row}]));return performance.now()-started;
   });
   await counts([5000,5000],[0,6666]);
+  await basis.selectOption('lbe');await counts([5000,5000],[0,10000]);
+  await country.selectOption('Ireland');await counts([5000,0],[0,5000]);
   console.log(`${label}: 30,000 joined rows / 10,000 distinct submissions rendered in ${Math.round(elapsed)} ms`);
   assert.deepEqual(await page.evaluate(()=>testApi.errors),[]);assert.deepEqual(errors,[]);
   await reset();console.log(`${label}: WHO interaction, mapping, dates, filters, pagination, accessibility and lifecycle checks passed.`);

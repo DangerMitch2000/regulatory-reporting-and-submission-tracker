@@ -1,8 +1,16 @@
 // Historical WHO activity: a submission belongs to SubID; an approval belongs to ROID.
 // Resolve identity dates before local filters, and allocate each activity only once.
 export const DEFAULT_SITES = Object.freeze(['ABO', 'ADJ', 'ADK', 'AJG', 'ARDG', 'Abbott Diagnostics Scarborough, Inc.']);
-export const ROLES = Object.freeze(['SubID', 'ROID', 'AppID', 'RegistrationID', 'Site', 'BusinessUnit', 'CommercialRegion', 'Product', 'SubmissionType', 'ActualSubmission', 'ActualApproval', 'AsOfDate', 'SubmissionURL', 'RegulatoryObjectiveURL', 'RegistrationURL']);
+export const ROLES = Object.freeze(['SubID', 'ROID', 'AppID', 'RegistrationID', 'Site', 'BusinessUnit', 'CommercialRegion', 'Product', 'SubmissionType', 'ActualSubmission', 'ActualApproval', 'AsOfDate', 'SubmissionURL', 'RegulatoryObjectiveURL', 'RegistrationURL', 'AppStatus', 'ROStatus', 'SubStatus', 'OriginalSubmission', 'LatestSubmission', 'OriginalApproval', 'LatestApproval', 'Country']);
 export const REQUIRED = Object.freeze(['CommercialRegion', 'Site']);
+export const STATE_ROLES = Object.freeze(['AppStatus', 'ROStatus', 'SubStatus']);
+const STATE_IDS = Object.freeze({AppStatus:'AppID', ROStatus:'ROID', SubStatus:'SubID'});
+const STATE_LABELS = Object.freeze({AppStatus:'Application state', ROStatus:'RO state', SubStatus:'Submission state'});
+const DATE_BASES = Object.freeze({
+  actual:{label:'Actual',submissions:'ActualSubmission',approvals:'ActualApproval'},
+  initial:{label:'Initial plan',submissions:'OriginalSubmission',approvals:'OriginalApproval'},
+  lbe:{label:'LBE plan',submissions:'LatestSubmission',approvals:'LatestApproval'}
+});
 export const clean = value => String(value ?? '').trim().replace(/\s+/g, ' ');
 const norm = value => clean(value).toLocaleLowerCase('en-GB');
 const DAY = 86400000;
@@ -36,11 +44,11 @@ export function parseDay(value) {
     ? {kind:'date',day:+check} : {kind:'invalid'};
 }
 
-export function resolveDate(values, mapped=true) {
+export function resolveDate(values, mapped=true, label='actual') {
   if (!mapped) return {kind:'unmapped'};
   const parsed=values.map(parseDay), days=[...new Set(parsed.filter(value=>value.kind==='date').map(value=>value.day))];
   if (parsed.some(value=>value.kind==='invalid')) return {kind:'issue',reason:'Invalid / outside 1900–2100'};
-  if (days.length>1) return {kind:'issue',reason:'Conflicting actual dates'};
+  if (days.length>1) return {kind:'issue',reason:`Conflicting ${label} dates`};
   return days.length ? {kind:'date',day:days[0]} : {kind:'blank'};
 }
 
@@ -58,14 +66,16 @@ export function formatDate(value) {
 function validNow(now) { const result=now instanceof Date ? now : now==null ? new Date() : new Date(now); return Number.isFinite(+result)?result:new Date(); }
 export function defaultState(now) {
   const year=validNow(now).getFullYear();
-  return {sites:[...DEFAULT_SITES,''],unit:'ID',product:'*',region:'*',submissionType:'*',whoValue:'@who',approvalBasis:'ro',groupBy:'site',years:[year-1,year],theme:'dark',capture:false};
+  return {sites:[...DEFAULT_SITES,''],unit:'ID',product:'*',region:'*',country:'*',submissionType:'*',whoValue:'@who',approvalBasis:'ro',dateBasis:'actual',stateFilters:Object.fromEntries(STATE_ROLES.map(role=>[role,'*'])),groupBy:'site',years:[year-1,year],theme:'dark',capture:false};
 }
 export function normalizeState(saved={},now) {
   const defaults=defaultState(now), state=saved&&typeof saved==='object'?saved:{};
   const years=Array.isArray(state.years)?[...new Set(state.years.map(Number).filter(year=>Number.isInteger(year)&&year>=1900&&year<=2100))].sort((a,b)=>a-b):[];
   return {...defaults,...state,
     sites:state.sites==='*'?'*':Array.isArray(state.sites)?uniqueLabels(state.sites.filter(value=>typeof value==='string')):defaults.sites,
-    ...Object.fromEntries(['unit','product','region','submissionType','whoValue'].map(key=>[key,typeof state[key]==='string'?clean(state[key]):defaults[key]])),
+    ...Object.fromEntries(['unit','product','region','country','submissionType','whoValue'].map(key=>[key,typeof state[key]==='string'?clean(state[key]):defaults[key]])),
+    dateBasis:Object.hasOwn(DATE_BASES,state.dateBasis)?state.dateBasis:'actual',
+    stateFilters:Object.fromEntries(STATE_ROLES.map(role=>[role,Array.isArray(state.stateFilters?.[role])?uniqueLabels(state.stateFilters[role].filter(value=>typeof value==='string')):'*'])),
     years:years.length===2?years:defaults.years, approvalBasis:'ro', groupBy:state.groupBy==='region'?'region':'site',
     theme:state.theme==='light'?'light':'dark', capture:state.capture===true};
 }
@@ -101,10 +111,53 @@ function companionSubmissionDates(rows,mapped) {
 }
 const predicateValue=(row,role,value,mapped)=>!mapped[role] || value==='*' || norm(row[role])===norm(value);
 
+// States belong to their own IDs, not to a flattened join row. A blank repeat
+// cannot hide a known state, and different child states are not parent conflicts.
+function stateIndex(rows,mapped) {
+  const indices=Object.fromEntries(STATE_ROLES.map(role=>[role,new Map()]));
+  for(const role of STATE_ROLES) {
+    if(!mapped[role]) continue;
+    for(const row of rows) {
+      const id=clean(row[STATE_IDS[role]]);
+      if(!id) continue;
+      if(!indices[role].has(id)) indices[role].set(id,new Map());
+      const value=clean(row[role]);
+      if(value) indices[role].get(id).set(norm(value),value);
+    }
+    for(const [id,values] of indices[role]) indices[role].set(id,{id,values:uniqueLabels([...values.values()])});
+  }
+  const record=(row,role)=>indices[role].get(clean(row[STATE_IDS[role]]))||{id:'',values:clean(row[role])?[clean(row[role])]:[]};
+  const matches=(row,role,selection)=>{
+    if(!mapped[role]||selection==='*') return true;
+    const values=record(row,role).values;
+    return selection.some(selected=>selected===''?!values.length:values.some(value=>norm(value)===norm(selected)));
+  };
+  const aggregate=(identityRows,role)=>{
+    if(!mapped[role]) return {kind:'unmapped',values:[],label:'Field not mapped',records:[]};
+    const records=[...new Map(identityRows.map(row=>{
+      const item=record(row,role);
+      // Anonymous states remain evidence from that row, never a fabricated ID.
+      return [item.id?`id:${item.id}`:`anonymous:${item.values.map(norm).join('|')}`,item];
+    })).values()];
+    const values=uniqueLabels(records.flatMap(item=>item.values)),conflicting=records.some(item=>item.id&&item.values.length>1),hasBlank=records.some(item=>!item.values.length);
+    const kind=conflicting?'issue':values.length>1||(values.length&&hasBlank)?'multiple':values.length?'value':'blank';
+    const labels=[...values,...(hasBlank?['Not recorded']:[])];
+    return {kind,values,label:conflicting?`Conflicting states: ${labels.join(' / ')}`:labels.join(' · ')||'Not recorded',records};
+  };
+  return {matches,aggregate};
+}
+
+function rawDates(rows,role) {
+  return unique(rows.map(row=>row[role] instanceof Date?Number.isFinite(+row[role])?row[role].toISOString():'Invalid Date':row[role]));
+}
+
 export function summarize(inputRows,options={}) {
   const rows=Array.isArray(inputRows)?inputRows:[], now=validNow(options.now), state=normalizeState(options,now);
   const mapped=Object.fromEntries(ROLES.map(role=>[role,options.mapped instanceof Set?options.mapped.has(role):Array.isArray(options.mapped)?options.mapped.includes(role):options.mapped&&Object.hasOwn(options.mapped,role)?options.mapped[role]===true:rows.some(row=>Object.hasOwn(row,role))]));
   const notices=[],issues=[],events=[],issueKeys=new Map(), years=state.years;
+  const dateBasis=state.dateBasis,dateBasisLabel=DATE_BASES[dateBasis].label;
+  const basisDateRoles={submissions:DATE_BASES[dateBasis].submissions,approvals:DATE_BASES[dateBasis].approvals};
+  const resolvedStates=stateIndex(rows,mapped);
   const addIssue=(issue,key=JSON.stringify([issue.kind,issue.metric,issue.id,issue.sourceRow]))=>{
     const existing=issueKeys.get(key);
     if(!existing){issueKeys.set(key,issue);issues.push(issue);return;}
@@ -127,20 +180,23 @@ export function summarize(inputRows,options={}) {
   const referenceSource=suppliedAsOf.kind==='date'?'Supplied extract date':'Previous-day reference (not source refresh time)';
   if(suppliedAsOf.kind==='issue') notices.push('The supplied as-of field has invalid or conflicting dates. Using yesterday as a reference, not an extract date.');
   else if(suppliedAsOf.kind==='blank'||suppliedAsOf.kind==='unmapped') notices.push('No usable extract date supplied. As of yesterday is a reference, not source refresh time.');
-  const unavailableMetrics={submissions:!mapped.SubID||!mapped.ActualSubmission,approvals:!mapped.ROID||!mapped.ActualApproval};
-  if(unavailableMetrics.submissions) notices.push('Submissions unavailable: map Submission ID and Actual submission date.');
-  if(unavailableMetrics.approvals) notices.push('Approvals unavailable: map RO ID and Actual RO approval date.');
+  const unavailableMetrics={submissions:!mapped.SubID||!mapped[basisDateRoles.submissions],approvals:!mapped.ROID||!mapped[basisDateRoles.approvals]};
+  const dateLabel=metric=>`${dateBasisLabel} ${metric==='submissions'?'submission':'RO approval'} date`;
+  if(unavailableMetrics.submissions) notices.push(`Submissions unavailable: map Submission ID and ${dateLabel('submissions')} (${basisDateRoles.submissions}).`);
+  if(unavailableMetrics.approvals) notices.push(`Approvals unavailable: map RO ID and ${dateLabel('approvals')} (${basisDateRoles.approvals}).`);
   const scopeUnavailable=REQUIRED.some(role=>!mapped[role]);
   if(!mapped.CommercialRegion) notices.push('Map Commercial region. WHO is identified by its explicit commercial-region value; missing regions are not inferred to be WHO.');
   if(!mapped.Site) notices.push('Map the manufacturing site field before viewing activity by the six sites.');
   if(!mapped.BusinessUnit&&state.unit!=='*') notices.push('Business unit is not mapped. The ID/unit filter cannot be applied; counts include all delivered business units.');
-  const choices={sites:uniqueLabels(rows.map(row=>row.Site)),units:uniqueLabels(rows.map(row=>row.BusinessUnit)),products:uniqueLabels(rows.map(row=>row.Product)),regions:uniqueLabels(rows.map(row=>row.CommercialRegion)),whoValues:uniqueLabels(rows.map(row=>row.CommercialRegion)),submissionTypes:uniqueLabels(rows.map(row=>row.SubmissionType)),years:[...new Set([...years,...rows.flatMap(row=>[row.ActualSubmission,row.ActualApproval]).map(parseDay).filter(value=>value.kind==='date').map(value=>new Date(value.day).getUTCFullYear())])].sort((a,b)=>a-b)};
+  if(!mapped.Country&&state.country!=='*') notices.push('Country is not mapped. The country filter cannot be applied; counts include all delivered countries.');
+  for(const role of STATE_ROLES) if(!mapped[role]&&state.stateFilters[role]!=='*') notices.push(`${STATE_LABELS[role]} is not mapped. Its state filter cannot be applied; counts include all delivered states.`);
+  const choices={sites:uniqueLabels(rows.map(row=>row.Site)),units:uniqueLabels(rows.map(row=>row.BusinessUnit)),products:uniqueLabels(rows.map(row=>row.Product)),regions:uniqueLabels(rows.map(row=>row.CommercialRegion)),countries:uniqueLabels(rows.map(row=>row.Country)),whoValues:uniqueLabels(rows.map(row=>row.CommercialRegion)),submissionTypes:uniqueLabels(rows.map(row=>row.SubmissionType)),stateFilters:Object.fromEntries(STATE_ROLES.map(role=>[role,uniqueLabels(rows.map(row=>row[role]))])),years:[...new Set([...years,...rows.flatMap(row=>Object.values(DATE_BASES).flatMap(basis=>[row[basis.submissions],row[basis.approvals]])).map(parseDay).filter(value=>value.kind==='date').map(value=>new Date(value.day).getUTCFullYear())])].sort((a,b)=>a-b)};
   const whoMatch=row=>state.whoValue==='*'||(state.whoValue==='@who'?isWHO(row.CommercialRegion):norm(row.CommercialRegion)===norm(state.whoValue));
-  const dimensionMatch=row=>predicateValue(row,'BusinessUnit',state.unit,mapped) && predicateValue(row,'Product',state.product,mapped) && predicateValue(row,'SubmissionType',state.submissionType,mapped);
+  const dimensionMatch=row=>predicateValue(row,'BusinessUnit',state.unit,mapped) && predicateValue(row,'Product',state.product,mapped) && predicateValue(row,'SubmissionType',state.submissionType,mapped) && predicateValue(row,'Country',state.country,mapped) && STATE_ROLES.every(role=>resolvedStates.matches(row,role,state.stateFilters[role]));
   const baseMatch=row=>whoMatch(row) && dimensionMatch(row);
   const siteMatch=(row,site)=>state.sites==='*'||state.sites.some(value=>value===''?!clean(row.Site)&&(!site||site.kind==='blank'):norm(value)===norm(row.Site));
   const regionMatch=(row,region)=>!mapped.CommercialRegion||state.region==='*'||(state.region===''?region.kind==='blank':norm(row.CommercialRegion)===norm(state.region));
-  const allMatch=(row,region,site)=>baseMatch(row)&&(state.whoValue!==''||region.kind==='blank')&&siteMatch(row,site)&&regionMatch(row,region);
+  const allMatch=(row,region,site,countries)=>baseMatch(row)&&(state.whoValue!==''||region.kind==='blank')&&siteMatch(row,site)&&regionMatch(row,region)&&(!mapped.Country||state.country!==''||!countries.length);
   if(mapped.CommercialRegion && rows.length && !rows.some(whoMatch)) notices.push('No rows match the selected commercial region. Select the exact WHO region value supplied in your source.');
   if(mapped.BusinessUnit && rows.length && !rows.some(row=>predicateValue(row,'BusinessUnit',state.unit,mapped))) notices.push(`No delivered rows match business unit ${state.unit || 'Not recorded'}.`);
   if(scopeUnavailable) unavailableMetrics.submissions=unavailableMetrics.approvals=true;
@@ -162,28 +218,38 @@ export function summarize(inputRows,options={}) {
     });
     for(const metric of ['submissions','approvals']) {
       if(unavailableMetrics[metric]) continue;
-      const idRole=metric==='submissions'?'SubID':'ROID',dateRole=metric==='submissions'?'ActualSubmission':'ActualApproval', byID=new Map();
+      const idRole=metric==='submissions'?'SubID':'ROID',dateRole=basisDateRoles[metric], byID=new Map();
       for(const row of rows) { const id=clean(row[idRole]); if(id){if(!byID.has(id))byID.set(id,[]);byID.get(id).push(row);} }
       for(const [id,identityRows] of byID) {
-        const date=resolveDate(identityRows.map(row=>row[dateRole]));
+        const dates=Object.fromEntries(Object.entries(DATE_BASES).map(([basis,roles])=>[basis,resolveDate(identityRows.map(row=>row[roles[metric]]),mapped[roles[metric]],basis==='actual'?'actual':roles.label.toLowerCase())]));
+        const date=dates[dateBasis];
         const site=allocation(identityRows,'Site','site'), region=allocation(identityRows,'CommercialRegion','region');
+        const countries=uniqueLabels(identityRows.map(row=>row.Country)).filter(Boolean);
         // All scope dimensions must coexist in a delivered row. Identity dates and
         // allocation still use all joins, so filtering cannot conceal conflicts.
-        if(!identityRows.some(row=>allMatch(row,region,site))) continue;
-        const metadata={id,metric,subIds:unique(identityRows.map(row=>row.SubID)),roIds:unique(identityRows.map(row=>row.ROID)),appIds:unique(identityRows.map(row=>row.AppID)),registrationIds:unique(identityRows.map(row=>row.RegistrationID)),products:unique(identityRows.map(row=>row.Product)),site:site.label,region:region.label,sites:site.values,regions:region.values};
+        if(!identityRows.some(row=>allMatch(row,region,site,countries))) continue;
+        const states=Object.fromEntries(STATE_ROLES.map(role=>[role,resolvedStates.aggregate(identityRows,role)]));
+        const metadata={id,metric,subIds:unique(identityRows.map(row=>row.SubID)),roIds:unique(identityRows.map(row=>row.ROID)),appIds:unique(identityRows.map(row=>row.AppID)),registrationIds:unique(identityRows.map(row=>row.RegistrationID)),products:unique(identityRows.map(row=>row.Product)),site:site.label,region:region.label,sites:site.values,regions:region.values,countries,country:countries.join(' · ')||'Not recorded'};
         if(site.kind==='multiple') addIssue({...metadata,kind:'multipleSites',message:'This record has multiple manufacturing sites. It is counted once in Multiple sites — review, not once per site.'});
         if(region.kind==='multiple') addIssue({...metadata,kind:'multipleRegions',message:'This record has multiple commercial regions. It is counted once in Multiple regions — review, not once per region.'});
         if(region.kind==='blank'&&mapped.CommercialRegion) addIssue({...metadata,kind:'missingRegion',message:'Commercial region not recorded. The record remains included.'});
+        for(const role of STATE_ROLES) for(const record of states[role].records) if(record.id&&record.values.length>1) {
+          addIssue({...metadata,id:record.id,kind:'conflictingState',field:role,rawValues:record.values,rawValueCount:record.values.length,message:`Conflicting ${STATE_LABELS[role].toLowerCase()} values for the same ${STATE_IDS[role]}. Date-based activity remains counted; review the source state.`},JSON.stringify(['conflictingState',role,record.id]));
+        }
+        for(const basis of ['initial','lbe']) if(basis!==dateBasis&&dates[basis].kind==='issue') {
+          const field=DATE_BASES[basis][metric],rawValues=rawDates(identityRows,field);
+          addIssue({...metadata,kind:'invalidPlanDate',field,rawValues:rawValues.slice(0,20),rawValueCount:rawValues.length,message:`${dates[basis].reason}: ${DATE_BASES[basis].label.toLowerCase()} ${metric==='submissions'?'submission':'RO approval'} date. This does not change the selected ${dateBasisLabel.toLowerCase()} count.`},JSON.stringify(['invalidPlanDate',metric,id,field]));
+        }
         if(date.kind!=='date') {
-          const rawValues=unique(identityRows.map(row=>row[dateRole] instanceof Date?Number.isFinite(+row[dateRole])?row[dateRole].toISOString():'Invalid Date':row[dateRole]));
-          addIssue({...metadata,kind:date.kind==='issue'?'invalidDate':'missingDate',rawValues:rawValues.slice(0,20),rawValueCount:rawValues.length,field:dateRole,message:date.kind==='issue'?`${date.reason}: ${metric==='submissions'?'actual submission':'actual RO approval'} date. Excluded from this metric.`:`Actual ${metric==='submissions'?'submission':'RO approval'} date not recorded; year cannot be assigned.`});
+          const rawValues=rawDates(identityRows,dateRole);
+          addIssue({...metadata,kind:date.kind==='issue'?'invalidDate':'missingDate',rawValues:rawValues.slice(0,20),rawValueCount:rawValues.length,field:dateRole,message:date.kind==='issue'?`${date.reason}: ${dateLabel(metric).toLowerCase()}. Excluded from this metric.`:`${dateLabel(metric)} not recorded; year cannot be assigned. No other date basis is substituted.`});
           continue;
         }
-        if(date.day>asOf) {addIssue({...metadata,kind:'futureDate',date:date.day,message:'Actual date is after the as-of reference. Excluded from this metric.'});continue;}
+        if(dateBasis==='actual'&&date.day>asOf) {addIssue({...metadata,kind:'futureDate',date:date.day,message:'Actual date is after the as-of reference. Excluded from this metric.'});continue;}
         const year=new Date(date.day).getUTCFullYear();
         if(!years.includes(year)) continue;
         const group=state.groupBy==='region'?region:site;
-        events.push({...metadata,key:`${metric}:${encodeURIComponent(id)}`,date:date.day,year,groupKey:group.key,groupLabel:group.label,siteKey:site.key,regionKey:region.key,submissionDate:metric==='submissions'?date:companionSubmissionDates(identityRows,mapped),approvalDate:metric==='approvals'?date:resolveDate(identityRows.map(row=>row.ActualApproval),mapped.ActualApproval),url:safeURL(identityRows,metric==='submissions'?'SubmissionURL':'RegulatoryObjectiveURL'),source:'Velocity'});
+        events.push({...metadata,key:`${metric}:${encodeURIComponent(id)}`,date:date.day,year,dateBasis,initialDate:dates.initial,lbeDate:dates.lbe,actualDate:dates.actual,states,groupKey:group.key,groupLabel:group.label,siteKey:site.key,regionKey:region.key,submissionDate:metric==='submissions'?dates.actual:companionSubmissionDates(identityRows,mapped),approvalDate:metric==='approvals'?dates.actual:resolveDate(identityRows.map(row=>row.ActualApproval),mapped.ActualApproval),url:safeURL(identityRows,metric==='submissions'?'SubmissionURL':'RegulatoryObjectiveURL'),source:'Velocity'});
       }
     }
   }
@@ -200,5 +266,6 @@ export function summarize(inputRows,options={}) {
   const unassignedSiteActivity={submissions:[0,0],approvals:[0,0]};
   for(const event of events) if(event.siteKey==='site:blank') unassignedSiteActivity[event.metric][years.indexOf(event.year)]++;
   const scopeLabel=state.whoValue==='@who'?'WHO':state.whoValue==='*'?'All commercial regions':state.whoValue||'Commercial region not recorded';
-  return {years,asOf,asOfLabel:formatDate(asOf),referenceSource,totals,groups,events,issues,choices,notices,unavailableMetrics,scopeUnavailable,mapped,scopeLabel,visibleSites:activeSites.filter(site=>defaultOrder.includes(norm(site))).length,visibleSiteLabels:activeSites,unassignedSiteActivity,totalDefaultSites:DEFAULT_SITES.length,approvalBasisLabel:'Distinct ROs with actual approval dates',source:'Velocity',sourceRowCount:rows.length,state};
+  const approvalBasisLabel=dateBasis==='actual'?'Distinct ROs with actual approval dates':`Distinct ROs with ${dateBasisLabel.toLowerCase()} approval dates`;
+  return {years,asOf,asOfLabel:formatDate(asOf),referenceSource,dateBasis,dateBasisLabel,basisDateRoles,totals,groups,events,issues,choices,notices,unavailableMetrics,scopeUnavailable,mapped,scopeLabel,visibleSites:activeSites.filter(site=>defaultOrder.includes(norm(site))).length,visibleSiteLabels:activeSites,unassignedSiteActivity,totalDefaultSites:DEFAULT_SITES.length,approvalBasisLabel,source:'Velocity',sourceRowCount:rows.length,state};
 }

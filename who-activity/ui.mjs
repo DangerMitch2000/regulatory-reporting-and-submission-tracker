@@ -2,6 +2,8 @@ import { summarize, defaultState, DEFAULT_SITES, formatDate } from './logic.mjs'
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const METRICS = { submissions: 'Submissions', approvals: 'Approvals' };
+const UI_DATE_BASES = { actual: 'Actual', initial: 'Initial plan', lbe: 'LBE plan' };
+const STATE_FIELDS = [['AppStatus', 'Application state', 'App'], ['ROStatus', 'RO state', 'RO'], ['SubStatus', 'Submission state', 'Sub']];
 const PAGE_SIZE = 20;
 const NOT_RECORDED = 'Not recorded';
 const number = value => new Intl.NumberFormat('en-GB').format(value || 0);
@@ -46,6 +48,7 @@ export function render(root, rows, options = {}) {
   const detailsScroll = oldDetails?.scrollTop || 0;
   const oldSitesOpen = !!root.querySelector('.who-sites')?.open;
   const oldMoreOpen = !!root.querySelector('.who-more')?.open;
+  const oldStateOpen = new Set([...root.querySelectorAll('.who-state-picker[open]')].map(item => item.dataset.role));
   const previousDetail = root.getAttribute('data-detail');
   const detailSignature = JSON.stringify(state.detail || null);
   const change = patch => options.onChange?.(patch);
@@ -88,9 +91,13 @@ export function render(root, rows, options = {}) {
   const scopeLabel = result.scopeLabel || (state.whoValue === '@who' ? 'WHO' : state.whoValue === '*' ? 'All commercial regions' : state.whoValue || 'Commercial region not recorded');
   heading.append(node('h1', 'Submissions & Approvals'));
   const years = result.years;
+  const dateBasis = result.dateBasis || (Object.hasOwn(UI_DATE_BASES, state.dateBasis) ? state.dateBasis : 'actual');
+  const dateBasisLabel = result.dateBasisLabel || UI_DATE_BASES[dateBasis];
+  const basisSuffix = dateBasis === 'actual' ? '' : ` · ${dateBasisLabel}`;
+  const stateFilters = state.stateFilters || {};
   const currentYear = new Date(result.asOf).getUTCFullYear();
-  const yearLabel = year => `${year}${year === currentYear ? ' YTD' : ''}`;
-  heading.append(node('p', `${yearLabel(years[0])} / ${yearLabel(years[1])} · ${scopeLabel} · Actual milestones · ${!isMapped('BusinessUnit') ? 'All delivered business units' : state.unit === '*' ? 'All business units' : state.unit}`, 'who-subtitle'));
+  const yearLabel = year => `${year}${dateBasis === 'actual' && year === currentYear ? ' YTD' : ''}`;
+  heading.append(node('p', `${yearLabel(years[0])} / ${yearLabel(years[1])} · ${scopeLabel} · ${dateBasis === 'actual' ? 'Actual milestones' : `${dateBasisLabel} dates · Full calendar years`} · ${!isMapped('BusinessUnit') ? 'All delivered business units' : state.unit === '*' ? 'All business units' : state.unit}`, 'who-subtitle'));
   header.append(heading);
   const actions = node('div', null, 'who-actions');
   const captureButton = focusKey(button(state.capture ? 'Interactive mode' : 'Screenshot mode', () => change({ capture: !state.capture }), 'who-button', state.capture ? 'Return to interactive mode' : 'Use screenshot layout'), 'capture');
@@ -174,6 +181,7 @@ export function render(root, rows, options = {}) {
     sites.append(siteOptions); siteField.append(sites); filters.append(siteField);
     makeSelect(filters, 'Product', 'product', state.product, choices.products, value => filterChange({ product: value }), { disabled: !isMapped('Product') });
     makeSelect(filters, 'Commercial region', 'region', state.whoValue, list(choices.regions).filter(value => value === state.whoValue || String(value).trim().toLowerCase() !== 'who'), value => filterChange({ whoValue: value, region: '*' }), { disabled: !isMapped('CommercialRegion'), extra: [{ key: '@who', label: 'WHO' }] });
+    makeSelect(filters, 'Country', 'country', state.country ?? '*', choices.countries, value => filterChange({ country: value }), { disabled: !isMapped('Country') });
     const availableYears = [...new Set([...list(choices.years), ...years])].sort((a, b) => a - b);
     makeSelect(filters, 'Earlier year', 'older-year', years[0], availableYears.filter(value => value !== years[1]), value => filterChange({ years: [Number(value), years[1]].sort((a, b) => a - b) }), { all: false });
     makeSelect(filters, 'Later year', 'newer-year', years[1], availableYears.filter(value => value !== years[0]), value => filterChange({ years: [years[0], Number(value)].sort((a, b) => a - b) }), { all: false });
@@ -182,8 +190,48 @@ export function render(root, rows, options = {}) {
     more.append(focusKey(node('summary', 'More options'), 'more-options'));
     const moreFields = node('div', null, 'who-more-fields');
     makeSelect(moreFields, 'Submission type', 'submission-type', state.submissionType, choices.submissionTypes, value => filterChange({ submissionType: value }), { disabled: !isMapped('SubmissionType') });
-    more.append(moreFields, node('p', 'WHO is identified by the Commercial region value. Blank regions are available in Data checks; they are not assumed to be WHO.', 'who-note'));
+    for (const [role, label] of STATE_FIELDS) {
+      const field = node('div', null, 'who-field'); field.append(node('span', label));
+      const selected = stateFilters[role] === '*' || stateFilters[role] == null ? null : new Set(list(stateFilters[role]));
+      const picker = node('details', null, 'who-state-picker'); picker.dataset.role = role; picker.setAttribute('data-testid', `filter-state-${role}`); picker.open = oldStateOpen.has(role);
+      const summary = focusKey(node('summary', !isMapped(role) ? 'Field not mapped' : selected === null ? 'All' : selected.size ? `${selected.size} selected` : 'None'), `state-${role}`);
+      summary.setAttribute('aria-label', `Select ${label.replace(/state$/, 'states')}`);
+      picker.append(summary);
+      if (!isMapped(role)) {
+        summary.setAttribute('aria-disabled', 'true');
+        summary.addEventListener('click', event => event.preventDefault());
+      } else {
+        const allValues = [...new Set([...list(choices.stateFilters?.[role]), ...list(stateFilters[role] === '*' ? [] : stateFilters[role])])];
+        const setValues = values => filterChange({ stateFilters: { ...stateFilters, [role]: values } });
+        const commands = node('div', null, 'who-site-commands');
+        commands.append(button('All', () => setValues('*')), button('Clear', () => setValues([])));
+        picker.append(commands);
+        const values = node('div', null, 'who-site-options');
+        for (const value of allValues) {
+          const option = node('label', null, 'who-site-option');
+          const input = focusKey(node('input'), `state-${role}-${value}`); input.type = 'checkbox'; input.checked = selected === null || selected.has(value);
+          input.setAttribute('aria-label', `${label}: ${value || NOT_RECORDED}`);
+          input.addEventListener('change', () => {
+            const next = selected === null ? new Set(allValues) : new Set(selected);
+            if (input.checked) next.add(value); else next.delete(value);
+            setValues([...next]);
+          });
+          option.append(input, node('span', value || NOT_RECORDED)); values.append(option);
+        }
+        if (!allValues.length) values.append(node('span', 'No states in delivered data', 'who-note'));
+        picker.append(values);
+      }
+      field.append(picker); moreFields.append(field);
+    }
+    more.append(moreFields, node('p', 'State filters use the current recorded state. WHO is the Commercial region value; blank regions are not assumed to be WHO.', 'who-note'));
     root.append(more);
+  }
+
+  const appliedStates = STATE_FIELDS.filter(([role]) => isMapped(role) && stateFilters[role] != null && stateFilters[role] !== '*')
+    .map(([role, label]) => `${label}: ${list(stateFilters[role]).map(value => value || NOT_RECORDED).join(', ') || 'None'}`);
+  if (appliedStates.length) {
+    const summary = node('p', `Current-state filters · ${appliedStates.join(' · ')}`, 'who-applied-states');
+    summary.setAttribute('data-testid', 'applied-state-filters'); root.append(summary);
   }
 
   const cards = node('section', null, 'who-cards'); cards.setAttribute('aria-label', 'Milestone totals');
@@ -191,12 +239,12 @@ export function render(root, rows, options = {}) {
     for (const metric of ['submissions', 'approvals']) {
       const unavailable = !!result.scopeUnavailable || !!result.unavailableMetrics?.[metric];
       const count = result.totals?.[metric]?.[yearIndex] || 0;
-      const card = button('', () => choose(metric, year), `who-card who-year-${yearIndex}`, `${yearLabel(year)} ${METRICS[metric]}: ${unavailable ? 'Unavailable' : number(count)}. Show records.`);
+      const card = button('', () => choose(metric, year), `who-card who-year-${yearIndex}`, `${yearLabel(year)} ${METRICS[metric]}${basisSuffix}: ${unavailable ? 'Unavailable' : number(count)}. Show records.`);
       card.setAttribute('data-testid', 'metric-card'); card.dataset.metric = metric; card.dataset.year = year;
       card.setAttribute('aria-pressed', String(state.detail?.metric === metric && state.detail?.year === year && state.detail?.groupKey == null));
       card.disabled = unavailable;
-      card.append(node('span', `${yearLabel(year)} ${METRICS[metric]}`, 'who-card-label'), node('strong', unavailable ? '—' : number(count), 'who-card-value'));
-      if (unavailable) card.append(node('span', result.scopeUnavailable ? 'Map required fields' : 'Map ID and actual date', 'who-note'));
+      card.append(node('span', `${yearLabel(year)} ${METRICS[metric]}${basisSuffix}`, 'who-card-label'), node('strong', unavailable ? '—' : number(count), 'who-card-value'));
+      if (unavailable) card.append(node('span', result.scopeUnavailable ? 'Map required fields' : `Map ID and ${dateBasisLabel.toLowerCase()} date`, 'who-note'));
       cards.append(card);
     }
   });
@@ -208,7 +256,14 @@ export function render(root, rows, options = {}) {
     const item = focusKey(button(label, () => filterChange({ groupBy: key }), state.groupBy === key ? 'is-active' : ''), `group-${key}`);
     item.setAttribute('aria-pressed', String(state.groupBy === key)); groupButtons.append(item);
   }
-  chartTop.append(state.capture ? node('span', state.groupBy === 'site' ? 'By site' : 'By commercial region', 'who-chart-grouping-label') : groupButtons);
+  const chartControls = node('div', null, 'who-chart-controls');
+  chartControls.append(state.capture ? node('span', state.groupBy === 'site' ? 'By site' : 'By commercial region', 'who-chart-grouping-label') : groupButtons);
+  if (state.capture) chartControls.append(node('span', `Date basis: ${dateBasisLabel}`, 'who-basis-label'));
+  else {
+    const basis = makeSelect(chartControls, 'Date basis', 'date-basis', dateBasis, Object.entries(UI_DATE_BASES).map(([key, label]) => ({ key, label })), value => filterChange({ dateBasis: value }), { all: false });
+    basis.title = 'Count each submission or RO once in the year of its selected date. LBE means latest best estimate.';
+  }
+  chartTop.append(chartControls);
   const legend = node('div', null, 'who-legend'); legend.setAttribute('aria-label', 'Year colours');
   years.forEach((year, index) => { const item = node('span', null, `who-legend-item who-year-${index}`); item.append(node('i'), doc.createTextNode(yearLabel(year))); legend.append(item); });
   chartTop.append(legend); root.append(chartTop);
@@ -219,14 +274,15 @@ export function render(root, rows, options = {}) {
   for (const metric of ['submissions', 'approvals']) {
     const panel = node('section', null, 'who-chart-panel'); panel.dataset.metric = metric;
     panel.setAttribute('data-testid', `chart-${metric}`);
-    panel.append(node('h2', METRICS[metric]));
+    panel.append(node('h2', `${METRICS[metric]}${basisSuffix}`));
     if (result.scopeUnavailable) {
       panel.append(node('p', 'Map Commercial region and Site to identify the records in this view.', 'who-empty'));
     } else if (result.unavailableMetrics?.[metric]) {
-      const empty = node('p', `Map the ${metric === 'submissions' ? 'Submission ID and Actual submission date' : `${result.approvalBasisLabel || 'approval record ID'} and Actual approval date`} fields to show this chart.`, 'who-empty');
+      const dateName = `${dateBasisLabel} ${metric === 'submissions' ? 'submission' : 'approval'} date`;
+      const empty = node('p', `Map the ${metric === 'submissions' ? 'Submission ID' : 'RO ID'} and ${dateName} fields to show this chart.`, 'who-empty');
       panel.append(empty);
     } else if (!groups.length) {
-      panel.append(node('p', 'No matching actual activity in the selected years. Check the filters and Commercial region mapping.', 'who-empty'));
+      panel.append(node('p', `No matching ${dateBasis === 'actual' ? 'actual activity' : `${dateBasisLabel.toLowerCase()} records`} in the selected years. Check the filters and Commercial region mapping.`, 'who-empty'));
     } else {
       const axisRow = node('div', null, 'who-chart-axis'); axisRow.append(node('span'));
       const axis = svg('svg', { 'aria-hidden': 'true' });
@@ -242,9 +298,9 @@ export function render(root, rows, options = {}) {
           const count = group[metric]?.[index] || 0;
           const barWidth = 84 * count / max;
           const y = index * 25 + 5;
-          const bar = svg('g', { class: `who-bar who-year-${index}`, tabindex: '0', role: 'button', 'aria-label': `${group.label}, ${yearLabel(year)} ${METRICS[metric]}: ${number(count)}. Show records.`, 'data-metric': metric, 'data-year': year, 'data-group': group.key, 'data-testid': 'chart-bar', 'data-focus-key': `bar-${metric}-${year}-${group.key}` });
+          const bar = svg('g', { class: `who-bar who-year-${index}`, tabindex: '0', role: 'button', 'aria-label': `${group.label}, ${yearLabel(year)} ${METRICS[metric]}${basisSuffix}: ${number(count)}. Show records.`, 'data-metric': metric, 'data-year': year, 'data-group': group.key, 'data-testid': 'chart-bar', 'data-focus-key': `bar-${metric}-${year}-${group.key}` });
           bar.setAttribute('aria-pressed', String(state.detail?.metric === metric && state.detail?.year === year && state.detail?.groupKey === group.key));
-          bar.append(svg('title', {}, `${group.label} · ${yearLabel(year)} · ${number(count)} ${METRICS[metric].toLowerCase()}\nSelect to review IDs and actual dates.`));
+          bar.append(svg('title', {}, `${group.label} · ${yearLabel(year)} · ${number(count)} ${METRICS[metric].toLowerCase()} · ${dateBasisLabel}\nSelect to review IDs, dates and current states.`));
           bar.append(svg('rect', { x: '1%', y, width: '99%', height: 21, class: 'who-bar-target' }));
           if (count) bar.append(svg('rect', { x: '1%', y: y + 2, width: `${barWidth}%`, height: 17, rx: 2, class: 'who-bar-fill' }));
           bar.append(svg('text', { x: `${1 + barWidth}%`, dx: 6, y: y + 15, class: 'who-bar-value' }, number(count)));
@@ -263,7 +319,7 @@ export function render(root, rows, options = {}) {
 
   const footer = node('div', null, 'who-footer');
   const scope = node('div', null, 'who-scope');
-  scope.append(node('span', `${number(result.visibleSites)} of ${result.totalDefaultSites || 6} sites with actual activity · Unassigned sites shown separately.`));
+  scope.append(node('span', `${number(result.visibleSites)} of ${result.totalDefaultSites || 6} sites with ${dateBasis === 'actual' ? 'actual activity' : `${dateBasisLabel.toLowerCase()} dates`} · Unassigned sites shown separately.`));
   scope.append(node('span', `Approvals: ${result.approvalBasisLabel || 'distinct ROs with actual approval dates'}.`));
   scope.append(node('span', `As of ${result.asOfLabel} · ${result.referenceSource || 'Reference date; not a source refresh timestamp'}.`));
   footer.append(scope);
@@ -274,6 +330,7 @@ export function render(root, rows, options = {}) {
     const selections = [];
     if (state.product !== '*') selections.push(`Product: ${state.product}`);
     selections.push(`Commercial region: ${scopeLabel}`);
+    if (state.country != null && state.country !== '*') selections.push(`Country: ${state.country || NOT_RECORDED}`);
     if (state.submissionType !== '*') selections.push(`Type: ${state.submissionType}`);
     if (state.sites !== '*') selections.push(`Selected sites: ${list(state.sites).map(site => site || 'Unassigned site').join(', ') || 'None'}`);
     if (selections.length) root.append(node('p', selections.join(' · '), 'who-capture-filters'));
@@ -284,14 +341,14 @@ export function render(root, rows, options = {}) {
     const isIssues = detail.type === 'issues';
     const panel = node('section', null, 'who-details'); panel.setAttribute('data-testid', 'details');
     const group = groups.find(item => item.key === detail.groupKey);
-    const title = isIssues ? 'Data checks' : `${detail.year} ${METRICS[detail.metric] || 'Records'}${group ? ` · ${group.label}` : ''}`;
+    const title = isIssues ? 'Data checks' : `${detail.year} ${METRICS[detail.metric] || 'Records'}${basisSuffix}${group ? ` · ${group.label}` : ''}`;
     const top = node('div', null, 'who-details-top'); top.append(node('h2', title));
     const detailActions = node('div', null, 'who-actions');
     const search = focusKey(node('input'), 'detail-search'); search.type = 'search'; search.value = state.detailSearch || ''; search.placeholder = 'Search IDs, products or sites'; search.setAttribute('aria-label', 'Search details');
     search.addEventListener('input', () => change({ detailSearch: search.value, page: 0 })); detailActions.append(search);
     const query = String(state.detailSearch || '').trim().toLowerCase();
     let records = isIssues ? [...(result.issues || [])] : (result.events || []).filter(event => event.metric === detail.metric && event.year === detail.year && (detail.groupKey == null || event.groupKey === detail.groupKey));
-    if (query) records = records.filter(record => Object.values(record).flat().filter(value => typeof value !== 'object').join(' ').toLowerCase().includes(query));
+    if (query) records = records.filter(record => [...Object.values(record).flat().filter(value => typeof value !== 'object'), ...Object.values(record.states || {}).map(value => value.label)].join(' ').toLowerCase().includes(query));
     const sort = state.sort || { field: isIssues ? 'id' : 'date', direction: 'desc' };
     records.sort((a, b) => {
       const av = sort.field === 'date' ? (typeof a.date === 'number' ? a.date : a.date?.day || 0) : String(a[sort.field] || '');
@@ -313,7 +370,7 @@ export function render(root, rows, options = {}) {
     const scroll = node('div', null, 'who-detail-scroll');
     const table = node('table', null, 'who-table');
     const head = node('thead'); const headingRow = node('tr');
-    const columns = isIssues ? [['id', 'Record ID'], ['kind', 'Check'], ['metric', 'Metric'], ['message', 'Details']] : [['date', 'Actual date'], ['id', 'Record ID'], ['site', 'Site'], ['region', 'Commercial region'], [null, 'Related records'], ['products', 'Product'], ['source', 'Source'], [null, 'Platform']];
+    const columns = isIssues ? [['id', 'Record ID'], ['kind', 'Check'], ['metric', 'Metric'], ['message', 'Details']] : [['date', `Dates · ${dateBasisLabel}`], ['id', 'Record ID'], [null, 'Current states'], ['site', 'Site'], ['region', 'Commercial region'], ['country', 'Country'], [null, 'Related records'], ['products', 'Product']];
     for (const [field, label] of columns) {
       const th = node('th'); th.scope = 'col';
       if (field) {
@@ -349,7 +406,7 @@ export function render(root, rows, options = {}) {
         };
         if (record.field || record.rawValues) {
           if (record.field) evidenceField('Source field', record.field);
-          evidenceField('Raw date values', record.rawValues || [], record.rawValueCount);
+          evidenceField(STATE_FIELDS.some(([role]) => role === record.field) ? 'Raw state values' : 'Raw date values', record.rawValues || [], record.rawValueCount);
         }
         for (const [label, values] of [['Submission IDs', record.subIds], ['RO IDs', record.roIds], ['Application IDs', record.appIds], ['Registration IDs', record.registrationIds]]) {
           if (list(values).length) evidenceField(label, values);
@@ -362,18 +419,33 @@ export function render(root, rows, options = {}) {
         if (evidenceBody.childNodes.length) { evidence.append(evidenceBody); message.append(evidence); }
         tr.append(message);
       } else {
-        const date = formatDate(record.date);
-        tr.append(node('td', date, 'who-date'), node('td', record.id, 'who-record-id'), node('td', record.site || NOT_RECORDED), node('td', record.region || NOT_RECORDED));
+        const recordCell = node('td', null, 'who-record-id');
+        const url = safeUrl(record.url);
+        if (url && options.onLaunchUrl) {
+          const open = focusKey(button(record.id, () => options.onLaunchUrl(url), 'who-text-button', `Open ${record.id} in platform`), `record-${record.key}`);
+          open.title = `Open ${record.id} in platform`;
+          recordCell.append(open);
+        } else recordCell.textContent = record.id;
+        const dateCell = node('td', null, 'who-date'); dateCell.setAttribute('data-testid', 'record-dates');
+        for (const [basis, label, value] of [['initial', 'Initial', record.initialDate], ['lbe', 'LBE', record.lbeDate], ['actual', 'Actual', record.actualDate]]) {
+          const line = node('div', null, `who-value-line${dateBasis === basis ? ' is-selected-basis' : ''}`); line.dataset.dateBasis = basis;
+          line.append(node('span', label, 'who-value-label'), node('span', formatDate(value)));
+          line.title = `${UI_DATE_BASES[basis]} ${record.metric === 'approvals' ? 'RO approval' : 'submission'} date: ${formatDate(value)}`;
+          dateCell.append(line);
+        }
+        const stateCell = node('td', null, 'who-current-states'); stateCell.setAttribute('data-testid', 'record-states');
+        for (const [role, label, shortLabel] of STATE_FIELDS) {
+          const value = record.states?.[role];
+          const stateLabel = value?.label || (isMapped(role) ? NOT_RECORDED : 'Field not mapped');
+          const line = node('div', null, 'who-value-line'); line.append(node('span', shortLabel, 'who-value-label'), node('span', stateLabel));
+          line.title = `${label}: ${stateLabel}${value?.records?.length ? `\n${value.records.map(item => `${item.id}: ${textList(item.values)}`).join('\n')}` : ''}`;
+          stateCell.append(line);
+        }
+        tr.append(dateCell, recordCell, stateCell, node('td', record.site || NOT_RECORDED), node('td', record.region || NOT_RECORDED), node('td', isMapped('Country') ? textList(record.countries) : 'Field not mapped'));
         const related = node('td');
         for (const [label, values] of [['App', record.appIds], ['RO', record.roIds], ['Sub', record.subIds], ['Reg', record.registrationIds]]) if (list(values).length) related.append(node('div', `${label}: ${textList(values)}`));
         if (!related.childNodes.length) related.textContent = NOT_RECORDED;
-        const source = node('td', record.source || 'Velocity');
-        source.title = `Submission: ${formatDate(record.submissionDate)}\nApproval: ${formatDate(record.approvalDate)}`;
-        tr.append(related, node('td', textList(record.products)), source);
-        const link = node('td'); const url = safeUrl(record.url);
-        if (url && options.onLaunchUrl) { const open = button('Open ↗', () => options.onLaunchUrl(url), 'who-text-button', `Open ${record.id} in platform`); open.title = url; link.append(open); }
-        else link.textContent = '—';
-        tr.append(link);
+        tr.append(related, node('td', textList(record.products)));
       }
       body.append(tr);
     }

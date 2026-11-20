@@ -233,3 +233,147 @@ test('mapTable maps exact roles and reports missing requirements; duplicate role
   assert.throws(()=>mapTable({...table,columns:[...table.columns,{roles:{Site:true}}]}),/only one field/);
   assert.equal(summary([row()],{mapped:new Set(ROLES)}).events.length,2);
 });
+
+test('planning and state controls default to actual history and all current states',()=>{
+  const state=defaultState(now);
+  assert.equal(state.dateBasis,'actual'); assert.equal(state.country,'*');
+  assert.deepEqual(state.stateFilters,{AppStatus:'*',ROStatus:'*',SubStatus:'*'});
+  const restored=normalizeState({dateBasis:'lbe',country:' France ',stateFilters:{AppStatus:[' Active ','active',''],ROStatus:[],SubStatus:'bad'}},now);
+  assert.equal(restored.dateBasis,'lbe'); assert.equal(restored.country,'France');
+  assert.deepEqual(restored.stateFilters.AppStatus,['','active']); assert.deepEqual(restored.stateFilters.ROStatus,[]);
+  assert.equal(restored.stateFilters.SubStatus,'*'); assert.equal(normalizeState({dateBasis:'bad'},now).dateBasis,'actual');
+  const result=summary([row({AppStatus:'Closed',ROStatus:'Archived',SubStatus:'Withdrawn'})]);
+  assert.equal(result.events.length,2); assert.equal(result.events[0].states.AppStatus.label,'Closed');
+  assert.equal(summary([row()],{stateFilters:{SubStatus:[]}}).events.length,0);
+});
+
+test('each date basis owns its years without falling back to another planned or actual date',()=>{
+  const rows=[row({ActualSubmission:'2024-12-31',ActualApproval:'2025-06-01',OriginalSubmission:'2025-03-01',LatestSubmission:'2026-04-01',OriginalApproval:'2026-07-01',LatestApproval:'2027-01-31'})];
+  const actual=summary(rows),initial=summary(rows,{dateBasis:'initial'}),lbe=summary(rows,{dateBasis:'lbe'});
+  assert.deepEqual(actual.totals,{submissions:[0,0],approvals:[1,0]});
+  assert.deepEqual(initial.totals,{submissions:[1,0],approvals:[0,1]});
+  assert.deepEqual(lbe.totals,{submissions:[0,1],approvals:[0,0]});
+  assert.deepEqual(initial.basisDateRoles,{submissions:'OriginalSubmission',approvals:'OriginalApproval'});
+  assert.equal(lbe.dateBasisLabel,'LBE plan'); assert.deepEqual(lbe.choices.years,[2024,2025,2026,2027]);
+  const submission=lbe.events[0];
+  assert.equal(formatDate(submission.initialDate),'01 Mar 2025');
+  assert.equal(formatDate(submission.lbeDate),'01 Apr 2026');
+  assert.equal(formatDate(submission.actualDate),'31 Dec 2024');
+  assert.equal(submission.date,submission.lbeDate.day); assert.equal(submission.submissionDate.day,submission.actualDate.day);
+  const blankInitial=summary([row({LatestSubmission:'2026-06-01',OriginalApproval:'2026-07-01'})],{dateBasis:'initial'});
+  assert.deepEqual(blankInitial.totals,{submissions:[0,0],approvals:[0,1]});
+  assert.ok(blankInitial.issues.some(issue=>issue.field==='OriginalSubmission'&&issue.kind==='missingDate'));
+  for(const result of [actual,initial,lbe,blankInitial]) reconciles(result);
+});
+
+test('future initial and LBE plans count in their chosen year but future actuals do not',()=>{
+  const rows=[row({ActualSubmission:'2027-01-10',ActualApproval:'2027-02-10',OriginalSubmission:'2026-12-10',OriginalApproval:'2027-01-10',LatestSubmission:'2027-02-10',LatestApproval:'2027-03-10'})];
+  const actual=summary(rows,{years:[2026,2027]}),initial=summary(rows,{years:[2026,2027],dateBasis:'initial'}),lbe=summary(rows,{years:[2026,2027],dateBasis:'lbe'});
+  assert.equal(actual.events.length,0); assert.equal(actual.issues.filter(issue=>issue.kind==='futureDate').length,2);
+  assert.deepEqual(initial.totals,{submissions:[1,0],approvals:[0,1]});
+  assert.deepEqual(lbe.totals,{submissions:[0,1],approvals:[0,1]});
+  assert.equal(lbe.issues.filter(issue=>issue.kind==='futureDate').length,0);
+  reconciles(initial); reconciles(lbe);
+});
+
+test('invalid or conflicting plans stay reviewable before filters without changing actual evidence',()=>{
+  const rows=[row({OriginalSubmission:'2025-01-01',LatestApproval:'2026-02-30'}),row({OriginalSubmission:'2025-02-01',LatestApproval:'2026-02-30',Product:'Other'})];
+  const actual=summary(rows,{product:'Product A'});
+  assert.deepEqual(actual.totals,{submissions:[1,0],approvals:[0,1]});
+  assert.ok(actual.issues.some(issue=>issue.field==='OriginalSubmission'&&issue.kind==='invalidPlanDate'&&issue.message.includes('Conflicting initial plan dates')));
+  assert.ok(actual.issues.some(issue=>issue.field==='LatestApproval'&&issue.kind==='invalidPlanDate'));
+  assert.equal(actual.events.find(event=>event.metric==='submissions').initialDate.kind,'issue');
+  const initial=summary(rows,{product:'Product A',dateBasis:'initial'});
+  assert.equal(initial.events.length,0); assert.ok(initial.issues.some(issue=>issue.field==='OriginalSubmission'&&issue.kind==='invalidDate'));
+  const independent=summary([row({ActualSubmission:'bad',OriginalSubmission:'2025-01-01',OriginalApproval:'2026-01-01'})],{dateBasis:'initial'});
+  assert.deepEqual(independent.totals,{submissions:[1,0],approvals:[0,1]});
+  assert.equal(independent.events.find(event=>event.metric==='submissions').actualDate.kind,'issue');
+});
+
+test('planned RO approvals use RO IDs and RO dates independently of child submission plans',()=>{
+  const rows=[row({OriginalSubmission:'2025-03-01',OriginalApproval:'2026-06-01'}),row({SubID:'S2',OriginalSubmission:'2026-04-01',OriginalApproval:'2026-06-01'})];
+  const result=summary(rows,{dateBasis:'initial'});
+  assert.deepEqual(result.totals,{submissions:[1,1],approvals:[0,1]});
+  assert.equal(result.events.find(event=>event.metric==='approvals').initialDate.day,parseDay('2026-06-01').day);
+  assert.equal(result.issues.filter(issue=>issue.kind==='invalidDate').length,0); reconciles(result);
+  const missingSub=summary([row({SubID:'',LatestApproval:'2026-07-01'})],{dateBasis:'lbe'});
+  assert.deepEqual(missingSub.totals,{submissions:[0,0],approvals:[0,1]});
+  const missingRO=summary([row({ROID:'',LatestSubmission:'2026-07-01'})],{dateBasis:'lbe'});
+  assert.deepEqual(missingRO.totals,{submissions:[0,1],approvals:[0,0]});
+  const conflict=summary([...rows,row({SubID:'S3',Product:'Other',OriginalApproval:'2026-07-01'})],{dateBasis:'initial',product:'Product A'});
+  assert.equal(sum(conflict.totals.approvals),0); assert.equal(sum(conflict.totals.submissions),2);
+});
+
+test('date basis availability is independent for submission and approval mappings',()=>{
+  const rows=[row({OriginalSubmission:'2025-03-01',OriginalApproval:'2026-06-01',LatestSubmission:'2026-06-01',LatestApproval:'2026-08-01'})];
+  const result=summary(rows,{dateBasis:'lbe',mapped:{...mapped,LatestApproval:false}});
+  assert.deepEqual(result.unavailableMetrics,{submissions:false,approvals:true});
+  assert.equal(result.events.length,1); assert.ok(result.notices.some(message=>message.includes('LatestApproval')));
+  const actual=summary(rows,{mapped:{...mapped,OriginalSubmission:false,OriginalApproval:false,LatestSubmission:false,LatestApproval:false}});
+  assert.deepEqual(actual.totals,{submissions:[1,0],approvals:[0,1]});
+  assert.equal(actual.events[0].initialDate.kind,'unmapped');
+  const initial=summary(rows,{dateBasis:'initial',mapped:{...mapped,ActualSubmission:false,ActualApproval:false}});
+  assert.deepEqual(initial.totals,{submissions:[1,0],approvals:[0,1]});
+  assert.equal(initial.events[0].actualDate.kind,'unmapped');
+});
+
+test('state filters use linked record states on the same delivered row as other selections',()=>{
+  const rows=[row({SubID:'S1',AppID:'A1',Product:'A',AppStatus:'Active',ROStatus:'In progress',SubStatus:'Planned'}),row({SubID:'S2',AppID:'A2',Product:'B',AppStatus:'Closed',ROStatus:'In progress',SubStatus:'Submitted'})];
+  assert.equal(summary(rows,{product:'A',stateFilters:{SubStatus:['Submitted']}}).events.length,0);
+  assert.equal(summary(rows,{product:'A',stateFilters:{AppStatus:['Closed']}}).events.length,0);
+  const result=summary(rows,{product:'B',stateFilters:{AppStatus:['Closed'],SubStatus:['Submitted'],ROStatus:['In progress']}});
+  assert.deepEqual(result.totals,{submissions:[1,0],approvals:[0,1]});
+  const approval=result.events.find(event=>event.metric==='approvals');
+  assert.equal(approval.states.SubStatus.kind,'multiple'); assert.deepEqual(approval.states.SubStatus.values,['Planned','Submitted']);
+  assert.equal(approval.states.AppStatus.kind,'multiple');
+  assert.equal(result.issues.filter(issue=>issue.kind==='conflictingState').length,0);
+  assert.deepEqual(result.choices.stateFilters.SubStatus,['Planned','Submitted']);
+  reconciles(result);
+});
+
+test('blank repeated state values do not override a known identity state or fabricate links',()=>{
+  const rows=[row({AppStatus:'Active',ROStatus:'Approved',SubStatus:'Submitted'}),row({AppStatus:'',ROStatus:'',SubStatus:''})];
+  for(const role of ['AppStatus','ROStatus','SubStatus']) assert.equal(summary(rows,{stateFilters:{[role]:['']}}).events.length,0);
+  const blank=summary([row()],{stateFilters:{AppStatus:[''],ROStatus:[''],SubStatus:['']}});
+  assert.equal(blank.events.length,2); assert.equal(blank.events[0].states.SubStatus.kind,'blank');
+  const mixed=summary([row({SubStatus:'Submitted'}),row({SubID:'S2',SubStatus:''})],{stateFilters:{SubStatus:['']}});
+  const approval=mixed.events.find(event=>event.metric==='approvals');
+  assert.equal(approval.states.SubStatus.kind,'multiple'); assert.equal(approval.states.SubStatus.label,'Submitted · Not recorded');
+  assert.equal(mixed.issues.filter(issue=>issue.kind==='conflictingState').length,0);
+  const literal=summary([row({SubStatus:'Not recorded'})],{stateFilters:{SubStatus:['']}});
+  assert.equal(literal.events.length,0);
+  const missingSubIDs=[row({SubID:'',Product:'A',SubStatus:'Planned'}),row({SubID:'',Product:'B',SubStatus:'Submitted'})];
+  assert.equal(summary(missingSubIDs,{product:'A',stateFilters:{SubStatus:['Submitted']}}).events.length,0);
+  const missingAppIDs=[row({AppID:'',Product:'A',AppStatus:'Active'}),row({AppID:'',Product:'B',AppStatus:'Closed'})];
+  assert.equal(summary(missingAppIDs,{product:'A',stateFilters:{AppStatus:['Closed']}}).events.length,0);
+});
+
+test('contradictory states on one ID remain reviewable before local filtering',()=>{
+  const rows=[row({SubStatus:'Planned',ROStatus:'Approved'}),row({SubStatus:'Submitted',ROStatus:'Approved',Product:'Other'})];
+  const result=summary(rows,{product:'Product A',stateFilters:{SubStatus:['Planned']}});
+  assert.deepEqual(result.totals,{submissions:[1,0],approvals:[0,1]});
+  const issues=result.issues.filter(issue=>issue.kind==='conflictingState');
+  assert.equal(issues.length,1); assert.equal(issues[0].field,'SubStatus'); assert.equal(issues[0].id,'SUB-1');
+  assert.deepEqual(issues[0].rawValues,['Planned','Submitted']);
+  assert.equal(result.events[0].states.SubStatus.kind,'issue');
+  const unavailable=summary([row()],{stateFilters:{ROStatus:['Approved']},mapped:{...mapped,ROStatus:false}});
+  assert.equal(unavailable.events.length,2); assert.ok(unavailable.notices.some(message=>message.includes('RO state is not mapped')));
+  assert.equal(unavailable.events[0].states.ROStatus.kind,'unmapped');
+});
+
+test('country filters coexist with dimensions and distinguish unknown from known joined countries',()=>{
+  const rows=[row({Country:'France',Product:'A'}),row({Country:'Germany',Product:'B'})];
+  assert.equal(summary(rows,{country:'Germany',product:'A'}).events.length,0);
+  const result=summary(rows,{country:'France',product:'A'});
+  assert.equal(result.events.length,2); assert.deepEqual(result.events[0].countries,['France','Germany']);
+  assert.equal(result.events[0].country,'France · Germany');
+  assert.equal(result.issues.filter(issue=>/countr/i.test(issue.kind)).length,0);
+  assert.deepEqual(result.choices.countries,['France','Germany']); reconciles(result);
+  const joinedBlank=[row({Country:'France'}),row({Country:''})];
+  assert.equal(summary(joinedBlank,{country:''}).events.length,0);
+  const trulyBlank=summary([row({Country:''})],{country:''});
+  assert.equal(trulyBlank.events.length,2); assert.equal(trulyBlank.events[0].country,'Not recorded');
+  assert.equal(summary([row({Country:'Not recorded'})],{country:''}).events.length,0);
+  const unavailable=summary(rows,{country:'France',mapped:{...mapped,Country:false}});
+  assert.equal(unavailable.events.length,2); assert.ok(unavailable.notices.some(message=>message.includes('Country is not mapped')));
+});

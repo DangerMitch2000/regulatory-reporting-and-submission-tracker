@@ -6,7 +6,7 @@ const {boot}=require('./prepare-tests.cjs'),{runSuite}=require('./browser-test.c
   const metadata=JSON.parse(fs.readFileSync(path.join(__dirname,'powerbi','pbiviz.json'),'utf8'));
   const guid=metadata.visual.guid;
   const pkg=JSON.parse(fs.readFileSync(path.join(__dirname,'package-check','resources',guid+'.pbiviz.json'),'utf8'));
-  assert.equal(pkg.visual.guid,guid);assert.equal(pkg.visual.version,'1.0.1.0');
+  assert.equal(pkg.visual.guid,guid);assert.equal(pkg.visual.version,'1.1.0.0');
   assert.deepEqual(pkg.capabilities.privileges,[]);
   const {ROLES}=await import('./logic.mjs'),{sample,sixSiteSample}=await import('./demo.mjs');
   assert.deepEqual([...pkg.capabilities.dataRoles.map(role=>role.name)].sort(),[...ROLES].sort());
