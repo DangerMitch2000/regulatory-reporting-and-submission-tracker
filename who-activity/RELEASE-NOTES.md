@@ -1,14 +1,14 @@
-# Submissions & Approvals 1.1.0
+# Submissions & Approvals 1.1.1
 
-Adds Initial plan and LBE (Latest Best Estimate) dates for submissions and RO approvals, current-state filters, and Country.
+Data checks now review every mapped date and current state, independently of the chart's selected date basis.
 
-- Date basis: Actual (default), Initial plan or LBE plan. Plans use the full selected years and can include future planned activity; Actuals retain their as-of cutoff.
-- Optional Application, RO and Submission state multi-select filters under More options, defaulting to All.
-- Country filter and Details values, independent of Commercial region.
-- Initial, LBE and Actual dates together in Details, with current states.
-- Click the record ID to open its corresponding platform page. Source and separate Platform columns have been removed.
-- Missing/conflicting dates remain reviewable without silently substituting another date basis. Submissions still count distinct Submission IDs; approvals count distinct ROs.
+- Checks all six Actual, Initial and LBE milestone dates, Data as-of date, and Application/RO/Submission states.
+- Separates Needs review from Information, including expected pending work and unrecorded optional information.
+- Shows field coverage and distinguishes check entries from distinct identified records.
+- Preserves actual-date evidence, valid future plans and existing distinct submission/RO totals.
+- Adds a filtered Copy checks table for reviewing all pages in a spreadsheet, alongside raw source evidence and Copy IDs.
+- Clarifies that checks cover delivered records across all years, not just the chart's two-year totals.
 
-Import this package to replace the existing visual. Add eight optional fields: Country, Application state, RO state, Submission state, Initial planned submission, LBE planned submission, Initial planned RO approval and LBE planned RO approval. The visual identity and existing mappings are retained; the installation guide lists every field.
+Import this package to replace the existing visual. No new field wells are required; the visual identity and existing mappings are retained. Map the optional dates and states to include them in the checks. These are review prompts, not automatic changes to Velocity data.
 
 The demo uses fictional data. This remains an uncertified preview; screenshot mode does not enable native Power BI PowerPoint/PDF export.

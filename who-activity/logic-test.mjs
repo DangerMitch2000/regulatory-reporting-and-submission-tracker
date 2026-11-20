@@ -272,7 +272,8 @@ test('future initial and LBE plans count in their chosen year but future actuals
   assert.equal(actual.events.length,0); assert.equal(actual.issues.filter(issue=>issue.kind==='futureDate').length,2);
   assert.deepEqual(initial.totals,{submissions:[1,0],approvals:[0,1]});
   assert.deepEqual(lbe.totals,{submissions:[0,1],approvals:[0,1]});
-  assert.equal(lbe.issues.filter(issue=>issue.kind==='futureDate').length,0);
+  assert.equal(lbe.issues.filter(issue=>issue.kind==='futureDate').length,2,'actual-date checks remain visible in plan views');
+  assert.ok(lbe.issues.filter(issue=>issue.kind==='futureDate').every(issue=>issue.dateBasis==='actual'));
   reconciles(initial); reconciles(lbe);
 });
 
@@ -284,7 +285,7 @@ test('invalid or conflicting plans stay reviewable before filters without changi
   assert.ok(actual.issues.some(issue=>issue.field==='LatestApproval'&&issue.kind==='invalidPlanDate'));
   assert.equal(actual.events.find(event=>event.metric==='submissions').initialDate.kind,'issue');
   const initial=summary(rows,{product:'Product A',dateBasis:'initial'});
-  assert.equal(initial.events.length,0); assert.ok(initial.issues.some(issue=>issue.field==='OriginalSubmission'&&issue.kind==='invalidDate'));
+  assert.equal(initial.events.length,0); assert.ok(initial.issues.some(issue=>issue.field==='OriginalSubmission'&&issue.kind==='invalidPlanDate'));
   const independent=summary([row({ActualSubmission:'bad',OriginalSubmission:'2025-01-01',OriginalApproval:'2026-01-01'})],{dateBasis:'initial'});
   assert.deepEqual(independent.totals,{submissions:[1,0],approvals:[0,1]});
   assert.equal(independent.events.find(event=>event.metric==='submissions').actualDate.kind,'issue');
@@ -376,4 +377,114 @@ test('country filters coexist with dimensions and distinguish unknown from known
   assert.equal(summary([row({Country:'Not recorded'})],{country:''}).events.length,0);
   const unavailable=summary(rows,{country:'France',mapped:{...mapped,Country:false}});
   assert.equal(unavailable.events.length,2); assert.ok(unavailable.notices.some(message=>message.includes('Country is not mapped')));
+});
+
+test('all mapped milestone dates are audited independently of the selected chart basis',()=>{
+  const rows=[row({ActualSubmission:'2026-11-19',OriginalSubmission:'bad baseline',LatestSubmission:'',ActualApproval:'2026-02-30',OriginalApproval:'',LatestApproval:'2026-12-01',AppStatus:'Active',ROStatus:'Health Authority Approved',SubStatus:'Completed'})];
+  const results=['actual','initial','lbe'].map(dateBasis=>summary(rows,{dateBasis}));
+  const signature=result=>result.issues.map(issue=>[issue.id,issue.kind,issue.field,issue.severity,issue.checkGroup,issue.message]);
+  assert.deepEqual(signature(results[0]),signature(results[1])); assert.deepEqual(signature(results[0]),signature(results[2]));
+  assert.equal(results[0].issues.length,5);
+  assert.deepEqual(results[0].issues.filter(issue=>issue.severity==='review').map(issue=>issue.field).sort(),['ActualApproval','ActualSubmission','OriginalSubmission']);
+  assert.deepEqual(results[2].totals,{submissions:[0,0],approvals:[0,1]},'future plan still counts independently');
+  assert.ok(results[0].checkCoverage.every(field=>field.checked)); assert.equal(results[0].checkCoverage.length,10);
+  for(const result of results) reconciles(result);
+});
+
+test('unavailable selected date fields do not hide other date and state checks',()=>{
+  const result=summary([row({ActualSubmission:'bad actual',OriginalSubmission:'bad initial',LatestSubmission:null,AppStatus:'',ROStatus:'',SubStatus:''})],{dateBasis:'lbe',mapped:{...mapped,LatestSubmission:false,LatestApproval:false}});
+  assert.ok(result.unavailableMetrics.submissions&&result.unavailableMetrics.approvals);
+  assert.ok(result.issues.some(issue=>issue.field==='ActualSubmission'&&issue.kind==='invalidDate'));
+  assert.ok(result.issues.some(issue=>issue.field==='OriginalSubmission'&&issue.kind==='invalidPlanDate'));
+  assert.equal(result.issues.filter(issue=>issue.kind==='missingState').length,3);
+  assert.equal(result.issues.filter(issue=>issue.field==='LatestSubmission'||issue.field==='LatestApproval').length,0,'unmapped optional fields are not reported as blank records');
+  assert.equal(result.checkCoverage.find(field=>field.field==='LatestSubmission').checked,false);
+});
+
+test('blank actual dates distinguish conservative pending work from explicit milestone evidence',()=>{
+  const check=(SubStatus,ROStatus)=>summary([row({ActualSubmission:null,ActualApproval:null,SubStatus,ROStatus,AppStatus:'Active'})]).issues.filter(issue=>['ActualSubmission','ActualApproval'].includes(issue.field));
+  for(const issue of check('Planned','In Progress')) {assert.equal(issue.kind,'missingDate');assert.equal(issue.severity,'info');assert.equal(issue.checkGroup,'expectedPending');}
+  for(const issue of check('Ready For Submission','On Hold By Health Authority')) assert.equal(issue.checkGroup,'expectedPending');
+  for(const issue of check('Sent To Health Authority','Conditionally Approved')) {assert.equal(issue.severity,'review');assert.match(issue.message,/verify the actual date/i);}
+  for(const issue of check('Archived','Withdrawn')) {assert.equal(issue.severity,'info');assert.equal(issue.checkGroup,'notRecorded');}
+  assert.equal(check('Distributed','Custom workflow')[0].checkGroup,'notRecorded','distributed is not assumed to prove or disprove authority submission');
+  const custom=summary([row({SubStatus:'Custom workflow',ROStatus:'Other workflow',AppStatus:'Custom application state'})]);
+  assert.equal(custom.issues.filter(issue=>/State/.test(issue.kind)).length,0,'custom state names are not invented errors');
+});
+
+test('current planned states with actual dates are reviewable without discarding historical activity',()=>{
+  const result=summary([row({SubStatus:'Planned',ROStatus:'Planned',AppStatus:'Inactive'})]);
+  assert.deepEqual(result.totals,{submissions:[1,0],approvals:[0,1]});
+  const mismatches=result.issues.filter(issue=>issue.kind==='stateDateMismatch');
+  assert.equal(mismatches.length,2); assert.ok(mismatches.every(issue=>issue.severity==='review'));
+  const historical=summary([row({SubStatus:'Withdrawn',ROStatus:'Archived',AppStatus:'Inactive'})]);
+  assert.equal(historical.issues.filter(issue=>issue.kind==='stateDateMismatch').length,0);
+  assert.deepEqual(historical.totals,result.totals);
+});
+
+test('as-of checks are global once and excluded from identified or unidentified record totals',()=>{
+  for(const value of [null,'bad']) {
+    const result=summary([row({AsOfDate:value}),row({AsOfDate:value})],{mapped:{...mapped,ActualSubmission:false,ActualApproval:false},dateBasis:'actual'});
+    const checks=result.issues.filter(issue=>issue.field==='AsOfDate');
+    assert.equal(checks.length,1); assert.equal(checks[0].recordType,'dataset');
+    assert.equal(checks[0].severity,value==null?'info':'review'); assert.equal(result.issuesSummary.datasetCount,1);
+    assert.equal(result.issuesSummary.unidentifiedCount,0); assert.equal(result.issuesSummary.recordCount,3);
+  }
+  const conflict=summary([row(),row({AsOfDate:'2026-11-17'})]);
+  assert.equal(conflict.issues.filter(issue=>issue.field==='AsOfDate').length,1);
+  assert.match(conflict.issues.find(issue=>issue.field==='AsOfDate').message,/Conflicting data as-of dates/);
+  assert.equal(conflict.asOfLabel,'19 Nov 2026');
+  const future=summary([row({AsOfDate:'2026-11-21'})]);
+  assert.equal(future.issues.find(issue=>issue.field==='AsOfDate').kind,'futureDate'); assert.equal(future.asOfLabel,'21 Nov 2026','audit does not silently change supplied cutoff');
+});
+
+test('lone application and RO states are checked without requiring a selected milestone date',()=>{
+  const appOnly=summary([row({SubID:'',ROID:'',AppID:'APP-ONLY',ActualSubmission:null,ActualApproval:null,AppStatus:''})],{mapped:{...mapped,ActualSubmission:false,ActualApproval:false}});
+  const appCheck=appOnly.issues.find(issue=>issue.field==='AppStatus');
+  assert.equal(appCheck.kind,'missingState');assert.equal(appCheck.recordType,'application');assert.equal(appCheck.id,'APP-ONLY');
+  assert.equal(appOnly.issues.filter(issue=>issue.field==='SubStatus'||issue.field==='ROStatus').length,0,'no invented absent child identities');
+  const roOnly=summary([row({SubID:'',ROStatus:'Planned'}),row({SubID:'',ROStatus:'Health Authority Approved'})],{mapped:{...mapped,ActualApproval:false}});
+  assert.equal(roOnly.issues.filter(issue=>issue.field==='ROStatus'&&issue.kind==='conflictingState').length,1);
+});
+
+test('typed issue counts deduplicate joined evidence while preserving all checked fields',()=>{
+  const base=row({SubID:'SAME',ROID:'SAME',AppID:'SAME',ActualSubmission:null,ActualApproval:null,AsOfDate:null});
+  const result=summary([base,{...base,RegistrationID:'REG-2'},base]);
+  assert.equal(result.issuesSummary.recordCount,3,'typed identities prevent one text ID merging three record types');
+  assert.equal(result.issuesSummary.total,10,'six date blanks, three state blanks and one global reference blank');
+  assert.equal(result.issuesSummary.review,0);assert.equal(result.issuesSummary.info,10);assert.equal(result.issuesSummary.datasetCount,1);
+  const known=summary([row({AppStatus:'Active',SubStatus:'Completed',ROStatus:'Health Authority Approved',OriginalSubmission:'2025-01-01',LatestSubmission:'2025-02-01',OriginalApproval:'2026-01-01',LatestApproval:'2026-01-15'}),row()]);
+  assert.equal(known.issues.filter(issue=>issue.kind==='missingState'||issue.kind==='conflictingState'||issue.kind==='missingDate').length,0,'blank repeat joins do not conceal recorded identity evidence');
+});
+
+test('missing owner IDs retain bounded raw source date/state examples without fabricating records',()=>{
+  const orphan=row({SubID:'',ROID:'',AppID:'',ActualSubmission:'bad date',SubStatus:'Completed',AppStatus:'Active'});
+  const result=summary([orphan,{...orphan,ActualSubmission:'2026-12-31'}]);
+  const missingSub=result.issues.filter(issue=>issue.field==='SubID'&&issue.kind==='missingID');
+  assert.equal(missingSub.length,2);assert.deepEqual(missingSub[0].sourceFields.ActualSubmission,['bad date']);assert.deepEqual(missingSub[0].sourceFields.SubStatus,['Completed']);
+  assert.equal(result.issues.filter(issue=>issue.field==='AppID').length,2);assert.deepEqual(result.issues.find(issue=>issue.field==='AppID').sourceFields.AppStatus,['Active']);
+  assert.equal(result.issuesSummary.recordCount,0);assert.equal(result.issuesSummary.unidentifiedCount,2);
+  const linked=summary(Array.from({length:30},(_,i)=>row({SubID:'',ActualSubmission:`raw ${i}`,SubStatus:'Completed'})));
+  const review=linked.issues.find(issue=>issue.field==='SubID');assert.equal(review.sourceRows,30);assert.equal(review.sourceFields.ActualSubmission.length,20);
+  assert.equal(review.recordType,'ro');assert.equal(review.id,'RO-1');
+});
+
+test('coverage distinguishes unmapped fields, missing identities, unavailable scope and no delivered data',()=>{
+  const noScope=summary([row()],{mapped:{...mapped,Site:false}});
+  assert.equal(noScope.checkCoverage.filter(field=>field.checked).length,1);assert.equal(noScope.checkCoverage.find(field=>field.checked).field,'AsOfDate');
+  assert.equal(noScope.checkCoverage.find(field=>field.field==='AppStatus').reason,'Map required scope fields');
+  const noID=summary([row()],{mapped:{...mapped,AppID:false}});
+  assert.equal(noID.checkCoverage.find(field=>field.field==='AppStatus').reason,'Owning ID field not mapped');
+  const blankID=summary([row({AppID:'',AppStatus:''})]);
+  assert.equal(blankID.checkCoverage.find(field=>field.field==='AppStatus').reason,'No owning IDs delivered');assert.equal(blankID.issues.filter(issue=>issue.field==='AppID').length,0);
+  assert.ok(summary([]).checkCoverage.every(field=>!field.checked));assert.equal(summary([]).issues.length,0);
+});
+
+test('audit scope can include older records but never claims their warnings are counted chart activity',()=>{
+  const rows=[row({ActualSubmission:'2020-01-01',ActualApproval:'2020-02-01',Site:'ABO'}),row({ActualSubmission:'2020-01-01',ActualApproval:'2020-02-01',Site:'ADK'})];
+  const result=summary(rows);
+  assert.equal(result.events.length,0);assert.ok(result.issues.length>0);
+  assert.ok(result.issues.filter(issue=>issue.kind==='multipleSites').every(issue=>issue.message.includes('When otherwise eligible')));
+  const otherYear=summary(rows,{years:[2019,2020]});assert.equal(otherYear.issues.length,result.issues.length);
+  assert.deepEqual(otherYear.totals,{submissions:[0,1],approvals:[0,1]});
 });

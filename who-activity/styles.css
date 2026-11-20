@@ -83,6 +83,19 @@
 .who-details-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-bottom:1px solid var(--who-border)}
 .who-details-top .who-actions{justify-content:flex-end}
 .who-details-top input[type=search]{width:240px;max-width:100%}
+.who-details-top .who-field{flex-direction:row;align-items:center;gap:7px}
+.who-details-top .who-field select{width:145px}
+.who-check-summary{padding:9px 12px 3px;font-size:max(13px,.88em);font-variant-numeric:tabular-nums;color:var(--who-text)}
+.who-check-scope{padding:0 12px 5px;font-size:max(13px,.85em);color:var(--who-muted);line-height:1.4}
+.who-check-coverage{padding:2px 12px 8px;font-size:max(13px,.85em);color:var(--who-muted)}
+.who-check-coverage>summary{cursor:pointer;width:fit-content}
+.who-coverage-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 18px;padding:8px 0;overflow-wrap:anywhere}
+.who-check-table .who-check-identity{min-width:130px}
+.who-check-table .who-check-kind{min-width:170px}
+.who-check-table .who-check-priority{min-width:110px}
+.who-check-table td:last-child{min-width:260px;max-width:none}
+.who-check-review{color:var(--who-warning);font-weight:600}
+.who-check-info{color:var(--who-muted)}
 .who-detail-scroll{overflow:auto;max-height:300px;overscroll-behavior:contain;scrollbar-gutter:stable;position:relative;isolation:isolate}
 .who-table{width:100%;border-collapse:separate;border-spacing:0;text-align:left;font-size:max(13px,.88em)}
 .who-table th{position:sticky;top:0;background:var(--who-panel-2);color:var(--who-text);z-index:2;white-space:nowrap;border-bottom:1px solid var(--who-border);font-weight:600;padding:9px 10px}
@@ -131,6 +144,7 @@
 .who-narrow .who-footer{flex-wrap:wrap}
 .who-narrow .who-scope{max-width:100%}
 .who-narrow .who-details-top input[type=search]{width:100%}
+.who-narrow .who-coverage-fields{grid-template-columns:1fr}
 .who-capture .who-header{margin-bottom:16px}
 .who-capture .who-header .who-button{opacity:.65;font-size:max(13px,.8em);padding:3px 7px}
 .who-capture .who-chart-top{margin-top:4px}

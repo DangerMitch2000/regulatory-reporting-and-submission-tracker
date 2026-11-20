@@ -1,8 +1,8 @@
-# Submissions & Approvals 1.1.0
+# Submissions & Approvals 1.1.1
 
-Compare submissions and RO approvals across two calendar years using **Actual**, **Initial plan**, or **LBE plan** dates. LBE means Latest Best Estimate for both submissions and approvals. Previously named WHO Submissions & Approvals; version 1.1.0 keeps the same visual identity and existing field mappings so it replaces the earlier visual on import. The visual opens on **Actuals**, **Commercial region = WHO**, **Business unit = ID**, the six standard sites and unassigned sites. Country and current-state filters default to All. Years default to the previous and current calendar years; Actuals use year-to-date activity, while plan views cover the full selected years.
+Compare submissions and RO approvals across two calendar years using **Actual**, **Initial plan**, or **LBE plan** dates. LBE means Latest Best Estimate for both submissions and approvals. Previously named WHO Submissions & Approvals; version 1.1.1 keeps the same visual identity and existing field mappings so it replaces the earlier visual on import. The visual opens on **Actuals**, **Commercial region = WHO**, **Business unit = ID**, the six standard sites and unassigned sites. Country and current-state filters default to All. Years default to the previous and current calendar years; Actuals use year-to-date activity, while plan views cover the full selected years.
 
-[Download the Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/who-activity-v1.1.0/submissions-approvals-1.1.0.0.pbiviz) · [Interactive demo with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/who-activity/preview.html) · [All visuals](../README.md)
+[Download the Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/who-activity-v1.1.1/submissions-approvals-1.1.1.0.pbiviz) · [Interactive demo with fictional data](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/who-activity/preview.html) · [All visuals](../README.md)
 
 ## Install and map fields
 
@@ -75,6 +75,16 @@ Four cards show previous/current-year submissions and approvals. Paired horizont
 Switch grouping between Site and Commercial region. Filters apply to commercial-region scope, business unit, sites, products, country, submission type and current states. Selecting multiple dimensions requires matching evidence on a delivered source row; unrelated joined values are not treated as a valid combination. Filter selections and date basis persist in the report. The subtitle shows the selected scope and date basis beneath the fixed Submissions & Approvals title.
 
 Data checks expose missing links/IDs, blank site/region values, unusable dates and conflicting assignments. Loading messages remain visible while Power BI supplies additional rows; partial counts are not presented as complete.
+
+## Review all dates and states
+
+Data checks examine all mapped Actual, Initial plan and LBE dates for submissions and RO approvals, plus Data as-of date and the three current-state fields. Changing the chart's Date basis does not hide checks for the other date fields. Field coverage shows which dates and states can actually be checked; unmapped fields or missing identity mappings are identified explicitly.
+
+**Needs review** includes invalid or conflicting dates, actual dates after the as-of cutoff, conflicting states for the same record ID, and supported state/date inconsistencies. A clearly completed submission or approved RO without its actual date needs review. **Information** includes missing plans or states and missing actual dates without conclusive completion evidence. Clearly pending work is labelled as such. These checks never invent dates, replace missing values, or change the activity-counting rules. Future planned dates are valid. Closed or archived records can legitimately retain historical actual dates.
+
+The totals distinguish **check entries** from **distinct identified records**. One record can have several checks, and anonymous source rows cannot establish distinct records. Checks cover delivered data in the applicable filter scope across all years, including undated records; they are not a count of excluded records from the two chart years. Blank region and site coverage checks can also remain visible separately from the chart's counted groups.
+
+Open **Data checks**, choose **All**, **Needs review** or **Information**, then search or sort the list. Expand **Source evidence** to see mapped fields, raw values, states and linked IDs. **Copy checks** copies the complete searched/filtered checklist across all pages as a spreadsheet-friendly table; **Copy IDs** copies distinct displayed IDs only. Neither action changes the source data. To verify a finding, compare the exact record and field in Velocity and then check the corresponding Power BI mapping and relationships.
 
 Dark is the default; Light is available. Typography uses Wallace Sans and Wallace Sans Light for the title, with Segoe UI/Arial fallbacks. No font files are bundled. The layout stacks charts on narrower visuals and accommodates the full Scarborough site name. Screenshot mode hides controls for a clean capture while retaining scope and quality notices.
 

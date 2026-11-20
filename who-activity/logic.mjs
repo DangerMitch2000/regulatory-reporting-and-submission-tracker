@@ -11,6 +11,12 @@ const DATE_BASES = Object.freeze({
   initial:{label:'Initial plan',submissions:'OriginalSubmission',approvals:'OriginalApproval'},
   lbe:{label:'LBE plan',submissions:'LatestSubmission',approvals:'LatestApproval'}
 });
+const DATE_LABELS = Object.freeze({ActualSubmission:'Actual submission date',ActualApproval:'Actual RO approval date',OriginalSubmission:'Initial planned submission date',OriginalApproval:'Initial planned RO approval date',LatestSubmission:'LBE planned submission date',LatestApproval:'LBE planned RO approval date',AsOfDate:'Data as-of date'});
+// Exact states already used by the tracker/change dashboard. Unknown custom
+// states are retained, not classified as invalid or assumed to be complete.
+const MILESTONE_STATES = Object.freeze({submissions:new Set(['completed','ha received','sent to health authority','rejected']),approvals:new Set(['health authority approved','conditionally approved'])});
+const PENDING_STATES = Object.freeze({submissions:new Set(['planned','ready for submission']),approvals:new Set(['planned','in progress','on hold by mah','on hold by health authority'])});
+const BEFORE_MILESTONE_STATES = Object.freeze({submissions:new Set(['planned','ready for submission']),approvals:new Set(['planned'])});
 export const clean = value => String(value ?? '').trim().replace(/\s+/g, ' ');
 const norm = value => clean(value).toLocaleLowerCase('en-GB');
 const DAY = 86400000;
@@ -158,26 +164,40 @@ export function summarize(inputRows,options={}) {
   const dateBasis=state.dateBasis,dateBasisLabel=DATE_BASES[dateBasis].label;
   const basisDateRoles={submissions:DATE_BASES[dateBasis].submissions,approvals:DATE_BASES[dateBasis].approvals};
   const resolvedStates=stateIndex(rows,mapped);
-  const addIssue=(issue,key=JSON.stringify([issue.kind,issue.metric,issue.id,issue.sourceRow]))=>{
+  const addIssue=(issue,key=JSON.stringify([issue.kind,issue.metric,issue.id,issue.field,issue.sourceRow]))=>{
+    issue={severity:'review',checkGroup:'review',recordType:issue.metric==='submissions'?'submission':issue.metric==='approvals'?'ro':'source',...issue};
     const existing=issueKeys.get(key);
     if(!existing){issueKeys.set(key,issue);issues.push(issue);return;}
     if(issue.sourceRows) {
       existing.sourceRows=(existing.sourceRows||0)+issue.sourceRows;
       if(existing.sourceRowExamples.length<20) existing.sourceRowExamples.push(...issue.sourceRowExamples.slice(0,20-existing.sourceRowExamples.length));
       for(const field of ['subIds','roIds','appIds','registrationIds','products','sites','regions']) existing[field]=unique([...(existing[field]||[]),...(issue[field]||[])]);
+      if(issue.sourceFields) {
+        existing.sourceFields ||= {};
+        for(const [field,values] of Object.entries(issue.sourceFields)) existing.sourceFields[field]=uniqueLabels([...(existing.sourceFields[field]||[]),...values]).slice(0,20);
+      }
     }
   };
   const sourceReview=(row,sourceRow,kind,message,metric)=>{
     const subId=clean(row.SubID),roId=clean(row.ROID),id=subId||roId||`Source row ${sourceRow+1}`;
     const key=(subId||roId)?JSON.stringify([kind,metric,subId,roId]):JSON.stringify([kind,metric,'anonymous',sourceRow]);
-    addIssue({id,kind,message,...(metric?{metric}:{}),sourceRow,sourceRows:1,sourceRowExamples:[sourceRow+1],
+    const sourceRoles=metric==='applications'?['AppStatus']:[...Object.values(DATE_BASES).map(basis=>basis[metric]),metric==='submissions'?'SubStatus':'ROStatus'];
+    const sourceFields=kind==='missingID'?Object.fromEntries(sourceRoles.filter(field=>mapped[field]).map(field=>[field,[row[field] instanceof Date?Number.isFinite(+row[field])?row[field].toISOString():'Invalid Date':clean(row[field])]])):undefined;
+    addIssue({id,kind,message,...(metric?{metric}:{}),...(sourceFields?{sourceFields,field:metric==='applications'?'AppID':metric==='submissions'?'SubID':'ROID'}:{}),recordType:subId?'submission':roId?'ro':'source',sourceRow,sourceRows:1,sourceRowExamples:[sourceRow+1],
       subIds:unique([row.SubID]),roIds:unique([row.ROID]),appIds:unique([row.AppID]),registrationIds:unique([row.RegistrationID]),products:unique([row.Product]),sites:unique([row.Site]),regions:unique([row.CommercialRegion]),
       site:clean(row.Site)||'Unassigned site',region:clean(row.CommercialRegion)||'Not recorded',rawSite:clean(row.Site),rawCommercialRegion:clean(row.CommercialRegion)},key);
   };
   const previousDay=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())-DAY;
-  const suppliedAsOf=resolveDate(rows.map(row=>row.AsOfDate),mapped.AsOfDate);
+  const suppliedAsOf=resolveDate(rows.map(row=>row.AsOfDate),mapped.AsOfDate,'data as-of');
   const asOf=suppliedAsOf.kind==='date'?suppliedAsOf.day:previousDay;
   const referenceSource=suppliedAsOf.kind==='date'?'Supplied extract date':'Previous-day reference (not source refresh time)';
+  const checkCoverage=[...Object.entries(DATE_BASES).flatMap(([,basis])=>['submissions','approvals'].map(metric=>({field:basis[metric],label:DATE_LABELS[basis[metric]],type:'date',mapped:mapped[basis[metric]],identityMapped:mapped[metric==='submissions'?'SubID':'ROID']}))),{field:'AsOfDate',label:DATE_LABELS.AsOfDate,type:'date',mapped:mapped.AsOfDate,identityMapped:true},...STATE_ROLES.map(field=>({field,label:STATE_LABELS[field],type:'state',mapped:mapped[field],identityMapped:mapped[STATE_IDS[field]]}))];
+  if(rows.length&&mapped.AsOfDate&&(suppliedAsOf.kind!=='date'||suppliedAsOf.day>previousDay+DAY)) {
+    const rawValues=rawDates(rows,'AsOfDate'),metadata={id:'Dataset',recordType:'dataset',field:'AsOfDate',rawValues:rawValues.slice(0,20),rawValueCount:rawValues.length};
+    if(suppliedAsOf.kind==='blank') addIssue({...metadata,kind:'missingDate',severity:'info',checkGroup:'notRecorded',message:'Data as-of date not recorded. Yesterday is used as a reference, not a source refresh timestamp.'});
+    else if(suppliedAsOf.kind==='issue') addIssue({...metadata,kind:'invalidDate',message:`${suppliedAsOf.reason}: data as-of date. Yesterday is used as a reference; verify the extract date.`});
+    else if(suppliedAsOf.day>previousDay+DAY) addIssue({...metadata,kind:'futureDate',date:suppliedAsOf.day,message:'Data as-of date is after today. The supplied cutoff is retained; verify that this is the intended reference date.'});
+  }
   if(suppliedAsOf.kind==='issue') notices.push('The supplied as-of field has invalid or conflicting dates. Using yesterday as a reference, not an extract date.');
   else if(suppliedAsOf.kind==='blank'||suppliedAsOf.kind==='unmapped') notices.push('No usable extract date supplied. As of yesterday is a reference, not source refresh time.');
   const unavailableMetrics={submissions:!mapped.SubID||!mapped[basisDateRoles.submissions],approvals:!mapped.ROID||!mapped[basisDateRoles.approvals]};
@@ -185,6 +205,12 @@ export function summarize(inputRows,options={}) {
   if(unavailableMetrics.submissions) notices.push(`Submissions unavailable: map Submission ID and ${dateLabel('submissions')} (${basisDateRoles.submissions}).`);
   if(unavailableMetrics.approvals) notices.push(`Approvals unavailable: map RO ID and ${dateLabel('approvals')} (${basisDateRoles.approvals}).`);
   const scopeUnavailable=REQUIRED.some(role=>!mapped[role]);
+  for(const coverage of checkCoverage) {
+    const idRole=coverage.type==='state'?STATE_IDS[coverage.field]:coverage.field==='AsOfDate'?null:coverage.field.endsWith('Submission')?'SubID':'ROID';
+    const identityPresent=!idRole||rows.some(row=>clean(row[idRole]));
+    coverage.checked=coverage.mapped&&coverage.identityMapped&&rows.length>0&&identityPresent&&(!idRole||!scopeUnavailable);
+    coverage.reason=coverage.checked?'':!coverage.mapped?'Field not mapped':!coverage.identityMapped?'Owning ID field not mapped':!rows.length?'No data delivered':idRole&&scopeUnavailable?'Map required scope fields':!identityPresent?'No owning IDs delivered':'Not checked';
+  }
   if(!mapped.CommercialRegion) notices.push('Map Commercial region. WHO is identified by its explicit commercial-region value; missing regions are not inferred to be WHO.');
   if(!mapped.Site) notices.push('Map the manufacturing site field before viewing activity by the six sites.');
   if(!mapped.BusinessUnit&&state.unit!=='*') notices.push('Business unit is not mapped. The ID/unit filter cannot be applied; counts include all delivered business units.');
@@ -215,9 +241,12 @@ export function summarize(inputRows,options={}) {
       if(!siteMatch(row)) return;
       if(mapped.SubID&&!clean(row.SubID)) sourceReview(row,sourceRow,'missingID','Submission ID not recorded. This source row cannot identify a distinct submission.','submissions');
       if(mapped.ROID&&!clean(row.ROID)) sourceReview(row,sourceRow,'missingID','RO ID not recorded. This source row cannot identify a distinct RO approval.','approvals');
+      if(mapped.AppID&&mapped.AppStatus&&!clean(row.AppID)&&clean(row.AppStatus)) sourceReview(row,sourceRow,'missingID','Application state is recorded but Application ID is blank. The raw state is retained as source evidence; no application identity or state conflict is inferred.','applications');
     });
     for(const metric of ['submissions','approvals']) {
-      if(unavailableMetrics[metric]) continue;
+      // Auditing does not depend on the chart's selected date basis. A missing
+      // mapping for that basis must not hide checks on other mapped fields.
+      if(!mapped[metric==='submissions'?'SubID':'ROID']) continue;
       const idRole=metric==='submissions'?'SubID':'ROID',dateRole=basisDateRoles[metric], byID=new Map();
       for(const row of rows) { const id=clean(row[idRole]); if(id){if(!byID.has(id))byID.set(id,[]);byID.get(id).push(row);} }
       for(const [id,identityRows] of byID) {
@@ -230,26 +259,50 @@ export function summarize(inputRows,options={}) {
         if(!identityRows.some(row=>allMatch(row,region,site,countries))) continue;
         const states=Object.fromEntries(STATE_ROLES.map(role=>[role,resolvedStates.aggregate(identityRows,role)]));
         const metadata={id,metric,subIds:unique(identityRows.map(row=>row.SubID)),roIds:unique(identityRows.map(row=>row.ROID)),appIds:unique(identityRows.map(row=>row.AppID)),registrationIds:unique(identityRows.map(row=>row.RegistrationID)),products:unique(identityRows.map(row=>row.Product)),site:site.label,region:region.label,sites:site.values,regions:region.values,countries,country:countries.join(' · ')||'Not recorded'};
-        if(site.kind==='multiple') addIssue({...metadata,kind:'multipleSites',message:'This record has multiple manufacturing sites. It is counted once in Multiple sites — review, not once per site.'});
-        if(region.kind==='multiple') addIssue({...metadata,kind:'multipleRegions',message:'This record has multiple commercial regions. It is counted once in Multiple regions — review, not once per region.'});
-        if(region.kind==='blank'&&mapped.CommercialRegion) addIssue({...metadata,kind:'missingRegion',message:'Commercial region not recorded. The record remains included.'});
-        for(const role of STATE_ROLES) for(const record of states[role].records) if(record.id&&record.values.length>1) {
-          addIssue({...metadata,id:record.id,kind:'conflictingState',field:role,rawValues:record.values,rawValueCount:record.values.length,message:`Conflicting ${STATE_LABELS[role].toLowerCase()} values for the same ${STATE_IDS[role]}. Date-based activity remains counted; review the source state.`},JSON.stringify(['conflictingState',role,record.id]));
+        if(site.kind==='multiple') addIssue({...metadata,kind:'multipleSites',message:'This record has multiple manufacturing sites. When otherwise eligible for the chart, it is counted once in Multiple sites — review, not once per site.'});
+        if(region.kind==='multiple') addIssue({...metadata,kind:'multipleRegions',message:'This record has multiple commercial regions. When otherwise eligible for the chart, it is counted once in Multiple regions — review, not once per region.'});
+        if(region.kind==='blank'&&mapped.CommercialRegion) addIssue({...metadata,kind:'missingRegion',message:'Commercial region not recorded. The record can remain included when All or Not recorded is selected and its date is eligible for the chart.'});
+        const ownState=states[metric==='submissions'?'SubStatus':'ROStatus'];
+        const stateValues=ownState.values,oneState=stateValues.length===1?norm(stateValues[0]):'';
+        for(const basis of ['actual','initial','lbe']) {
+          const field=DATE_BASES[basis][metric],resolved=dates[basis];
+          if(!mapped[field]) continue;
+          const future=basis==='actual'&&resolved.kind==='date'&&resolved.day>asOf;
+          const mismatch=basis==='actual'&&resolved.kind==='date'&&BEFORE_MILESTONE_STATES[metric].has(oneState);
+          if(resolved.kind==='date'&&!future&&!mismatch) continue;
+          const rawValues=rawDates(identityRows,field),evidence={...metadata,field,dateBasis:basis,stateValues,rawValues:rawValues.slice(0,20),rawValueCount:rawValues.length};
+          if(resolved.kind==='issue') addIssue({...evidence,kind:basis==='actual'?'invalidDate':'invalidPlanDate',message:`${resolved.reason}: ${DATE_LABELS[field].toLowerCase()}. Excluded from ${DATE_BASES[basis].label.toLowerCase()} activity for this metric; other usable date bases remain independent.`});
+          else if(resolved.kind==='blank') {
+            const complete=basis==='actual'&&MILESTONE_STATES[metric].has(oneState),pending=basis==='actual'&&PENDING_STATES[metric].has(oneState);
+            const explanation=complete?` The current state (${stateValues[0]}) provides milestone evidence; verify the actual date in Velocity.`:pending?` Expected pending work in the current state (${stateValues[0]}); this is not a confirmed data error.`:basis==='actual'?' The milestone may not have occurred; no completion is inferred from an unknown or inactive state.':' This may be an unrecorded baseline or estimate; it is not automatically a data error.';
+            addIssue({...evidence,kind:'missingDate',severity:complete?'review':'info',checkGroup:complete?'review':pending?'expectedPending':'notRecorded',message:`${DATE_LABELS[field]} not recorded; no year can be assigned for this date basis.${explanation} No other date basis is substituted.`});
+          } else if(future) addIssue({...evidence,kind:'futureDate',date:resolved.day,message:'Actual date is after the as-of reference. Excluded from actual activity for this metric; planned activity remains independent.'});
+          if(mismatch) addIssue({...evidence,kind:'stateDateMismatch',date:resolved.day,message:`An actual date is recorded while the current ${metric==='submissions'?'submission':'RO'} state is ${stateValues[0]}. Review the state/date combination; usable actual activity is retained.`});
         }
-        for(const basis of ['initial','lbe']) if(basis!==dateBasis&&dates[basis].kind==='issue') {
-          const field=DATE_BASES[basis][metric],rawValues=rawDates(identityRows,field);
-          addIssue({...metadata,kind:'invalidPlanDate',field,rawValues:rawValues.slice(0,20),rawValueCount:rawValues.length,message:`${dates[basis].reason}: ${DATE_BASES[basis].label.toLowerCase()} ${metric==='submissions'?'submission':'RO approval'} date. This does not change the selected ${dateBasisLabel.toLowerCase()} count.`},JSON.stringify(['invalidPlanDate',metric,id,field]));
-        }
-        if(date.kind!=='date') {
-          const rawValues=rawDates(identityRows,dateRole);
-          addIssue({...metadata,kind:date.kind==='issue'?'invalidDate':'missingDate',rawValues:rawValues.slice(0,20),rawValueCount:rawValues.length,field:dateRole,message:date.kind==='issue'?`${date.reason}: ${dateLabel(metric).toLowerCase()}. Excluded from this metric.`:`${dateLabel(metric)} not recorded; year cannot be assigned. No other date basis is substituted.`});
-          continue;
-        }
-        if(dateBasis==='actual'&&date.day>asOf) {addIssue({...metadata,kind:'futureDate',date:date.day,message:'Actual date is after the as-of reference. Excluded from this metric.'});continue;}
+        if(unavailableMetrics[metric]||date.kind!=='date') continue;
+        if(dateBasis==='actual'&&date.day>asOf) continue;
         const year=new Date(date.day).getUTCFullYear();
         if(!years.includes(year)) continue;
         const group=state.groupBy==='region'?region:site;
         events.push({...metadata,key:`${metric}:${encodeURIComponent(id)}`,date:date.day,year,dateBasis,initialDate:dates.initial,lbeDate:dates.lbe,actualDate:dates.actual,states,groupKey:group.key,groupLabel:group.label,siteKey:site.key,regionKey:region.key,submissionDate:metric==='submissions'?dates.actual:companionSubmissionDates(identityRows,mapped),approvalDate:metric==='approvals'?dates.actual:resolveDate(identityRows.map(row=>row.ActualApproval),mapped.ActualApproval),url:safeURL(identityRows,metric==='submissions'?'SubmissionURL':'RegulatoryObjectiveURL'),source:'Velocity'});
+      }
+    }
+    // State checks are owned by their IDs independently of milestone availability.
+    // This includes an application or RO with no child submission yet.
+    for(const field of STATE_ROLES) {
+      const idRole=STATE_IDS[field];
+      if(!mapped[field]||!mapped[idRole]) continue;
+      const byID=new Map();
+      for(const row of rows) {const id=clean(row[idRole]);if(id){if(!byID.has(id))byID.set(id,[]);byID.get(id).push(row);}}
+      for(const [id,identityRows] of byID) {
+        const resolved=resolvedStates.aggregate(identityRows,field);
+        if(resolved.kind!=='blank'&&resolved.kind!=='issue') continue;
+        const site=allocation(identityRows,'Site','site'),region=allocation(identityRows,'CommercialRegion','region'),countries=uniqueLabels(identityRows.map(row=>row.Country)).filter(Boolean);
+        if(!identityRows.some(row=>allMatch(row,region,site,countries))) continue;
+        const recordType=field==='AppStatus'?'application':field==='ROStatus'?'ro':'submission';
+        const metadata={id,recordType,field,metric:field==='ROStatus'?'approvals':field==='SubStatus'?'submissions':'applications',stateValues:resolved.values,rawValues:resolved.values,rawValueCount:resolved.values.length,subIds:unique(identityRows.map(row=>row.SubID)),roIds:unique(identityRows.map(row=>row.ROID)),appIds:unique(identityRows.map(row=>row.AppID)),registrationIds:unique(identityRows.map(row=>row.RegistrationID)),products:unique(identityRows.map(row=>row.Product)),site:site.label,region:region.label,sites:site.values,regions:region.values,countries};
+        if(resolved.kind==='blank') addIssue({...metadata,kind:'missingState',severity:'info',checkGroup:'notRecorded',message:`${STATE_LABELS[field]} not recorded for this ${recordType}. No state or completion is inferred; verify the source field if a state is expected.`});
+        else if(resolved.kind==='issue') addIssue({...metadata,kind:'conflictingState',message:`Conflicting ${STATE_LABELS[field].toLowerCase()} values for the same ${idRole}. Date-based activity remains counted; review the source state.`});
       }
     }
   }
@@ -267,5 +320,6 @@ export function summarize(inputRows,options={}) {
   for(const event of events) if(event.siteKey==='site:blank') unassignedSiteActivity[event.metric][years.indexOf(event.year)]++;
   const scopeLabel=state.whoValue==='@who'?'WHO':state.whoValue==='*'?'All commercial regions':state.whoValue||'Commercial region not recorded';
   const approvalBasisLabel=dateBasis==='actual'?'Distinct ROs with actual approval dates':`Distinct ROs with ${dateBasisLabel.toLowerCase()} approval dates`;
-  return {years,asOf,asOfLabel:formatDate(asOf),referenceSource,dateBasis,dateBasisLabel,basisDateRoles,totals,groups,events,issues,choices,notices,unavailableMetrics,scopeUnavailable,mapped,scopeLabel,visibleSites:activeSites.filter(site=>defaultOrder.includes(norm(site))).length,visibleSiteLabels:activeSites,unassignedSiteActivity,totalDefaultSites:DEFAULT_SITES.length,approvalBasisLabel,source:'Velocity',sourceRowCount:rows.length,state};
+  const issuesSummary={total:issues.length,review:issues.filter(issue=>issue.severity==='review').length,info:issues.filter(issue=>issue.severity==='info').length,recordCount:new Set(issues.filter(issue=>['submission','ro','application'].includes(issue.recordType)).map(issue=>JSON.stringify([issue.recordType,issue.id]))).size,unidentifiedCount:new Set(issues.filter(issue=>issue.recordType==='source').map(issue=>issue.sourceRow)).size,datasetCount:issues.filter(issue=>issue.recordType==='dataset').length};
+  return {years,asOf,asOfLabel:formatDate(asOf),referenceSource,dateBasis,dateBasisLabel,basisDateRoles,totals,groups,events,issues,issuesSummary,checkCoverage,choices,notices,unavailableMetrics,scopeUnavailable,mapped,scopeLabel,visibleSites:activeSites.filter(site=>defaultOrder.includes(norm(site))).length,visibleSiteLabels:activeSites,unassignedSiteActivity,totalDefaultSites:DEFAULT_SITES.length,approvalBasisLabel,source:'Velocity',sourceRowCount:rows.length,state};
 }

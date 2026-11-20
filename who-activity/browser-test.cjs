@@ -115,12 +115,15 @@ async function runSuite(page,url,{screenshots=false,label='source'}={}) {
   await card('approvals',2026).click();
   assert.deepEqual((await detail.locator('.who-record-id').allTextContents()).sort(),['RO-CROSS-YEAR','RO-OLDER-SUB','RO-SHARED'],'approval Details list distinct ROs even when child submissions have different dates');
   await detail.getByRole('button',{name:'Close details'}).click();
-  await main.getByTestId('data-checks').click();assert.match(await detail.textContent(),/NO-REGION/);assert.match(await detail.textContent(),/NO-SITE/);
-  const blankEvidence=detail.locator('tr[data-record-id="NO-REGION"]').filter({hasText:'unclassifiedRegion'}).getByTestId('source-evidence');
+  await main.getByTestId('data-checks').click();
+  await detail.getByRole('searchbox',{name:'Search details'}).fill('NO-SITE');assert.match(await detail.textContent(),/NO-SITE/);
+  await detail.getByRole('searchbox',{name:'Search details'}).fill('NO-REGION');assert.match(await detail.textContent(),/NO-REGION/);
+  const blankEvidence=detail.locator('tr[data-record-id="NO-REGION"][data-check-kind="unclassifiedRegion"]').getByTestId('source-evidence');
   await blankEvidence.getByText('Source evidence',{exact:true}).click();
   assert.match(await blankEvidence.textContent(),/Raw commercial region: \(blank\)/);
   assert.match(await blankEvidence.textContent(),/3 delivered join rows/);
-  const invalidEvidence=detail.locator('tr[data-record-id="BAD-DATE"]').getByTestId('source-evidence').first();
+  await detail.getByRole('searchbox',{name:'Search details'}).fill('BAD-DATE');
+  const invalidEvidence=detail.locator('tr[data-record-id="BAD-DATE"][data-check-field="ActualSubmission"]').getByTestId('source-evidence');
   await invalidEvidence.getByText('Source evidence',{exact:true}).click();
   assert.match(await invalidEvidence.textContent(),/ActualSubmission/);assert.match(await invalidEvidence.textContent(),/31\/02\/2026/);
   await detail.getByRole('button',{name:'Close details'}).click();
@@ -221,6 +224,126 @@ async function runSuite(page,url,{screenshots=false,label='source'}={}) {
   for(const role of ['AppStatus','ROStatus','SubStatus'])assert.equal(await statePicker(role).locator('summary').getAttribute('aria-disabled'),'true');
   await basis.selectOption('initial');assert.equal(await card('submissions',2026).isDisabled(),true);assert.equal(await card('approvals',2026).isDisabled(),true);
   await page.evaluate(()=>testApi.resize(1440,820));
+
+  // Data checks audit every mapped date/state independently of the chosen chart
+  // basis. The review table makes informational blanks distinct from exclusions.
+  await page.evaluate(()=>{
+    const good=id=>({SubID:id,ROID:'RO-'+id,AppID:'APP-'+id,Site:'ABO',BusinessUnit:'ID',CommercialRegion:'WHO',Country:'Ireland',AsOfDate:'2026-11-18',AppStatus:'Active',ROStatus:'Health Authority Approved',SubStatus:'Completed',ActualSubmission:'2026-02-01',ActualApproval:'2026-03-01',OriginalSubmission:'2026-01-10',LatestSubmission:'2026-01-20',OriginalApproval:'2026-02-10',LatestApproval:'2026-02-20'});
+    const rows=[
+      {...good('AUDIT-ACTUAL'),ActualSubmission:'31/02/2026'},
+      {...good('AUDIT-INITIAL'),OriginalSubmission:'31/02/2026'},
+      {...good('AUDIT-LBE'),LatestApproval:'2026-02-20'},
+      {...good('AUDIT-LBE'),LatestApproval:'2026-02-21'},
+      {...good('AUDIT-FUTURE'),ActualSubmission:'2026-12-01'},
+      {...good('AUDIT-PENDING'),SubStatus:'Planned',ROStatus:'Planned',ActualSubmission:null,ActualApproval:null,OriginalSubmission:'2026-12-01',LatestSubmission:'2026-12-02',OriginalApproval:'2026-12-03',LatestApproval:'2026-12-04'},
+      {...good('AUDIT-COMPLETE-MISSING'),ActualSubmission:null,ActualApproval:null},
+      {...good('AUDIT-CONFLICT'),SubStatus:'Completed'},
+      {...good('AUDIT-CONFLICT'),SubStatus:'Planned'},
+      {...good('AUDIT-BLANK-STATES'),AppStatus:null,ROStatus:null,SubStatus:null},
+      {AppID:'APP-AUDIT-LONE',AppStatus:null,Site:'ABO',BusinessUnit:'ID',CommercialRegion:'WHO',Country:'Ireland',AsOfDate:'2026-11-18'},
+      {...good('AUDIT-LONE-RO'),SubID:null,SubStatus:null,ROStatus:null,ActualSubmission:null,OriginalSubmission:null,LatestSubmission:null},
+      {...good('AUDIT-CUSTOM'),AppStatus:'Custom active',ROStatus:'Regional handoff',SubStatus:'Sponsor review'},
+      ...Array.from({length:25},(_,i)=>({...good((i===0?'=':'')+'COPY-'+String(i).padStart(2,'0')),OriginalSubmission:null,...(i===1?{SubStatus:'=Custom state'}:{})}))
+    ];
+    window.auditRows=rows.flatMap(row=>[row,{...row},{...row}]);testApi.reset(window.auditRows);
+  });
+  await counts([0,30],[0,33]);
+  await main.getByTestId('data-checks').click();
+  const checkPriority=detail.getByTestId('filter-check-severity');
+  const checkSearch=detail.getByRole('searchbox',{name:'Search details'});
+  const copyChecks=async()=>{
+    await page.evaluate(()=>{window.copied=[];Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>window.copied.push(text)}})});
+    await detail.getByRole('button',{name:'Copy checks',exact:true}).click();
+    const raw=await page.evaluate(()=>copied.at(-1));
+    return {raw,lines:raw.split(/\r?\n/).map(line=>line.split('\t'))};
+  };
+  assert.equal(await checkPriority.inputValue(),'all');
+  assert.match(await detail.getByTestId('check-summary').textContent(),/check|record/i);
+  assert.match(await detail.getByTestId('check-coverage').textContent(),/Actual|Initial|LBE|state/i);
+  assert.match(await detail.textContent(),/all years|across.*years|not.*chart.*years/i,'checks scope must not imply only the two chart years');
+  const allChecks=await copyChecks();
+  assert.deepEqual(allChecks.lines[0],['Record ID','Record type','Field','Check','Priority','Details','Raw values','Current states','Source field examples','Linked IDs']);
+  assert.ok(allChecks.lines.length>21,'audit sample spans more than one table page');
+  assert.ok(allChecks.lines.slice(1).some(cells=>cells[0].startsWith('Source row')&&cells[9].includes('APP-AUDIT-LONE')),'orphan-source checks retain linked application IDs for reconciliation');
+  const checkRow=async(id,field,kind)=>{
+    await checkSearch.fill(id);
+    return detail.locator('tr[data-record-id="'+id+'"][data-check-field="'+field+'"]'+(kind?'[data-check-kind="'+kind+'"]':''));
+  };
+  assert.equal(await (await checkRow('AUDIT-ACTUAL','ActualSubmission','invalidDate')).getAttribute('data-check-severity'),'review');
+  assert.equal(await (await checkRow('AUDIT-INITIAL','OriginalSubmission','invalidPlanDate')).getAttribute('data-check-severity'),'review');
+  assert.equal(await (await checkRow('RO-AUDIT-LBE','LatestApproval','invalidPlanDate')).getAttribute('data-check-severity'),'review');
+  assert.equal(await (await checkRow('AUDIT-FUTURE','ActualSubmission','futureDate')).getAttribute('data-check-severity'),'review');
+  const completedMissing=await checkRow('AUDIT-COMPLETE-MISSING','ActualSubmission','missingDate');
+  assert.equal(await completedMissing.getAttribute('data-check-severity'),'review');
+  await completedMissing.getByText('Source evidence',{exact:true}).click();
+  assert.match(await completedMissing.getByTestId('source-evidence').textContent(),/Completed/);
+  const pendingMissing=await checkRow('AUDIT-PENDING','ActualSubmission','missingDate');
+  assert.equal(await pendingMissing.getAttribute('data-check-severity'),'info');
+  assert.match(await pendingMissing.textContent(),/pending|planned|not.*submitted/i);
+  assert.equal(await (await checkRow('APP-AUDIT-LONE','AppStatus','missingState')).count(),1,'application-only records retain their own state check');
+  assert.equal(await (await checkRow('RO-AUDIT-LONE-RO','ROStatus','missingState')).count(),1,'RO-only records retain their own state check');
+  assert.equal(await (await checkRow('AUDIT-CONFLICT','SubStatus','conflictingState')).count(),1,'duplicate join rows do not multiply a state conflict');
+  await checkSearch.fill('AUDIT-CUSTOM');assert.match(await detail.textContent(),/No matching data checks/,'custom nonblank states are not invented validation errors');
+  await checkSearch.fill('AUDIT-BLANK-STATES');
+  assert.equal(await detail.locator('[data-check-kind="missingState"]').count(),3,'all three current states are checked under their owning IDs');
+  await checkSearch.fill('');
+  const fingerprint=lines=>lines.slice(1).map(cells=>[cells[0],cells[1],cells[2],cells[3],cells[4]].join('|')).sort();
+  for(const value of ['initial','lbe']){
+    await detail.getByRole('button',{name:'Close details'}).click();await basis.selectOption(value);await main.getByTestId('data-checks').click();
+    assert.deepEqual(fingerprint((await copyChecks()).lines),fingerprint(allChecks.lines),'all mapped-field checks survive switching date basis to '+value);
+  }
+  await checkPriority.selectOption('review');
+  let filtered=await copyChecks();assert.ok(filtered.lines.length>1);assert.ok(filtered.lines.slice(1).every(cells=>cells[4]==='Needs review'));
+  await checkPriority.selectOption('info');
+  await checkSearch.fill('COPY-');
+  assert.match(await detail.locator('.who-paging').textContent(),/1–20 of 25/);
+  await detail.getByRole('button',{name:'Next',exact:true}).click();
+  assert.match(await detail.locator('.who-paging').textContent(),/21–25 of 25/);
+  filtered=await copyChecks();assert.equal(filtered.lines.length,26,'Copy checks includes all matching pages plus its header');
+  assert.ok(filtered.lines.slice(1).every(cells=>cells[4]==='Information'));
+  assert.ok(filtered.lines.some(cells=>cells[0]==="'=COPY-00"),'spreadsheet-formula-like IDs are copied as literal text');
+  for(const cells of filtered.lines.slice(1))for(const cell of cells)assert.equal(/^[=+@-]/.test(cell.trimStart()),false,'no copied cell starts a spreadsheet formula');
+  await page.evaluate(()=>Object.defineProperty(navigator,'clipboard',{configurable:true,value:undefined}));
+  await detail.getByRole('button',{name:'Copy checks',exact:true}).click();
+  const fallback=detail.getByRole('textbox',{name:'Checks to copy'});
+  assert.equal(await fallback.inputValue(),filtered.raw.replace(/\r\n/g,'\n'));
+  assert.equal(await fallback.evaluate(e=>e.value.slice(e.selectionStart,e.selectionEnd)),filtered.raw.replace(/\r\n/g,'\n'));
+  await checkSearch.fill('NO-SUCH-CHECK');
+  assert.equal((await copyChecks()).lines.length,1,'empty result copies only the audit header');
+  await checkSearch.fill('');await checkPriority.selectOption('all');
+  await main.locator('.who-activity').evaluate(e=>{e.scrollTop=Math.max(0,e.querySelector('.who-details').offsetTop-12)});
+  await screenshot('all-date-state-checks');
+  await page.setViewportSize({width:700,height:700});await page.evaluate(()=>testApi.resize(700,700));
+  assert.equal(await main.locator('.who-activity').evaluate(e=>e.scrollWidth<=e.clientWidth+1),true,'audit controls stay inside compact visual');
+  await main.locator('.who-activity').evaluate(e=>{e.scrollTop=Math.max(0,e.querySelector('.who-details').offsetTop-12)});
+  await screenshot('compact-date-state-checks');
+  await page.setViewportSize({width:1440,height:900});await page.evaluate(()=>testApi.resize(1440,820));
+  await page.evaluate(()=>testApi.reset(window.auditRows,{omit:['ActualSubmission','ActualApproval']}));
+  assert.equal(await card('submissions',2026).isDisabled(),true);assert.equal(await card('approvals',2026).isDisabled(),true);
+  await main.getByTestId('data-checks').click();await checkSearch.fill('AUDIT-INITIAL');
+  assert.equal(await detail.locator('[data-check-field="OriginalSubmission"][data-check-kind="invalidPlanDate"]').count(),1,'unmapped actual metric does not disable mapped plan checks');
+  assert.match(await detail.getByTestId('check-coverage').textContent(),/not mapped|unmapped/i);
+  await page.evaluate(()=>{
+    const pending={SubID:'COUNT-SUB',ROID:'COUNT-RO',AppID:'COUNT-APP',SubStatus:'Planned',ROStatus:'Planned',AppStatus:'Active',Site:'ABO',BusinessUnit:'ID',CommercialRegion:'WHO',AsOfDate:'2026-11-18'};
+    testApi.reset(Array.from({length:30},()=>({...pending})));
+  });
+  await main.getByTestId('data-checks').click();
+  assert.match(await detail.getByTestId('check-summary').textContent(),/6 of 6 checks shown/);
+  assert.match(await detail.getByTestId('check-summary').textContent(),/0 need review/);
+  assert.match(await detail.getByTestId('check-summary').textContent(),/6 information/);
+  assert.match(await detail.getByTestId('check-summary').textContent(),/2 identified records/,'six missing-date check entries refer to two distinct owning records');
+  await page.evaluate(()=>testApi.reset(window.auditRows.map(row=>({...row,AsOfDate:'bad date'}))));
+  await main.getByTestId('data-checks').click();await checkSearch.fill('AsOfDate');
+  assert.equal(await detail.locator('[data-check-field="AsOfDate"]').count(),1,'extract-date validation is a single dataset check, not one per row');
+  await page.evaluate(()=>testApi.reset(window.auditRows.map(row=>({...row,AsOfDate:'2026-12-01'}))));
+  await main.getByTestId('data-checks').click();await checkSearch.fill('AsOfDate');
+  assert.equal(await detail.locator('[data-check-field="AsOfDate"][data-check-kind="futureDate"]').count(),1,'future reference date is reviewed separately from actual milestone dates');
+  await page.evaluate(()=>testApi.reset(window.auditRows,{omit:['AppStatus','ROStatus','SubStatus','AsOfDate']}));
+  await main.getByTestId('data-checks').click();
+  for(const field of ['AppStatus','ROStatus','SubStatus','AsOfDate'])assert.equal(await detail.locator('[data-check-field="'+field+'"]').count(),0,'an unmapped optional field is unavailable, not a per-record blank: '+field);
+  assert.match(await detail.getByTestId('check-coverage').textContent(),/not mapped/i);
+
+  await reset();
 
   await page.evaluate(()=>{testApi.setAllowFetch(true);testApi.fetchRequests.length=0;testApi.reset(testApi.sample().filter(r=>r.Site==='ABO'),{partial:true})});
   assert.match(await main.getByTestId('notices').textContent(),/partial/i);

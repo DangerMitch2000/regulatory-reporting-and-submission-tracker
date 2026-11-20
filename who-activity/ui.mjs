@@ -4,6 +4,18 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 const METRICS = { submissions: 'Submissions', approvals: 'Approvals' };
 const UI_DATE_BASES = { actual: 'Actual', initial: 'Initial plan', lbe: 'LBE plan' };
 const STATE_FIELDS = [['AppStatus', 'Application state', 'App'], ['ROStatus', 'RO state', 'RO'], ['SubStatus', 'Submission state', 'Sub']];
+const UI_CHECK_FIELDS = { ActualSubmission: 'Actual submission date', ActualApproval: 'Actual RO approval date', OriginalSubmission: 'Initial planned submission date', LatestSubmission: 'LBE planned submission date', OriginalApproval: 'Initial planned RO approval date', LatestApproval: 'LBE planned RO approval date', AsOfDate: 'Data as-of date', AppStatus: 'Application state', ROStatus: 'RO state', SubStatus: 'Submission state', Site: 'Manufacturing site', CommercialRegion: 'Commercial region', SubID: 'Submission ID', ROID: 'RO ID', AppID: 'Application ID' };
+const UI_CHECK_KINDS = { missingDate: 'Date not recorded', invalidDate: 'Date needs review', invalidPlanDate: 'Plan date needs review', futureDate: 'Actual date after reference', conflictingState: 'Conflicting states', missingState: 'State not recorded', stateDateMismatch: 'State and date differ', unclassifiedRegion: 'Commercial region not recorded', missingRegion: 'Commercial region not recorded', missingSite: 'Manufacturing site blank', missingID: 'Record ID not recorded', multipleSites: 'Multiple manufacturing sites', multipleRegions: 'Multiple commercial regions' };
+const uiCheckLabel = record => record.field === 'AsOfDate' && record.kind === 'futureDate' ? 'Reference date after today' : record.checkGroup === 'expectedPending' ? 'Expected pending date' : UI_CHECK_KINDS[record.kind] || String(record.kind || 'Check').replace(/([a-z])([A-Z])/g, '$1 $2');
+const uiCheckType = record => ({ submission: 'Submission', ro: 'RO', application: 'Application', dataset: 'Dataset', source: 'Source row' }[record.recordType] || METRICS[record.metric] || 'Record');
+const uiCheckSeverity = record => record.severity === 'info' ? 'info' : 'review';
+const uiCheckPriority = record => uiCheckSeverity(record) === 'info' ? 'Information' : 'Needs review';
+const uiCheckIdentified = record => !!record.id && !['dataset', 'source'].includes(record.recordType) && !/^Source row \d+$/.test(record.id);
+const uiCheckCell = value => {
+  const original = String(value ?? '');
+  const safe = original.replace(/[\t\r\n]/g, ' ');
+  return /^[\t\r\n]/.test(original) || /^\s*[=+\-@]/.test(original) ? `'${safe}` : safe;
+};
 const PAGE_SIZE = 20;
 const NOT_RECORDED = 'Not recorded';
 const number = value => new Intl.NumberFormat('en-GB').format(value || 0);
@@ -323,7 +335,8 @@ export function render(root, rows, options = {}) {
   scope.append(node('span', `Approvals: ${result.approvalBasisLabel || 'distinct ROs with actual approval dates'}.`));
   scope.append(node('span', `As of ${result.asOfLabel} · ${result.referenceSource || 'Reference date; not a source refresh timestamp'}.`));
   footer.append(scope);
-  const checks = focusKey(button(`Data checks · ${number(result.issues?.length)}`, () => change({ ...(state.capture ? { capture: false } : {}), detail: { type: 'issues' }, detailSearch: '', page: 0 }), 'who-checks'), 'checks');
+  const checks = focusKey(button(`Data checks · ${number(result.issues?.length)}`, () => change({ ...(state.capture ? { capture: false } : {}), detail: { type: 'issues' }, detailSearch: '', checkSeverity: 'all', page: 0 }), 'who-checks'), 'checks');
+  checks.title = 'Review all mapped dates and states. This is a count of checks, not distinct records or confirmed errors.';
   checks.setAttribute('data-testid', 'data-checks'); footer.append(checks); root.append(footer);
 
   if (state.capture) {
@@ -344,33 +357,74 @@ export function render(root, rows, options = {}) {
     const title = isIssues ? 'Data checks' : `${detail.year} ${METRICS[detail.metric] || 'Records'}${basisSuffix}${group ? ` · ${group.label}` : ''}`;
     const top = node('div', null, 'who-details-top'); top.append(node('h2', title));
     const detailActions = node('div', null, 'who-actions');
-    const search = focusKey(node('input'), 'detail-search'); search.type = 'search'; search.value = state.detailSearch || ''; search.placeholder = 'Search IDs, products or sites'; search.setAttribute('aria-label', 'Search details');
+    const checkSeverity = ['review', 'info'].includes(state.checkSeverity) ? state.checkSeverity : 'all';
+    if (isIssues) makeSelect(detailActions, 'Show checks', 'check-severity', checkSeverity, [{ key: 'all', label: 'All' }, { key: 'review', label: 'Needs review' }, { key: 'info', label: 'Information' }], value => change({ checkSeverity: value, page: 0 }), { all: false });
+    const search = focusKey(node('input'), 'detail-search'); search.type = 'search'; search.value = state.detailSearch || ''; search.placeholder = isIssues ? 'Search IDs, fields or checks' : 'Search IDs, products or sites'; search.setAttribute('aria-label', 'Search details');
     search.addEventListener('input', () => change({ detailSearch: search.value, page: 0 })); detailActions.append(search);
     const query = String(state.detailSearch || '').trim().toLowerCase();
     let records = isIssues ? [...(result.issues || [])] : (result.events || []).filter(event => event.metric === detail.metric && event.year === detail.year && (detail.groupKey == null || event.groupKey === detail.groupKey));
-    if (query) records = records.filter(record => [...Object.values(record).flat().filter(value => typeof value !== 'object'), ...Object.values(record.states || {}).map(value => value.label)].join(' ').toLowerCase().includes(query));
-    const sort = state.sort || { field: isIssues ? 'id' : 'date', direction: 'desc' };
+    if (isIssues && checkSeverity !== 'all') records = records.filter(record => uiCheckSeverity(record) === checkSeverity);
+    if (query) records = records.filter(record => [...Object.values(record).flat().filter(value => typeof value !== 'object'), ...Object.values(record.states || {}).map(value => value.label), ...(isIssues ? [uiCheckLabel(record), UI_CHECK_FIELDS[record.field] || '', uiCheckType(record), uiCheckPriority(record)] : [])].join(' ').toLowerCase().includes(query));
+    const sortFields = isIssues ? ['id', 'kind', 'severity', 'message'] : ['date', 'id', 'site', 'region', 'country', 'products'];
+    const sort = state.sort && sortFields.includes(state.sort.field) ? state.sort : { field: isIssues ? 'severity' : 'date', direction: 'desc' };
     records.sort((a, b) => {
-      const av = sort.field === 'date' ? (typeof a.date === 'number' ? a.date : a.date?.day || 0) : String(a[sort.field] || '');
-      const bv = sort.field === 'date' ? (typeof b.date === 'number' ? b.date : b.date?.day || 0) : String(b[sort.field] || '');
+      const av = sort.field === 'date' ? (typeof a.date === 'number' ? a.date : a.date?.day || 0) : isIssues && sort.field === 'kind' ? uiCheckLabel(a) : String(a[sort.field] || '');
+      const bv = sort.field === 'date' ? (typeof b.date === 'number' ? b.date : b.date?.day || 0) : isIssues && sort.field === 'kind' ? uiCheckLabel(b) : String(b[sort.field] || '');
       return (typeof av === 'number' ? av - bv : av.localeCompare(bv, undefined, { numeric: true })) * (sort.direction === 'asc' ? 1 : -1);
     });
-    const ids = [...new Set(records.map(record => record.id).filter(Boolean))];
+    const ids = [...new Set(records.filter(record => !isIssues || uiCheckIdentified(record)).map(record => record.id).filter(Boolean))];
     const copyStatus = node('span', '', 'who-copy-status'); copyStatus.setAttribute('role', 'status');
     const copyFallback = node('textarea', ids.join('\n'), 'who-copy-fallback'); copyFallback.hidden = true; copyFallback.readOnly = true; copyFallback.setAttribute('aria-label', 'IDs to copy');
-    detailActions.append(button('Copy IDs', async () => {
+    const copyText = async (text, copiedLabel, fallbackLabel, aria) => {
       try {
-        if (options.onCopy) { const outcome = await options.onCopy(ids.join('\n')); if (outcome === false) throw new Error('Clipboard unavailable'); }
-        else if (doc.defaultView?.navigator?.clipboard?.writeText) await doc.defaultView.navigator.clipboard.writeText(ids.join('\n'));
+        if (options.onCopy) { const outcome = await options.onCopy(text); if (outcome === false) throw new Error('Clipboard unavailable'); }
+        else if (doc.defaultView?.navigator?.clipboard?.writeText) await doc.defaultView.navigator.clipboard.writeText(text);
         else throw new Error('Clipboard unavailable');
-        copyStatus.textContent = `${number(ids.length)} IDs copied`;
-      } catch { copyFallback.hidden = false; copyFallback.focus(); copyFallback.select(); copyStatus.textContent = 'Select and copy the IDs below'; }
-    }, 'who-button'), button('Close', () => change({ detail: null, page: 0 }), 'who-button', 'Close details'));
+        copyFallback.hidden = true; copyStatus.textContent = copiedLabel;
+      } catch { copyFallback.value = text; copyFallback.setAttribute('aria-label', aria); copyFallback.hidden = false; copyFallback.focus(); copyFallback.select(); copyStatus.textContent = fallbackLabel; }
+    };
+    detailActions.append(button('Copy IDs', () => copyText(ids.join('\n'), `${number(ids.length)} IDs copied`, 'Select and copy the IDs below', 'IDs to copy'), 'who-button'));
+    if (isIssues) detailActions.append(button('Copy checks', () => {
+      const exportRows = [['Record ID', 'Record type', 'Field', 'Check', 'Priority', 'Details', 'Raw values', 'Current states', 'Source field examples', 'Linked IDs'], ...records.map(record => {
+        const rawValues = list(record.rawValues);
+        const rawCount = record.rawValueCount ?? rawValues.length;
+        const rawText = rawValues.join(' | ') + (rawCount > rawValues.length ? ` | +${number(rawCount - rawValues.length)} more values (not included)` : '');
+        const sourceExamples = Object.entries(record.sourceFields || {}).map(([field, values]) => `${UI_CHECK_FIELDS[field] || field}: ${list(values).map(value => String(value ?? '') || '(blank)').join(' | ')}`).join('; ');
+        const linkedIds = [['App', record.appIds], ['RO', record.roIds], ['Sub', record.subIds], ['Reg', record.registrationIds]].filter(([, values]) => list(values).length).map(([label, values]) => `${label}: ${list(values).join(' | ')}`).join('; ');
+        return [record.id, uiCheckType(record), UI_CHECK_FIELDS[record.field] || record.field || '', uiCheckLabel(record), uiCheckPriority(record), record.message, rawText, list(record.stateValues).join(' | '), sourceExamples, linkedIds];
+      })];
+      const text = exportRows.map(row => row.map(uiCheckCell).join('\t')).join('\r\n');
+      return copyText(text, `${number(records.length)} checks copied across all matching pages`, 'Select and copy the checks below', 'Checks to copy');
+    }, 'who-button'));
+    detailActions.append(button('Close', () => change({ detail: null, page: 0 }), 'who-button', 'Close details'));
     top.append(detailActions); panel.append(top, copyStatus, copyFallback);
+    if (isIssues) {
+      const allChecks = result.issues || [];
+      const summary = result.issuesSummary || { total: allChecks.length, review: allChecks.filter(record => uiCheckSeverity(record) === 'review').length, info: allChecks.filter(record => uiCheckSeverity(record) === 'info').length, recordCount: new Set(allChecks.filter(uiCheckIdentified).map(record => `${record.recordType || record.metric}:${record.id}`)).size, unidentifiedCount: allChecks.filter(record => !uiCheckIdentified(record)).length };
+      const reviewCount = records.filter(record => uiCheckSeverity(record) === 'review').length;
+      const infoCount = records.length - reviewCount;
+      const summaryLine = node('p', `${number(records.length)} of ${number(summary.total)} checks shown · ${number(reviewCount)} need review · ${number(infoCount)} information · ${number(summary.recordCount)} identified records in all checks${summary.unidentifiedCount ? ` · ${number(summary.unidentifiedCount)} without a record identity` : ''}${summary.datasetCount ? ` · ${number(summary.datasetCount)} dataset checks` : ''}`, 'who-check-summary');
+      summaryLine.setAttribute('data-testid', 'check-summary'); panel.append(summaryLine);
+      panel.append(node('p', 'Date and state checks cover filtered records across all years, not only the chart years. Site and region coverage checks also include unresolved source rows. Multiple checks can refer to one record.', 'who-check-scope'));
+      const coverage = list(result.checkCoverage);
+      if (coverage.length) {
+        const checkedField = field => field.checked ?? (field.mapped && field.identityMapped !== false);
+        const countCoverage = type => { const fields = coverage.filter(field => field.type === type); return `${fields.filter(checkedField).length}/${fields.length}`; };
+        const coverageDetails = node('details', null, 'who-check-coverage'); coverageDetails.setAttribute('data-testid', 'check-coverage');
+        coverageDetails.append(node('summary', `Checked fields · Dates ${countCoverage('date')} · States ${countCoverage('state')}`));
+        const coverageFields = node('div', null, 'who-coverage-fields');
+        const coverageReasons = { notmapped: 'Field not mapped', ownerIDnotmapped: 'Owning record ID not mapped', nodata: 'No data delivered', requiredscopeunmapped: 'Map required scope fields', noownerIDs: 'No owning IDs delivered' };
+        for (const field of coverage) {
+          const coverageLabel = checkedField(field) ? 'Checked' : coverageReasons[field.reason] || field.reason || (!field.mapped ? 'Field not mapped' : field.identityMapped === false ? 'Owning record ID not mapped' : 'Not checked');
+          coverageFields.append(node('p', `${field.label || UI_CHECK_FIELDS[field.field] || field.field}: ${coverageLabel}`));
+        }
+        coverageDetails.append(coverageFields); panel.append(coverageDetails);
+      }
+    }
     const scroll = node('div', null, 'who-detail-scroll');
-    const table = node('table', null, 'who-table');
+    const table = node('table', null, `who-table${isIssues ? ' who-check-table' : ''}`);
     const head = node('thead'); const headingRow = node('tr');
-    const columns = isIssues ? [['id', 'Record ID'], ['kind', 'Check'], ['metric', 'Metric'], ['message', 'Details']] : [['date', `Dates · ${dateBasisLabel}`], ['id', 'Record ID'], [null, 'Current states'], ['site', 'Site'], ['region', 'Commercial region'], ['country', 'Country'], [null, 'Related records'], ['products', 'Product']];
+    const columns = isIssues ? [['id', 'Record ID'], ['kind', 'Check'], ['severity', 'Priority'], ['message', 'Details']] : [['date', `Dates · ${dateBasisLabel}`], ['id', 'Record ID'], [null, 'Current states'], ['site', 'Site'], ['region', 'Commercial region'], ['country', 'Country'], [null, 'Related records'], ['products', 'Product']];
     for (const [field, label] of columns) {
       const th = node('th'); th.scope = 'col';
       if (field) {
@@ -387,7 +441,11 @@ export function render(root, rows, options = {}) {
     for (const record of records.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)) {
       const tr = node('tr'); tr.dataset.recordId = record.id || '';
       if (isIssues) {
-        for (const field of ['id', 'kind', 'metric']) tr.append(node('td', record[field] || '—'));
+        tr.dataset.checkKind = record.kind || ''; tr.dataset.checkField = record.field || ''; tr.dataset.checkSeverity = uiCheckSeverity(record);
+        const identityCell = node('td', null, 'who-check-identity'); identityCell.append(node('div', record.id || '—'), node('div', uiCheckType(record), 'who-note'));
+        const checkCell = node('td', null, 'who-check-kind'); checkCell.append(node('div', uiCheckLabel(record)));
+        if (record.field) checkCell.append(node('div', UI_CHECK_FIELDS[record.field] || record.field, 'who-note'));
+        tr.append(identityCell, checkCell, node('td', uiCheckPriority(record), `who-check-priority who-check-${uiCheckSeverity(record)}`));
         const message = node('td'); message.append(node('div', record.message || '—'));
         const evidence = node('details', null, 'who-source-evidence');
         evidence.setAttribute('data-testid', 'source-evidence');
@@ -406,8 +464,11 @@ export function render(root, rows, options = {}) {
         };
         if (record.field || record.rawValues) {
           if (record.field) evidenceField('Source field', record.field);
-          evidenceField(STATE_FIELDS.some(([role]) => role === record.field) ? 'Raw state values' : 'Raw date values', record.rawValues || [], record.rawValueCount);
+          evidenceField(STATE_FIELDS.some(([role]) => role === record.field) ? 'Raw state values' : /Submission|Approval|AsOfDate/.test(record.field || '') ? 'Raw date values' : 'Raw values', record.rawValues || [], record.rawValueCount);
         }
+        if (record.stateValues) evidenceField('Current states', record.stateValues);
+        if (record.dateBasis) evidenceField('Date basis', UI_DATE_BASES[record.dateBasis] || record.dateBasis);
+        for (const [field, values] of Object.entries(record.sourceFields || {})) evidenceField(`${UI_CHECK_FIELDS[field] || field} (examples)`, values);
         for (const [label, values] of [['Submission IDs', record.subIds], ['RO IDs', record.roIds], ['Application IDs', record.appIds], ['Registration IDs', record.registrationIds]]) {
           if (list(values).length) evidenceField(label, values);
         }
@@ -452,7 +513,8 @@ export function render(root, rows, options = {}) {
     if (!records.length) { const row = node('tr'); const cell = node('td', isIssues ? 'No matching data checks.' : 'No matching records.'); cell.colSpan = columns.length; row.append(cell); body.append(row); }
     table.append(body); scroll.append(table); panel.append(scroll);
     const paging = node('div', null, 'who-paging');
-    paging.append(node('span', records.length ? `${number(page * PAGE_SIZE + 1)}–${number(Math.min((page + 1) * PAGE_SIZE, records.length))} of ${number(records.length)} records` : '0 records'));
+    const countLabel = isIssues ? 'checks' : 'records';
+    paging.append(node('span', records.length ? `${number(page * PAGE_SIZE + 1)}–${number(Math.min((page + 1) * PAGE_SIZE, records.length))} of ${number(records.length)} ${countLabel}` : `0 ${countLabel}`));
     const previous = focusKey(button('Previous', () => change({ page: page - 1 })), 'previous-page'); previous.disabled = page === 0;
     const next = focusKey(button('Next', () => change({ page: page + 1 })), 'next-page'); next.disabled = page === maxPage;
     paging.append(previous, next); panel.append(paging); root.append(panel);
