@@ -14,6 +14,7 @@ Use **Node 22** and run each visual's commands from its own folder. Each guide l
 | `key-submissions/` | `node key-submissions.build.cjs` | `key-submissions/` |
 | `site-regulatory-plan/` | `node site-plan.build.cjs` | `site-plan/` |
 | `site-submission-outlook/` | `node build.cjs` | `powerbi/` |
+| `who-activity/` | `node build.cjs` | `powerbi/` |
 
 The nested Key Submissions directory is intentional: the outer folder contains maintained source; the inner one is generated. Dependencies, generated projects and release staging directories are ignored by Git.
 

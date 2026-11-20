@@ -6,6 +6,7 @@
 
 | Visual | Download | Demo |
 | --- | --- | --- |
+| [WHO Submissions & Approvals 1.0.0](who-activity/README.md) | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/who-activity-v1.0.0/who-submissions-approvals-1.0.0.0.pbiviz) | [Two-year activity](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/who-activity/preview.html) |
 | [Change Dashboard 1.9.1](change-dashboard/README.md) | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/change-dashboard-v1.9.1/change-dashboard-1.9.1.0.pbiviz) | [Change Dashboard](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/change-dashboard/preview.html) |
 | [Registration Coverage Map 1.0.2](registration-map/README.md) | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/registration-map-v1.0.2/registration-coverage-map-1.0.2.0.pbiviz) | [World map](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/registration-map/preview.html) |
 | [Regulatory Tracker 1.18.3](regulatory-tracker/README.md) | [Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/v1.18.3/regulatory-tracker-1.18.3.0.pbiviz) | [Tracker](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/) |
@@ -41,6 +42,7 @@ ivdr-overview/             IVDR comparison
 key-submissions/           Key submission planning
 site-regulatory-plan/      Site regulatory planning
 site-submission-outlook/   Previous, current and next month
+who-activity/              WHO submissions and RO approvals by year
 shared/                   Common dispatch-requirement logic
 docs/                     Development guide and archived history
 ```

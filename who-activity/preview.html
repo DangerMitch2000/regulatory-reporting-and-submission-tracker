@@ -1,0 +1,825 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WHO activity — fictional preview</title><style>.who-activity{--who-bg:#19252b;--who-panel:#213139;--who-panel-2:#283b44;--who-text:#edf2f4;--who-muted:#b5c4cc;--who-border:#44565f;--who-older:#7da6c4;--who-newer:#76b8a7;--who-warning:#ead09a;--who-font-size:14px;box-sizing:border-box;position:relative;width:100%;height:100%;overflow:auto;background:var(--who-bg);color:var(--who-text);font-family:'Wallace Sans','Segoe UI',Arial,sans-serif;font-size:var(--who-font-size);line-height:1.35;padding:18px 22px;scrollbar-color:var(--who-border) var(--who-bg);color-scheme:dark;isolation:isolate}
+.who-activity *, .who-activity *::before,.who-activity *::after{box-sizing:border-box}
+.who-activity.who-light{--who-bg:#fafbfc;--who-panel:#f0f4f6;--who-panel-2:#e5edf1;--who-text:#233640;--who-muted:#50636d;--who-border:#bccad1;--who-older:#477c9f;--who-newer:#318572;--who-warning:#735215;color-scheme:light}
+.who-activity h1,.who-activity h2,.who-activity p{margin:0}
+.who-activity h1{font-family:'Wallace Sans Light','Wallace Sans','Segoe UI',Arial,sans-serif;font-weight:300;font-size:clamp(24px,2em,30px);letter-spacing:.01em;line-height:1.15}
+.who-activity h2{font-size:1.08em;font-weight:600}
+.who-activity button,.who-activity input,.who-activity select,.who-activity textarea{font:inherit;color:inherit}
+.who-activity button,.who-activity select,.who-activity input,.who-activity textarea,.who-activity summary{outline-offset:3px}
+.who-activity button:focus-visible,.who-activity select:focus-visible,.who-activity input:focus-visible,.who-activity summary:focus-visible,.who-bar:focus-visible{outline:2px solid var(--who-newer)}
+.who-activity button{cursor:pointer}
+.who-activity button:disabled{cursor:default;opacity:.58}
+.who-activity button:not(:disabled):hover{background:var(--who-panel-2)}
+.who-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+.who-subtitle{color:var(--who-muted);font-size:max(13px,.92em);margin-top:6px!important}
+.who-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.who-button,.who-site-commands button,.who-paging button,.who-checks{border:1px solid var(--who-border);background:var(--who-panel);padding:6px 10px;border-radius:4px;white-space:nowrap}
+.who-notices{border:1px solid var(--who-warning);border-left:3px solid var(--who-warning);background:var(--who-panel);padding:8px 12px;margin-bottom:12px;color:var(--who-warning);font-size:max(13px,.92em)}
+.who-notices p+p{margin-top:5px}
+.who-filters{display:grid;grid-template-columns:.8fr 1fr 1.4fr 1.2fr .7fr .7fr;gap:10px;align-items:start;margin-bottom:7px}
+.who-field{display:flex;flex-direction:column;gap:4px;min-width:0;color:var(--who-muted);font-size:max(13px,.9em)}
+.who-field>span{white-space:nowrap}
+.who-field select,.who-sites>summary,.who-activity input[type=search]{width:100%;min-width:0;min-height:34px;padding:6px 8px;border:1px solid var(--who-border);border-radius:4px;background:var(--who-panel);color:var(--who-text)}
+.who-field select{overflow:hidden;text-overflow:ellipsis}
+.who-field select:disabled{opacity:.55}
+.who-sites{min-width:0}
+.who-sites>summary{cursor:pointer;list-style-position:inside}
+.who-sites[open]{background:var(--who-panel);border-radius:4px}
+.who-site-options{max-height:205px;overflow:auto;padding:5px 7px}
+.who-site-option{display:flex;align-items:flex-start;gap:7px;padding:5px 1px;overflow-wrap:anywhere;color:var(--who-text)}
+.who-site-option[hidden]{display:none}
+.who-site-option input{margin-top:3px;accent-color:var(--who-newer)}
+.who-site-commands{display:flex;gap:4px;flex-wrap:wrap;padding:7px 5px}
+.who-site-commands button{padding:4px 7px;font-size:max(13px,.9em)}
+.who-sites input[type=search]{width:calc(100% - 10px);margin:0 5px}
+.who-more{margin:0 0 12px;font-size:max(13px,.9em);color:var(--who-muted)}
+.who-more summary{cursor:pointer;width:fit-content;padding:2px 0}
+.who-more-fields{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:10px;padding:8px 0 5px}
+.who-note{font-size:max(13px,.87em);color:var(--who-muted);margin-top:4px!important}
+.who-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.who-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;border:1px solid var(--who-border);border-top:3px solid var(--who-older);background:var(--who-panel);padding:12px 15px 10px;border-radius:5px;gap:4px;min-height:90px}
+.who-card.who-year-1{border-top-color:var(--who-newer)}
+.who-card[aria-pressed=true]{background:var(--who-panel-2);box-shadow:inset 0 0 0 1px var(--who-text)}
+.who-card-label{color:var(--who-muted);font-size:max(13px,.94em)}
+.who-card-value{font-size:2.1em;line-height:1.1;font-weight:600;font-variant-numeric:tabular-nums}
+.who-chart-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:9px}
+.who-segment{display:flex;border:1px solid var(--who-border);border-radius:4px;overflow:hidden}
+.who-segment button{border:0;border-right:1px solid var(--who-border);background:transparent;padding:6px 12px;font-size:max(13px,.92em)}
+.who-segment button:last-child{border-right:0}
+.who-segment button.is-active{background:var(--who-panel-2);font-weight:600}
+.who-legend{display:flex;gap:18px;color:var(--who-muted);font-size:max(13px,.92em)}
+.who-legend-item{display:flex;gap:7px;align-items:center;white-space:nowrap}
+.who-legend-item i{display:block;width:16px;height:10px;background:var(--who-older);border-radius:2px}
+.who-legend-item.who-year-1 i{background:var(--who-newer)}
+.who-charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:stretch}
+.who-chart-panel{background:var(--who-panel);border:1px solid var(--who-border);border-radius:5px;padding:13px 15px 10px;min-width:0}
+.who-chart-panel h2{margin-bottom:2px}
+.who-chart-axis,.who-chart-group{display:grid;grid-template-columns:minmax(100px,31%) minmax(0,1fr);column-gap:10px;align-items:center}
+.who-chart-axis svg{width:100%;height:25px;overflow:visible;color:var(--who-muted);fill:currentColor;font-size:13px}
+.who-chart-group{min-height:76px;padding:3px 0;border-bottom:1px solid color-mix(in srgb,var(--who-border) 45%,transparent)}
+.who-chart-group:last-child{border-bottom:0}
+.who-group-label{font-size:max(13px,.92em);overflow-wrap:anywhere;font-weight:500;line-height:1.25;padding:4px 0}
+.who-bars{width:100%;height:58px;overflow:visible;font-family:inherit}
+.who-gridline{stroke:var(--who-border);stroke-width:.7;opacity:.65;vector-effect:non-scaling-stroke}
+.who-bar{cursor:pointer}
+.who-bar-target{fill:transparent}
+.who-bar-fill{fill:var(--who-older)}
+.who-year-1 .who-bar-fill{fill:var(--who-newer)}
+.who-bar-value{fill:var(--who-text);font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
+.who-bar:hover .who-bar-fill,.who-bar:focus .who-bar-fill{filter:brightness(1.15);stroke:var(--who-text);stroke-width:1;vector-effect:non-scaling-stroke}
+.who-bar[aria-pressed=true] .who-bar-fill{stroke:var(--who-text);stroke-width:2;vector-effect:non-scaling-stroke}
+.who-empty{display:flex;align-items:center;justify-content:center;min-height:220px;max-width:430px;margin:auto!important;text-align:center;line-height:1.6;color:var(--who-muted);padding:24px 10px}
+.who-footer{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;margin-top:10px}
+.who-scope{display:flex;flex-wrap:wrap;gap:3px 12px;color:var(--who-muted);font-size:max(13px,.85em);max-width:86%}
+.who-checks{padding:4px 8px;font-size:max(13px,.85em)}
+.who-capture-filters{font-size:max(13px,.85em);color:var(--who-muted);margin-top:6px!important}
+.who-details{margin-top:15px;border:1px solid var(--who-border);border-radius:5px;overflow:hidden;background:var(--who-panel)}
+.who-details-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-bottom:1px solid var(--who-border)}
+.who-details-top .who-actions{justify-content:flex-end}
+.who-details-top input[type=search]{width:240px;max-width:100%}
+.who-detail-scroll{overflow:auto;max-height:300px;overscroll-behavior:contain;scrollbar-gutter:stable;position:relative;isolation:isolate}
+.who-table{width:100%;border-collapse:separate;border-spacing:0;text-align:left;font-size:max(13px,.88em)}
+.who-table th{position:sticky;top:0;background:var(--who-panel-2);color:var(--who-text);z-index:2;white-space:nowrap;border-bottom:1px solid var(--who-border);font-weight:600;padding:9px 10px}
+.who-table th button{border:0;background:transparent;padding:0;text-align:left;white-space:nowrap;font-weight:inherit}
+.who-table td{padding:8px 10px;border-bottom:1px solid var(--who-border);vertical-align:top;max-width:260px;overflow-wrap:anywhere}
+.who-table tbody tr:last-child td{border-bottom:0}
+.who-date{white-space:nowrap;font-variant-numeric:tabular-nums}
+.who-record-id{min-width:125px}
+.who-source-evidence{margin-top:6px}
+.who-source-evidence summary{cursor:pointer;width:fit-content;color:var(--who-muted);font-size:13px}
+.who-source-fields{max-height:200px;overflow:auto;overscroll-behavior:contain;padding:6px 0 2px;line-height:1.4}
+.who-source-fields p+p{margin-top:5px}
+.who-text-button{border:0;background:transparent;padding:0;color:var(--who-text);text-decoration:underline;white-space:nowrap}
+.who-paging{display:flex;justify-content:flex-end;gap:7px;align-items:center;padding:7px 10px;border-top:1px solid var(--who-border);font-size:max(13px,.85em)}
+.who-paging span{margin-right:auto;color:var(--who-muted)}
+.who-paging button{padding:4px 8px}
+.who-copy-status{display:block;padding:0 12px;font-size:max(13px,.85em);color:var(--who-muted)}
+.who-copy-status:empty{display:none}
+.who-copy-fallback{margin:8px 12px;width:calc(100% - 24px);height:85px;background:var(--who-bg);border:1px solid var(--who-border);padding:8px}
+.who-compact .who-filters{grid-template-columns:repeat(3,minmax(0,1fr))}
+.who-compact .who-charts{grid-template-columns:1fr}
+.who-compact .who-chart-axis,.who-compact .who-chart-group{grid-template-columns:minmax(145px,25%) minmax(0,1fr)}
+.who-compact .who-chart-group{min-height:68px}
+.who-compact .who-details-top{align-items:flex-start;flex-direction:column}
+.who-compact .who-details-top .who-actions{justify-content:flex-start;width:100%}
+.who-narrow{padding:12px}
+.who-narrow .who-header{flex-direction:column}
+.who-narrow .who-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+.who-narrow .who-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.who-narrow .who-card{padding:10px;min-height:85px}
+.who-narrow .who-more-fields{grid-template-columns:1fr}
+.who-narrow .who-chart-panel{padding:10px}
+.who-narrow .who-chart-axis,.who-narrow .who-chart-group{grid-template-columns:minmax(100px,34%) minmax(0,1fr);column-gap:8px}
+.who-narrow .who-chart-top{flex-wrap:wrap}
+.who-narrow .who-footer{flex-wrap:wrap}
+.who-narrow .who-scope{max-width:100%}
+.who-narrow .who-details-top input[type=search]{width:100%}
+.who-capture .who-header{margin-bottom:16px}
+.who-capture .who-header .who-button{opacity:.65;font-size:max(13px,.8em);padding:3px 7px}
+.who-capture .who-chart-top{margin-top:4px}
+.who-high-contrast .who-year-1 .who-bar-fill{fill:var(--who-panel);stroke:var(--who-text);stroke-width:2;stroke-dasharray:4 2}
+.who-high-contrast .who-legend-item.who-year-1 i{background:var(--who-panel);border:2px dashed var(--who-text)}
+@media print{.who-activity{height:auto;overflow:visible}.who-actions,.who-filters,.who-more,.who-details{display:none}.who-activity{print-color-adjust:exact}}
+
+
+body{margin:0;padding:16px;background:#151b21;color:#e6ebf0;font:14px 'Wallace Sans','Segoe UI',Arial,sans-serif}body>nav{max-width:1440px;margin:0 auto 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}body>nav strong{margin-right:auto}body>nav button{font:inherit;color:inherit;border:1px solid #526171;border-radius:4px;background:#26323e;padding:6px 10px;cursor:pointer}#host{box-sizing:border-box;width:100%;max-width:1440px;height:820px;margin:auto;border:1px solid #465260}.demo-note{max-width:1440px;margin:12px auto;color:#bdc8d4;line-height:1.4}</style></head><body><nav aria-label="Fictional preview controls"><strong>Preview · fictional data</strong><button id="three">Three active sites / reset</button><button id="six">Six active sites</button><button id="wide">Wide</button><button id="small">Compact</button></nav><div id="host"></div><p class="demo-note">Illustration only — all IDs, products, dates and counts are fictional. Fixed example reference: 18 Nov 2026; selected years: 2025 and 2026. WHO means the WHO value in Commercial region. Blank regions need review and appear when All regions or Not recorded is selected. Totals describe delivered Velocity data, not a validation against source records.</p><script>(()=>{
+// Historical WHO activity: a submission belongs to SubID; an approval belongs to ROID.
+// Resolve identity dates before local filters, and allocate each activity only once.
+const DEFAULT_SITES = Object.freeze(['ABO', 'ADJ', 'ADK', 'AJG', 'ARDG', 'Abbott Diagnostics Scarborough, Inc.']);
+const ROLES = Object.freeze(['SubID', 'ROID', 'AppID', 'RegistrationID', 'Site', 'BusinessUnit', 'CommercialRegion', 'Product', 'SubmissionType', 'ActualSubmission', 'ActualApproval', 'AsOfDate', 'SubmissionURL', 'RegulatoryObjectiveURL', 'RegistrationURL']);
+const REQUIRED = Object.freeze(['CommercialRegion', 'Site']);
+const clean = value => String(value ?? '').trim().replace(/\s+/g, ' ');
+const norm = value => clean(value).toLocaleLowerCase('en-GB');
+const DAY = 86400000;
+const WHO_VALUES = new Set(['who', 'who (multi-country)', 'world health organization', 'world health organization (who)']);
+const isWHO = value => WHO_VALUES.has(norm(value));
+const unique = values => [...new Set(values.map(clean).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'en-GB', {numeric:true}));
+const uniqueLabels = values => [...new Map(values.map(clean).map(value => [norm(value), value])).values()].sort((a,b) => a.localeCompare(b, 'en-GB', {numeric:true}));
+
+function parseDay(value) {
+  if (value == null || clean(value) === '') return {kind:'blank'};
+  let y, m, d;
+  if (value instanceof Date) {
+    if (!Number.isFinite(+value)) return {kind:'invalid'};
+    [y,m,d] = [value.getUTCFullYear(), value.getUTCMonth()+1, value.getUTCDate()];
+  } else {
+    const text=clean(value), iso=text.match(/^(\d{4})-(\d{2})-(\d{2})(.*)$/), local=text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(.*)$/);
+    if (!iso && !local) return {kind:'invalid'};
+    const match=iso||local;
+    [y,m,d]=iso?match.slice(1,4).map(Number):[Number(match[3]),Number(match[2]),Number(match[1])];
+    if (match[4]) {
+      const time=match[4].match(/^[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,9}))?)?(Z|[+-]\d{2}:?\d{2})?$/);
+      if(!time || Number(time[1])>23 || Number(time[2])>59 || Number(time[3]||0)>59) return {kind:'invalid'};
+      if(time[5] && time[5]!=='Z') {
+        const offset=time[5].replace(':','');
+        if(Number(offset.slice(1,3))>23 || Number(offset.slice(3))>59) return {kind:'invalid'};
+      }
+    }
+  }
+  const check=new Date(0); check.setUTCFullYear(y,m-1,d); check.setUTCHours(0,0,0,0);
+  return y>=1900 && y<=2100 && check.getUTCFullYear()===y && check.getUTCMonth()===m-1 && check.getUTCDate()===d
+    ? {kind:'date',day:+check} : {kind:'invalid'};
+}
+
+function resolveDate(values, mapped=true) {
+  if (!mapped) return {kind:'unmapped'};
+  const parsed=values.map(parseDay), days=[...new Set(parsed.filter(value=>value.kind==='date').map(value=>value.day))];
+  if (parsed.some(value=>value.kind==='invalid')) return {kind:'issue',reason:'Invalid / outside 1900–2100'};
+  if (days.length>1) return {kind:'issue',reason:'Conflicting actual dates'};
+  return days.length ? {kind:'date',day:days[0]} : {kind:'blank'};
+}
+
+function formatDate(value) {
+  if (value && typeof value==='object') {
+    if (value.kind==='date') value=value.day;
+    else if (value.kind==='multiple') return `${value.days.length} dates`;
+    else return value.kind==='issue' ? value.reason : value.kind==='unmapped' ? 'Field not mapped' : 'Not recorded';
+  }
+  if(!Number.isFinite(value)) return 'Not recorded';
+  const date=new Date(value),months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${String(date.getUTCDate()).padStart(2,'0')} ${months[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
+}
+
+function validNow(now) { const result=now instanceof Date ? now : now==null ? new Date() : new Date(now); return Number.isFinite(+result)?result:new Date(); }
+function defaultState(now) {
+  const year=validNow(now).getFullYear();
+  return {sites:[...DEFAULT_SITES,''],unit:'ID',product:'*',region:'*',submissionType:'*',whoValue:'@who',approvalBasis:'ro',groupBy:'site',years:[year-1,year],theme:'dark',capture:false};
+}
+function normalizeState(saved={},now) {
+  const defaults=defaultState(now), state=saved&&typeof saved==='object'?saved:{};
+  const years=Array.isArray(state.years)?[...new Set(state.years.map(Number).filter(year=>Number.isInteger(year)&&year>=1900&&year<=2100))].sort((a,b)=>a-b):[];
+  return {...defaults,...state,
+    sites:state.sites==='*'?'*':Array.isArray(state.sites)?uniqueLabels(state.sites.filter(value=>typeof value==='string')):defaults.sites,
+    ...Object.fromEntries(['unit','product','region','submissionType','whoValue'].map(key=>[key,typeof state[key]==='string'?clean(state[key]):defaults[key]])),
+    years:years.length===2?years:defaults.years, approvalBasis:'ro', groupBy:state.groupBy==='region'?'region':'site',
+    theme:state.theme==='light'?'light':'dark', capture:state.capture===true};
+}
+
+function mapTable(table) {
+  const columns=Array.isArray(table?.columns)?table.columns:[], mapped={}, labels={}, indices={};
+  for (const role of ROLES) {
+    const matches=columns.map((column,index)=>column?.roles?.[role]?index:-1).filter(index=>index>=0);
+    if(matches.length>1) throw new Error(`Map only one field to ${role}.`);
+    mapped[role]=matches.length===1; indices[role]=matches[0]??-1;
+    labels[role]=mapped[role]?clean(columns[indices[role]].displayName||columns[indices[role]].queryName||role):'';
+  }
+  return {rows:(Array.isArray(table?.rows)?table.rows:[]).map(values=>Object.fromEntries(ROLES.map(role=>[role,mapped[role]?values[indices[role]]:null]))),missing:REQUIRED.filter(role=>!mapped[role]),mapped,labels};
+}
+
+function allocation(rows,role,dimension) {
+  const values=uniqueLabels(rows.map(row=>row[role])).filter(Boolean);
+  if(!values.length) return {key:`${dimension}:blank`,label:dimension==='site'?'Unassigned site':'Not recorded',values:[],kind:'blank'};
+  if(values.length>1) return {key:`${dimension}:multiple`,label:`Multiple ${dimension==='site'?'sites':'regions'} — review`,values,kind:'multiple'};
+  return {key:`${dimension}:value:${encodeURIComponent(norm(values[0]))}`,label:values[0],values,kind:'value'};
+}
+function safeURL(rows,role) {
+  const urls=unique(rows.map(row=>row[role]));
+  if(urls.length!==1) return '';
+  try { const url=new URL(urls[0]); return url.protocol==='https:' && !url.username && !url.password?url.href:''; } catch { return ''; }
+}
+function companionSubmissionDates(rows,mapped) {
+  if(!mapped.ActualSubmission) return {kind:'unmapped'};
+  const parsed=rows.map(row=>parseDay(row.ActualSubmission));
+  const days=[...new Set(parsed.filter(value=>value.kind==='date').map(value=>value.day))].sort((a,b)=>a-b);
+  if(days.length>1) return {kind:'multiple',days,reason:'Multiple linked submission dates'};
+  return resolveDate(rows.map(row=>row.ActualSubmission));
+}
+const predicateValue=(row,role,value,mapped)=>!mapped[role] || value==='*' || norm(row[role])===norm(value);
+
+function summarize(inputRows,options={}) {
+  const rows=Array.isArray(inputRows)?inputRows:[], now=validNow(options.now), state=normalizeState(options,now);
+  const mapped=Object.fromEntries(ROLES.map(role=>[role,options.mapped instanceof Set?options.mapped.has(role):Array.isArray(options.mapped)?options.mapped.includes(role):options.mapped&&Object.hasOwn(options.mapped,role)?options.mapped[role]===true:rows.some(row=>Object.hasOwn(row,role))]));
+  const notices=[],issues=[],events=[],issueKeys=new Map(), years=state.years;
+  const addIssue=(issue,key=JSON.stringify([issue.kind,issue.metric,issue.id,issue.sourceRow]))=>{
+    const existing=issueKeys.get(key);
+    if(!existing){issueKeys.set(key,issue);issues.push(issue);return;}
+    if(issue.sourceRows) {
+      existing.sourceRows=(existing.sourceRows||0)+issue.sourceRows;
+      if(existing.sourceRowExamples.length<20) existing.sourceRowExamples.push(...issue.sourceRowExamples.slice(0,20-existing.sourceRowExamples.length));
+      for(const field of ['subIds','roIds','appIds','registrationIds','products','sites','regions']) existing[field]=unique([...(existing[field]||[]),...(issue[field]||[])]);
+    }
+  };
+  const sourceReview=(row,sourceRow,kind,message,metric)=>{
+    const subId=clean(row.SubID),roId=clean(row.ROID),id=subId||roId||`Source row ${sourceRow+1}`;
+    const key=(subId||roId)?JSON.stringify([kind,metric,subId,roId]):JSON.stringify([kind,metric,'anonymous',sourceRow]);
+    addIssue({id,kind,message,...(metric?{metric}:{}),sourceRow,sourceRows:1,sourceRowExamples:[sourceRow+1],
+      subIds:unique([row.SubID]),roIds:unique([row.ROID]),appIds:unique([row.AppID]),registrationIds:unique([row.RegistrationID]),products:unique([row.Product]),sites:unique([row.Site]),regions:unique([row.CommercialRegion]),
+      site:clean(row.Site)||'Unassigned site',region:clean(row.CommercialRegion)||'Not recorded',rawSite:clean(row.Site),rawCommercialRegion:clean(row.CommercialRegion)},key);
+  };
+  const previousDay=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())-DAY;
+  const suppliedAsOf=resolveDate(rows.map(row=>row.AsOfDate),mapped.AsOfDate);
+  const asOf=suppliedAsOf.kind==='date'?suppliedAsOf.day:previousDay;
+  const referenceSource=suppliedAsOf.kind==='date'?'Supplied extract date':'Previous-day reference (not source refresh time)';
+  if(suppliedAsOf.kind==='issue') notices.push('The supplied as-of field has invalid or conflicting dates. Using yesterday as a reference, not an extract date.');
+  else if(suppliedAsOf.kind==='blank'||suppliedAsOf.kind==='unmapped') notices.push('No usable extract date supplied. As of yesterday is a reference, not source refresh time.');
+  const unavailableMetrics={submissions:!mapped.SubID||!mapped.ActualSubmission,approvals:!mapped.ROID||!mapped.ActualApproval};
+  if(unavailableMetrics.submissions) notices.push('Submissions unavailable: map Submission ID and Actual submission date.');
+  if(unavailableMetrics.approvals) notices.push('Approvals unavailable: map RO ID and Actual RO approval date.');
+  const scopeUnavailable=REQUIRED.some(role=>!mapped[role]);
+  if(!mapped.CommercialRegion) notices.push('Map Commercial region. WHO is identified by its explicit commercial-region value; missing regions are not inferred to be WHO.');
+  if(!mapped.Site) notices.push('Map the manufacturing site field before viewing activity by the six sites.');
+  if(!mapped.BusinessUnit&&state.unit!=='*') notices.push('Business unit is not mapped. The ID/unit filter cannot be applied; counts include all delivered business units.');
+  const choices={sites:uniqueLabels(rows.map(row=>row.Site)),units:uniqueLabels(rows.map(row=>row.BusinessUnit)),products:uniqueLabels(rows.map(row=>row.Product)),regions:uniqueLabels(rows.map(row=>row.CommercialRegion)),whoValues:uniqueLabels(rows.map(row=>row.CommercialRegion)),submissionTypes:uniqueLabels(rows.map(row=>row.SubmissionType)),years:[...new Set([...years,...rows.flatMap(row=>[row.ActualSubmission,row.ActualApproval]).map(parseDay).filter(value=>value.kind==='date').map(value=>new Date(value.day).getUTCFullYear())])].sort((a,b)=>a-b)};
+  const whoMatch=row=>state.whoValue==='*'||(state.whoValue==='@who'?isWHO(row.CommercialRegion):norm(row.CommercialRegion)===norm(state.whoValue));
+  const dimensionMatch=row=>predicateValue(row,'BusinessUnit',state.unit,mapped) && predicateValue(row,'Product',state.product,mapped) && predicateValue(row,'SubmissionType',state.submissionType,mapped);
+  const baseMatch=row=>whoMatch(row) && dimensionMatch(row);
+  const siteMatch=(row,site)=>state.sites==='*'||state.sites.some(value=>value===''?!clean(row.Site)&&(!site||site.kind==='blank'):norm(value)===norm(row.Site));
+  const regionMatch=(row,region)=>!mapped.CommercialRegion||state.region==='*'||(state.region===''?region.kind==='blank':norm(row.CommercialRegion)===norm(state.region));
+  const allMatch=(row,region,site)=>baseMatch(row)&&(state.whoValue!==''||region.kind==='blank')&&siteMatch(row,site)&&regionMatch(row,region);
+  if(mapped.CommercialRegion && rows.length && !rows.some(whoMatch)) notices.push('No rows match the selected commercial region. Select the exact WHO region value supplied in your source.');
+  if(mapped.BusinessUnit && rows.length && !rows.some(row=>predicateValue(row,'BusinessUnit',state.unit,mapped))) notices.push(`No delivered rows match business unit ${state.unit || 'Not recorded'}.`);
+  if(scopeUnavailable) unavailableMetrics.submissions=unavailableMetrics.approvals=true;
+
+  if(!scopeUnavailable) {
+    // Missing IDs are source rows, never made-up distinct records. Approval ownership
+    // is independent, so a missing submission ID does not remove a valid RO approval.
+    rows.forEach((row,sourceRow)=>{
+      // Blank regions cannot establish WHO membership. Keep their source rows
+      // reviewable even while the default WHO-only totals exclude them.
+      if(!clean(row.CommercialRegion) && !whoMatch(row) && dimensionMatch(row) && siteMatch(row)) sourceReview(row,sourceRow,'unclassifiedRegion','Commercial region not recorded. WHO membership is unknown, so this source row is excluded from the selected region totals.');
+      if(!clean(row.Site)&&dimensionMatch(row)&&(whoMatch(row)||!clean(row.CommercialRegion))) sourceReview(row,sourceRow,'missingSite','Manufacturing site is blank on this source row. A recorded site on the same identity is retained where available; otherwise activity uses Unassigned site. No site is inferred.');
+      if(!baseMatch(row)) return;
+      const region=allocation([row],'CommercialRegion','region');
+      if(!regionMatch(row,region)) return;
+      if(!siteMatch(row)) return;
+      if(mapped.SubID&&!clean(row.SubID)) sourceReview(row,sourceRow,'missingID','Submission ID not recorded. This source row cannot identify a distinct submission.','submissions');
+      if(mapped.ROID&&!clean(row.ROID)) sourceReview(row,sourceRow,'missingID','RO ID not recorded. This source row cannot identify a distinct RO approval.','approvals');
+    });
+    for(const metric of ['submissions','approvals']) {
+      if(unavailableMetrics[metric]) continue;
+      const idRole=metric==='submissions'?'SubID':'ROID',dateRole=metric==='submissions'?'ActualSubmission':'ActualApproval', byID=new Map();
+      for(const row of rows) { const id=clean(row[idRole]); if(id){if(!byID.has(id))byID.set(id,[]);byID.get(id).push(row);} }
+      for(const [id,identityRows] of byID) {
+        const date=resolveDate(identityRows.map(row=>row[dateRole]));
+        const site=allocation(identityRows,'Site','site'), region=allocation(identityRows,'CommercialRegion','region');
+        // All scope dimensions must coexist in a delivered row. Identity dates and
+        // allocation still use all joins, so filtering cannot conceal conflicts.
+        if(!identityRows.some(row=>allMatch(row,region,site))) continue;
+        const metadata={id,metric,subIds:unique(identityRows.map(row=>row.SubID)),roIds:unique(identityRows.map(row=>row.ROID)),appIds:unique(identityRows.map(row=>row.AppID)),registrationIds:unique(identityRows.map(row=>row.RegistrationID)),products:unique(identityRows.map(row=>row.Product)),site:site.label,region:region.label,sites:site.values,regions:region.values};
+        if(site.kind==='multiple') addIssue({...metadata,kind:'multipleSites',message:'This record has multiple manufacturing sites. It is counted once in Multiple sites — review, not once per site.'});
+        if(region.kind==='multiple') addIssue({...metadata,kind:'multipleRegions',message:'This record has multiple commercial regions. It is counted once in Multiple regions — review, not once per region.'});
+        if(region.kind==='blank'&&mapped.CommercialRegion) addIssue({...metadata,kind:'missingRegion',message:'Commercial region not recorded. The record remains included.'});
+        if(date.kind!=='date') {
+          const rawValues=unique(identityRows.map(row=>row[dateRole] instanceof Date?Number.isFinite(+row[dateRole])?row[dateRole].toISOString():'Invalid Date':row[dateRole]));
+          addIssue({...metadata,kind:date.kind==='issue'?'invalidDate':'missingDate',rawValues:rawValues.slice(0,20),rawValueCount:rawValues.length,field:dateRole,message:date.kind==='issue'?`${date.reason}: ${metric==='submissions'?'actual submission':'actual RO approval'} date. Excluded from this metric.`:`Actual ${metric==='submissions'?'submission':'RO approval'} date not recorded; year cannot be assigned.`});
+          continue;
+        }
+        if(date.day>asOf) {addIssue({...metadata,kind:'futureDate',date:date.day,message:'Actual date is after the as-of reference. Excluded from this metric.'});continue;}
+        const year=new Date(date.day).getUTCFullYear();
+        if(!years.includes(year)) continue;
+        const group=state.groupBy==='region'?region:site;
+        events.push({...metadata,key:`${metric}:${encodeURIComponent(id)}`,date:date.day,year,groupKey:group.key,groupLabel:group.label,siteKey:site.key,regionKey:region.key,submissionDate:metric==='submissions'?date:companionSubmissionDates(identityRows,mapped),approvalDate:metric==='approvals'?date:resolveDate(identityRows.map(row=>row.ActualApproval),mapped.ActualApproval),url:safeURL(identityRows,metric==='submissions'?'SubmissionURL':'RegulatoryObjectiveURL'),source:'Velocity'});
+      }
+    }
+  }
+  const totals={submissions:[0,0],approvals:[0,0]},groupsByKey=new Map();
+  for(const event of events) {
+    const yearIndex=years.indexOf(event.year); totals[event.metric][yearIndex]++;
+    if(!groupsByKey.has(event.groupKey)) groupsByKey.set(event.groupKey,{key:event.groupKey,label:event.groupLabel,submissions:[0,0],approvals:[0,0]});
+    groupsByKey.get(event.groupKey)[event.metric][yearIndex]++;
+  }
+  const defaultOrder=DEFAULT_SITES.map(norm), rank=group=>state.groupBy==='site'&&defaultOrder.includes(norm(group.label))?defaultOrder.indexOf(norm(group.label)):group.key.endsWith(':blank')?10001:group.key.endsWith(':multiple')?10002:1000;
+  const groups=[...groupsByKey.values()].sort((a,b)=>rank(a)-rank(b)||a.label.localeCompare(b.label,'en-GB',{numeric:true}));
+  events.sort((a,b)=>b.date-a.date||a.metric.localeCompare(b.metric)||a.id.localeCompare(b.id,'en-GB',{numeric:true}));
+  const activeSites=uniqueLabels(events.flatMap(event=>event.sites));
+  const unassignedSiteActivity={submissions:[0,0],approvals:[0,0]};
+  for(const event of events) if(event.siteKey==='site:blank') unassignedSiteActivity[event.metric][years.indexOf(event.year)]++;
+  const scopeLabel=state.whoValue==='@who'?'WHO':state.whoValue==='*'?'All commercial regions':state.whoValue||'Commercial region not recorded';
+  return {years,asOf,asOfLabel:formatDate(asOf),referenceSource,totals,groups,events,issues,choices,notices,unavailableMetrics,scopeUnavailable,mapped,scopeLabel,visibleSites:activeSites.filter(site=>defaultOrder.includes(norm(site))).length,visibleSiteLabels:activeSites,unassignedSiteActivity,totalDefaultSites:DEFAULT_SITES.length,approvalBasisLabel:'Distinct ROs with actual approval dates',source:'Velocity',sourceRowCount:rows.length,state};
+}
+
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const METRICS = { submissions: 'Submissions', approvals: 'Approvals' };
+const PAGE_SIZE = 20;
+const NOT_RECORDED = 'Not recorded';
+const number = value => new Intl.NumberFormat('en-GB').format(value || 0);
+const list = value => Array.isArray(value) ? value : value == null || value === '' ? [] : [value];
+const textList = value => list(value).filter(Boolean).join(', ') || NOT_RECORDED;
+const safeUrl = value => {
+  try { const url = new URL(String(value)); return url.protocol === 'https:' ? url.href : null; }
+  catch { return null; }
+};
+const niceMaximum = value => {
+  if (value <= 4) return 4;
+  const desiredStep = value / 4;
+  const power = 10 ** Math.floor(Math.log10(desiredStep));
+  const multiple = [1, 2, 5, 10].find(candidate => candidate * power >= desiredStep);
+  return multiple * power * 4;
+};
+
+/** All record values are written as text. The host owns persisted state and external actions. */
+function render(root, rows, options = {}) {
+  const doc = root.ownerDocument;
+  const node = (tag, text, className) => {
+    const result = doc.createElement(tag);
+    if (text !== undefined && text !== null) result.textContent = String(text);
+    if (className) result.className = className;
+    return result;
+  };
+  const svg = (tag, attrs = {}, text) => {
+    const result = doc.createElementNS(SVG_NS, tag);
+    for (const [key, value] of Object.entries(attrs)) result.setAttribute(key, String(value));
+    if (text !== undefined) result.textContent = String(text);
+    return result;
+  };
+  const state = { ...defaultState(options.now), ...options.state };
+  const result = summarize(rows, { ...state, now: options.now, mapped: options.mapped });
+  const width = options.width || root.clientWidth || 1200;
+  const active = doc.activeElement;
+  const focused = root.contains(active) ? active?.getAttribute?.('data-focus-key') : null;
+  const selection = focused && /^(INPUT|TEXTAREA)$/.test(active.tagName)
+    ? { start: active.selectionStart, end: active.selectionEnd } : null;
+  const rootScroll = root.scrollTop;
+  const oldDetails = root.querySelector('.who-detail-scroll');
+  const detailsScroll = oldDetails?.scrollTop || 0;
+  const oldSitesOpen = !!root.querySelector('.who-sites')?.open;
+  const oldMoreOpen = !!root.querySelector('.who-more')?.open;
+  const previousDetail = root.getAttribute('data-detail');
+  const detailSignature = JSON.stringify(state.detail || null);
+  const change = patch => options.onChange?.(patch);
+  const filterChange = patch => change({ ...patch, detail: null, detailSearch: '', page: 0 });
+  const isMapped = role => result.mapped ? result.mapped[role] !== false : !options.mapped || options.mapped[role] !== false;
+  const focusKey = (element, key) => { element.setAttribute('data-focus-key', key); return element; };
+  const button = (text, action, className = '', aria) => {
+    const item = node('button', text, className);
+    item.type = 'button';
+    if (aria) item.setAttribute('aria-label', aria);
+    item.addEventListener('click', action);
+    return item;
+  };
+  const choose = (metric, year, groupKey = null) => change({ ...(state.capture ? { capture: false } : {}), detail: { metric, year, groupKey }, detailSearch: '', page: 0 });
+
+  root.replaceChildren();
+  root.className = `who-activity ${state.theme === 'light' ? 'who-light' : 'who-dark'}${state.capture ? ' who-capture' : ''}${width <= 950 ? ' who-compact' : ''}${width <= 540 ? ' who-narrow' : ''}`;
+  root.tabIndex = 0;
+  root.setAttribute('data-detail', detailSignature);
+  root.setAttribute('aria-label', 'WHO submissions and approvals');
+  root.onkeydown = event => {
+    if (event.key === 'Escape' && (state.capture || state.detail)) {
+      event.preventDefault();
+      change({ capture: false, detail: null });
+    }
+  };
+  root.style.setProperty('--who-font-size', `${Math.max(14, Math.min(16, width / 100))}px`);
+  if (options.highContrast) {
+    const hc = options.highContrast;
+    for (const [key, value] of Object.entries({ '--who-bg': hc.background, '--who-panel': hc.background, '--who-text': hc.foreground, '--who-muted': hc.foreground, '--who-border': hc.foreground, '--who-older': hc.foreground, '--who-newer': hc.foreground })) {
+      if (typeof value === 'string') root.style.setProperty(key, value);
+    }
+    root.classList.add('who-high-contrast');
+  } else {
+    for (const key of ['--who-bg', '--who-panel', '--who-text', '--who-muted', '--who-border', '--who-older', '--who-newer']) root.style.removeProperty(key);
+  }
+
+  const header = node('header', null, 'who-header');
+  const heading = node('div');
+  const scopeLabel = result.scopeLabel || (state.whoValue === '@who' ? 'WHO' : state.whoValue === '*' ? 'All commercial regions' : state.whoValue || 'Commercial region not recorded');
+  heading.append(node('h1', `${scopeLabel} Submissions & Approvals`));
+  const years = result.years;
+  const currentYear = new Date(result.asOf).getUTCFullYear();
+  const yearLabel = year => `${year}${year === currentYear ? ' YTD' : ''}`;
+  heading.append(node('p', `${yearLabel(years[0])} / ${yearLabel(years[1])} · Actual milestones · ${!isMapped('BusinessUnit') ? 'All delivered business units' : state.unit === '*' ? 'All business units' : state.unit}`, 'who-subtitle'));
+  header.append(heading);
+  const actions = node('div', null, 'who-actions');
+  const captureButton = focusKey(button(state.capture ? 'Interactive mode' : 'Screenshot mode', () => change({ capture: !state.capture }), 'who-button', state.capture ? 'Return to interactive mode' : 'Use screenshot layout'), 'capture');
+  captureButton.title = 'Simplifies the layout for screen capture. Power BI native PDF and PowerPoint export support is unchanged.';
+  actions.append(captureButton);
+  if (!state.capture) {
+    const theme = focusKey(button(state.theme === 'light' ? 'Dark' : 'Light', () => change({ theme: state.theme === 'light' ? 'dark' : 'light' }), 'who-button', `Use ${state.theme === 'light' ? 'dark' : 'light'} theme`), 'theme');
+    actions.append(theme);
+  }
+  header.append(actions);
+  root.append(header);
+
+  const notices = new Set([...(result.notices || []), ...list(options.notice)].filter(Boolean));
+  if (options.missing?.length) notices.add(`Map required fields: ${options.missing.map(value => options.labels?.[value] || value).join(', ')}.`);
+  if (notices.size) {
+    const region = node('div', null, 'who-notices');
+    region.setAttribute('role', 'status');
+    region.setAttribute('data-testid', 'notices');
+    for (const message of notices) region.append(node('p', message));
+    root.append(region);
+  }
+
+  const choices = result.choices || {};
+  const makeSelect = (parent, label, name, value, values, callback, { all = true, disabled = false, display = item => item === '' ? NOT_RECORDED : String(item), extra = [] } = {}) => {
+    const wrapper = node('label', null, 'who-field');
+    wrapper.append(node('span', label));
+    const select = focusKey(node('select'), name);
+    select.setAttribute('aria-label', label);
+    select.setAttribute('data-testid', `filter-${name}`);
+    if (all) {
+      const option = node('option', 'All'); option.value = '*'; select.append(option);
+    }
+    const seen = new Set(all ? ['*'] : []);
+    for (const item of [...extra, ...list(values)]) {
+      const key = typeof item === 'object' ? item.key : item;
+      if (seen.has(String(key))) continue;
+      seen.add(String(key));
+      const option = node('option', typeof item === 'object' ? item.label : display(item));
+      option.value = String(key); select.append(option);
+    }
+    if (!seen.has(String(value))) {
+      const option = node('option', `${display(value)} (not in delivered data)`); option.value = String(value); select.append(option);
+    }
+    select.value = String(value);
+    select.disabled = disabled;
+    if (disabled) select.title = `${label} field is not mapped`;
+    select.addEventListener('change', () => callback(select.value));
+    wrapper.append(select); parent.append(wrapper);
+    return select;
+  };
+
+  if (!state.capture) {
+    const filters = node('div', null, 'who-filters');
+    makeSelect(filters, 'Business unit', 'unit', state.unit, choices.units, value => filterChange({ unit: value }), { disabled: !isMapped('BusinessUnit') });
+    const siteField = node('div', null, 'who-field who-site-field');
+    siteField.append(node('span', 'Sites'));
+    const sites = node('details', null, 'who-sites'); sites.open = oldSitesOpen;
+    const selectedSites = state.sites === '*' ? null : new Set(list(state.sites));
+    const siteSummary = focusKey(node('summary', selectedSites === null ? 'All sites' : `${[...selectedSites].filter(Boolean).length} sites${selectedSites.has('') ? ' + unassigned' : ''}`), 'sites');
+    siteSummary.setAttribute('aria-label', 'Select sites'); siteSummary.setAttribute('data-testid', 'filter-sites'); sites.append(siteSummary);
+    const siteOptions = node('div', null, 'who-site-options');
+    const siteCommands = node('div', null, 'who-site-commands');
+    siteCommands.append(button('All', () => filterChange({ sites: '*' })), button('Clear', () => filterChange({ sites: [] })), button('Reset', () => filterChange({ sites: [...DEFAULT_SITES, ''] }), '', 'Reset to six sites and Unassigned site'));
+    sites.append(siteCommands);
+    const siteSearch = focusKey(node('input'), 'site-search');
+    siteSearch.type = 'search'; siteSearch.placeholder = 'Find site'; siteSearch.setAttribute('aria-label', 'Find site');
+    sites.append(siteSearch);
+    const allSites = [...new Set([...DEFAULT_SITES, '', ...list(choices.sites), ...list(state.sites === '*' ? [] : state.sites)])];
+    for (const site of allSites) {
+      const option = node('label', null, 'who-site-option');
+      const input = focusKey(node('input'), `site-${site}`); input.type = 'checkbox'; input.checked = selectedSites === null || selectedSites.has(site);
+      input.setAttribute('aria-label', site || 'Unassigned site');
+      input.addEventListener('change', () => {
+        const selected = selectedSites === null ? new Set(allSites) : new Set(selectedSites);
+        if (input.checked) selected.add(site); else selected.delete(site);
+        filterChange({ sites: [...selected] });
+      });
+      option.append(input, node('span', site || 'Unassigned site')); option.dataset.search = (site || 'Unassigned site').toLowerCase(); siteOptions.append(option);
+    }
+    siteSearch.addEventListener('input', () => { for (const label of siteOptions.children) label.hidden = !label.dataset.search.includes(siteSearch.value.toLowerCase()); });
+    sites.append(siteOptions); siteField.append(sites); filters.append(siteField);
+    makeSelect(filters, 'Product', 'product', state.product, choices.products, value => filterChange({ product: value }), { disabled: !isMapped('Product') });
+    makeSelect(filters, 'Commercial region', 'region', state.whoValue, list(choices.regions).filter(value => value === state.whoValue || String(value).trim().toLowerCase() !== 'who'), value => filterChange({ whoValue: value, region: '*' }), { disabled: !isMapped('CommercialRegion'), extra: [{ key: '@who', label: 'WHO' }] });
+    const availableYears = [...new Set([...list(choices.years), ...years])].sort((a, b) => a - b);
+    makeSelect(filters, 'Earlier year', 'older-year', years[0], availableYears.filter(value => value !== years[1]), value => filterChange({ years: [Number(value), years[1]].sort((a, b) => a - b) }), { all: false });
+    makeSelect(filters, 'Later year', 'newer-year', years[1], availableYears.filter(value => value !== years[0]), value => filterChange({ years: [years[0], Number(value)].sort((a, b) => a - b) }), { all: false });
+    root.append(filters);
+    const more = node('details', null, 'who-more'); more.open = oldMoreOpen;
+    more.append(focusKey(node('summary', 'More options'), 'more-options'));
+    const moreFields = node('div', null, 'who-more-fields');
+    makeSelect(moreFields, 'Submission type', 'submission-type', state.submissionType, choices.submissionTypes, value => filterChange({ submissionType: value }), { disabled: !isMapped('SubmissionType') });
+    more.append(moreFields, node('p', 'WHO is identified by the Commercial region value. Blank regions are available in Data checks; they are not assumed to be WHO.', 'who-note'));
+    root.append(more);
+  }
+
+  const cards = node('section', null, 'who-cards'); cards.setAttribute('aria-label', 'Milestone totals');
+  years.forEach((year, yearIndex) => {
+    for (const metric of ['submissions', 'approvals']) {
+      const unavailable = !!result.scopeUnavailable || !!result.unavailableMetrics?.[metric];
+      const count = result.totals?.[metric]?.[yearIndex] || 0;
+      const card = button('', () => choose(metric, year), `who-card who-year-${yearIndex}`, `${yearLabel(year)} ${METRICS[metric]}: ${unavailable ? 'Unavailable' : number(count)}. Show records.`);
+      card.setAttribute('data-testid', 'metric-card'); card.dataset.metric = metric; card.dataset.year = year;
+      card.setAttribute('aria-pressed', String(state.detail?.metric === metric && state.detail?.year === year && state.detail?.groupKey == null));
+      card.disabled = unavailable;
+      card.append(node('span', `${yearLabel(year)} ${METRICS[metric]}`, 'who-card-label'), node('strong', unavailable ? '—' : number(count), 'who-card-value'));
+      if (unavailable) card.append(node('span', result.scopeUnavailable ? 'Map required fields' : 'Map ID and actual date', 'who-note'));
+      cards.append(card);
+    }
+  });
+  root.append(cards);
+
+  const chartTop = node('div', null, 'who-chart-top');
+  const groupButtons = node('div', null, 'who-segment'); groupButtons.setAttribute('role', 'group'); groupButtons.setAttribute('aria-label', 'Group charts by');
+  for (const [key, label] of [['site', 'Site'], ['region', 'Commercial region']]) {
+    const item = focusKey(button(label, () => filterChange({ groupBy: key }), state.groupBy === key ? 'is-active' : ''), `group-${key}`);
+    item.setAttribute('aria-pressed', String(state.groupBy === key)); groupButtons.append(item);
+  }
+  chartTop.append(state.capture ? node('span', state.groupBy === 'site' ? 'By site' : 'By commercial region', 'who-chart-grouping-label') : groupButtons);
+  const legend = node('div', null, 'who-legend'); legend.setAttribute('aria-label', 'Year colours');
+  years.forEach((year, index) => { const item = node('span', null, `who-legend-item who-year-${index}`); item.append(node('i'), doc.createTextNode(yearLabel(year))); legend.append(item); });
+  chartTop.append(legend); root.append(chartTop);
+
+  const groups = result.groups || [];
+  const max = niceMaximum(Math.max(0, ...groups.flatMap(group => [...group.submissions, ...group.approvals])));
+  const charts = node('section', null, 'who-charts'); charts.setAttribute('aria-label', 'Milestones by group');
+  for (const metric of ['submissions', 'approvals']) {
+    const panel = node('section', null, 'who-chart-panel'); panel.dataset.metric = metric;
+    panel.setAttribute('data-testid', `chart-${metric}`);
+    panel.append(node('h2', METRICS[metric]));
+    if (result.scopeUnavailable) {
+      panel.append(node('p', 'Map Commercial region and Site to identify the records in this view.', 'who-empty'));
+    } else if (result.unavailableMetrics?.[metric]) {
+      const empty = node('p', `Map the ${metric === 'submissions' ? 'Submission ID and Actual submission date' : `${result.approvalBasisLabel || 'approval record ID'} and Actual approval date`} fields to show this chart.`, 'who-empty');
+      panel.append(empty);
+    } else if (!groups.length) {
+      panel.append(node('p', 'No matching actual activity in the selected years. Check the filters and Commercial region mapping.', 'who-empty'));
+    } else {
+      const axisRow = node('div', null, 'who-chart-axis'); axisRow.append(node('span'));
+      const axis = svg('svg', { 'aria-hidden': 'true' });
+      for (let tick = 0; tick <= 4; tick++) axis.append(svg('text', { x: `${1 + tick * 21}%`, y: 18, 'text-anchor': tick === 0 ? 'start' : 'middle' }, number(max * tick / 4)));
+      axisRow.append(axis); panel.append(axisRow);
+      const groupList = node('div', null, 'who-chart-groups');
+      for (const group of groups) {
+        const row = node('div', null, 'who-chart-group'); row.dataset.group = group.key; row.setAttribute('data-testid', 'chart-group');
+        const label = node('span', group.label, 'who-group-label'); label.title = group.label; row.append(label);
+        const graph = svg('svg', { class: 'who-bars', role: 'group', 'aria-label': `${group.label} ${METRICS[metric]}` });
+        for (let tick = 0; tick <= 4; tick++) graph.append(svg('line', { x1: `${1 + tick * 21}%`, x2: `${1 + tick * 21}%`, y1: 0, y2: 58, class: 'who-gridline' }));
+        years.forEach((year, index) => {
+          const count = group[metric]?.[index] || 0;
+          const barWidth = 84 * count / max;
+          const y = index * 25 + 5;
+          const bar = svg('g', { class: `who-bar who-year-${index}`, tabindex: '0', role: 'button', 'aria-label': `${group.label}, ${yearLabel(year)} ${METRICS[metric]}: ${number(count)}. Show records.`, 'data-metric': metric, 'data-year': year, 'data-group': group.key, 'data-testid': 'chart-bar', 'data-focus-key': `bar-${metric}-${year}-${group.key}` });
+          bar.setAttribute('aria-pressed', String(state.detail?.metric === metric && state.detail?.year === year && state.detail?.groupKey === group.key));
+          bar.append(svg('title', {}, `${group.label} · ${yearLabel(year)} · ${number(count)} ${METRICS[metric].toLowerCase()}\nSelect to review IDs and actual dates.`));
+          bar.append(svg('rect', { x: '1%', y, width: '99%', height: 21, class: 'who-bar-target' }));
+          if (count) bar.append(svg('rect', { x: '1%', y: y + 2, width: `${barWidth}%`, height: 17, rx: 2, class: 'who-bar-fill' }));
+          bar.append(svg('text', { x: `${1 + barWidth}%`, dx: 6, y: y + 15, class: 'who-bar-value' }, number(count)));
+          const selectBar = () => choose(metric, year, group.key);
+          bar.addEventListener('click', selectBar);
+          bar.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectBar(); } });
+          graph.append(bar);
+        });
+        row.append(graph); groupList.append(row);
+      }
+      panel.append(groupList);
+    }
+    charts.append(panel);
+  }
+  root.append(charts);
+
+  const footer = node('div', null, 'who-footer');
+  const scope = node('div', null, 'who-scope');
+  scope.append(node('span', `${number(result.visibleSites)} of ${result.totalDefaultSites || 6} sites with actual activity · Unassigned sites shown separately.`));
+  scope.append(node('span', `Approvals: ${result.approvalBasisLabel || 'distinct ROs with actual approval dates'}.`));
+  scope.append(node('span', `As of ${result.asOfLabel} · ${result.referenceSource || 'Reference date; not a source refresh timestamp'}.`));
+  footer.append(scope);
+  const checks = focusKey(button(`Data checks · ${number(result.issues?.length)}`, () => change({ ...(state.capture ? { capture: false } : {}), detail: { type: 'issues' }, detailSearch: '', page: 0 }), 'who-checks'), 'checks');
+  checks.setAttribute('data-testid', 'data-checks'); footer.append(checks); root.append(footer);
+
+  if (state.capture) {
+    const selections = [];
+    if (state.product !== '*') selections.push(`Product: ${state.product}`);
+    selections.push(`Commercial region: ${scopeLabel}`);
+    if (state.submissionType !== '*') selections.push(`Type: ${state.submissionType}`);
+    if (state.sites !== '*') selections.push(`Selected sites: ${list(state.sites).map(site => site || 'Unassigned site').join(', ') || 'None'}`);
+    if (selections.length) root.append(node('p', selections.join(' · '), 'who-capture-filters'));
+  }
+
+  if (state.detail && !state.capture) {
+    const detail = state.detail;
+    const isIssues = detail.type === 'issues';
+    const panel = node('section', null, 'who-details'); panel.setAttribute('data-testid', 'details');
+    const group = groups.find(item => item.key === detail.groupKey);
+    const title = isIssues ? 'Data checks' : `${detail.year} ${METRICS[detail.metric] || 'Records'}${group ? ` · ${group.label}` : ''}`;
+    const top = node('div', null, 'who-details-top'); top.append(node('h2', title));
+    const detailActions = node('div', null, 'who-actions');
+    const search = focusKey(node('input'), 'detail-search'); search.type = 'search'; search.value = state.detailSearch || ''; search.placeholder = 'Search IDs, products or sites'; search.setAttribute('aria-label', 'Search details');
+    search.addEventListener('input', () => change({ detailSearch: search.value, page: 0 })); detailActions.append(search);
+    const query = String(state.detailSearch || '').trim().toLowerCase();
+    let records = isIssues ? [...(result.issues || [])] : (result.events || []).filter(event => event.metric === detail.metric && event.year === detail.year && (detail.groupKey == null || event.groupKey === detail.groupKey));
+    if (query) records = records.filter(record => Object.values(record).flat().filter(value => typeof value !== 'object').join(' ').toLowerCase().includes(query));
+    const sort = state.sort || { field: isIssues ? 'id' : 'date', direction: 'desc' };
+    records.sort((a, b) => {
+      const av = sort.field === 'date' ? (typeof a.date === 'number' ? a.date : a.date?.day || 0) : String(a[sort.field] || '');
+      const bv = sort.field === 'date' ? (typeof b.date === 'number' ? b.date : b.date?.day || 0) : String(b[sort.field] || '');
+      return (typeof av === 'number' ? av - bv : av.localeCompare(bv, undefined, { numeric: true })) * (sort.direction === 'asc' ? 1 : -1);
+    });
+    const ids = [...new Set(records.map(record => record.id).filter(Boolean))];
+    const copyStatus = node('span', '', 'who-copy-status'); copyStatus.setAttribute('role', 'status');
+    const copyFallback = node('textarea', ids.join('\n'), 'who-copy-fallback'); copyFallback.hidden = true; copyFallback.readOnly = true; copyFallback.setAttribute('aria-label', 'IDs to copy');
+    detailActions.append(button('Copy IDs', async () => {
+      try {
+        if (options.onCopy) { const outcome = await options.onCopy(ids.join('\n')); if (outcome === false) throw new Error('Clipboard unavailable'); }
+        else if (doc.defaultView?.navigator?.clipboard?.writeText) await doc.defaultView.navigator.clipboard.writeText(ids.join('\n'));
+        else throw new Error('Clipboard unavailable');
+        copyStatus.textContent = `${number(ids.length)} IDs copied`;
+      } catch { copyFallback.hidden = false; copyFallback.focus(); copyFallback.select(); copyStatus.textContent = 'Select and copy the IDs below'; }
+    }, 'who-button'), button('Close', () => change({ detail: null, page: 0 }), 'who-button', 'Close details'));
+    top.append(detailActions); panel.append(top, copyStatus, copyFallback);
+    const scroll = node('div', null, 'who-detail-scroll');
+    const table = node('table', null, 'who-table');
+    const head = node('thead'); const headingRow = node('tr');
+    const columns = isIssues ? [['id', 'Record ID'], ['kind', 'Check'], ['metric', 'Metric'], ['message', 'Details']] : [['date', 'Actual date'], ['id', 'Record ID'], ['site', 'Site'], ['region', 'Commercial region'], [null, 'Related records'], ['products', 'Product'], ['source', 'Source'], [null, 'Platform']];
+    for (const [field, label] of columns) {
+      const th = node('th'); th.scope = 'col';
+      if (field) {
+        const selected = sort.field === field;
+        th.setAttribute('aria-sort', selected ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none');
+        th.append(focusKey(button(`${label}${selected ? sort.direction === 'asc' ? ' ↑' : ' ↓' : ''}`, () => change({ sort: { field, direction: selected && sort.direction === 'asc' ? 'desc' : 'asc' }, page: 0 }), '', `Sort by ${label}`), `sort-${field}`));
+      } else th.textContent = label;
+      headingRow.append(th);
+    }
+    head.append(headingRow); table.append(head);
+    const body = node('tbody');
+    const maxPage = Math.max(0, Math.ceil(records.length / PAGE_SIZE) - 1);
+    const page = Math.max(0, Math.min(maxPage, state.page || 0));
+    for (const record of records.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)) {
+      const tr = node('tr'); tr.dataset.recordId = record.id || '';
+      if (isIssues) {
+        for (const field of ['id', 'kind', 'metric']) tr.append(node('td', record[field] || '—'));
+        const message = node('td'); message.append(node('div', record.message || '—'));
+        const evidence = node('details', null, 'who-source-evidence');
+        evidence.setAttribute('data-testid', 'source-evidence');
+        evidence.append(node('summary', 'Source evidence'));
+        const evidenceBody = node('div', null, 'who-source-fields');
+        const evidenceField = (label, values, total) => {
+          const all = list(values);
+          const bounded = all.slice(0, 20).map(value => {
+            const text = String(value ?? '');
+            return text === '' ? '(blank)' : text.length > 512 ? `${text.slice(0, 512)}… (truncated)` : text;
+          });
+          const count = total ?? all.length;
+          const line = node('p'); line.append(node('strong', `${label}: `), doc.createTextNode(bounded.join(', ') || '(blank)'));
+          if (count > bounded.length) line.append(doc.createTextNode(` · ${number(count - bounded.length)} more values`));
+          evidenceBody.append(line);
+        };
+        if (record.field || record.rawValues) {
+          if (record.field) evidenceField('Source field', record.field);
+          evidenceField('Raw date values', record.rawValues || [], record.rawValueCount);
+        }
+        for (const [label, values] of [['Submission IDs', record.subIds], ['RO IDs', record.roIds], ['Application IDs', record.appIds], ['Registration IDs', record.registrationIds]]) {
+          if (list(values).length) evidenceField(label, values);
+        }
+        if (Object.hasOwn(record, 'rawSite')) evidenceField('Raw site', record.rawSite);
+        else if (record.sites) evidenceField('Site values', record.sites);
+        if (Object.hasOwn(record, 'rawCommercialRegion')) evidenceField('Raw commercial region', record.rawCommercialRegion);
+        else if (record.regions) evidenceField('Commercial region values', record.regions);
+        if (record.sourceRows > 1) evidenceBody.append(node('p', `${number(record.sourceRows)} delivered join rows reference these IDs; these are source rows, not ${number(record.sourceRows)} distinct records.`));
+        if (evidenceBody.childNodes.length) { evidence.append(evidenceBody); message.append(evidence); }
+        tr.append(message);
+      } else {
+        const date = formatDate(record.date);
+        tr.append(node('td', date, 'who-date'), node('td', record.id, 'who-record-id'), node('td', record.site || NOT_RECORDED), node('td', record.region || NOT_RECORDED));
+        const related = node('td');
+        for (const [label, values] of [['App', record.appIds], ['RO', record.roIds], ['Sub', record.subIds], ['Reg', record.registrationIds]]) if (list(values).length) related.append(node('div', `${label}: ${textList(values)}`));
+        if (!related.childNodes.length) related.textContent = NOT_RECORDED;
+        const source = node('td', record.source || 'Velocity');
+        source.title = `Submission: ${formatDate(record.submissionDate)}\nApproval: ${formatDate(record.approvalDate)}`;
+        tr.append(related, node('td', textList(record.products)), source);
+        const link = node('td'); const url = safeUrl(record.url);
+        if (url && options.onLaunchUrl) { const open = button('Open ↗', () => options.onLaunchUrl(url), 'who-text-button', `Open ${record.id} in platform`); open.title = url; link.append(open); }
+        else link.textContent = '—';
+        tr.append(link);
+      }
+      body.append(tr);
+    }
+    if (!records.length) { const row = node('tr'); const cell = node('td', isIssues ? 'No matching data checks.' : 'No matching records.'); cell.colSpan = columns.length; row.append(cell); body.append(row); }
+    table.append(body); scroll.append(table); panel.append(scroll);
+    const paging = node('div', null, 'who-paging');
+    paging.append(node('span', records.length ? `${number(page * PAGE_SIZE + 1)}–${number(Math.min((page + 1) * PAGE_SIZE, records.length))} of ${number(records.length)} records` : '0 records'));
+    const previous = focusKey(button('Previous', () => change({ page: page - 1 })), 'previous-page'); previous.disabled = page === 0;
+    const next = focusKey(button('Next', () => change({ page: page + 1 })), 'next-page'); next.disabled = page === maxPage;
+    paging.append(previous, next); panel.append(paging); root.append(panel);
+    if (previousDetail === detailSignature) scroll.scrollTop = detailsScroll;
+  }
+
+  root.scrollTop = rootScroll;
+  if (state.detail && !state.capture && previousDetail !== detailSignature) {
+    const details = root.querySelector('.who-details');
+    const bounds = root.getBoundingClientRect();
+    const target = details?.getBoundingClientRect();
+    if (target && (target.top > bounds.bottom - 120 || target.top < bounds.top)) {
+      // Only scroll inside this visual. scrollIntoView can move the entire report page.
+      root.scrollTop = Math.max(0, rootScroll + target.top - bounds.top - 12);
+    }
+  }
+  if (focused) {
+    const target = [...root.querySelectorAll('[data-focus-key]')].find(item => item.getAttribute('data-focus-key') === focused);
+    if (target && !target.disabled) {
+      target.focus({ preventScroll: true });
+      if (selection && typeof target.setSelectionRange === 'function' && selection.start != null) target.setSelectionRange(selection.start, selection.end);
+    }
+  }
+  return result;
+}
+
+// Entirely fictional fixtures. Dates stay fixed so preview screenshots are reproducible.
+const DEMO_NOW = '2026-11-20T12:00:00Z';
+const DEMO_AS_OF = '2026-11-18';
+const DEMO_YEARS = [2025, 2026];
+const SCARBOROUGH = 'Abbott Diagnostics Scarborough, Inc.';
+
+function makeSite(site, code, submissions, approvals) {
+  const rows = [];
+  DEMO_YEARS.forEach((year, yi) => {
+    const total = Math.max(submissions[yi], approvals[yi]);
+    for (let i = 0; i < total; i++) {
+      const suffix = `${code}-${year}-${String(i + 1).padStart(3, '0')}`;
+      const month = String(1 + i % 9).padStart(2, '0');
+      const row = {
+        SubID: `DEMO-SUB-${suffix}`, ROID: `DEMO-RO-${suffix}`,
+        AppID: `DEMO-APP-${code}-${String(1 + i % 4).padStart(2, '0')}`,
+        RegistrationID: `DEMO-REG-${suffix}`,
+        Site: site, BusinessUnit: 'ID', CommercialRegion: 'WHO',
+        Product: ['Fictional assay Alpha', 'Fictional assay Beta', 'Fictional assay Gamma'][i % 3],
+        SubmissionType: i % 3 ? 'Variation' : 'Initial application',
+        ActualSubmission: i < submissions[yi] ? `${year}-${month}-05` : null,
+        ActualApproval: i < approvals[yi] ? `${year}-${month}-21` : null,
+        AsOfDate: DEMO_AS_OF,
+        SubmissionURL: `https://example.com/fictional/submissions/${suffix}`,
+        RegulatoryObjectiveURL: `https://example.com/fictional/ros/${suffix}`,
+        RegistrationURL: `https://example.com/fictional/registrations/${suffix}`
+      };
+      rows.push(row);
+      // Joined source rows must not multiply milestone counts.
+      if (i % 7 === 0) rows.push({...row});
+    }
+  });
+  return rows;
+}
+
+function sample() {
+  const active = [
+    ...makeSite('ABO', 'ABO', [10, 14], [7, 9]),
+    ...makeSite('ADK', 'ADK', [18, 26], [13, 21]),
+    ...makeSite(SCARBOROUGH, 'SCR', [4, 6], [0, 4])
+  ];
+  const inactive = ['ADJ', 'AJG', 'ARDG'].map(site => ({
+    SubID: `DEMO-SUB-${site}-UNDATED`, ROID: `DEMO-RO-${site}-UNDATED`,
+    Site: site, BusinessUnit: 'ID', CommercialRegion: 'WHO',
+    ActualSubmission: null, ActualApproval: null, AsOfDate: DEMO_AS_OF,
+    Product: 'Fictional assay Alpha', SubmissionType: 'Initial application'
+  }));
+  // These remain in filter choices, but are outside the initial ID / WHO scope.
+  return [...active, ...inactive,
+    {...active[0], SubID: 'DEMO-NON-WHO', ROID: 'DEMO-NON-WHO-RO', CommercialRegion: 'EMEA'},
+    {...active[0], SubID: 'DEMO-OTHER-BU', ROID: 'DEMO-OTHER-BU-RO', BusinessUnit: 'CMI'},
+    {...active[0], SubID: 'DEMO-REGION-NOT-RECORDED', ROID: 'DEMO-REGION-NOT-RECORDED-RO', CommercialRegion: ''}
+  ];
+}
+
+function sixSiteSample() {
+  return [...sample(),
+    ...makeSite('ADJ', 'ADJ', [5, 8], [3, 6]),
+    ...makeSite('AJG', 'AJG', [3, 5], [1, 3]),
+    ...makeSite('ARDG', 'ARDG', [2, 4], [0, 2])
+  ];
+}
+
+
+const root = document.getElementById('host');
+let state = defaultState(new Date(DEMO_NOW));
+let rows = sample();
+function draw() {
+  render(root, rows, {
+    state, now: new Date(DEMO_NOW), mapped: Object.fromEntries(ROLES.map(role => [role,true])), missing: [],
+    width: root.clientWidth, height: root.clientHeight,
+    onChange(patch) {state = {...state, ...patch}; draw();},
+    onCopy: async text => {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(text);
+    },
+    onLaunchUrl: url => window.open(url, '_blank', 'noopener,noreferrer')
+  });
+}
+document.getElementById('three').onclick = () => {rows=sample(); state=defaultState(new Date(DEMO_NOW)); draw();};
+document.getElementById('six').onclick = () => {rows=sixSiteSample(); state=defaultState(new Date(DEMO_NOW)); draw();};
+document.getElementById('wide').onclick = () => {root.style.maxWidth='1440px'; root.style.height='820px'; draw();};
+document.getElementById('small').onclick = () => {root.style.maxWidth='700px'; root.style.height='700px'; draw();};
+new ResizeObserver(draw).observe(root);
+draw();
+
+})();</script></body></html>

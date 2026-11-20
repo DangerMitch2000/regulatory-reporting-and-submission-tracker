@@ -4,7 +4,7 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '../..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
-const folders = ['change-dashboard', 'registration-map', 'regulatory-tracker', 'roadmap', 'ivdr-overview', 'key-submissions', 'site-regulatory-plan', 'site-submission-outlook'];
+const folders = ['change-dashboard', 'registration-map', 'regulatory-tracker', 'roadmap', 'ivdr-overview', 'key-submissions', 'site-regulatory-plan', 'site-submission-outlook', 'who-activity'];
 const readme = read('README.md');
 assert.equal(readme.match(/^## .+$/m)?.[0], '## Table of visuals', 'Keep the visual table first');
 const table = readme.match(/^\| Visual \| Download \| Demo \|\r?\n[\s\S]*?(?=\r?\n\r?\n)/m)?.[0];
@@ -14,8 +14,8 @@ for (const folder of folders) {
   assert(table.includes(`](${folder}/README.md)`), `Missing guide: ${folder}`);
   assert(fs.existsSync(path.join(root, folder, 'README.md')), `Missing folder guide: ${folder}`);
 }
-assert.equal((table.match(/releases\/download\//g) || []).length, 8, 'Keep the package links');
-assert.equal((table.match(/github\.io\//g) || []).length, 8, 'Keep the demo links');
+assert.equal((table.match(/releases\/download\//g) || []).length, folders.length, 'Keep the package links');
+assert.equal((table.match(/github\.io\//g) || []).length, folders.length, 'Keep the demo links');
 
 const guides = ['README.md', 'docs/README.md', 'docs/development.md', 'docs/history/pre-cleanup-readme.md', ...folders.map(folder => `${folder}/README.md`)];
 let links = 0;

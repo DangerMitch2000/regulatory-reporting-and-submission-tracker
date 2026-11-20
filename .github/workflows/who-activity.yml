@@ -1,0 +1,176 @@
+name: Build WHO Submissions & Approvals
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish a versioned release after validation
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths:
+      - 'who-activity/**'
+      - '.github/workflows/who-activity.yml'
+permissions:
+  contents: write
+concurrency:
+  group: who-activity-release
+  cancel-in-progress: false
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: who-activity
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Generate Power BI project and preview
+        run: |
+          node build.cjs
+          node prepare-preview.cjs
+          git diff --exit-code -- preview.html
+      - name: Install pinned build tools
+        timeout-minutes: 5
+        working-directory: who-activity/powerbi
+        run: npm install
+      - name: Install test browser
+        timeout-minutes: 5
+        working-directory: who-activity/powerbi
+        run: npx playwright install chromium
+      - name: Verify calculations and visual interactions
+        run: |
+          node logic-test.mjs
+          npm --prefix powerbi run typecheck
+          node prepare-tests.cjs
+          node browser-test.cjs
+      - name: Build Power BI package
+        working-directory: who-activity/powerbi
+        run: npm run package -- --no-stats
+      - name: Verify the actual packaged runtime
+        run: |
+          unzip 'powerbi/dist/*.pbiviz' -d package-check
+          node package-test.cjs
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+          cp powerbi/dist/*.pbiviz release/who-submissions-approvals-1.0.0.0.pbiviz
+          cp README.md release/WHO-ACTIVITY-INSTALL.md
+          cp preview.html release/who-activity-demo.html
+          cp RELEASE-NOTES.md release/RELEASE-NOTES.md
+          tar --exclude=node_modules --exclude=.tmp --exclude=dist -czf release/who-activity-source.tar.gz powerbi logic.mjs ui.mjs styles.css visual.ts build.cjs demo.mjs preview-entry.mjs prepare-preview.cjs preview.html prepare-tests.cjs logic-test.mjs browser-test.cjs package-test.cjs README.md RELEASE-NOTES.md
+          cd release
+          sha256sum * > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: who-activity-1.0.0
+          path: who-activity/release/
+      - name: Stage all assets in a draft, then publish the preview
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: who-activity-v1.0.0
+        run: |
+          set -euo pipefail
+          # Retry transient GitHub failures. Draft discovery uses the complete
+          # releases list: the release-by-tag REST endpoint excludes drafts.
+          retry_gh() {
+            local attempt status output errors
+            output=$(mktemp)
+            errors=$(mktemp)
+            for attempt in 1 2 3 4 5; do
+              if gh "$@" >"$output" 2>"$errors"; then
+                cat "$output"
+                cat "$errors" >&2
+                rm -f "$output" "$errors"
+                return 0
+              else
+                status=$?
+              fi
+              if ! grep -Eiq 'HTTP 5[0-9][0-9]|status code: 5[0-9][0-9]|timeout|timed out|connection reset|unexpected EOF' "$errors" || [ "$attempt" = 5 ]; then
+                cat "$output"
+                cat "$errors" >&2
+                rm -f "$output" "$errors"
+                return "$status"
+              fi
+              cat "$errors" >&2
+              sleep "$((attempt * 5))"
+            done
+          }
+
+          tag="$RELEASE_TAG"
+          remote_tag=$(git ls-remote origin "refs/tags/$tag" "refs/tags/$tag^{}")
+          if [ -n "$remote_tag" ]; then
+            git fetch --no-tags origin "refs/tags/$tag"
+            tag_commit=$(git rev-parse 'FETCH_HEAD^{commit}')
+            if [ "$tag_commit" != "$GITHUB_SHA" ]; then
+              # A workflow-only repair may finish this unchanged version. The
+              # existing tag must be an ancestor and its actual visual sources
+              # must match; only this copied workflow source is excluded.
+              if ! git merge-base --is-ancestor "$tag_commit" "$GITHUB_SHA"; then
+                echo "Refusing to reuse $tag: $tag_commit is not an ancestor of $GITHUB_SHA." >&2
+                exit 1
+              fi
+              if ! git diff --quiet "$tag_commit" "$GITHUB_SHA" -- ':(top)who-activity' ':(top,exclude)who-activity/publish-workflow.yml'; then
+                echo "WHO Submissions & Approvals sources changed after $tag. Use a new version; the existing tag will not move." >&2
+                exit 1
+              fi
+              echo "Reusing immutable $tag at $tag_commit; who-activity sources match $GITHUB_SHA."
+            fi
+          else
+            tag_commit="$GITHUB_SHA"
+            git tag "$tag" "$GITHUB_SHA"
+            git push origin "refs/tags/$tag"
+          fi
+
+          find_release() {
+            retry_gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/releases?per_page=100" > releases-list.json || return $?
+            node -e 'const pages=require("./releases-list.json"),matches=pages.flat().filter(r=>r.tag_name===process.env.RELEASE_TAG);if(matches.length>1)throw Error("Multiple releases have this exact tag; refusing ambiguous changes.");if(matches.length){const r=matches[0];if(!r.draft)throw Error("This version is already public. Bump the version; published releases will not be modified.");if(!Number.isSafeInteger(r.id)||r.id<=0)throw Error("Invalid release ID");process.stdout.write(String(r.id));}'
+          }
+          release_id=$(find_release)
+          if [ -z "$release_id" ]; then
+            # If GitHub accepted creation but lost the response, rediscover the
+            # existing draft before treating a retry's duplicate error as failure.
+            if ! retry_gh release create "$tag" --verify-tag --target "$tag_commit" --draft --prerelease --title 'WHO Submissions & Approvals 1.0.0' --notes-file RELEASE-NOTES.md; then
+              release_id=$(find_release)
+              if [ -z "$release_id" ]; then
+                echo "Draft creation failed and the complete release list contains no matching draft." >&2
+                exit 1
+              fi
+            fi
+            for probe in 1 2 3 4 5 6 7 8 9 10; do
+              release_id=$(find_release)
+              if [ -n "$release_id" ]; then break; fi
+              sleep 3
+            done
+            if [ -z "$release_id" ]; then
+              echo "The created draft could not be rediscovered; refusing asset changes." >&2
+              exit 1
+            fi
+          fi
+
+          assert_draft() {
+            retry_gh api "repos/$GITHUB_REPOSITORY/releases/$release_id" > release-state.json || return $?
+            RELEASE_ID="$release_id" RELEASE_COMMIT="$tag_commit" node -e 'const r=require("./release-state.json");if(r.id!==Number(process.env.RELEASE_ID)||r.tag_name!==process.env.RELEASE_TAG||!r.draft)throw Error("Release identity changed or became public; refusing to modify it.");if(r.target_commitish!==process.env.RELEASE_COMMIT)throw Error("Draft target differs from the immutable release tag commit.");'
+          }
+          # gh release upload/download resolve drafts through the CLI's GraphQL
+          # fallback. Guard each mutation with the stable numeric REST release ID.
+          for file in release/*; do
+            assert_draft
+            retry_gh release upload "$tag" "$file" --clobber
+          done
+          # Verify every staged asset byte-for-byte before exposing the preview.
+          check_dir=$(mktemp -d)
+          retry_gh release download "$tag" --dir "$check_dir" --clobber
+          for file in release/*; do
+            cmp "$file" "$check_dir/$(basename "$file")"
+          done
+          assert_draft
+          retry_gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" -F draft=false -F prerelease=true -f make_latest=false > published-release.json
+          RELEASE_ID="$release_id" node -e 'const r=require("./published-release.json");if(r.id!==Number(process.env.RELEASE_ID)||r.tag_name!==process.env.RELEASE_TAG||r.draft||!r.prerelease)throw Error("Published preview verification failed.");'
+
