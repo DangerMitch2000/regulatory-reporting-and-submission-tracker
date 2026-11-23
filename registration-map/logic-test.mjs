@@ -19,7 +19,7 @@ const model = rows => analyze(rows, { countries, now });
 const view = (rows, state = {}) => derive(model(rows), state);
 
 test('Power BI mapping retains exact fields and requires identifier plus country role', () => {
-  assert.equal(FIELD_NAMES.length, 18);
+  assert.equal(FIELD_NAMES.length, 19);
   assert.equal(roles, FIELD_NAMES);
   assert.equal(names.Manufacturer, 'Legal manufacturer');
   const mapped = mapTable({ columns: [{ roles: { RegistrationID: true } }, { roles: { Country: true } }], rows: [['R1', 'France']] });
@@ -30,6 +30,82 @@ test('Power BI mapping retains exact fields and requires identifier plus country
   assert.equal(view(mapped.rows).kpis.registrations, 0, 'Unmapped state must not become Approved');
   assert.equal(mapTable({ columns: [], rows: [[]] }).missing.length, 3);
   assert.throws(() => mapTable({ columns: [{ roles: { Product: true } }, { roles: { Product: true } }] }), /one column/);
+});
+
+test('Product families are optional source values and do not change legacy field mapping', () => {
+  assert.equal(names.ProductFamily, 'Product family');
+  const columns = [
+    { roles: { RegistrationID: true } }, { roles: { RegistrationCountry: true } },
+    { roles: { RegistrationState: true } }, { roles: { Product: true } }
+  ];
+  const legacy = mapTable({ columns, rows: [['R1', 'France', 'Approved', 'Product A']] });
+  assert.deepEqual(legacy.missing, []);
+  assert.equal(legacy.rows[0].ProductFamily, null);
+  assert.equal(legacy.mappedFields.includes('ProductFamily'), false);
+  assert.deepEqual(view(legacy.rows).records[0].productFamilies, []);
+  assert.equal(view(legacy.rows).kpis.registrations, 1);
+  const current = mapTable({ columns: [{ roles: { ProductFamily: true } }, ...columns],
+    rows: [['Family A', 'R1', 'France', 'Approved', 'Product A']] });
+  assert.equal(current.rows[0].RegistrationID, 'R1');
+  assert.equal(current.rows[0].Product, 'Product A');
+  assert.deepEqual(view(current.rows).records[0].productFamilies, ['Family A']);
+  assert.throws(() => mapTable({ columns: [{ roles: { ProductFamily: true } }, { roles: { ProductFamily: true } }] }), /one column/);
+});
+
+test('Distinct product families preserve registration and catalog membership counts', () => {
+  const first = row({ ProductFamily: ' Family Z ' });
+  const source = [first, { ...first }, row({ ProductFamily: 'Family A', Product: 'Product B', ProductID: 'PB', CatalogNumber: '00202' }),
+    row({ ProductFamily: '' }), row({ ProductFamily: null })];
+  const result = view(source);
+  assert.deepEqual(result.records[0].productFamilies, ['Family A', 'Family Z']);
+  assert.equal(result.kpis.registrations, 1);
+  assert.equal(result.kpis.products, 2);
+  assert.equal(result.countries.find(country => country.id === '250').count, 1);
+  assert.deepEqual(result.records[0].catalogNumbers, ['00101', '00202']);
+  assert.deepEqual(result.records[0].catalogAssociations.map(({ product, code }) => ({ product, code })),
+    [{ product: 'Product A', code: '00101' }, { product: 'Product B', code: '00202' }]);
+  assert.equal(result.records[0].rows.length, source.length, 'All source memberships remain available');
+  assert.deepEqual(view([row({ Product: 'A product is not a family', ProductFamily: ' ' })]).records[0].productFamilies, []);
+});
+
+test('Product families reflect only source rows matching product, site, unit, country and search filters', () => {
+  const source = [row({ ProductFamily: 'Alpha family' }),
+    row({ ProductFamily: 'Beta family', Product: 'Product B', Manufacturer: 'Legal B', RegistrationManufacturingSite: 'Factory B', BusinessUnit: 'Unit B' }),
+    row({ RegistrationID: 'REG-GERMANY', RegistrationCountry: 'Germany', ProductFamily: 'German family' })];
+  const m = model(source);
+  for (const filters of [{ products: ['Product B'] }, { sites: ['Factory B'] }, { units: ['Unit B'] },
+    { products: ['Product B'], sites: ['Legal B'], units: ['Unit B'] }]) {
+    const result = derive(m, filters);
+    assert.equal(result.kpis.registrations, 1);
+    assert.deepEqual(result.records[0].productFamilies, ['Beta family']);
+  }
+  assert.equal(derive(m, { products: ['Product A'], sites: ['Factory B'] }).records.length, 0);
+  assert.equal(derive(m, { products: ['Product B'], search: 'alpha FAMILY' }).records.length, 0);
+  const searched = derive(m, { search: 'ALPHA family' });
+  assert.equal(searched.records.length, 1);
+  assert.deepEqual(searched.records[0].productFamilies, ['Alpha family']);
+  const france = derive(m, { countries: ['250'] });
+  assert.equal(france.records.length, 1);
+  assert.deepEqual(france.records[0].productFamilies, ['Alpha family', 'Beta family']);
+  assert.deepEqual(derive(m, { countries: ['276'] }).records[0].productFamilies, ['German family']);
+  assert.deepEqual(derive(m).records.find(record => record.id === 'REG-1').productFamilies, ['Alpha family', 'Beta family'], 'Reapplying filters does not mutate full membership evidence');
+  const conflict = view([row({ ProductFamily: 'France family' }),
+    row({ RegistrationCountry: 'Germany', ProductFamily: 'Germany family' })], { countries: ['250'] });
+  assert.deepEqual(conflict.records[0].productFamilies, ['France family']);
+  assert.deepEqual(conflict.records[0].countryIds, [], 'Country conflicts remain withheld from map placement');
+  assert.deepEqual(conflict.review[0].productFamilies, ['France family']);
+});
+
+test('CSV exports a safe, distinct Product families field from filtered memberships', () => {
+  const result = view([row({ ProductFamily: '=unsafe("A")' }), row({ ProductFamily: '=unsafe("A")' }),
+    row({ Product: 'Product B', ProductFamily: 'Excluded family', CatalogNumber: '00999' })], { products: ['Product A'] });
+  const csv = toCsv(result.records);
+  assert(csv.split('\r\n')[0].includes('"Products","Product families","Product IDs"'));
+  assert(csv.includes('"\'=unsafe(""A"")"'), 'Family values are protected against spreadsheet formula evaluation');
+  assert.equal(csv.match(/unsafe/g).length, 1, 'Repeated joined rows do not repeat family values');
+  assert(!csv.includes('Excluded family'));
+  assert(!csv.includes('00999'));
+  assert(csv.includes('""product"":""Product A""'));
 });
 
 test('Duplicate memberships never inflate registration counts or lose catalog codes', () => {

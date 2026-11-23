@@ -4,7 +4,7 @@ export const FIELD_NAMES = Object.freeze([
   'RegistrationID', 'RegistrationCountry', 'RegistrationState', 'RegistrationStart',
   'RegistrationEnd', 'RegistrationNumber', 'Product', 'ProductID', 'Manufacturer',
   'RegistrationManufacturingSite', 'BusinessUnit', 'Country', 'AppID', 'ROID',
-  'SubID', 'CatalogNumber', 'RegistrationURL', 'RegistrationHolder'
+  'SubID', 'CatalogNumber', 'RegistrationURL', 'RegistrationHolder', 'ProductFamily'
 ]);
 export const roles = FIELD_NAMES;
 export const names = Object.freeze({
@@ -15,7 +15,7 @@ export const names = Object.freeze({
   RegistrationManufacturingSite: 'Registration manufacturing site', BusinessUnit: 'Business unit',
   Country: 'Country (fallback)', AppID: 'Application ID', ROID: 'Regulatory objective ID',
   SubID: 'Submission ID', CatalogNumber: 'Catalog number', RegistrationURL: 'Registration URL',
-  RegistrationHolder: 'Registration holder'
+  RegistrationHolder: 'Registration holder', ProductFamily: 'Product family'
 });
 export const DEFAULT_STATE = Object.freeze({
   states: Object.freeze(['Approved', 'Conditionally Approved']), products: Object.freeze([]),
@@ -140,7 +140,7 @@ function memberships(rows) {
     if (!catalogGroups.has(key)) catalogGroups.set(key, { product, productId, country: row._country?.raw || '', code });
   }
   return { products: sorted(rows.map(row => text(row.Product) || text(row.ProductID))),
-    productIds: values('ProductID'), legalSites, registrationSites,
+    productIds: values('ProductID'), productFamilies: values('ProductFamily'), legalSites, registrationSites,
     sites: sorted([...legalSites, ...registrationSites]), units: values('BusinessUnit'),
     registrationNumbers: values('RegistrationNumber'), holders: values('RegistrationHolder'),
     relatedAppIDs: values('AppID'), relatedROIDs: values('ROID'), relatedSubIDs: values('SubID'),
@@ -232,7 +232,7 @@ export function derive(model, state = {}) {
     if (sites.size && !sites.has(text(row.Manufacturer)) && !sites.has(text(row.RegistrationManufacturingSite))) return false;
     if (units.size && !units.has(text(row.BusinessUnit))) return false;
     if (countries.size && !countries.has(row._country.id)) return false;
-    if (query && !['RegistrationID', 'RegistrationNumber', 'Product', 'ProductID', 'CatalogNumber', 'AppID', 'ROID', 'SubID', 'RegistrationCountry', 'Country']
+    if (query && !['RegistrationID', 'RegistrationNumber', 'Product', 'ProductID', 'ProductFamily', 'CatalogNumber', 'AppID', 'ROID', 'SubID', 'RegistrationCountry', 'Country']
       .some(field => norm(row[field]).includes(query)) && !norm(row._country.name).includes(query)) return false;
     return true;
   }
@@ -240,7 +240,8 @@ export function derive(model, state = {}) {
   const project = record => {
     if (!expiryMatches(record)) return null;
     const matchingRows = record.rows.filter(matches);
-    return matchingRows.length ? { ...record, matchingRows } : null;
+    return matchingRows.length ? { ...record, matchingRows,
+      productFamilies: sorted(matchingRows.map(row => text(row.ProductFamily))) } : null;
   };
   const records = model.records.filter(record => !states.size || states.has(record.state)).map(project).filter(Boolean);
   // Review deliberately spans all registration states. Membership and expiry
@@ -278,7 +279,7 @@ export function csvEscape(value) {
 }
 
 export function toCsv(records) {
-  const header = ['Registration ID', 'Registration number', 'Country', 'Country mapping', 'State', 'Products',
+  const header = ['Registration ID', 'Registration number', 'Country', 'Country mapping', 'State', 'Products', 'Product families',
     'Product IDs', 'Legal manufacturers', 'Registration manufacturing sites', 'Business units',
     'Registration start', 'Registration end', 'Expiry status', 'Registration holders', 'Catalog numbers',
     'Product / catalog associations', 'Application IDs', 'Regulatory objective IDs', 'Submission IDs', 'Source URL', 'Review notes'];
@@ -286,7 +287,7 @@ export function toCsv(records) {
   const body = records.map(record => {
     const members = memberships(record.matchingRows || record.rows);
     return [record.id, join(members.registrationNumbers), join(record.countryNames.length ? record.countryNames : record.countryValues),
-      record.countryStatus, record.state, join(members.products), join(members.productIds), join(members.legalSites),
+      record.countryStatus, record.state, join(members.products), join(members.productFamilies), join(members.productIds), join(members.legalSites),
       join(members.registrationSites), join(members.units), record.startInfo.label, record.endInfo.label,
       record.expiryStatus, join(members.holders), join(members.catalogNumbers),
       JSON.stringify(members.catalogAssociations), join(members.relatedAppIDs), join(members.relatedROIDs),

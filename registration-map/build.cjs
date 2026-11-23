@@ -1,7 +1,7 @@
 /* Reproducible, separate Registration Coverage Map Power BI project. */
 const fs = require('node:fs'), path = require('node:path'), {pathToFileURL} = require('node:url');
 const root = __dirname, out = path.join(root, 'powerbi');
-const VERSION = '1.0.2', PACKAGE_VERSION = '1.0.2.0';
+const VERSION = '1.0.3', PACKAGE_VERSION = '1.0.3.0';
 const GUID = 'registrationCoverageMapC34DF5A6F82049BE968C22E8D9EF6031';
 function write(name, value) {
   const file = path.join(out, name);
@@ -10,7 +10,7 @@ function write(name, value) {
 }
 async function build() {
   const {roles, names} = await import(pathToFileURL(path.join(root, 'logic.mjs')).href);
-  if (roles.length !== 18 || new Set(roles).size !== 18) throw Error('Expected 18 distinct registration-map field roles.');
+  if (roles.length !== 19 || new Set(roles).size !== 19) throw Error('Expected 19 distinct registration-map field roles.');
   write('package.json', {
     name: 'registration-coverage-map', version: VERSION, private: true,
     scripts: {typecheck: 'tsc --noEmit', package: 'pbiviz package'},
@@ -49,6 +49,6 @@ async function build() {
     pixels.set(land ? [32, 161, 146, 255] : inside ? [29, 57, 89, 255] : [255, 255, 255, 0], y * 81 + 1 + x * 4);
   }
   write('assets/icon.png', Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]), chunk('IHDR', header), chunk('IDAT', zlib.deflateSync(pixels)), chunk('IEND', Buffer.alloc(0))]));
-  console.log(`Generated Registration Coverage Map ${VERSION} / ${PACKAGE_VERSION}; 18 roles, offline geography, separate GUID ${GUID}.`);
+  console.log(`Generated Registration Coverage Map ${VERSION} / ${PACKAGE_VERSION}; ${roles.length} roles, offline geography, separate GUID ${GUID}.`);
 }
 build().catch(error => { console.error(error); process.exitCode = 1; });

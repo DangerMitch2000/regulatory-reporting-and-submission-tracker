@@ -1,12 +1,12 @@
-# Registration Coverage Map 1.0.2
+# Registration Coverage Map 1.0.3
 
 A separate Power BI visual for exploring registration coverage by country. Filter products, legal or registration manufacturing sites, business units, registration states, countries and expiry dates. Select a country to inspect registrations, copy their IDs or export the filtered list.
 
-[Download the Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/registration-map-v1.0.2/registration-coverage-map-1.0.2.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/registration-map/preview.html) · [Release notes](RELEASE-NOTES.md)
+[Download the Power BI package](https://github.com/DangerMitch2000/regulatory-reporting-and-submission-tracker/releases/download/registration-map-v1.0.3/registration-coverage-map-1.0.3.0.pbiviz) · [Interactive demo](https://dangermitch2000.github.io/regulatory-reporting-and-submission-tracker/registration-map/preview.html) · [Release notes](RELEASE-NOTES.md)
 
 The demo uses fictional data. This is an uncertified preview, with a separate visual identity from the Regulatory Tracker and other repository visuals. Its world geometry is bundled; the map makes no runtime requests to a map provider and requires no API key.
 
-## Typography in 1.0.2
+## Typography
 
 The main title uses **Wallace Sans Light** at weight 300. Body text, map labels, controls, notices, details and copy panels use **Wallace Sans**, matching Site Submission Outlook. Fonts fall back to **Segoe UI**, Arial and sans-serif; the title tries Wallace Sans after Wallace Sans Light. No font files are bundled or downloaded. Wallace Sans must be available in the viewing environment to display it.
 
@@ -21,7 +21,7 @@ The main title uses **Wallace Sans Light** at weight 300. Body text, map labels,
 
 ## Import and map fields
 
-1. Download **registration-coverage-map-1.0.2.0.pbiviz**.
+1. Download **registration-coverage-map-1.0.3.0.pbiviz**.
 2. In Power BI Desktop, use **Visualizations (…) → Import a visual from a file** and select the package. Add **Registration Coverage Map** to a report page.
 3. Map **Registration ID**, **Registration country** and **Registration state**. Map Product, Site and Business Unit fields to enable the requested filters. Use the source columns; their source names do not need changing.
 4. Add other fields from the table below as available. Date fields must use raw Date/DateTime columns, not automatic Date hierarchies. Use **Don’t summarize** for identifiers.
@@ -34,6 +34,7 @@ The main title uses **Wallace Sans Light** at weight 300. Body text, map labels,
 | RegistrationState | Recorded registration lifecycle state |
 | Product | Product name, used for product filtering and Details |
 | ProductID | Optional stable product ID; used if product name is blank |
+| ProductFamily | Optional product-family name from the registration/product relationship; shown in the registration list, Details, search and CSV |
 | Manufacturer | Legal manufacturer site |
 | RegistrationManufacturingSite | Manufacturing site on the registration; both site sources are filterable and distinguished in Details |
 | BusinessUnit | Business unit |
@@ -50,8 +51,8 @@ Use relationships that deliver real registration/product/site memberships. Do no
 
 ## Interactions
 
-- Select a country on the map or in the country table to list its registrations. Click a registration ID for Details, linked IDs, source memberships and review notes.
-- Search IDs, registration numbers, products, catalog numbers or countries. Filters support multiple selections and searchable choice lists. **All business units** removes the ID restriction; **Reset filters** clears the unit restriction and restores the default approved states.
+- Select a country on the map or in the country table to list its registrations. The **Product families** column shows distinct families linked to each registration within the current product, site, business-unit and search filters. It uses up to two lines; hover for the full text or click the registration ID for full Details. Blank or unmapped families show **Not recorded**. Duplicate family memberships do not increase registration counts.
+- Search IDs, registration numbers, products, product families, catalog numbers or countries. Filters support multiple selections and searchable choice lists. **All business units** removes the ID restriction; **Reset filters** clears the unit restriction and restores the default approved states.
 - Summary counts open their relevant list. **Expiring · 90 days** applies that expiry filter. **Needs review** opens the review list across all states.
 - Use **Copy IDs** or **CSV** for the whole filtered list, not only the visible page. If the host blocks clipboard/export, selectable text is provided. CSV protects formula-like values and includes product/catalog associations.
 - Use +/−, **World**, dragging, or Ctrl+wheel to move around the map. Tiny-country targets and the country table make small jurisdictions accessible. Country shapes also support keyboard focus and Enter/Space.
@@ -69,6 +70,6 @@ Windowed Power BI data delivery is supported. Loading or host limits show an exp
 
 ## Development
 
-From the repository root, first run `cd registration-map`. Run `node build.cjs`, install dependencies in `powerbi/`, and run `node prepare-preview.cjs`. Verification commands: `node --test logic-test.mjs`, `node geography-test.cjs`, `node host-test.cjs`, `node browser-test.cjs` and `node host-browser-test.cjs`. The release workflow also typechecks, builds and inspects the packaged visual; publishing requires a manual run with **publish** enabled. Synthetic tests do not substitute for testing the report’s actual source model and tenant configuration.
+From the repository root, first run `cd registration-map`. Run `node build.cjs`, install dependencies in `powerbi/`, and run `node prepare-preview.cjs`. Verification commands: `node --test logic-test.mjs`, `node geography-test.cjs`, `node host-test.cjs`, `node browser-test.cjs` and `node host-browser-test.cjs`. The release workflow also typechecks, builds and inspects the packaged visual; publishing requires a manual run with **publish** enabled or the explicit versioned publication marker on a main-branch commit. Synthetic tests do not substitute for testing the report’s actual source model and tenant configuration.
 
 See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for pinned Natural Earth geometry and public-domain provenance. Boundaries follow that dataset’s published cartographic view; country colouring reflects supplied records.

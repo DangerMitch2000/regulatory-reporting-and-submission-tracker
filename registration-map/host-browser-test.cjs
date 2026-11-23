@@ -119,6 +119,72 @@ async function businessUnitStartupChecks(page) {
   await page.evaluate(async () => {for (const id of ['startup', 'unmapped-startup']) {const r = coverageHarness.instances[id]; r.visual.destroy(); await r.visual.queue; r.element.remove();}});
 }
 
+async function productFamilyChecks(page, packaged) {
+  const base = {RegistrationID:'FAMILY-IE',RegistrationCountry:'Ireland',RegistrationState:'Approved',RegistrationStart:'2020-01-01',RegistrationEnd:'2030-12-31',Product:'Alpha device',ProductFamily:'Immunoassay diagnostic family',Manufacturer:'ABO',BusinessUnit:'ID',CatalogNumber:'CAT-A'};
+  const rows = [base,{...base}, {...base,CatalogNumber:'CAT-B'},
+    {...base,Product:'Beta device',ProductFamily:'Molecular diagnostics extended product family',Manufacturer:'ADK'},
+    {...base,Product:'Gamma device',ProductFamily:'Restricted other-unit family',BusinessUnit:'CMI'},
+    {...base,ProductFamily:''},
+    {...base,RegistrationID:'FAMILY-BLANK',Product:'Standalone product name',ProductFamily:null},
+    {...base,RegistrationID:'FAMILY-FR',RegistrationCountry:'France',ProductFamily:'France-only family'}];
+  await page.evaluate(() => coverageHarness.create('families'));
+  const root = page.locator('#families');
+  const send = (options = {}) => page.evaluate(({rows,options}) => coverageHarness.send('families',rows,options),{rows,options});
+  const snapshot = () => page.evaluate(() => coverageHarness.snapshot('families'));
+  const chooseIreland = async () => {await root.locator('.map-country[data-country="372"]').focus();await page.keyboard.press('Enter');assert.equal(await root.locator('.map-side-heading h2').textContent(),'Ireland');};
+  const familyRow = id => root.locator('.map-record-table tbody tr').filter({has:page.getByRole('button',{name:id,exact:true})});
+  const familyText = id => familyRow(id).locator('.map-product-families').textContent();
+  async function assertFamilyLayout(label) {
+    const sizes=await root.evaluate(element=>{
+      const visual=element.querySelector('.registration-map'),side=element.querySelector('.map-side'),table=element.querySelector('.map-record-table');
+      return {rootWidth:visual.clientWidth,rootScroll:visual.scrollWidth,sideWidth:side.clientWidth,sideScroll:side.scrollWidth,tableWidth:table.getBoundingClientRect().width};
+    });
+    assert(sizes.rootScroll<=sizes.rootWidth+1,label+': visual overflow '+JSON.stringify(sizes));
+    assert(sizes.sideScroll<=sizes.sideWidth+1,label+': side overflow '+JSON.stringify(sizes));
+    assert(sizes.tableWidth<=sizes.sideWidth+1,label+': table overflow '+JSON.stringify(sizes));
+  }
+  await send({width:1200,height:760});await chooseIreland();
+  assert.equal((await snapshot()).metrics[1],3,'Product family joins do not inflate distinct registration totals');
+  assert.deepEqual(await root.locator('.map-record-table th').allTextContents(),['Registration','Product families','State','End date']);
+  assert.equal(await root.locator('.map-record-table tbody tr').count(),2,'Country selection excludes registrations from other countries');
+  assert.equal(await familyText('FAMILY-IE'),'Immunoassay diagnostic family · Molecular diagnostics extended product family');
+  assert.equal(await familyRow('FAMILY-IE').locator('.map-family-value').getAttribute('title'),'Immunoassay diagnostic family · Molecular diagnostics extended product family','Full family list remains available when visually clamped');
+  assert.equal(await familyText('FAMILY-BLANK'),'Not recorded','Missing family is not inferred from the product name');
+  assert.doesNotMatch(await root.locator('.map-record-table').textContent(),/Restricted other-unit|France-only/,'Country list families reflect country and business-unit scope');
+  await assertFamilyLayout('Wide product family list');
+  await page.screenshot({path:path.join(artifacts,packaged?'product-families-package-wide.png':'product-families-source-wide.png'),fullPage:true});
+  await root.getByRole('button',{name:'FAMILY-IE',exact:true}).click();
+  const detail=root.locator('.map-detail-field').filter({has:page.locator('span').filter({hasText:/^Product families$/})});
+  assert.equal(await detail.locator('strong').textContent(),'Immunoassay diagnostic family · Molecular diagnostics extended product family','Details retains every scoped family');
+  await root.getByRole('button',{name:'Back',exact:true}).click();
+  await root.getByRole('button',{name:'CSV',exact:true}).click();
+  const csv=await page.evaluate(()=>coverageHarness.instances.families.exports.at(-1)[0]);
+  assert.match(csv.split(/\r?\n/)[0],/Product families/);assert.match(csv,/Immunoassay diagnostic family/);assert.match(csv,/Molecular diagnostics extended product family/);
+  assert.doesNotMatch(csv,/France-only family|Restricted other-unit family/,'Country CSV excludes out-of-scope families');
+  const productFilter=root.locator('details[data-filter="products"]');
+  await productFilter.locator('summary').click();await productFilter.getByRole('checkbox',{name:'Alpha device',exact:true}).check();await productFilter.locator('summary').click();
+  assert.equal(await familyText('FAMILY-IE'),'Immunoassay diagnostic family','Product filtering does not leak another product family');
+  await root.getByRole('button',{name:'Products: 1 selected ×',exact:true}).click();
+  await root.getByRole('searchbox',{name:'Search registrations',exact:true}).fill('Molecular diagnostics extended');
+  await page.waitForFunction(()=>coverageHarness.instances.families.visual.app.getState().filters.search==='Molecular diagnostics extended');
+  assert.equal((await snapshot()).metrics[1],1,'Search finds a family without requiring product-name match');
+  assert.equal(await familyText('FAMILY-IE'),'Molecular diagnostics extended product family','Search keeps matching membership evidence');
+  await root.getByRole('searchbox',{name:'Search registrations',exact:true}).fill('');
+  await page.waitForFunction(()=>coverageHarness.instances.families.visual.app.getState().filters.search==='');
+  await send({type:4,width:760,height:700});
+  await assertFamilyLayout('Compact product family list');
+  assert.equal(await familyText('FAMILY-IE'),'Immunoassay diagnostic family · Molecular diagnostics extended product family');
+  await familyRow('FAMILY-IE').scrollIntoViewIfNeeded();
+  await page.screenshot({path:path.join(artifacts,packaged?'product-families-package-compact.png':'product-families-source-compact.png'),fullPage:true});
+  await send({omit:['ProductFamily']});
+  assert.equal((await snapshot()).metrics[1],3,'An old report without the optional field keeps its existing counts');
+  assert.equal(await familyText('FAMILY-IE'),'Not recorded','An unmapped optional family field does not invent family data');
+  assert.equal(await root.locator('.host-notice').isHidden(),true,'Missing optional family mapping is not a required-field warning');
+  await send();
+  assert.equal(await familyText('FAMILY-IE'),'Immunoassay diagnostic family · Molecular diagnostics extended product family','Adding the new mapping restores family data');
+  await page.evaluate(async()=>{const r=coverageHarness.instances.families;r.visual.destroy();await r.visual.queue;r.element.remove();});
+}
+
 async function run({packaged} = {}) {
   const {roles} = await import('./logic.mjs');
   fs.mkdirSync(artifacts, {recursive: true});
@@ -146,6 +212,7 @@ async function run({packaged} = {}) {
     await page.clock.setFixedTime(new Date('2026-11-04T12:00:00Z'));
     await page.goto('http://127.0.0.1:' + server.address().port + '/');
     await businessUnitStartupChecks(page);
+    await productFamilyChecks(page, packaged);
     await page.evaluate(() => coverageHarness.create('first'));
     const batches = fixtures();
     for (let i = 0; i < batches.length; i++) {
@@ -232,7 +299,7 @@ async function run({packaged} = {}) {
     assert.deepEqual(errors, []); assert.deepEqual(external, [], 'The visual makes zero external runtime requests');
     const events = await page.evaluate(() => Object.values(coverageHarness.instances).flatMap(r => r.events));
     assert.equal(events.some(event => event.startsWith('failed:')), false, events.join('\n'));
-    console.log(`PASS ${packaged ? 'packaged' : 'actual'} Visual browser host: ID startup, mixed/empty/partial/missing-unit batches, explicit other/All and Reset persistence, unmapped fallback, offline SVG, distinct accumulated batches, render-before-fetch, resize/data selection preservation, denied/allowed copy/export, explicit URL launch, high contrast, notices, two instances, destroy and empty data.`);
+    console.log(`PASS ${packaged ? 'packaged' : 'actual'} Visual browser host: product-family mapping/list/Details/search/CSV/compact layout, ID startup, mixed/empty/partial/missing-unit batches, explicit other/All and Reset persistence, unmapped fallback, offline SVG, distinct accumulated batches, render-before-fetch, resize/data selection preservation, denied/allowed copy/export, explicit URL launch, high contrast, notices, two instances, destroy and empty data.`);
   } finally {await browser?.close(); await new Promise(resolve => server.close(resolve));}
 }
 module.exports = {run, fixtures};
